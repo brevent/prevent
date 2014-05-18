@@ -6,21 +6,27 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.FileUtils;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.view.inputmethod.InputMethod;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
@@ -34,19 +40,19 @@ public class XposedMod implements IXposedHookZygoteInit {
 
 	abstract class MethodHook extends XC_MethodHook {
 		private long mtime;
-		protected Set<String> packages;
+		protected Map<String, Boolean> packages;
 
 		protected MethodHook() {
 			loadPackages();
 		}
 
 		protected void loadPackages() {
-			mtime = getMTime();
+			mtime = getMTime(FORCESTOP);
 			packages = loadFromFile(FORCESTOP);
 		}
 
 		protected void reloadPackagesIfNeeded() {
-			long time = getMTime();
+			long time = getMTime(FORCESTOP);
 			if (time > mtime) {
 				packages = loadFromFile(FORCESTOP);
 				mtime = time;
@@ -55,7 +61,55 @@ public class XposedMod implements IXposedHookZygoteInit {
 
 		protected void savePackages(String suffix) {
 			saveToFile(FORCESTOP, packages, suffix);
-			mtime = getMTime();
+			mtime = getMTime(FORCESTOP);
+		}
+
+		protected void saveToFile(String path, Map<String, Boolean> packages, String suffix) {
+			try {
+				File file = new File(path + suffix);
+				BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+				for (Entry<String, Boolean> entry : packages.entrySet()) {
+					writer.write(entry.getKey());
+					writer.write("=");
+					writer.write(String.valueOf(entry.getValue()));
+					writer.write("\n");
+				}
+				writer.close();
+				FileUtils.setPermissions(file.getAbsolutePath(), 0666, -1, -1);
+				file.renameTo(new File(path));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		protected Map<String, Boolean> loadFromFile(String path) {
+			Map<String, Boolean> packages = new TreeMap<String, Boolean>();
+			try {
+				String line;
+				File file = new File(path);
+				BufferedReader reader = new BufferedReader(new FileReader(file));
+				while ((line = reader.readLine()) != null) {
+					line = line.trim();
+					String[] components = line.split("=");
+					if (components.length > 1) {
+						packages.put(components[0], Boolean.valueOf(components[1]));
+					} else {
+						packages.put(line, Boolean.TRUE);
+					}
+				}
+				reader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return packages;
+		}
+
+		protected long getMTime(String path) {
+			File file = new File(path);
+			if (file != null && file.exists()) {
+				return file.lastModified();
+			}
+			return 0L;
 		}
 	}
 
@@ -73,12 +127,48 @@ public class XposedMod implements IXposedHookZygoteInit {
 			if (intent == null || intent.getComponent() == null) {
 				return;
 			}
+			if (!Intent.ACTION_MAIN.equals(intent.getAction())) {
+				return;
+			}
+			Set<String> categories = intent.getCategories();
+			if (categories == null || !categories.contains(Intent.CATEGORY_LAUNCHER)) {
+				return;
+			}
 			String packageName = intent.getComponent().getPackageName();
 			reloadPackagesIfNeeded();
-			if (packages.contains(packageName)) {
-				packages.remove(packageName);
+			if (Boolean.TRUE.equals(packages.get(packageName))) {
+				packages.put(packageName, Boolean.FALSE);
 				savePackages("Hook_ActivityManagerProxy_startActivity");
 				android.util.Log.d(TAG, "start package " + packageName);
+			}
+		}
+	}
+
+	class Hook_Activity_finish extends MethodHook {
+		private Field mParentField = null;
+
+		public Hook_Activity_finish() {
+			super();
+			try {
+				mParentField = Activity.class.getDeclaredField("mParent");
+				mParentField.setAccessible(true);
+			} catch (NoSuchFieldException e) {
+				// do nothing
+			}
+		}
+
+		@Override
+		protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+			if (mParentField != null && mParentField.get(param.thisObject) != null) {
+				return;
+			}
+			Activity activity = (Activity) param.thisObject;
+			String packageName = activity.getApplicationInfo().packageName;
+			reloadPackagesIfNeeded();
+			if (Boolean.FALSE.equals(packages.get(packageName))) {
+				packages.put(packageName, Boolean.TRUE);
+				savePackages("Hook_Activity_finish");
+				android.util.Log.d(TAG, "finish package " + packageName);
 			}
 		}
 	}
@@ -92,8 +182,8 @@ public class XposedMod implements IXposedHookZygoteInit {
 		protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 			String packageName = (String) param.args[0];
 			reloadPackagesIfNeeded();
-			if (!packages.contains(packageName)) {
-				packages.add(packageName);
+			if (!Boolean.TRUE.equals(packages.get(packageName))) {
+				packages.put(packageName, Boolean.TRUE);
 				savePackages("Hook_ActivityManagerProxy_forceStopPackage");
 			}
 			android.util.Log.d(TAG, "forcestop package " + packageName);
@@ -101,14 +191,26 @@ public class XposedMod implements IXposedHookZygoteInit {
 	}
 
 	class Hook_IntentFilter_match extends MethodHook {
-		private HashMap<String, Boolean> systemLauncherPackages;;
+		private Map<String, Boolean> systemPackages;;
+
 		public Hook_IntentFilter_match() {
 			super();
-			systemLauncherPackages = new HashMap<String, Boolean>();
+			systemPackages = new HashMap<String, Boolean>();
 		}
 
 		@Override
 		protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+			String action = (String) param.args[0];
+			@SuppressWarnings("unchecked")
+			Set<String> categories = (Set<String>) param.args[4];
+			if (InputMethod.SERVICE_INTERFACE.equals(action)) {
+				// input method
+				return;
+			} else if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
+				// app widget
+				return;
+			}
+
 			Object object = null;
 			String packageName = null;
 			boolean isSystemPackage = false;
@@ -140,25 +242,29 @@ public class XposedMod implements IXposedHookZygoteInit {
 			if (packageName == null) {
 				return;
 			}
-			if (isSystemPackage && !systemLauncherPackages.containsKey(packageName)) {
-				systemLauncherPackages.put(packageName, Boolean.FALSE);
+			if (isSystemPackage && !systemPackages.containsKey(packageName)) {
+				systemPackages.put(packageName, Boolean.FALSE);
 			}
-			String action = (String) param.args[0];
-			@SuppressWarnings("unchecked")
-			Set<String> categories = (Set<String>) param.args[4];
 
 			if (Intent.ACTION_MAIN.equals(action) && categories != null && categories.contains(Intent.CATEGORY_LAUNCHER)) {
-				if (Boolean.FALSE.equals(systemLauncherPackages.get(packageName))) {
+				// launcher
+				if (Boolean.FALSE.equals(systemPackages.get(packageName))) {
 					android.util.Log.d(TAG, "system launcher package " + packageName);
-					systemLauncherPackages.put(packageName, Boolean.TRUE);
+					systemPackages.put(packageName, Boolean.TRUE);
 				}
 				return;
 			}
+
+			if (isSystemPackage && Intent.ACTION_VIEW.equals(action)) {
+				// other wise, there is no way to open system's default action
+				return;
+			}
+
 			reloadPackagesIfNeeded();
-			if (packages.contains(packageName) && !Boolean.FALSE.equals(systemLauncherPackages.get(packageName))) {
+			if (Boolean.TRUE.equals(packages.get(packageName)) && !Boolean.FALSE.equals(systemPackages.get(packageName))) {
 				param.setResult(IntentFilter.NO_MATCH_ACTION);
 				android.util.Log.d(TAG, "ignore intent-filter for: " + packageName + ", action: " + action +
-					", categories: " + Arrays.toString(categories == null ? null : categories.toArray(new String[0])));
+					", categories: " + Arrays.toString(categories == null ? null : categories.toArray()));
 			}
 		}
 	}
@@ -167,83 +273,35 @@ public class XposedMod implements IXposedHookZygoteInit {
 	@Override
 	public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
 		Class<?> ActivityManagerProxy = Class.forName("android.app.ActivityManagerProxy");
-		Class<?> IApplicationThread = Class.forName("android.app.IApplicationThread");
 
 		File parent = new File(FORCESTOP).getParentFile();
 		parent.mkdirs();
-		setPermissions(parent.getAbsolutePath(), 0777, -1, -1);
+		FileUtils.setPermissions(parent.getAbsolutePath(), 0777, 1000, 1000);
 
 		if (Build.VERSION.SDK_INT < 14) {
-			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", IApplicationThread, Intent.class,
+			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", "android.app.IApplicationThread", Intent.class,
 				String.class, Uri[].class, int.class, IBinder.class, String.class,
 				int.class, boolean.class, boolean.class, new Hook_ActivityManagerProxy_startActivity(1));
 		} else if (Build.VERSION.SDK_INT < 16) {
-			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", IApplicationThread, Intent.class,
+			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", "android.app.IApplicationThread", Intent.class,
 				String.class, Uri[].class, int.class, IBinder.class, String.class, int.class, boolean.class,
 				boolean.class, String.class, ParcelFileDescriptor.class, boolean.class, new Hook_ActivityManagerProxy_startActivity(1));
 		} else if (Build.VERSION.SDK_INT < 18){
-			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", IApplicationThread, Intent.class,
+			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", "android.app.IApplicationThread", Intent.class,
 				String.class, IBinder.class, String.class, int.class, int.class, String.class,
 				ParcelFileDescriptor.class, Bundle.class, new Hook_ActivityManagerProxy_startActivity(1));
 		} else {
-			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", IApplicationThread, String.class, Intent.class,
+			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", "android.app.IApplicationThread", String.class, Intent.class,
 				String.class, IBinder.class, String.class, int.class,
 				int.class, String.class, ParcelFileDescriptor.class, Bundle.class, new Hook_ActivityManagerProxy_startActivity(2));
 		}
 
+		XposedHelpers.findAndHookMethod(Activity.class, "finish", new Hook_Activity_finish());
+
 		XposedHelpers.findAndHookMethod(ActivityManagerProxy, "forceStopPackage", String.class, new Hook_ActivityManagerProxy_forceStopPackage());
 
 		XposedHelpers.findAndHookMethod(IntentFilter.class, "match", String.class, String.class, String.class,
-                    Uri.class, Set.class, String.class, new Hook_IntentFilter_match());
+			Uri.class, Set.class, String.class, new Hook_IntentFilter_match());
 	}
 
-	private static void saveToFile(String path, Set<String> packages, String suffix) {
-		try {
-			File file = new File(path + suffix);
-			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-			for (String name : packages) {
-				writer.write(name);
-				writer.write("\n");
-			}
-			writer.close();
-			setPermissions(file.getAbsolutePath(), 0666, -1, -1);
-			file.renameTo(new File(path));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private static Set<String> loadFromFile(String path) {
-		HashSet<String> packages = new HashSet<String>();
-		try {
-			String line;
-			File file = new File(path);
-			BufferedReader reader = new BufferedReader(new FileReader(file));
-			while ((line = reader.readLine()) != null) {
-				packages.add(line.trim());
-			}
-			reader.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return packages;
-	}
-
-	private static void setPermissions(String path, int mode, int uid, int gid) {
-		try {
-			// frameworks/base/core/java/android/os/FileUtils.java
-			Class<?> fileUtils = Class.forName("android.os.FileUtils");
-			Method setPermissions = fileUtils.getMethod("setPermissions", String.class, int.class, int.class, int.class);
-			setPermissions.invoke(null, path, mode, uid, gid);
-		} catch (Throwable ex) {
-		}
-	}
-
-	private static long getMTime() {
-		File file = new File(FORCESTOP);
-		if (file != null && file.exists()) {
-			return file.lastModified();
-		}
-		return 0L;
-	}
 }
