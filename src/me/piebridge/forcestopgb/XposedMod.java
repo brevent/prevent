@@ -1,20 +1,12 @@
 package me.piebridge.forcestopgb;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
@@ -35,8 +27,6 @@ import de.robv.android.xposed.XposedHelpers;
 public class XposedMod implements IXposedHookZygoteInit {
 
 	public static final String TAG = "me.piebridge.forcestopgb";
-	@SuppressLint("SdCardPath")
-	private static final String FORCESTOP = "/data/data/me.piebridge.forcestopgb/conf/forcestop.list";
 
 	abstract class MethodHook extends XC_MethodHook {
 		private long mtime;
@@ -47,70 +37,22 @@ public class XposedMod implements IXposedHookZygoteInit {
 		}
 
 		protected void loadPackages() {
-			mtime = getMTime(FORCESTOP);
-			packages = loadFromFile(FORCESTOP);
+			mtime = PackageProvider.getMTime(PackageProvider.FORCESTOP);
+			packages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
 		}
 
 		protected void reloadPackagesIfNeeded() {
-			long time = getMTime(FORCESTOP);
+			long time = PackageProvider.getMTime(PackageProvider.FORCESTOP);
 			if (time > mtime) {
-				packages = loadFromFile(FORCESTOP);
+				packages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
 				mtime = time;
 			}
 		}
 
 		protected void savePackages(String suffix) {
-			saveToFile(FORCESTOP, packages, suffix);
-			mtime = getMTime(FORCESTOP);
+			mtime = PackageProvider.saveToFile(PackageProvider.FORCESTOP, packages, suffix);
 		}
 
-		protected void saveToFile(String path, Map<String, Boolean> packages, String suffix) {
-			try {
-				File file = new File(path + suffix);
-				BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-				for (Entry<String, Boolean> entry : packages.entrySet()) {
-					writer.write(entry.getKey());
-					writer.write("=");
-					writer.write(String.valueOf(entry.getValue()));
-					writer.write("\n");
-				}
-				writer.close();
-				FileUtils.setPermissions(file.getAbsolutePath(), 0666, -1, -1);
-				file.renameTo(new File(path));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		protected Map<String, Boolean> loadFromFile(String path) {
-			Map<String, Boolean> packages = new TreeMap<String, Boolean>();
-			try {
-				String line;
-				File file = new File(path);
-				BufferedReader reader = new BufferedReader(new FileReader(file));
-				while ((line = reader.readLine()) != null) {
-					line = line.trim();
-					String[] components = line.split("=");
-					if (components.length > 1) {
-						packages.put(components[0], Boolean.valueOf(components[1]));
-					} else {
-						packages.put(line, Boolean.TRUE);
-					}
-				}
-				reader.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return packages;
-		}
-
-		protected long getMTime(String path) {
-			File file = new File(path);
-			if (file != null && file.exists()) {
-				return file.lastModified();
-			}
-			return 0L;
-		}
 	}
 
 	class Hook_ActivityManagerProxy_startActivity extends MethodHook {
@@ -274,7 +216,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 	public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
 		Class<?> ActivityManagerProxy = Class.forName("android.app.ActivityManagerProxy");
 
-		File parent = new File(FORCESTOP).getParentFile();
+		File parent = new File(PackageProvider.FORCESTOP).getParentFile();
 		parent.mkdirs();
 		FileUtils.setPermissions(parent.getAbsolutePath(), 0777, 1000, 1000);
 
