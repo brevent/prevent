@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">强行停止</string>
+    <string name="app_name">阻止运行</string>
     <string name="xposed_summary">阻止强行停止的程序自动运行</string>
 </resources>
