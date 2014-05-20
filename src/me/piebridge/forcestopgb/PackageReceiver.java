@@ -1,5 +1,6 @@
 package me.piebridge.forcestopgb;
 
+import java.util.List;
 import java.util.Map;
 
 import android.content.BroadcastReceiver;
@@ -13,7 +14,10 @@ public class PackageReceiver extends BroadcastReceiver {
 		if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction()) && !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
 			savePackage(intent.getData().getSchemeSpecificPart(), false);
 		} else if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())) {
-			savePackage(intent.getData().getSchemeSpecificPart(), true);
+			String pkgName = intent.getData().getSchemeSpecificPart();
+			if (hasLauncher(context, pkgName)) {
+				savePackage(pkgName, true);
+			}
 		}
 	}
 
@@ -39,4 +43,15 @@ public class PackageReceiver extends BroadcastReceiver {
 		}
 	}
 
+	private boolean hasLauncher(Context context, String pkgName) {
+		Intent intent = new Intent(Intent.ACTION_MAIN);
+		intent.addCategory(Intent.CATEGORY_LAUNCHER);
+		intent.setPackage(pkgName);
+		List<?> list = context.getPackageManager().queryIntentActivities(intent, 0);
+		if (list != null && list.size() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
