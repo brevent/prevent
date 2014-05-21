@@ -17,7 +17,8 @@ import android.os.FileUtils;
 public class PackageProvider {
 
 	@SuppressLint("SdCardPath")
-	public static final String FORCESTOP = "/data/data/me.piebridge.forcestopgb/conf/forcestop.list";
+	public static final String CONFDIR = "/data/data/me.piebridge.forcestopgb/conf";
+	public static final String FORCESTOP = CONFDIR + "/forcestop.list";
 
 	public static long saveToFile(String path, Map<String, Boolean> packages, String suffix) {
 		try {
@@ -74,5 +75,54 @@ public class PackageProvider {
 			return file.lastModified();
 		}
 		return 0L;
+	}
+
+	private static int readContent(File file) {
+		if (!file.exists()) {
+			return 0;
+		}
+		if (System.currentTimeMillis() - file.lastModified() > 10000) {
+			file.delete();
+			return 0;
+		}
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			String line = reader.readLine();
+			reader.close();
+			return Integer.parseInt(line);
+		} catch (NumberFormatException e) {
+			return 0;
+		} catch (IOException e) {
+			return 0;
+		}
+	}
+
+	private static void writeContent(File file, int count) {
+		try {
+			File tmp = new File(file.getAbsoluteFile() + ".tmp");
+			BufferedWriter writer = new BufferedWriter(new FileWriter(tmp));
+			writer.write(String.valueOf(count));
+			writer.write("\n");
+			writer.close();
+			FileUtils.setPermissions(tmp.getAbsolutePath(), 0666, -1, -1);
+			tmp.renameTo(file);
+		} catch (IOException e) {
+		}
+	}
+
+	public static int increaseCount(String packageName) {
+		File file = new File(CONFDIR, packageName);
+		int count = readContent(file) + 1;
+		writeContent(file, count);
+		return count;
+	}
+
+	public static int decreaseCount(String packageName) {
+		File file = new File(CONFDIR, packageName);
+		int count = readContent(file) - 1;
+		if (count == 0) {
+			file.delete();
+		}
+		return count;
 	}
 }
