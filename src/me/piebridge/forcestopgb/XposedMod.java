@@ -95,9 +95,10 @@ public class XposedMod implements IXposedHookZygoteInit {
 			}
 			String packageName = intent.getComponent().getPackageName();
 			reloadPackagesIfNeeded();
-			if (packages.containsKey(packageName)) {
-				android.util.Log.d(TAG, "start " + intent.getComponent());
+			if (!packages.containsKey(packageName)) {
+				return;
 			}
+			android.util.Log.d(TAG, "start " + intent.getComponent());
 			if (Boolean.TRUE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.FALSE);
 				savePackages("Hook_ActivityManagerProxy_startActivity");
@@ -123,9 +124,10 @@ public class XposedMod implements IXposedHookZygoteInit {
 			Activity activity = (Activity) param.thisObject;
 			String packageName = activity.getApplicationInfo().packageName;
 			reloadPackagesIfNeeded();
-			if (packages.containsKey(packageName)) {
-				android.util.Log.d(TAG, "finish " + activity.getComponentName());
+			if (!packages.containsKey(packageName)) {
+				return;
 			}
+			android.util.Log.d(TAG, "finish " + activity.getComponentName());
 			if (Boolean.FALSE.equals(packages.get(packageName)) && PackageProvider.decreaseCount(packageName) < 0) {
 				packages.put(packageName, Boolean.TRUE);
 				savePackages("Hook_Activity_finish");
