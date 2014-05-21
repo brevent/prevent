@@ -6,9 +6,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeSet;
 
 import android.annotation.SuppressLint;
 import android.os.FileUtils;
@@ -21,11 +26,19 @@ public class PackageProvider {
 	public static long saveToFile(String path, Map<String, Boolean> packages, String suffix) {
 		try {
 			File file = new File(path + suffix);
+			while (file.exists() && System.currentTimeMillis() - file.lastModified() > 10000) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			Set<String> keys = new TreeSet<String>(packages.keySet());
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-			for (Entry<String, Boolean> entry : packages.entrySet()) {
-				writer.write(entry.getKey());
+			for (String key : keys) {
+				writer.write(key);
 				writer.write("=");
-				writer.write(String.valueOf(entry.getValue()));
+				writer.write(String.valueOf(packages.get(key)));
 				writer.write("\n");
 			}
 			writer.close();
@@ -38,7 +51,7 @@ public class PackageProvider {
 	}
 
 	public static Map<String, Boolean> loadFromFile(String path) {
-		Map<String, Boolean> packages = new TreeMap<String, Boolean>();
+		Map<String, Boolean> packages = new HashMap<String, Boolean>();
 		try {
 			String line;
 			File file = new File(path);
