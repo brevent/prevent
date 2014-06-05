@@ -2,7 +2,6 @@ package me.piebridge.forcestopgb;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,11 +13,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.FileUtils;
-import android.os.IBinder;
-import android.os.ParcelFileDescriptor;
 import android.view.inputmethod.InputMethod;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
@@ -71,64 +67,53 @@ public class XposedMod implements IXposedHookZygoteInit {
 		protected void savePackages(String suffix) {
 			mtime = PackageProvider.saveToFile(PackageProvider.FORCESTOP, packages, suffix);
 		}
-
 	}
 
-	class Hook_ActivityManagerProxy_startActivity extends MethodHook {
-		private int index;
-
-		Hook_ActivityManagerProxy_startActivity(int index) {
-			super();
-			this.index = index;
-		}
-
+	ThreadLocal<Integer> count = new ThreadLocal<Integer>() {
 		@Override
-		protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-			Intent intent = (Intent) param.args[index];
-			if (intent == null || intent.getComponent() == null) {
-				return;
-			}
-			boolean launcher = false;
-			Set<String> categories = intent.getCategories();
-			if (Intent.ACTION_MAIN.equals(intent.getAction()) && categories != null && categories.contains(Intent.CATEGORY_LAUNCHER)) {
-				launcher = true;
-			}
+		protected Integer initialValue() {
+			return 0;
+		}
+	};
+
+	class Hook_Activity_onCreate extends MethodHook {
+		@Override
+		protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+			Activity activity = (Activity) param.thisObject;
+			Intent intent = activity.getIntent();
 			String packageName = intent.getComponent().getPackageName();
 			reloadPackagesIfNeeded();
 			if (!packages.containsKey(packageName)) {
 				return;
 			}
-			android.util.Log.d(TAG, "start " + intent.getComponent());
+			Set<String> categories = intent.getCategories();
+			android.util.Log.d(TAG, "onCreate: " + intent + ", count: " + count.get());
+			if (intent.getSourceBounds() != null && Intent.ACTION_MAIN.equals(intent.getAction())
+					&& (categories != null && categories.contains(Intent.CATEGORY_LAUNCHER))) {
+				count.set(1);
+			} else {
+				count.set(count.get() + 1);
+			}
 			if (Boolean.TRUE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.FALSE);
 				savePackages("Hook_ActivityManagerProxy_startActivity");
-			} else if (!launcher) {
-				PackageProvider.increaseCount(packageName);
 			}
 		}
 	}
 
-	class Hook_Activity_finish extends MethodHook {
-		private Field mParentField = null;
-
-		public Hook_Activity_finish() {
-			super();
-			mParentField = scanField(Activity.class, "mParent");
-		}
-
+	class Hook_Activity_onDestroy extends MethodHook {
 		@Override
-		protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-			if (mParentField != null && mParentField.get(param.thisObject) != null) {
-				return;
-			}
+		protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 			Activity activity = (Activity) param.thisObject;
-			String packageName = activity.getApplicationInfo().packageName;
+			Intent intent = activity.getIntent();
+			String packageName = intent.getComponent().getPackageName();
 			reloadPackagesIfNeeded();
 			if (!packages.containsKey(packageName)) {
 				return;
 			}
-			android.util.Log.d(TAG, "finish " + activity.getComponentName());
-			if (Boolean.FALSE.equals(packages.get(packageName)) && PackageProvider.decreaseCount(packageName) < 0) {
+			android.util.Log.d(TAG, "onDestroy: " + intent + ", count: " + count.get());
+			count.set(count.get() - 1);
+			if (count.get() == 0 && Boolean.FALSE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.TRUE);
 				savePackages("Hook_Activity_finish");
 			}
@@ -136,10 +121,6 @@ public class XposedMod implements IXposedHookZygoteInit {
 	}
 
 	class Hook_ActivityManagerProxy_forceStopPackage extends MethodHook {
-		public Hook_ActivityManagerProxy_forceStopPackage() {
-			super();
-		}
-
 		@Override
 		protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 			String packageName = (String) param.args[0];
@@ -148,7 +129,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 				packages.put(packageName, Boolean.TRUE);
 				savePackages("Hook_ActivityManagerProxy_forceStopPackage");
 			}
-			android.util.Log.d(TAG, "forcestop package " + packageName);
+			android.util.Log.d(TAG, "forceStopPackage: " + packageName);
 		}
 	}
 
@@ -195,7 +176,6 @@ public class XposedMod implements IXposedHookZygoteInit {
 				return;
 			}
 
-			Object object = null;
 			String packageName = null;
 			boolean isSystemPackage = false;
 			// param.thisObject.activity or param.thisObject.service
@@ -205,12 +185,12 @@ public class XposedMod implements IXposedHookZygoteInit {
 			}
 
 			try {
-				object = field.get(param.thisObject);
+				Object object = field.get(param.thisObject);
 				// object.owner.packageName
-				Object owner = scanField(object.getClass(), "owner").get(object);
-				packageName = (String) scanField(owner.getClass(), "packageName").get(owner);
+				Object owner = XposedHelpers.getObjectField(object, "owner");
+				packageName = (String) XposedHelpers.getObjectField(owner, "packageName");
 				// object.owner.applicationInfo
-				ApplicationInfo applicationInfo = (ApplicationInfo) scanField(owner.getClass(), "applicationInfo").get(owner);
+				ApplicationInfo applicationInfo = (ApplicationInfo) XposedHelpers.getObjectField(owner, "applicationInfo");
 				if ((applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
 					isSystemPackage = true;
 				}
@@ -240,45 +220,26 @@ public class XposedMod implements IXposedHookZygoteInit {
 			reloadPackagesIfNeeded();
 			if (Boolean.TRUE.equals(packages.get(packageName)) && !Boolean.FALSE.equals(systemPackages.get(packageName))) {
 				param.setResult(IntentFilter.NO_MATCH_ACTION);
-				android.util.Log.d(TAG, "ignore intent-filter for: " + packageName + ", action: " + action +
-					", categories: " + Arrays.toString(categories == null ? null : categories.toArray()));
 			}
 		}
 	}
 
-
 	@Override
 	public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
-		Class<?> ActivityManagerProxy = Class.forName("android.app.ActivityManagerProxy");
-
 		File parent = new File(PackageProvider.FORCESTOP).getParentFile();
 		parent.mkdirs();
 		FileUtils.setPermissions(parent.getAbsolutePath(), 0777, 1000, 1000);
 
-		if (Build.VERSION.SDK_INT < 14) {
-			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", "android.app.IApplicationThread", Intent.class,
-				String.class, Uri[].class, int.class, IBinder.class, String.class,
-				int.class, boolean.class, boolean.class, new Hook_ActivityManagerProxy_startActivity(1));
-		} else if (Build.VERSION.SDK_INT < 16) {
-			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", "android.app.IApplicationThread", Intent.class,
-				String.class, Uri[].class, int.class, IBinder.class, String.class, int.class, boolean.class,
-				boolean.class, String.class, ParcelFileDescriptor.class, boolean.class, new Hook_ActivityManagerProxy_startActivity(1));
-		} else if (Build.VERSION.SDK_INT < 18){
-			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", "android.app.IApplicationThread", Intent.class,
-				String.class, IBinder.class, String.class, int.class, int.class, String.class,
-				ParcelFileDescriptor.class, Bundle.class, new Hook_ActivityManagerProxy_startActivity(1));
-		} else {
-			XposedHelpers.findAndHookMethod(ActivityManagerProxy, "startActivity", "android.app.IApplicationThread", String.class, Intent.class,
-				String.class, IBinder.class, String.class, int.class,
-				int.class, String.class, ParcelFileDescriptor.class, Bundle.class, new Hook_ActivityManagerProxy_startActivity(2));
-		}
+		// package is force stopped
+		XposedHelpers.findAndHookMethod("android.app.ActivityManagerProxy", null, "forceStopPackage", String.class,
+				new Hook_ActivityManagerProxy_forceStopPackage());
 
-		XposedHelpers.findAndHookMethod(Activity.class, "finish", new Hook_Activity_finish());
+		XposedHelpers.findAndHookMethod(IntentFilter.class, "match", String.class, String.class, String.class, Uri.class, Set.class, String.class,
+				new Hook_IntentFilter_match());
 
-		XposedHelpers.findAndHookMethod(ActivityManagerProxy, "forceStopPackage", String.class, new Hook_ActivityManagerProxy_forceStopPackage());
-
-		XposedHelpers.findAndHookMethod(IntentFilter.class, "match", String.class, String.class, String.class,
-			Uri.class, Set.class, String.class, new Hook_IntentFilter_match());
+		// dynamic maintain force stopped package
+		XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new Hook_Activity_onCreate());
+		XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new Hook_Activity_onDestroy());
 	}
 
 }
