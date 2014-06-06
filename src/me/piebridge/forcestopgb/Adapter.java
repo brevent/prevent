@@ -38,6 +38,11 @@ public class Adapter extends ArrayAdapter<AppInfo> {
 		addAll(names, false);
 	}
 
+	public Adapter(MainActivity context, Set<String> names, boolean nocache) {
+		this(context);
+		addAll(names, nocache);
+	}
+
 	public void addAll(final Set<String> names, final boolean nocache) {
 		new AsyncTask<Void, Integer, TreeSet<AppInfo>>() {
 			ProgressDialog dialog;
@@ -70,7 +75,7 @@ public class Adapter extends ArrayAdapter<AppInfo> {
 						if (nocache) {
 							String label = info.loadLabel(pm).toString();
 							labels.put(name, label);
-							applications.add(new AppInfo(name, label, running.get(name)));
+							applications.add(new AppInfo(name, label, running.get(name)).flags(info.flags));
 						} else {
 							String label = labels.get(name);
 							if (label == null) {
