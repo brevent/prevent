@@ -1,5 +1,6 @@
 package me.piebridge.forcestopgb;
 
+import java.io.File;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.FileUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -60,6 +62,7 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 		cancel.setEnabled(false);
 		prevent.setEnabled(false);
 		remove.setEnabled(false);
+		PackageProvider.ensureDirectory();
 	}
 
 	@Override
@@ -240,6 +243,7 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 		selections.clear();
 		refresh(APPLICATIONS, false);
 		refresh(PREVENTLIST, false);
+		checkSelection();
 	}
 
 	private void refresh(int position, boolean force) {

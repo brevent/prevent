@@ -226,9 +226,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 
 	@Override
 	public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
-		File parent = new File(PackageProvider.FORCESTOP).getParentFile();
-		parent.mkdirs();
-		FileUtils.setPermissions(parent.getAbsolutePath(), 0777, 1000, 1000);
+		PackageProvider.ensureDirectory();
 
 		// package is force stopped
 		XposedHelpers.findAndHookMethod("android.app.ActivityManagerProxy", null, "forceStopPackage", String.class,

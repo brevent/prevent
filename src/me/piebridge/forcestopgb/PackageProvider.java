@@ -76,4 +76,11 @@ public class PackageProvider {
 		}
 		return 0L;
 	}
+
+	public static void ensureDirectory() {
+		File parent = new File(PackageProvider.FORCESTOP).getParentFile();
+		parent.mkdirs();
+		FileUtils.setPermissions(parent.getAbsolutePath(), 0777, 1000, 1000);
+	}
+
 }
