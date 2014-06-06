@@ -25,24 +25,6 @@ public class XposedMod implements IXposedHookZygoteInit {
 
 	public static final String TAG = "me.piebridge.forcestopgb";
 
-	private static Field scanField(Class<?> clazz, String... names) {
-		for (String name : names) {
-			Field field;
-			try {
-				field = clazz.getDeclaredField(name);
-				field.setAccessible(true);
-				return field;
-			} catch (NoSuchFieldException e) {
-			}
-			try {
-				field = clazz.getField(name);
-				return field;
-			} catch (NoSuchFieldException e) {
-			}
-		}
-		return null;
-	}
-
 	abstract class MethodHook extends XC_MethodHook {
 		private long mtime;
 		protected Map<String, Boolean> packages;
@@ -67,9 +49,27 @@ public class XposedMod implements IXposedHookZygoteInit {
 		protected void savePackages(String suffix) {
 			mtime = PackageProvider.saveToFile(PackageProvider.FORCESTOP, packages, suffix);
 		}
+
+		protected Field scanField(Class<?> clazz, String... names) {
+			for (String name : names) {
+				Field field;
+				try {
+					field = clazz.getDeclaredField(name);
+					field.setAccessible(true);
+					return field;
+				} catch (NoSuchFieldException e) {
+				}
+				try {
+					field = clazz.getField(name);
+					return field;
+				} catch (NoSuchFieldException e) {
+				}
+			}
+			return null;
+		}
 	}
 
-	ThreadLocal<Integer> count = new ThreadLocal<Integer>() {
+	ThreadLocal<Integer> c = new ThreadLocal<Integer>() {
 		@Override
 		protected Integer initialValue() {
 			return 0;
@@ -87,12 +87,12 @@ public class XposedMod implements IXposedHookZygoteInit {
 				return;
 			}
 			Set<String> categories = intent.getCategories();
-			android.util.Log.d(TAG, "onCreate: " + intent + ", count: " + count.get());
+			android.util.Log.d(TAG, "onCreate: " + intent + ", count: " + c.get());
 			if (intent.getSourceBounds() != null && Intent.ACTION_MAIN.equals(intent.getAction())
 					&& (categories != null && categories.contains(Intent.CATEGORY_LAUNCHER))) {
-				count.set(1);
+				c.set(1);
 			} else {
-				count.set(count.get() + 1);
+				c.set(c.get() + 1);
 			}
 			if (Boolean.TRUE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.FALSE);
@@ -111,9 +111,9 @@ public class XposedMod implements IXposedHookZygoteInit {
 			if (!packages.containsKey(packageName)) {
 				return;
 			}
-			android.util.Log.d(TAG, "onDestroy: " + intent + ", count: " + count.get());
-			count.set(count.get() - 1);
-			if (count.get() == 0 && Boolean.FALSE.equals(packages.get(packageName))) {
+			android.util.Log.d(TAG, "onDestroy: " + intent + ", count: " + c.get());
+			c.set(c.get() - 1);
+			if (c.get() == 0 && Boolean.FALSE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.TRUE);
 				savePackages("Hook_Activity_finish");
 			}
