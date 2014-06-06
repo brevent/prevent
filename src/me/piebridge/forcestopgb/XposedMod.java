@@ -83,7 +83,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 			Set<String> categories = intent.getCategories();
 			int oldCount = count.get();
 			android.util.Log.d(TAG, "onCreate: " + intent + ", count: " + oldCount);
-			if (intent.getSourceBounds() != null && Intent.ACTION_MAIN.equals(intent.getAction())
+			if ((intent.getFlags() & 0x10200000) != 0 && Intent.ACTION_MAIN.equals(intent.getAction())
 					&& (categories != null && categories.contains(Intent.CATEGORY_LAUNCHER))) {
 				count.set(1);
 			} else {
