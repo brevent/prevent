@@ -72,17 +72,17 @@ public class Adapter extends ArrayAdapter<AppInfo> {
 						if (!info.enabled) {
 							continue;
 						}
+						String label;
 						if (nocache) {
-							String label = info.loadLabel(pm).toString();
+							label = info.loadLabel(pm).toString();
 							labels.put(name, label);
-							applications.add(new AppInfo(name, label, running.get(name)).flags(info.flags));
 						} else {
-							String label = labels.get(name);
+							label = labels.get(name);
 							if (label == null) {
 								label = info.loadLabel(pm).toString();
 							}
-							applications.add(new AppInfo(name, label, running.get(name)));
 						}
+						applications.add(new AppInfo(name, label, running.get(name)).flags(info.flags));
 					} catch (NameNotFoundException e) {
 						e.printStackTrace();
 					}
@@ -137,6 +137,11 @@ public class Adapter extends ArrayAdapter<AppInfo> {
 		holder.loadingView.setVisibility(View.VISIBLE);
 		holder.checkView.setChecked(mContext.getSelection().contains(holder.packageName));
 		Boolean result = mContext.getPackages().get(appInfo.packageName);
+		if (appInfo.isSystem()) {
+			view.setBackgroundColor(mContext.getResources().getColor(R.color.dangerous));
+		} else {
+			view.setBackgroundColor(mContext.getResources().getColor(android.R.color.background_dark));
+		}
 		if (result == null) {
 			holder.preventView.setVisibility(View.INVISIBLE);
 		} else {
