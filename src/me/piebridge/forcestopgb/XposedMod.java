@@ -96,7 +96,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 			}
 			if (Boolean.TRUE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.FALSE);
-				savePackages("Hook_ActivityManagerProxy_startActivity");
+				savePackages("Hook_Activity_onCreate");
 			}
 		}
 	}
@@ -115,7 +115,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 			c.set(c.get() - 1);
 			if (c.get() == 0 && Boolean.FALSE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.TRUE);
-				savePackages("Hook_Activity_finish");
+				savePackages("Hook_Activity_onDestroy");
 			}
 		}
 	}
