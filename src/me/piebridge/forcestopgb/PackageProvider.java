@@ -23,7 +23,7 @@ public class PackageProvider {
 	public static long saveToFile(String path, Map<String, Boolean> packages, String suffix) {
 		try {
 			File file = new File(path + suffix);
-			while (file.exists() && System.currentTimeMillis() - file.lastModified() > 10000) {
+			while (file.exists() && System.currentTimeMillis() - file.lastModified() > 3000) {
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
