@@ -1,6 +1,5 @@
 package me.piebridge.forcestopgb;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,7 +13,6 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.FileUtils;
 import android.view.inputmethod.InputMethod;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
@@ -69,7 +67,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 		}
 	}
 
-	ThreadLocal<Integer> c = new ThreadLocal<Integer>() {
+	ThreadLocal<Integer> count = new ThreadLocal<Integer>() {
 		@Override
 		protected Integer initialValue() {
 			return 0;
@@ -82,17 +80,21 @@ public class XposedMod implements IXposedHookZygoteInit {
 			Activity activity = (Activity) param.thisObject;
 			Intent intent = activity.getIntent();
 			String packageName = intent.getComponent().getPackageName();
+			Set<String> categories = intent.getCategories();
+			int oldCount = count.get();
+			android.util.Log.d(TAG, "onCreate: " + intent + ", count: " + oldCount);
+			if (intent.getSourceBounds() != null && Intent.ACTION_MAIN.equals(intent.getAction())
+					&& (categories != null && categories.contains(Intent.CATEGORY_LAUNCHER))) {
+				count.set(1);
+			} else {
+				if (oldCount < 0) {
+					oldCount = 0;
+				}
+				count.set(oldCount + 1);
+			}
 			reloadPackagesIfNeeded();
 			if (!packages.containsKey(packageName)) {
 				return;
-			}
-			Set<String> categories = intent.getCategories();
-			android.util.Log.d(TAG, "onCreate: " + intent + ", count: " + c.get());
-			if (intent.getSourceBounds() != null && Intent.ACTION_MAIN.equals(intent.getAction())
-					&& (categories != null && categories.contains(Intent.CATEGORY_LAUNCHER))) {
-				c.set(1);
-			} else {
-				c.set(c.get() + 1);
 			}
 			if (Boolean.TRUE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.FALSE);
@@ -107,13 +109,18 @@ public class XposedMod implements IXposedHookZygoteInit {
 			Activity activity = (Activity) param.thisObject;
 			Intent intent = activity.getIntent();
 			String packageName = intent.getComponent().getPackageName();
+			int oldCount = count.get();
+			android.util.Log.d(TAG, "onDestroy: " + intent + ", count: " + oldCount);
+			if (oldCount > 1) {
+				count.set(oldCount - 1);
+			} else {
+				count.set(0);
+			}
 			reloadPackagesIfNeeded();
 			if (!packages.containsKey(packageName)) {
 				return;
 			}
-			android.util.Log.d(TAG, "onDestroy: " + intent + ", count: " + c.get());
-			c.set(c.get() - 1);
-			if (c.get() == 0 && Boolean.FALSE.equals(packages.get(packageName))) {
+			if (count.get() == 0 && Boolean.FALSE.equals(packages.get(packageName))) {
 				packages.put(packageName, Boolean.TRUE);
 				savePackages("Hook_Activity_onDestroy");
 			}

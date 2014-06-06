@@ -1,6 +1,5 @@
 package me.piebridge.forcestopgb;
 
-import java.io.File;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.FileUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
