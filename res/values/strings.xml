@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">Prevent Running</string>
     <string name="xposed_summary">Prevent force stopped applicatons from running.</string>
+    <string name="cancel">Cancel</string>
+    <string name="remove">Remove Prevent</string>
+    <string name="prevent">Auto Prevent</string>
+    <string name="applications">Applications</string>
+    <string name="preventlist">Prevent List</string>
+    <string name="loading">Loading. . .</string>
+    <string name="notrunning">(not running)</string>
+    <string name="background">Background</string>
+    <string name="foreground">Foreground</string>
+    <string name="empty">Empty</string>
+    <string name="perceptible">Perceptible</string>
+    <string name="service">Service</string>
+    <string name="visible">Visible</string>
+
 </resources>

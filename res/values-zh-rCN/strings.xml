@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">阻止运行</string>
     <string name="xposed_summary">阻止强行停止的程序自动运行</string>
+    <string name="cancel">取消</string>
+    <string name="remove">不再阻止</string>
+    <string name="prevent">自动阻止</string>
+    <string name="applications">所有程序</string>
+    <string name="preventlist">阻止列表</string>
+    <string name="loading">正在加载. . .</string>
+    <string name="notrunning">(没有运行)</string>
+    <string name="background">缓存</string>
+    <string name="foreground">前台</string>
+    <string name="empty">空</string>
+    <string name="perceptible">察觉</string>
+    <string name="service">服务</string>
+    <string name="visible">可见</string>
+
 </resources>

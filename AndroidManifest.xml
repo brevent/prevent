@@ -1,19 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="me.piebridge.forcestopgb"
-      android:versionCode="6"
-      android:versionName="0.5.1">
-    <uses-sdk android:minSdkVersion="8"/>
-    <application android:label="@string/app_name" >
-        <meta-data android:name="xposedmodule" android:value="true" />
-        <meta-data android:name="xposeddescription" android:value="@string/xposed_summary" />
-        <meta-data android:name="xposedminversion" android:value="2.1+" />
-        <receiver android:name=".PackageReceiver" >
+    package="me.piebridge.forcestopgb"
+    android:versionCode="7"
+    android:versionName="0.6" >
+
+    <uses-sdk
+        android:minSdkVersion="10"
+        android:targetSdkVersion="19" />
+
+    <application
+        android:allowBackup="false"
+        android:theme="@style/theme"
+        android:icon="@drawable/ic_launcher"
+        android:configChanges="orientation|screenSize|keyboardHidden"
+        android:label="@string/app_name" >
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="@string/xposed_summary" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="2.1+" />
+
+        <receiver android:name="me.piebridge.forcestopgb.PackageReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_ADDED" />
                 <action android:name="android.intent.action.PACKAGE_REMOVED" />
+
                 <data android:scheme="package" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
-</manifest> 
+
+</manifest>
