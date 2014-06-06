@@ -10,10 +10,9 @@
 
     <application
         android:allowBackup="false"
-        android:theme="@style/theme"
         android:icon="@drawable/ic_launcher"
-        android:configChanges="orientation|screenSize|keyboardHidden"
-        android:label="@string/app_name" >
+        android:label="@string/app_name"
+        android:theme="@style/theme" >
         <meta-data
             android:name="xposedmodule"
             android:value="true" />
@@ -35,6 +34,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
