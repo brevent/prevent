@@ -25,7 +25,7 @@ public class PreventListFragment extends RefreshableListFragment {
 	}
 
 	@Override
-	public void refresh() {
+	public void refresh(boolean force) {
 		setListAdapter(null);
 		setListAdapter(new Adapter(mActivity, mActivity.getPackages().keySet()));
 	}

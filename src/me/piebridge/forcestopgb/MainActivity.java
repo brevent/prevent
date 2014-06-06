@@ -123,7 +123,8 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				refresh();
+				refresh(APPLICATIONS, true);
+				refresh(PREVENTLIST, true);
 			}
 		});
 	}
@@ -237,15 +238,11 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 			return;
 		}
 		selections.clear();
-		refresh();
+		refresh(APPLICATIONS, false);
+		refresh(PREVENTLIST, false);
 	}
 
-	private void refresh() {
-		refresh(APPLICATIONS);
-		refresh(PREVENTLIST);
-	}
-
-	private void refresh(int position) {
-		((RefreshableListFragment) mPager.getAdapter().instantiateItem(mPager, position)).refresh();
+	private void refresh(int position, boolean force) {
+		((RefreshableListFragment) mPager.getAdapter().instantiateItem(mPager, position)).refresh(force);
 	}
 }

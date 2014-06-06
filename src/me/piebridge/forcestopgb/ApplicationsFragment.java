@@ -22,6 +22,26 @@ public class ApplicationsFragment extends RefreshableListFragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
+		initAdapter();
+	}
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+		setListAdapter(null);
+	}
+
+	@Override
+	public void refresh(boolean force) {
+		setListAdapter(null);
+		if (force) {
+			initAdapter();
+		} else {
+			setListAdapter(mAdapter);
+		}
+	}
+
+	public void initAdapter() {
 		mAdapter = new Adapter(mActivity);
 		PackageManager pm = mActivity.getPackageManager();
 		Set<String> names = new HashSet<String>();
@@ -39,25 +59,6 @@ public class ApplicationsFragment extends RefreshableListFragment {
 			names.add(appInfo.packageName);
 		}
 		mAdapter.addAll(names, true);
-		setListAdapter(mAdapter);
-	}
-
-	@Override
-	public void onDestroyView() {
-		super.onDestroyView();
-		setListAdapter(null);
-	}
-
-	public void notifyDataSetChanged() {
-		this.notifyDataSetChanged();
-		if (mAdapter != null) {
-			mAdapter.notifyDataSetChanged();
-		}
-	}
-
-	@Override
-	public void refresh() {
-		setListAdapter(null);
 		setListAdapter(mAdapter);
 	}
 
