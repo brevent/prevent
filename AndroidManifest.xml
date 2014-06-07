@@ -12,7 +12,7 @@
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/theme" >
+        android:theme="@style/dark" >
         <meta-data
             android:name="xposedmodule"
             android:value="true" />

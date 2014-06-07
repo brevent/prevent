@@ -138,9 +138,9 @@ public class Adapter extends ArrayAdapter<AppInfo> {
 		holder.checkView.setChecked(mContext.getSelection().contains(holder.packageName));
 		Boolean result = mContext.getPackages().get(appInfo.packageName);
 		if (appInfo.isSystem()) {
-			view.setBackgroundColor(mContext.getResources().getColor(R.color.dangerous));
+			view.setBackgroundColor(mContext.getThemedColor(R.attr.color_dangerous));
 		} else {
-			view.setBackgroundColor(mContext.getResources().getColor(android.R.color.background_dark));
+			view.setBackgroundColor(mContext.getColor(android.R.color.transparent));
 		}
 		if (result == null) {
 			holder.preventView.setVisibility(View.INVISIBLE);

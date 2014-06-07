@@ -12,6 +12,7 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -246,5 +247,19 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 
 	private void refresh(int position, boolean force) {
 		((RefreshableListFragment) mPager.getAdapter().instantiateItem(mPager, position)).refresh(force);
+	}
+
+	public int getColor(int colorId) {
+		return getResources().getColor(colorId);
+	}
+
+	public int getThemed(int resId) {
+		TypedValue tv = new TypedValue();
+		getTheme().resolveAttribute(resId, tv, true);
+		return tv.resourceId;
+	}
+
+	public int getThemedColor(int resId) {
+		return getColor(getThemed(R.attr.color_dangerous));
 	}
 }
