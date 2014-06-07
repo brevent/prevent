@@ -11,7 +11,7 @@ import android.os.Bundle;
 
 public class ApplicationsFragment extends RefreshableListFragment {
 	private MainActivity mActivity;
-	private static Adapter mAdapter;
+	private Adapter mAdapter;
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -22,7 +22,7 @@ public class ApplicationsFragment extends RefreshableListFragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		initAdapter();
+		setNewAdapter();
 	}
 
 	@Override
@@ -33,15 +33,17 @@ public class ApplicationsFragment extends RefreshableListFragment {
 
 	@Override
 	public void refresh(boolean force) {
-		setListAdapter(null);
-		if (force) {
-			initAdapter();
-		} else {
-			setListAdapter(mAdapter);
+		if (mActivity != null) {
+			setListAdapter(null);
+			if (force || mAdapter == null) {
+				setNewAdapter();
+			} else {
+				setListAdapter(mAdapter);
+			}
 		}
 	}
 
-	public void initAdapter() {
+	public void setNewAdapter() {
 		mAdapter = new Adapter(mActivity);
 		PackageManager pm = mActivity.getPackageManager();
 		Set<String> names = new HashSet<String>();

@@ -15,7 +15,7 @@ public class PreventListFragment extends RefreshableListFragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		setListAdapter(new Adapter(mActivity, mActivity.getPackages().keySet()));
+		setNewAdapter();
 	}
 
 	@Override
@@ -26,8 +26,13 @@ public class PreventListFragment extends RefreshableListFragment {
 
 	@Override
 	public void refresh(boolean force) {
-		setListAdapter(null);
-		setListAdapter(new Adapter(mActivity, mActivity.getPackages().keySet()));
+		if (mActivity != null) {
+			setListAdapter(null);
+			setNewAdapter();
+		}
 	}
 
+	private void setNewAdapter() {
+		setListAdapter(new Adapter(mActivity, mActivity.getPackages().keySet()));
+	}
 }
