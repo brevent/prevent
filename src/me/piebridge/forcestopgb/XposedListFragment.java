@@ -85,7 +85,9 @@ public abstract class XposedListFragment extends ListFragment {
 		} else {
 			menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
 		}
-		menu.add(Menu.NONE, R.string.uninstall, Menu.NONE, R.string.uninstall);
+		if (holder.canUninstall) {
+			menu.add(Menu.NONE, R.string.uninstall, Menu.NONE, R.string.uninstall);
+		}
 	}
 
 	@Override
@@ -224,6 +226,7 @@ public abstract class XposedListFragment extends ListFragment {
 		ImageView preventView;
 		Drawable icon;
 		Set<Integer> running;
+		boolean canUninstall;
 	}
 
 	static class Adapter extends ArrayAdapter<AppInfo> {
@@ -386,6 +389,7 @@ public abstract class XposedListFragment extends ListFragment {
 			} else {
 				view.setBackgroundColor(mActivity.getColor(android.R.color.transparent));
 			}
+			holder.canUninstall = ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) || ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0);
 			if (result == null) {
 				holder.preventView.setVisibility(View.INVISIBLE);
 			} else {
