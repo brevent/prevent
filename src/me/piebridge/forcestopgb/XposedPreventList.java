@@ -10,12 +10,7 @@ public class XposedPreventList extends XposedListFragment {
 	}
 
 	@Override
-	protected boolean alwaysRefresh() {
-		return true;
-	}
-
-	@Override
-	protected boolean useCache() {
+	protected boolean canUseCache() {
 		return true;
 	}
 

@@ -43,23 +43,21 @@ public abstract class XposedListFragment extends ListFragment {
 	private Adapter mAdapter;
 	private Locale prevLocale;
 	private XposedActivity mActivity;
-	private Set<String> prevNames = new HashSet<String>();
+	private Set<String> prevNames = null;
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		registerForContextMenu(getListView());
 		mActivity = (XposedActivity) getActivity();
-		android.util.Log.d(XposedMod.TAG, "onActivityCreated");
 		if (mActivity != null) {
-			setNewAdapter(mActivity);
+			setNewAdapterIfNeeded(mActivity, true);
 		}
 	}
 
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
-		android.util.Log.d(XposedMod.TAG, "onDestroyView");
 		mActivity = null;
 		setListAdapter(null);
 	}
@@ -76,7 +74,6 @@ public abstract class XposedListFragment extends ListFragment {
 		}
 		menu.clear();
 		ViewHolder holder = (ViewHolder) ((AdapterContextMenuInfo) menuInfo).targetView.getTag();
-		android.util.Log.d(XposedMod.TAG, "info: " + holder.packageName);
 		menu.setHeaderTitle(holder.nameView.getText());
 		if (holder.icon != null) {
 			menu.setHeaderIcon(holder.icon);
@@ -102,7 +99,6 @@ public abstract class XposedListFragment extends ListFragment {
 			startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)));
 			return true;
 		case R.string.remove:
-			android.util.Log.d(XposedMod.TAG, "remove: " + packageName);
 			holder.preventView.setVisibility(View.GONE);
 			mActivity.changePrevent(packageName, false);
 			return true;
@@ -130,51 +126,57 @@ public abstract class XposedListFragment extends ListFragment {
 
 	@Override
 	public void onPause() {
+		saveListPosition();
+		super.onPause();
+	}
+
+	public void saveListPosition() {
 		ListView l = getListView();
 		int position = l.getFirstVisiblePosition();
 		View v = l.getChildAt(0);
 		int top = (v == null) ? 0 : v.getTop();
 		setListPosition(new Position(position, top));
-		super.onPause();
 	}
 
 	public void refresh(boolean force) {
 		if (mActivity != null) {
-			if (alwaysRefresh() || force || mAdapter == null) {
-				setNewAdapter(mActivity);
-			} else {
-				mAdapter.notifyDataSetChanged();
-				Position position = getListPosition();
-				if (position != null) {
-					getListView().setSelectionFromTop(position.position, position.top);
-				}
-			}
+			setNewAdapterIfNeeded(mActivity, force);
 		}
 	}
 
 	protected abstract Set<String> getPackageNames(XposedActivity activity);
 
-	protected abstract boolean alwaysRefresh();
-
-	protected abstract boolean useCache();
+	protected abstract boolean canUseCache();
 
 	protected abstract void setListPosition(Position position);
 
 	protected abstract Position getListPosition();
 
-	private void setNewAdapter(XposedActivity activity) {
-		Set<String> names = getPackageNames(activity);
-		if (alwaysRefresh() || mAdapter == null || !Locale.getDefault().equals(prevLocale) || !names.equals(prevNames)) {
-			prevNames.clear();
-			prevNames.addAll(names);
-			prevLocale = Locale.getDefault();
+	private void setNewAdapterIfNeeded(XposedActivity activity, boolean force) {
+		Set<String> names;
+		if (force || prevNames == null) {
+			names = getPackageNames(activity);
+		} else {
+			names = prevNames;
+		}
+		if (mAdapter == null || !Locale.getDefault().equals(prevLocale) || !names.equals(prevNames)) {
 			if (mAdapter != null) {
 				setListAdapter(null);
 			}
-			mAdapter = new Adapter(activity, names, useCache());
+			mAdapter = new Adapter(activity, names, canUseCache());
 			setListAdapter(mAdapter);
+			if (prevNames == null) {
+				prevNames = new HashSet<String>();
+			}
+			prevNames.clear();
+			prevNames.addAll(names);
+			prevLocale = Locale.getDefault();
 		} else {
 			mAdapter.notifyDataSetChanged();
+			Position position = getListPosition();
+			if (position != null) {
+				getListView().setSelectionFromTop(position.position, position.top);
+			}
 		}
 	}
 

@@ -30,12 +30,7 @@ public class XposedApplications extends XposedListFragment {
 	}
 
 	@Override
-	protected boolean alwaysRefresh() {
-		return false;
-	}
-
-	@Override
-	protected boolean useCache() {
+	protected boolean canUseCache() {
 		return false;
 	}
 
