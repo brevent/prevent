@@ -57,6 +57,7 @@ public abstract class XposedListFragment extends ListFragment {
 
 	@Override
 	public void onDestroyView() {
+		saveListPosition();
 		super.onDestroyView();
 		mActivity = null;
 		setListAdapter(null);
@@ -115,29 +116,6 @@ public abstract class XposedListFragment extends ListFragment {
 		}
 	}
 
-	@Override
-	public void onResume() {
-		super.onResume();
-		Position position = getListPosition();
-		if (position != null) {
-			getListView().setSelectionFromTop(position.position, position.top);
-		}
-	}
-
-	@Override
-	public void onPause() {
-		saveListPosition();
-		super.onPause();
-	}
-
-	public void saveListPosition() {
-		ListView l = getListView();
-		int position = l.getFirstVisiblePosition();
-		View v = l.getChildAt(0);
-		int top = (v == null) ? 0 : v.getTop();
-		setListPosition(new Position(position, top));
-	}
-
 	public void refresh(boolean force) {
 		if (mActivity != null) {
 			setNewAdapterIfNeeded(mActivity, force);
@@ -151,6 +129,14 @@ public abstract class XposedListFragment extends ListFragment {
 	protected abstract void setListPosition(Position position);
 
 	protected abstract Position getListPosition();
+
+	private void saveListPosition() {
+		ListView l = getListView();
+		int position = l.getFirstVisiblePosition();
+		View v = l.getChildAt(0);
+		int top = (v == null) ? 0 : v.getTop();
+		setListPosition(new Position(position, top));
+	}
 
 	private void setNewAdapterIfNeeded(XposedActivity activity, boolean force) {
 		Set<String> names;
