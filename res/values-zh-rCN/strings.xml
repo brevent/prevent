@@ -16,5 +16,8 @@
     <string name="perceptible">察觉</string>
     <string name="service">服务</string>
     <string name="visible">可见</string>
+    <string name="app_info">程序信息</string>
+    <string name="uninstall">卸载</string>
+    <string name="switch_theme">切换主题</string>
 
 </resources>

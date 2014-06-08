@@ -8,14 +8,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.util.RecreateUtil;
+
+import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -24,14 +31,15 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 
-public class MainActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, CompoundButton.OnCheckedChangeListener, View.OnClickListener {
+public class XposedActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
+
 	private ViewPager mPager;
 	private String[] mPageTitles;
 	private List<AbstractSet<String>> mPageSelections;;
 	private PagerAdapter mPagerAdapter;
 	private Object runningLock = new Object();
 	private Object packageLock = new Object();
-	private Map<String, Boolean> packages;
+	private Map<String, Boolean> preventPackages;
 	private Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
 	private Button remove;
 	private Button cancel;
@@ -42,6 +50,8 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+		setTheme(THEME_LIGHT.equals(sp.getString(THEME, THEME_LIGHT)) ? R.style.light : R.style.dark);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		mPager = (ViewPager) findViewById(R.id.pager);
@@ -67,7 +77,7 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 	@Override
 	protected void onResume() {
 		super.onResume();
-		packages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
+		preventPackages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -88,9 +98,9 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 		public Fragment getItem(int position) {
 			switch (position) {
 			case APPLICATIONS:
-				return new ApplicationsFragment();
+				return new XposedApplications();
 			case PREVENTLIST:
-				return new PreventListFragment();
+				return new XposedPreventList();
 			default:
 				return null;
 			}
@@ -137,9 +147,45 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 		}
 	}
 
-	public Map<String, Boolean> getPackages() {
+	public Map<String, Boolean> getPreventPackages() {
 		synchronized (packageLock) {
-			return packages;
+			if (preventPackages == null) {
+				preventPackages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
+			}
+			return preventPackages;
+		}
+	}
+
+	@Override
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	public boolean onCreateOptionsMenu(Menu menu) {
+		menu.clear();
+		MenuItem item = menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+			item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+		}
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	private static final String THEME = "theme";
+	private static final String THEME_LIGHT = "light";
+	private static final String THEME_DARK = "dark";
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.string.switch_theme:
+			final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			String theme = sp.getString(THEME, THEME_LIGHT);
+			if (THEME_LIGHT.equals(theme)) {
+				sp.edit().putString(THEME, THEME_DARK).commit();
+			} else {
+				sp.edit().putString(THEME, THEME_LIGHT).commit();
+			}
+			RecreateUtil.recreate(this);
+			return true;
+		default:
+			return false;
 		}
 	}
 
@@ -165,29 +211,17 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 	public void onPageSelected(int position) {
 	}
 
-	@Override
-	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		ViewHolder holder = (ViewHolder) buttonView.getTag();
-		Set<String> selections = getSelection();
-		if (isChecked) {
-			selections.add(holder.packageName);
-		} else {
-			selections.remove(holder.packageName);
-		}
-		checkSelection();
-	}
-
 	public Set<String> getSelection() {
 		int position = mPager.getCurrentItem();
 		return mPageSelections.get(position);
 	}
 
-	private void checkSelection() {
+	public void checkSelection() {
 		Set<String> selections = getSelection();
 		if (selections.size() > 0) {
 			cancel.setEnabled(true);
 			remove.setEnabled(true);
-			if (isSubSet(selections, getPackages().keySet())) {
+			if (isSubSet(selections, getPreventPackages().keySet())) {
 				prevent.setEnabled(false);
 			} else {
 				prevent.setEnabled(true);
@@ -211,6 +245,23 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 		return true;
 	}
 
+	public void changePrevent(String packageName, boolean prevent) {
+		synchronized (packageLock) {
+			if (prevent) {
+				preventPackages.put(packageName, !running.containsKey(packageName));
+			} else {
+				preventPackages.remove(packageName);
+			}
+		}
+		PackageProvider.saveToFile(PackageProvider.FORCESTOP, preventPackages, "Activity");
+		int position = mPager.getCurrentItem();
+		for (int item = 0; item < mPageTitles.length; ++item) {
+			if (item != position) {
+				refresh(item, true);
+			}
+		}
+	}
+
 	@Override
 	public void onClick(View v) {
 		int position = mPager.getCurrentItem();
@@ -221,20 +272,20 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 		case R.id.prevent:
 			synchronized (packageLock) {
 				for (String packageName : selections) {
-					if (!packages.containsKey(packageName)) {
-						packages.put(packageName, !running.containsKey(packageName));
+					if (!preventPackages.containsKey(packageName)) {
+						preventPackages.put(packageName, !running.containsKey(packageName));
 					}
 				}
 			}
-			PackageProvider.saveToFile(PackageProvider.FORCESTOP, packages, "MainActivity");
+			PackageProvider.saveToFile(PackageProvider.FORCESTOP, preventPackages, "Activity");
 			break;
 		case R.id.remove:
 			synchronized (packageLock) {
 				for (String packageName : selections) {
-					packages.remove(packageName);
+					preventPackages.remove(packageName);
 				}
 			}
-			PackageProvider.saveToFile(PackageProvider.FORCESTOP, packages, "MainActivity");
+			PackageProvider.saveToFile(PackageProvider.FORCESTOP, preventPackages, "Activity");
 			break;
 		default:
 			return;
@@ -246,7 +297,7 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 	}
 
 	private void refresh(int position, boolean force) {
-		((RefreshableListFragment) mPager.getAdapter().instantiateItem(mPager, position)).refresh(force);
+		((XposedListFragment) mPager.getAdapter().instantiateItem(mPager, position)).refresh(force);
 	}
 
 	public int getColor(int colorId) {
@@ -262,4 +313,5 @@ public class MainActivity extends FragmentActivity implements ViewPager.OnPageCh
 	public int getThemedColor(int resId) {
 		return getColor(getThemed(R.attr.color_dangerous));
 	}
+
 }

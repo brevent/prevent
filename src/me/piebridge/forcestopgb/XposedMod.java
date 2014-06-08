@@ -235,6 +235,16 @@ public class XposedMod implements IXposedHookZygoteInit {
 	public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
 		PackageProvider.ensureDirectory();
 
+		Map<String, Boolean> packages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
+		if (packages.containsValue(Boolean.FALSE)) {
+			for (String key : packages.keySet()) {
+				if (!packages.get(key)) {
+					packages.put(key, Boolean.TRUE);
+				}
+			}
+			PackageProvider.saveToFile(PackageProvider.FORCESTOP, packages, "initZygote");
+		}
+
 		// package is force stopped
 		XposedHelpers.findAndHookMethod("android.app.ActivityManagerProxy", null, "forceStopPackage", String.class,
 				new Hook_ActivityManagerProxy_forceStopPackage());

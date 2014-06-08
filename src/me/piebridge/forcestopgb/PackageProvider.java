@@ -18,6 +18,7 @@ public class PackageProvider {
 
 	@SuppressLint("SdCardPath")
 	public static final String CONFDIR = "/data/data/me.piebridge.forcestopgb/conf";
+
 	public static final String FORCESTOP = CONFDIR + "/forcestop.list";
 
 	public static long saveToFile(String path, Map<String, Boolean> packages, String suffix) {
@@ -78,7 +79,7 @@ public class PackageProvider {
 	}
 
 	public static void ensureDirectory() {
-		File parent = new File(PackageProvider.FORCESTOP).getParentFile();
+		File parent = new File(FORCESTOP).getParentFile();
 		parent.mkdirs();
 		FileUtils.setPermissions(parent.getAbsolutePath(), 0777, 1000, 1000);
 	}
