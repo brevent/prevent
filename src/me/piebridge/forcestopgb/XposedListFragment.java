@@ -9,8 +9,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -186,7 +189,6 @@ public abstract class XposedListFragment extends ListFragment {
 	}
 
 	static class AppInfo implements Comparable<AppInfo> {
-
 		int flags;
 		Drawable icon;
 		String name = "";
@@ -220,11 +222,9 @@ public abstract class XposedListFragment extends ListFragment {
 		public boolean isSystem() {
 			return (flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
 		}
-
 	}
 
 	static class ViewHolder {
-
 		boolean check;
 		String label;
 		String packageName;
@@ -236,11 +236,9 @@ public abstract class XposedListFragment extends ListFragment {
 		ImageView preventView;
 		Drawable icon;
 		Set<Integer> running;
-
 	}
 
 	static class Adapter extends ArrayAdapter<AppInfo> {
-
 		private PackageManager pm;
 		private LayoutInflater inflater;
 		private XposedActivity mActivity;
@@ -253,9 +251,39 @@ public abstract class XposedListFragment extends ListFragment {
 			inflater = LayoutInflater.from(activity);
 		}
 
-		public Adapter(XposedActivity activity, Set<String> names, boolean cache) {
+		public Adapter(final XposedActivity activity, Set<String> names, boolean cache) {
 			this(activity);
-			addAll(names, cache);
+			if (!cache && !XposedActivity.isXposedEnabled()) {
+				// @formatter:off
+				new AlertDialog.Builder(activity)
+					.setTitle(R.string.app_name)
+					.setMessage(R.string.app_notenabled)
+					.setIcon(R.drawable.ic_launcher)
+					.setPositiveButton(activity.getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							Intent intent= new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
+							intent.setPackage("de.robv.android.xposed.installer");
+							intent.putExtra("section", 1);
+							intent.putExtra("opentab", 1);
+							intent.putExtra("module", mActivity.getPackageName());
+							intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+							try {
+								activity.startActivity(intent);
+							} catch (ActivityNotFoundException e) {
+								intent = activity.getPackageManager().getLaunchIntentForPackage("de.robv.android.xposed.installer");
+								if (intent != null) {
+									activity.startActivity(intent);
+								} else {
+									activity.finish();
+								}
+							}
+						}
+					}).create().show();
+				// @formatter:on
+			} else {
+				addAll(names, cache);
+			}
 		}
 
 		public void addAll(final Set<String> names, final boolean cache) {
@@ -445,6 +473,6 @@ public abstract class XposedListFragment extends ListFragment {
 				return buffer.toString();
 			}
 		};
-
 	}
+
 }

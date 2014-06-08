@@ -314,4 +314,8 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 		return getColor(getThemed(R.attr.color_dangerous));
 	}
 
+	public static boolean isXposedEnabled() {
+		return false;
+	}
+
 }

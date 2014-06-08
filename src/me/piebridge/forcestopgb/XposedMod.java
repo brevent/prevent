@@ -15,11 +15,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.inputmethod.InputMethod;
 
+import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedHelpers;
+import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
-public class XposedMod implements IXposedHookZygoteInit {
+public class XposedMod implements IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 	public static final String TAG = "me.piebridge.forcestopgb";
 
@@ -255,6 +258,16 @@ public class XposedMod implements IXposedHookZygoteInit {
 		// dynamic maintain force stopped package
 		XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new Hook_Activity_onCreate());
 		XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new Hook_Activity_onDestroy());
+	}
+
+	private static final String self = XposedMod.class.getPackage().getName();
+
+	@Override
+	public void handleLoadPackage(LoadPackageParam lpparam) throws Throwable {
+		if (self.equals(lpparam.packageName)) {
+			XposedHelpers.findAndHookMethod(XposedActivity.class.getName(), lpparam.classLoader, "isXposedEnabled",
+					XC_MethodReplacement.returnConstant(true));
+		}
 	}
 
 }
