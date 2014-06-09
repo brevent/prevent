@@ -28,6 +28,8 @@ public class XposedMod implements IXposedHookZygoteInit, IXposedHookLoadPackage 
 
 	public static final String ACTION_XPOSED_SECTION = "de.robv.android.xposed.installer.OPEN_SECTION";
 
+	public static final int FLAG_ACTIVITY_LAUNCHER = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED;
+
 	abstract class MethodHook extends XC_MethodHook {
 		private long mtime;
 		protected Map<String, Boolean> packages;
@@ -88,7 +90,7 @@ public class XposedMod implements IXposedHookZygoteInit, IXposedHookLoadPackage 
 			Set<String> categories = intent.getCategories();
 			int oldCount = count.get();
 			android.util.Log.d(TAG, "onCreate: " + intent + ", count: " + oldCount);
-			if ((intent.getFlags() & 0x10200000) != 0 && Intent.ACTION_MAIN.equals(intent.getAction())
+			if ((intent.getFlags() & FLAG_ACTIVITY_LAUNCHER) != 0 && Intent.ACTION_MAIN.equals(intent.getAction())
 					&& (categories != null && categories.contains(Intent.CATEGORY_LAUNCHER))) {
 				count.set(1);
 			} else {
