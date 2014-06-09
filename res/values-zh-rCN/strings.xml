@@ -20,5 +20,6 @@
     <string name="uninstall">卸载</string>
     <string name="switch_theme">切换主题</string>
     <string name="app_notenabled">请在Xposed Installer中启用“阻止运行”。</string>
+    <string name="open">打开</string>
 
 </resources>

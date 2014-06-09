@@ -20,5 +20,6 @@
     <string name="uninstall">Uninstall</string>
     <string name="switch_theme">Switch theme</string>
     <string name="app_notenabled">Please enable "Prevent Running" in Xposed Installer.</string>
+    <string name="open">Open</string>
 
 </resources>

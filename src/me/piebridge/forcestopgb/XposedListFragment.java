@@ -4,6 +4,7 @@ import java.text.Collator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -15,9 +16,11 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -85,6 +88,9 @@ public abstract class XposedListFragment extends ListFragment {
 		} else {
 			menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
 		}
+		if (getMainIntent(holder.packageName) != null) {
+			menu.add(Menu.NONE, R.string.open, Menu.NONE, R.string.open);
+		}
 		if (holder.canUninstall) {
 			menu.add(Menu.NONE, R.string.uninstall, Menu.NONE, R.string.uninstall);
 		}
@@ -99,7 +105,7 @@ public abstract class XposedListFragment extends ListFragment {
 		String packageName = holder.packageName;
 		switch (item.getItemId()) {
 		case R.string.app_info:
-			startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)));
+			mActivity.startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)));
 			return true;
 		case R.string.remove:
 			holder.preventView.setVisibility(View.GONE);
@@ -110,12 +116,48 @@ public abstract class XposedListFragment extends ListFragment {
 			holder.preventView.setImageResource(holder.running != null ? R.drawable.ic_menu_stop : R.drawable.ic_menu_block);
 			mActivity.changePrevent(packageName, true);
 			return true;
+		case R.string.open:
+			try {
+				mActivity.startActivity(getMainIntent(holder.packageName));
+			} catch (ActivityNotFoundException e) {
+				// do nothing
+			} catch (Exception e) {
+				// do nothing
+			}
+			return true;
 		case R.string.uninstall:
 			mActivity.startActivity(new Intent(Intent.ACTION_DELETE, Uri.fromParts("package", packageName, null)));
 			return true;
 		default:
 			return false;
 		}
+	}
+
+	private Intent getMainIntent(String packageName) {
+		PackageManager pm = mActivity.getPackageManager();
+		Intent launcher = pm.getLaunchIntentForPackage(packageName);
+		if (launcher != null) {
+			return launcher;
+		} else {
+			Intent intent = new Intent(Intent.ACTION_MAIN);
+			intent.setPackage(packageName);
+			List<ResolveInfo> ris = pm.queryIntentActivities(intent, 0);
+			if (ris != null && ris.size() > 0) {
+				// find the first exported activity
+				for (ResolveInfo ri : ris) {
+					ActivityInfo ai = ri.activityInfo;
+					if (!ai.exported) {
+						continue;
+					}
+					if (ai.enabled) {
+						return new Intent().setFlags(Intent.FLAG_ACTIVITY_NEW_TASK).setClassName(ai.packageName, ai.name);
+					} else {
+						return null;
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	public void refresh(boolean force) {
