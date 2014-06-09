@@ -77,7 +77,7 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 	@Override
 	protected void onResume() {
 		super.onResume();
-		preventPackages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
+		getPreventPackages();
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -132,9 +132,14 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 				}
 			}
 		}
+		try {
+			Thread.sleep(250);
+		} catch (InterruptedException e) {
+		}
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
+				getPreventPackages();
 				refresh();
 			}
 		});
@@ -146,10 +151,13 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 		}
 	}
 
+	private long mtime;
 	public Map<String, Boolean> getPreventPackages() {
 		synchronized (packageLock) {
-			if (preventPackages == null) {
+			long time = PackageProvider.getMTime(PackageProvider.FORCESTOP);
+			if (preventPackages == null || mtime < time) {
 				preventPackages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
+				mtime = time;
 			}
 			return preventPackages;
 		}
