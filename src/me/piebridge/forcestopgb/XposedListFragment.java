@@ -295,22 +295,12 @@ public abstract class XposedListFragment extends ListFragment {
 					.setPositiveButton(activity.getString(android.R.string.ok), new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							Intent intent= new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
-							intent.setPackage("de.robv.android.xposed.installer");
-							intent.putExtra("section", 1);
-							intent.putExtra("opentab", 1);
-							intent.putExtra("module", mActivity.getPackageName());
-							intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-							try {
-								activity.startActivity(intent);
-							} catch (ActivityNotFoundException e) {
-								intent = activity.getPackageManager().getLaunchIntentForPackage("de.robv.android.xposed.installer");
-								if (intent != null) {
-									activity.startActivity(intent);
-								} else {
-									activity.finish();
-								}
-							}
+							Intent intent= new Intent(XposedMod.ACTION_XPOSED_SECTION)
+								.setPackage("de.robv.android.xposed.installer")
+								.putExtra("section", "modules")
+								.putExtra("module", mActivity.getPackageName())
+								.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+							activity.startActivity(intent);
 						}
 					}).create().show();
 				// @formatter:on

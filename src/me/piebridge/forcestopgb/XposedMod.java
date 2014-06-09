@@ -26,6 +26,8 @@ public class XposedMod implements IXposedHookZygoteInit, IXposedHookLoadPackage 
 
 	public static final String TAG = "me.piebridge.forcestopgb";
 
+	public static final String ACTION_XPOSED_SECTION = "de.robv.android.xposed.installer.OPEN_SECTION";
+
 	abstract class MethodHook extends XC_MethodHook {
 		private long mtime;
 		protected Map<String, Boolean> packages;
@@ -171,6 +173,10 @@ public class XposedMod implements IXposedHookZygoteInit, IXposedHookLoadPackage 
 			standardActivityActions.add(Intent.ACTION_SEARCH);
 			standardActivityActions.add(Intent.ACTION_WEB_SEARCH);
 			standardActivityActions.add(Intent.ACTION_FACTORY_TEST);
+			// we need it
+			standardActivityActions.add(Intent.ACTION_DELETE);
+			standardActivityActions.add(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+			standardActivityActions.add(ACTION_XPOSED_SECTION);
 		}
 
 		@Override
@@ -265,8 +271,7 @@ public class XposedMod implements IXposedHookZygoteInit, IXposedHookLoadPackage 
 	@Override
 	public void handleLoadPackage(LoadPackageParam lpparam) throws Throwable {
 		if (self.equals(lpparam.packageName)) {
-			XposedHelpers.findAndHookMethod(XposedActivity.class.getName(), lpparam.classLoader, "isXposedEnabled",
-					XC_MethodReplacement.returnConstant(true));
+			XposedHelpers.findAndHookMethod(XposedActivity.class.getName(), lpparam.classLoader, "isXposedEnabled", XC_MethodReplacement.returnConstant(true));
 		}
 	}
 
