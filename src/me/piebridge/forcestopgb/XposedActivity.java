@@ -257,7 +257,7 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 			}
 		}
 		PackageProvider.saveToFile(PackageProvider.FORCESTOP, preventPackages, "Activity");
-		refreshIfNeeded();
+		refreshIfNeeded(false);
 	}
 
 	private void refresh(int position, boolean force) {
@@ -265,12 +265,12 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 		fragment.refresh(force ? force : fragment.canUseCache());
 	}
 
-	private void refreshIfNeeded() {
+	private void refreshIfNeeded(boolean force) {
 		int position = mPager.getCurrentItem();
 		for (int item = 0; item < mPageTitles.length; ++item) {
 			if (item != position) {
-				refresh(item, true);
-			} else {
+				refresh(item, force);
+			} else if (force) {
 				refresh(item, false);
 			}
 		}
@@ -311,7 +311,7 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 			return;
 		}
 		selections.clear();
-		refreshIfNeeded();
+		refreshIfNeeded(true);
 		checkSelection();
 	}
 
