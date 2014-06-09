@@ -135,8 +135,7 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				refresh(APPLICATIONS, true);
-				refresh(PREVENTLIST, true);
+				refresh();
 			}
 		});
 	}
@@ -196,28 +195,32 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 	@Override
 	public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 		if (positionOffset == 0) {
-			if (position == APPLICATIONS) {
-				prevent.setVisibility(View.VISIBLE);
-				remove.setVisibility(View.GONE);
-			} else {
-				remove.setVisibility(View.VISIBLE);
-				prevent.setVisibility(View.GONE);
-			}
-			checkSelection();
+			checkSelection(position);
 		}
 	}
 
 	@Override
 	public void onPageSelected(int position) {
+		checkSelection(position);
 	}
 
 	public Set<String> getSelection() {
-		int position = mPager.getCurrentItem();
-		return mPageSelections.get(position);
+		return mPageSelections.get(mPager.getCurrentItem());
 	}
 
 	public void checkSelection() {
-		Set<String> selections = getSelection();
+		checkSelection(mPager.getCurrentItem());
+	}
+
+	private void checkSelection(int position) {
+		if (position == APPLICATIONS) {
+			prevent.setVisibility(View.VISIBLE);
+			remove.setVisibility(View.GONE);
+		} else {
+			remove.setVisibility(View.VISIBLE);
+			prevent.setVisibility(View.GONE);
+		}
+		Set<String> selections = mPageSelections.get(position);
 		if (selections.size() > 0) {
 			cancel.setEnabled(true);
 			remove.setEnabled(true);
@@ -254,11 +257,28 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 			}
 		}
 		PackageProvider.saveToFile(PackageProvider.FORCESTOP, preventPackages, "Activity");
+		refreshIfNeeded();
+	}
+
+	private void refresh(int position, boolean force) {
+		XposedListFragment fragment = (XposedListFragment) mPager.getAdapter().instantiateItem(mPager, position);
+		fragment.refresh(force ? force : fragment.canUseCache());
+	}
+
+	private void refreshIfNeeded() {
 		int position = mPager.getCurrentItem();
 		for (int item = 0; item < mPageTitles.length; ++item) {
 			if (item != position) {
 				refresh(item, true);
+			} else {
+				refresh(item, false);
 			}
+		}
+	}
+
+	private void refresh() {
+		for (int item = 0; item < mPageTitles.length; ++item) {
+			refresh(item, true);
 		}
 	}
 
@@ -291,13 +311,8 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 			return;
 		}
 		selections.clear();
-		refresh(APPLICATIONS, false);
-		refresh(PREVENTLIST, false);
+		refreshIfNeeded();
 		checkSelection();
-	}
-
-	private void refresh(int position, boolean force) {
-		((XposedListFragment) mPager.getAdapter().instantiateItem(mPager, position)).refresh(force);
 	}
 
 	public int getColor(int colorId) {
