@@ -31,7 +31,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 
-public class XposedActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
+public class SettingActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
 	private ViewPager mPager;
 	private String[] mPageTitles;
@@ -71,7 +71,7 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 		cancel.setEnabled(false);
 		prevent.setEnabled(false);
 		remove.setEnabled(false);
-		PackageProvider.ensureDirectory();
+		PreventPackages.ensureDirectory();
 	}
 
 	@Override
@@ -98,9 +98,9 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 		public Fragment getItem(int position) {
 			switch (position) {
 			case APPLICATIONS:
-				return new XposedApplications();
+				return new SettingFragmentApplications();
 			case PREVENTLIST:
-				return new XposedPreventList();
+				return new SettingFragmentPreventList();
 			default:
 				return null;
 			}
@@ -154,9 +154,9 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 	private long mtime;
 	public Map<String, Boolean> getPreventPackages() {
 		synchronized (packageLock) {
-			long time = PackageProvider.getMTime(PackageProvider.FORCESTOP);
+			long time = PreventPackages.lastModified();
 			if (preventPackages == null || mtime < time) {
-				preventPackages = PackageProvider.loadFromFile(PackageProvider.FORCESTOP);
+				preventPackages = PreventPackages.load();
 				mtime = time;
 			}
 			return preventPackages;
@@ -264,12 +264,12 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 				preventPackages.remove(packageName);
 			}
 		}
-		PackageProvider.saveToFile(PackageProvider.FORCESTOP, preventPackages, "Activity");
+		PreventPackages.save(preventPackages, "Activity");
 		refreshIfNeeded(false);
 	}
 
 	private void refresh(int position, boolean force) {
-		XposedListFragment fragment = (XposedListFragment) mPager.getAdapter().instantiateItem(mPager, position);
+		SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, position);
 		fragment.refresh(force ? force : fragment.canUseCache());
 	}
 
@@ -305,7 +305,7 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 					}
 				}
 			}
-			PackageProvider.saveToFile(PackageProvider.FORCESTOP, preventPackages, "Activity");
+			PreventPackages.save(preventPackages, "Activity");
 			break;
 		case R.id.remove:
 			synchronized (packageLock) {
@@ -313,7 +313,7 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 					preventPackages.remove(packageName);
 				}
 			}
-			PackageProvider.saveToFile(PackageProvider.FORCESTOP, preventPackages, "Activity");
+			PreventPackages.save(preventPackages, "Activity");
 			break;
 		default:
 			return;
@@ -334,11 +334,7 @@ public class XposedActivity extends FragmentActivity implements ViewPager.OnPage
 	}
 
 	public int getThemedColor(int resId) {
-		return getColor(getThemed(R.attr.color_dangerous));
-	}
-
-	public static boolean isXposedEnabled() {
-		return false;
+		return getColor(getThemed(resId));
 	}
 
 }

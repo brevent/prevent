@@ -41,18 +41,18 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public abstract class XposedListFragment extends ListFragment {
+public abstract class SettingFragment extends ListFragment {
 
 	private Adapter mAdapter;
 	private Locale prevLocale;
-	private XposedActivity mActivity;
+	private SettingActivity mActivity;
 	private Set<String> prevNames = null;
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		registerForContextMenu(getListView());
-		mActivity = (XposedActivity) getActivity();
+		mActivity = (SettingActivity) getActivity();
 		if (mActivity != null) {
 			setNewAdapterIfNeeded(mActivity, true);
 		}
@@ -166,7 +166,7 @@ public abstract class XposedListFragment extends ListFragment {
 		}
 	}
 
-	protected abstract Set<String> getPackageNames(XposedActivity activity);
+	protected abstract Set<String> getPackageNames(SettingActivity activity);
 
 	protected abstract boolean canUseCache();
 
@@ -182,7 +182,7 @@ public abstract class XposedListFragment extends ListFragment {
 		setListPosition(new Position(position, top));
 	}
 
-	private void setNewAdapterIfNeeded(XposedActivity activity, boolean force) {
+	private void setNewAdapterIfNeeded(SettingActivity activity, boolean force) {
 		Set<String> names;
 		if (force || prevNames == null) {
 			names = getPackageNames(activity);
@@ -274,19 +274,19 @@ public abstract class XposedListFragment extends ListFragment {
 	static class Adapter extends ArrayAdapter<AppInfo> {
 		private PackageManager pm;
 		private LayoutInflater inflater;
-		private XposedActivity mActivity;
+		private SettingActivity mActivity;
 		private static Map<String, String> labels = new HashMap<String, String>();
 
-		public Adapter(XposedActivity activity) {
+		public Adapter(SettingActivity activity) {
 			super(activity, R.layout.item);
 			mActivity = activity;
 			pm = mActivity.getPackageManager();
 			inflater = LayoutInflater.from(activity);
 		}
 
-		public Adapter(final XposedActivity activity, Set<String> names, boolean cache) {
+		public Adapter(final SettingActivity activity, Set<String> names, boolean cache) {
 			this(activity);
-			if (!cache && !XposedActivity.isXposedEnabled()) {
+			if (!cache && !Hook.isHookEnabled()) {
 				// @formatter:off
 				new AlertDialog.Builder(activity)
 					.setTitle(R.string.app_name)
@@ -295,7 +295,7 @@ public abstract class XposedListFragment extends ListFragment {
 					.setPositiveButton(activity.getString(android.R.string.ok), new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							Intent intent= new Intent(XposedMod.ACTION_XPOSED_SECTION)
+							Intent intent= new Intent("de.robv.android.xposed.installer.OPEN_SECTION")
 								.setPackage("de.robv.android.xposed.installer")
 								.putExtra("section", "modules")
 								.putExtra("module", mActivity.getPackageName())

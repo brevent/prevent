@@ -2,10 +2,10 @@ package me.piebridge.forcestopgb;
 
 import java.util.Set;
 
-public class XposedPreventList extends XposedListFragment {
+public class SettingFragmentPreventList extends SettingFragment {
 
 	@Override
-	protected Set<String> getPackageNames(XposedActivity activity) {
+	protected Set<String> getPackageNames(SettingActivity activity) {
 		return activity.getPreventPackages().keySet();
 	}
 

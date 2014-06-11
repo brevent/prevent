@@ -14,16 +14,14 @@ import java.util.TreeSet;
 import android.annotation.SuppressLint;
 import android.os.FileUtils;
 
-public class PackageProvider {
+public class PreventPackages {
 
 	@SuppressLint("SdCardPath")
-	public static final String CONFDIR = "/data/data/me.piebridge.forcestopgb/conf";
+	public static final String FORCESTOP = "/data/data/" + PreventPackages.class.getPackage().getName() + "/conf/forcestop.list";
 
-	public static final String FORCESTOP = CONFDIR + "/forcestop.list";
-
-	public static long saveToFile(String path, Map<String, Boolean> packages, String suffix) {
+	public static long save(Map<String, Boolean> packages, String suffix) {
 		try {
-			File file = new File(path + suffix);
+			File file = new File(FORCESTOP + suffix);
 			while (file.exists() && System.currentTimeMillis() - file.lastModified() > 3000) {
 				try {
 					Thread.sleep(1000);
@@ -41,18 +39,18 @@ public class PackageProvider {
 			}
 			writer.close();
 			FileUtils.setPermissions(file.getAbsolutePath(), 0666, -1, -1);
-			file.renameTo(new File(path));
+			file.renameTo(new File(FORCESTOP));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return getMTime(path);
+		return lastModified();
 	}
 
-	public static Map<String, Boolean> loadFromFile(String path) {
+	public static Map<String, Boolean> load() {
 		Map<String, Boolean> packages = new HashMap<String, Boolean>();
 		try {
 			String line;
-			File file = new File(path);
+			File file = new File(FORCESTOP);
 			BufferedReader reader = new BufferedReader(new FileReader(file));
 			while ((line = reader.readLine()) != null) {
 				line = line.trim();
@@ -70,12 +68,14 @@ public class PackageProvider {
 		return packages;
 	}
 
-	public static long getMTime(String path) {
-		File file = new File(path);
-		if (file != null && file.exists()) {
+	public static long lastModified() {
+		File file = new File(FORCESTOP);
+		if (!file.isFile()) {
+			file.delete();
+			return 0L;
+		} else {
 			return file.lastModified();
 		}
-		return 0L;
 	}
 
 	public static void ensureDirectory() {

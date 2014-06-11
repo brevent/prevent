@@ -7,10 +7,10 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
-public class XposedApplications extends XposedListFragment {
+public class SettingFragmentApplications extends SettingFragment {
 
 	@Override
-	protected Set<String> getPackageNames(XposedActivity activity) {
+	protected Set<String> getPackageNames(SettingActivity activity) {
 		Set<String> names = new HashSet<String>();
 		PackageManager pm = activity.getPackageManager();
 		for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
