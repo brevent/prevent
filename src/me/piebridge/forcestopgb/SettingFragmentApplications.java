@@ -21,7 +21,7 @@ public class SettingFragmentApplications extends SettingFragment {
 			if (!appInfo.enabled) {
 				continue;
 			}
-			if (appInfo.packageName.equals("android")) {
+			if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 && pm.getLaunchIntentForPackage(appInfo.packageName) == null) {
 				continue;
 			}
 			names.add(appInfo.packageName);
