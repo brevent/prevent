@@ -300,7 +300,11 @@ public abstract class SettingFragment extends ListFragment {
 								.putExtra("section", "modules")
 								.putExtra("module", mActivity.getPackageName())
 								.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-							activity.startActivity(intent);
+							try {
+								activity.startActivity(intent);
+							} catch (ActivityNotFoundException e) {
+								activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.saurik.substrate")));
+							}
 						}
 					}).create().show();
 				// @formatter:on

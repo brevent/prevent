@@ -71,7 +71,6 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 		cancel.setEnabled(false);
 		prevent.setEnabled(false);
 		remove.setEnabled(false);
-		PreventPackages.ensureDirectory();
 	}
 
 	@Override
@@ -84,6 +83,17 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 				synchronized (runningLock) {
 					retrieveRunningProcesses();
 				}
+				try {
+					Thread.sleep(250);
+				} catch (InterruptedException e) {
+				}
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						getPreventPackages();
+						refresh();
+					}
+				});
 			}
 		}).start();
 	}
@@ -132,17 +142,6 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 				}
 			}
 		}
-		try {
-			Thread.sleep(250);
-		} catch (InterruptedException e) {
-		}
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getPreventPackages();
-				refresh();
-			}
-		});
 	}
 
 	public Map<String, Set<Integer>> getRunningProcesses() {

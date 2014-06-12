@@ -125,20 +125,10 @@ public class Hook {
 
 	public static void beforeActivity$onCreate(Activity activity) {
 		Intent intent = activity.getIntent();
-		String packageName = intent.getComponent().getPackageName();
-		Set<String> categories = intent.getCategories();
-		int oldCount = count.get();
-		android.util.Log.d(TAG, "before onCreate: " + intent + ", count: " + oldCount);
-		if ((intent.getFlags() & FLAG_ACTIVITY_LAUNCHER) != 0 && Intent.ACTION_MAIN.equals(intent.getAction())
-				&& (categories != null && categories.contains(Intent.CATEGORY_LAUNCHER))) {
-			count.set(1);
-		} else {
-			if (oldCount < 0) {
-				oldCount = 0;
-			}
-			count.set(oldCount + 1);
-		}
+		android.util.Log.d(TAG, "before onCreate: " + intent + ", count: " + count.get());
+		count.set(count.get() + 1);
 		reloadPackagesIfNeeded();
+		String packageName = intent.getComponent().getPackageName();
 		if (!preventPackages.containsKey(packageName)) {
 			return;
 		}
@@ -149,16 +139,11 @@ public class Hook {
 	}
 
 	public static void afterActivity$onDestroy(Activity activity) {
+		count.set(count.get() - 1);
 		Intent intent = activity.getIntent();
-		String packageName = intent.getComponent().getPackageName();
-		int oldCount = count.get();
-		if (oldCount > 1) {
-			count.set(oldCount - 1);
-		} else {
-			count.set(0);
-		}
 		android.util.Log.d(TAG, "after onDestroy: " + intent + ", count: " + count.get());
 		reloadPackagesIfNeeded();
+		String packageName = intent.getComponent().getPackageName();
 		if (!preventPackages.containsKey(packageName)) {
 			return;
 		}
@@ -170,7 +155,8 @@ public class Hook {
 
 	public static Result hookIntentFilter$match(IntentFilter thiz, String action, Set<String> categories) {
 		if (ACTION_HOOK.equals(action)) {
-			return new Result(int.class, IntentFilter.NO_MATCH_TYPE);
+			PreventPackages.ensureDirectory();
+			return new Result(int.class, -IntentFilter.NO_MATCH_ACTION);
 		}
 		if (InputMethod.SERVICE_INTERFACE.equals(action)) {
 			// input method
@@ -233,19 +219,10 @@ public class Hook {
 
 		reloadPackagesIfNeeded();
 		if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-			// android.util.Log.d(TAG, "disallow " + packageName + ", action: " + action + ", categories: " + categories);
+			android.util.Log.d(TAG, "disallow " + packageName + ", action: " + action + ", categories: " + categories);
 			return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
 		}
 		return Result.None;
-	}
-
-	public static void afterActivityManagerProxy$forceStopPackage(String packageName) {
-		reloadPackagesIfNeeded();
-		if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
-			preventPackages.put(packageName, Boolean.TRUE);
-			savePackages("afterActivityManagerProxy$forceStopPackage");
-		}
-		android.util.Log.d(TAG, "forceStopPackage: " + packageName);
 	}
 
 	public static class Result {
@@ -275,7 +252,7 @@ public class Hook {
 	}
 
 	public static boolean isHookEnabled() {
-		return new IntentFilter().match(ACTION_HOOK, null, null, null, null, null) != IntentFilter.NO_MATCH_ACTION;
+		return new IntentFilter().match(ACTION_HOOK, null, null, null, null, null) == -IntentFilter.NO_MATCH_ACTION;
 	}
 
 }

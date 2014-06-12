@@ -13,36 +13,36 @@ import com.saurik.substrate.MS;
 public class SubstrateHook extends Hook {
 
 	public static void initialize() {
-		hookActivityManagerProxy$forceStopPackage();
+		hookSystemServer$main();
 		hookActivity$onCreate();
 		hookActivity$onDestroy();
 		hookIntentFilter$match();
 	}
 
-	private static void hookActivityManagerProxy$forceStopPackage() {
-		try {
-			Class<?> ActivityManagerProxy = Class.forName("android.app.ActivityManagerProxy");
-			Method ActivityManagerProxy$forceStopPackage = ActivityManagerProxy.getMethod("forceStopPackage", String.class);
-			MS.hookMethod(ActivityManagerProxy, ActivityManagerProxy$forceStopPackage, new MS.MethodAlteration<Object, Void>() {
-				@Override
-				public Void invoked(Object thiz, Object... args) throws Throwable {
-					String packageName = (String) args[0];
-					invoke(thiz, packageName);
-					afterActivityManagerProxy$forceStopPackage(packageName);
-					return null;
+	private static void hookSystemServer$main() {
+		MS.hookClassLoad("com.android.server.SystemServer", new MS.ClassLoadHook() {
+			@Override
+			public void classLoaded(Class<?> SystemServer) {
+				try {
+					Method SystemServer$main = SystemServer.getDeclaredMethod("main", String[].class);
+					MS.hookMethod(SystemServer, SystemServer$main, new MS.MethodAlteration<Object, Void>() {
+						@Override
+						public Void invoked(Object thiz, Object... args) throws Throwable {
+							Hook.initPackages();
+							return invoke(thiz, args);
+						}
+					});
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
 				}
-
-			});
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		}
+			}
+		});
 	}
 
 	private static void hookActivity$onCreate() {
 		try {
-			MS.hookMethod(Activity.class, Activity.class.getDeclaredMethod("onCreate", Bundle.class), new MS.MethodAlteration<Activity, Void>() {
+			Method Activity$onCreate = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
+			MS.hookMethod(Activity.class, Activity$onCreate, new MS.MethodAlteration<Activity, Void>() {
 				@Override
 				public Void invoked(Activity thiz, Object... args) throws Throwable {
 					beforeActivity$onCreate(thiz);
@@ -51,23 +51,23 @@ public class SubstrateHook extends Hook {
 				}
 			});
 		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
+			throw new NoSuchMethodError(e.getMessage());
 		}
 	}
 
 	private static void hookActivity$onDestroy() {
 		try {
-			MS.hookMethod(Activity.class, Activity.class.getDeclaredMethod("onDestroy"), new MS.MethodAlteration<Activity, Void>() {
+			Method Activity$onDestroy = Activity.class.getDeclaredMethod("onDestroy");
+			MS.hookMethod(Activity.class, Activity$onDestroy, new MS.MethodAlteration<Activity, Void>() {
 				@Override
 				public Void invoked(Activity thiz, Object... args) throws Throwable {
 					invoke(thiz, args);
 					afterActivity$onDestroy(thiz);
 					return null;
 				}
-
 			});
 		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
+			throw new NoSuchMethodError(e.getMessage());
 		}
 	}
 
@@ -87,7 +87,7 @@ public class SubstrateHook extends Hook {
 				}
 			});
 		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
+			throw new NoSuchMethodError(e.getMessage());
 		}
 	}
 

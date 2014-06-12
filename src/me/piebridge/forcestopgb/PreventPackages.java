@@ -11,15 +11,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import android.annotation.SuppressLint;
 import android.os.FileUtils;
 
 public class PreventPackages {
 
-	@SuppressLint("SdCardPath")
-	public static final String FORCESTOP = "/data/data/" + PreventPackages.class.getPackage().getName() + "/conf/forcestop.list";
+	public static final String DATADIR = "/data/data";
+	public static final String FORCESTOP = DATADIR + "/" + PreventPackages.class.getPackage().getName() + "/conf/forcestop.list";
 
-	public static long save(Map<String, Boolean> packages, String suffix) {
+	public static synchronized long save(Map<String, Boolean> packages, String suffix) {
 		try {
 			File file = new File(FORCESTOP + suffix);
 			while (file.exists() && System.currentTimeMillis() - file.lastModified() > 3000) {
@@ -51,6 +50,9 @@ public class PreventPackages {
 		try {
 			String line;
 			File file = new File(FORCESTOP);
+			if (!file.exists()) {
+				return packages;
+			}
 			BufferedReader reader = new BufferedReader(new FileReader(file));
 			while ((line = reader.readLine()) != null) {
 				line = line.trim();
@@ -71,17 +73,25 @@ public class PreventPackages {
 	public static long lastModified() {
 		File file = new File(FORCESTOP);
 		if (!file.isFile()) {
-			file.delete();
-			return 0L;
+			if (file.exists()) {
+				file.delete();
+			}
+			return 1L;
 		} else {
 			return file.lastModified();
 		}
 	}
 
-	public static void ensureDirectory() {
-		File parent = new File(FORCESTOP).getParentFile();
-		parent.mkdirs();
-		FileUtils.setPermissions(parent.getAbsolutePath(), 0777, 1000, 1000);
+	static void ensureDirectory() {
+		File confdir = new File(FORCESTOP).getParentFile();
+		if (!confdir.isDirectory()) {
+			if (confdir.exists()) {
+				confdir.delete();
+			}
+			confdir.mkdir();
+			save(new HashMap<String, Boolean>(), "ensureDirectory");
+		}
+		FileUtils.setPermissions(confdir.getAbsolutePath(), 0777, -1, -1);
 	}
 
 }

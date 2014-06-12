@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">阻止运行</string>
-    <string name="xposed_summary">阻止强行停止的程序自动运行</string>
+    <string name="xposed_summary">阻止程序自动运行</string>
     <string name="cancel">取消</string>
     <string name="remove">不再阻止</string>
     <string name="prevent">自动阻止</string>
@@ -19,7 +19,7 @@
     <string name="app_info">程序信息</string>
     <string name="uninstall">卸载</string>
     <string name="switch_theme">切换主题</string>
-    <string name="app_notenabled">请在Xposed Installer中启用“阻止运行”。</string>
+    <string name="app_notenabled">请在"Xposed Installer"中启用“阻止运行”，或者安装"Cydia Substrate"。</string>
     <string name="open">打开</string>
 
 </resources>
