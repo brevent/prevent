@@ -13,10 +13,14 @@ import com.saurik.substrate.MS;
 public class SubstrateHook extends Hook {
 
 	public static void initialize() {
-		hookSystemServer$main();
-		hookActivity$onCreate();
-		hookActivity$onDestroy();
-		hookIntentFilter$match();
+		try {
+			hookSystemServer$main();
+			hookActivity$onCreate();
+			hookActivity$onDestroy();
+			hookIntentFilter$match();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static void hookSystemServer$main() {
@@ -39,56 +43,42 @@ public class SubstrateHook extends Hook {
 		});
 	}
 
-	private static void hookActivity$onCreate() {
-		try {
-			Method Activity$onCreate = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
-			MS.hookMethod(Activity.class, Activity$onCreate, new MS.MethodAlteration<Activity, Void>() {
-				@Override
-				public Void invoked(Activity thiz, Object... args) throws Throwable {
-					beforeActivity$onCreate(thiz);
-					invoke(thiz, args);
-					return null;
-				}
-			});
-		} catch (NoSuchMethodException e) {
-			throw new NoSuchMethodError(e.getMessage());
-		}
+	private static void hookActivity$onCreate() throws NoSuchMethodException {
+		Method Activity$onCreate = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
+		MS.hookMethod(Activity.class, Activity$onCreate, new MS.MethodAlteration<Activity, Void>() {
+			@Override
+			public Void invoked(Activity thiz, Object... args) throws Throwable {
+				beforeActivity$onCreate(thiz, args);
+				return invoke(thiz, args);
+			}
+		});
 	}
 
-	private static void hookActivity$onDestroy() {
-		try {
-			Method Activity$onDestroy = Activity.class.getDeclaredMethod("onDestroy");
-			MS.hookMethod(Activity.class, Activity$onDestroy, new MS.MethodAlteration<Activity, Void>() {
-				@Override
-				public Void invoked(Activity thiz, Object... args) throws Throwable {
-					invoke(thiz, args);
-					afterActivity$onDestroy(thiz);
-					return null;
-				}
-			});
-		} catch (NoSuchMethodException e) {
-			throw new NoSuchMethodError(e.getMessage());
-		}
+	private static void hookActivity$onDestroy() throws NoSuchMethodException {
+		Method Activity$onDestroy = Activity.class.getDeclaredMethod("onDestroy");
+		MS.hookMethod(Activity.class, Activity$onDestroy, new MS.MethodAlteration<Activity, Void>() {
+			@Override
+			public Void invoked(Activity thiz, Object... args) throws Throwable {
+				invoke(thiz, args);
+				afterActivity$onDestroy(thiz, args);
+				return null;
+			}
+		});
 	}
 
-	private static void hookIntentFilter$match() {
-		try {
-			Method IntentFilter$match = IntentFilter.class.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
-			MS.hookMethod(IntentFilter.class, IntentFilter$match, new MS.MethodAlteration<IntentFilter, Integer>() {
-				@Override
-				public Integer invoked(IntentFilter thiz, Object... args) throws Throwable {
-					@SuppressWarnings("unchecked")
-					Hook.Result result = hookIntentFilter$match(thiz, (String) args[0], (Set<String>) args[4]);
-					if (!result.isNone()) {
-						return (Integer) result.result;
-					} else {
-						return invoke(thiz, args);
-					}
+	private static void hookIntentFilter$match() throws NoSuchMethodException {
+		Method IntentFilter$match = IntentFilter.class.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
+		MS.hookMethod(IntentFilter.class, IntentFilter$match, new MS.MethodAlteration<IntentFilter, Integer>() {
+			@Override
+			public Integer invoked(IntentFilter thiz, Object... args) throws Throwable {
+				Hook.Result result = hookIntentFilter$match(thiz, args);
+				if (!result.isNone()) {
+					return (Integer) result.result;
+				} else {
+					return invoke(thiz, args);
 				}
-			});
-		} catch (NoSuchMethodException e) {
-			throw new NoSuchMethodError(e.getMessage());
-		}
+			}
+		});
 	}
 
 }

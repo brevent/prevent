@@ -5,7 +5,6 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
@@ -123,8 +122,8 @@ public class Hook {
 		}
 	}
 
-	public static void beforeActivity$onCreate(Activity activity) {
-		Intent intent = activity.getIntent();
+	public static void beforeActivity$onCreate(Activity thiz, Object... args) {
+		Intent intent = thiz.getIntent();
 		android.util.Log.d(TAG, "before onCreate: " + intent + ", count: " + count.get());
 		count.set(count.get() + 1);
 		reloadPackagesIfNeeded();
@@ -138,9 +137,9 @@ public class Hook {
 		}
 	}
 
-	public static void afterActivity$onDestroy(Activity activity) {
+	public static void afterActivity$onDestroy(Activity thiz, Object... args) {
 		count.set(count.get() - 1);
-		Intent intent = activity.getIntent();
+		Intent intent = thiz.getIntent();
 		android.util.Log.d(TAG, "after onDestroy: " + intent + ", count: " + count.get());
 		reloadPackagesIfNeeded();
 		String packageName = intent.getComponent().getPackageName();
@@ -153,7 +152,8 @@ public class Hook {
 		}
 	}
 
-	public static Result hookIntentFilter$match(IntentFilter thiz, String action, Set<String> categories) {
+	public static Result hookIntentFilter$match(IntentFilter thiz, Object... args) {
+		String action = (String) args[0];
 		if (ACTION_HOOK.equals(action)) {
 			PreventPackages.ensureDirectory();
 			return new Result(int.class, -IntentFilter.NO_MATCH_ACTION);
@@ -176,7 +176,7 @@ public class Hook {
 		try {
 			component = field.get(thiz);
 		} catch (IllegalAccessException e) {
-			throw new IllegalAccessError(e.getMessage());
+			return Result.None;
 		}
 
 		// component.owner
@@ -219,7 +219,7 @@ public class Hook {
 
 		reloadPackagesIfNeeded();
 		if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-			android.util.Log.d(TAG, "disallow " + packageName + ", action: " + action + ", categories: " + categories);
+			android.util.Log.d(TAG, "disallow " + packageName + ", action: " + action);
 			return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
 		}
 		return Result.None;

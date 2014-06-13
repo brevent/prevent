@@ -21,13 +21,13 @@ public class XposedMod implements IXposedHookZygoteInit {
 		XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {
 			@Override
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				Hook.beforeActivity$onCreate((Activity) param.thisObject);
+				Hook.beforeActivity$onCreate((Activity) param.thisObject, param.args);
 			}
 		});
 		XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new XC_MethodHook() {
 			@Override
 			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-				Hook.afterActivity$onDestroy((Activity) param.thisObject);
+				Hook.afterActivity$onDestroy((Activity) param.thisObject, param.args);
 			}
 		});
 
@@ -35,8 +35,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 		XposedHelpers.findAndHookMethod(IntentFilter.class, "match", String.class, String.class, String.class, Uri.class, Set.class, String.class, new XC_MethodHook() {
 			@Override
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				@SuppressWarnings("unchecked")
-				Hook.Result result = (Hook.Result) Hook.hookIntentFilter$match((IntentFilter) param.thisObject, (String) param.args[0], (Set<String>) param.args[4]);
+				Hook.Result result = (Hook.Result) Hook.hookIntentFilter$match((IntentFilter) param.thisObject, param.args);
 				if (!result.isNone()) {
 					param.setResult(result.result);
 				}
