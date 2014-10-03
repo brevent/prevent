@@ -10,7 +10,9 @@ public class PackageReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction()) && !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+		if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+			// replacing
+		} else if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction())) {
 			savePackage(intent.getData().getSchemeSpecificPart(), false);
 		} else if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())) {
 			String pkgName = intent.getData().getSchemeSpecificPart();
