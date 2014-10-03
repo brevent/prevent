@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import android.net.Uri;
@@ -122,6 +123,8 @@ public class Hook {
 		}
 	};
 
+	private static ThreadLocal<Activity> context = new ThreadLocal<Activity>();
+
 	public static void initPackages() {
 		Map<String, Boolean> packages = PreventPackages.load();
 		if (packages.containsValue(Boolean.FALSE)) {
@@ -143,6 +146,7 @@ public class Hook {
 		if (!preventPackages.containsKey(packageName)) {
 			return;
 		}
+		context.set(thiz);
 		if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
 			preventPackages.put(packageName, Boolean.FALSE);
 			savePackages("beforeActivity$onCreate");
@@ -157,6 +161,9 @@ public class Hook {
 		String packageName = intent.getComponent().getPackageName();
 		if (!preventPackages.containsKey(packageName)) {
 			return;
+		}
+		if (count.get() == 0) {
+			context.remove();
 		}
 		if (count.get() == 0 && Boolean.FALSE.equals(preventPackages.get(packageName))) {
 			preventPackages.put(packageName, Boolean.TRUE);
@@ -314,6 +321,16 @@ public class Hook {
 
 	public static boolean isHookEnabled() {
 		return new IntentFilter().match(ACTION_HOOK, null, null, null, null, null) == -IntentFilter.NO_MATCH_ACTION;
+	}
+
+	public static void stopSelf(int pid) {
+		Activity activity = context.get();
+		if (activity != null) {
+			Log.d(TAG, "Process.killProcess(self) is called in activity");
+			activity.finish();
+			Uri uri = Uri.fromParts("package", activity.getPackageName(), String.valueOf(System.currentTimeMillis()));
+			activity.sendBroadcast(new Intent(ACTION_FORCESTOP, uri));
+		}
 	}
 
 }

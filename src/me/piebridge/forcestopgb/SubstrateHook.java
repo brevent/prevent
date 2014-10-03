@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Process;
 
 import com.saurik.substrate.MS;
 
@@ -18,6 +19,7 @@ public class SubstrateHook extends Hook {
 			hookActivity$onCreate();
 			hookActivity$onDestroy();
 			hookIntentFilter$match();
+			hookProcess$killProcess();
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 		}
@@ -77,6 +79,20 @@ public class SubstrateHook extends Hook {
 				} else {
 					return invoke(thiz, args);
 				}
+			}
+		});
+	}
+
+	private static void hookProcess$killProcess() throws NoSuchMethodException {
+		Method Process$killProcess = Process.class.getMethod("killProcess", int.class);
+		MS.hookMethod(Process.class, Process$killProcess,  new MS.MethodAlteration<Process, Void>() {
+			@Override
+			public Void invoked(Process thiz, Object... args) throws Throwable {
+				int pid = (Integer) args[0];
+				if (Process.myPid() == pid) {
+					Hook.stopSelf(pid);
+				}
+				return invoke(thiz, args);
 			}
 		});
 	}

@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Process;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
@@ -42,6 +43,16 @@ public class XposedMod implements IXposedHookZygoteInit {
 			}
 		});
 		// @formatter:on
+
+		XposedHelpers.findAndHookMethod(Process.class, "killProcess", int.class, new XC_MethodHook() {
+			@Override
+			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+				int pid = (Integer) param.args[0];
+				if (Process.myPid() == pid) {
+					Hook.stopSelf(pid);
+				}
+			}
+		});
 	}
 
 }
