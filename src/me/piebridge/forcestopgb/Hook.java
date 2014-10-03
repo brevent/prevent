@@ -6,11 +6,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.net.Uri;
+import android.os.Build;
+import android.os.Process;
+import android.os.RemoteException;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
+import android.app.ActivityManagerNative;
 import android.appwidget.AppWidgetManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.util.Log;
 import android.view.inputmethod.InputMethod;
 
 public class Hook {
@@ -18,12 +27,15 @@ public class Hook {
 	public static final String TAG = Hook.class.getPackage().getName();
 
 	private static final String ACTION_HOOK = TAG + ".HOOK";
+	private static final String ACTION_FORCESTOP = TAG + ".FORCESTOP";
 
 	public static final String ACTION_XPOSED_SECTION = "de.robv.android.xposed.installer.OPEN_SECTION";
 
 	public static final int FLAG_ACTIVITY_LAUNCHER = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED;
 
 	private static long lastModified;
+
+	private static Map<String, Long> forceStopPackages = new HashMap<String, Long>();
 
 	private static Map<String, Boolean> preventPackages;
 
@@ -149,6 +161,32 @@ public class Hook {
 		if (count.get() == 0 && Boolean.FALSE.equals(preventPackages.get(packageName))) {
 			preventPackages.put(packageName, Boolean.TRUE);
 			savePackages("afterActivity$onDestroy");
+			forceStopPackage(thiz, packageName);
+		}
+	}
+
+	private static void forceStopPackage(Context context, String packageName) {
+		final ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		for (RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
+			if (service.service.getPackageName().equals(packageName)) {
+				context.sendBroadcast(new Intent(ACTION_FORCESTOP, Uri.fromParts("package", packageName, String.valueOf(System.currentTimeMillis()))));
+				break;
+			}
+		}
+	}
+
+	private static void forceStopPackage(String packageName) {
+		try {
+			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
+				ActivityManagerNative.getDefault().forceStopPackage(packageName, Process.myUid());
+			} else {
+				ActivityManagerNative.getDefault().forceStopPackage(packageName);
+			}
+			android.util.Log.d(TAG, "forceStopPackage " + packageName);
+		} catch (RuntimeException e) {
+			Log.e(TAG, "forceStopPackage", e);
+		} catch (RemoteException e) {
+			Log.e(TAG, "forceStopPackage", e);
 		}
 	}
 
@@ -157,7 +195,30 @@ public class Hook {
 		if (ACTION_HOOK.equals(action)) {
 			PreventPackages.ensureDirectory();
 			return new Result(int.class, -IntentFilter.NO_MATCH_ACTION);
+		} else if (ACTION_FORCESTOP.equals(action)) {
+			Uri data = (Uri) args[3];
+			if (data != null) {
+				final String ssp = data.getSchemeSpecificPart();
+				Long fragment = Long.parseLong(data.getFragment());
+				Long time = forceStopPackages.get(ssp);
+				if (time == null || time < fragment) {
+					forceStopPackages.put(ssp, fragment);
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								Thread.sleep(250);
+							} catch (InterruptedException e) {
+							}
+							Log.d(TAG, "force-stop " + ssp);
+							forceStopPackage(ssp);
+						}
+					}).run();
+				}
+			}
+			return Result.None;
 		}
+
 		if (InputMethod.SERVICE_INTERFACE.equals(action)) {
 			// input method
 			return Result.None;
