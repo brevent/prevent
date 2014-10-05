@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import android.net.Uri;
@@ -323,13 +322,14 @@ public class Hook {
 		return new IntentFilter().match(ACTION_HOOK, null, null, null, null, null) == -IntentFilter.NO_MATCH_ACTION;
 	}
 
-	public static void stopSelf(int pid) {
+	public static boolean stopSelf(int pid) {
 		Activity activity = context.get();
 		if (activity != null) {
 			Log.d(TAG, "Process.killProcess(self) is called in activity");
 			activity.finish();
-			Uri uri = Uri.fromParts("package", activity.getPackageName(), String.valueOf(System.currentTimeMillis()));
-			activity.sendBroadcast(new Intent(ACTION_FORCESTOP, uri));
+			return true;
+		} else {
+			return false;
 		}
 	}
 

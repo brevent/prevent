@@ -89,10 +89,11 @@ public class SubstrateHook extends Hook {
 			@Override
 			public Void invoked(Process thiz, Object... args) throws Throwable {
 				int pid = (Integer) args[0];
-				if (Process.myPid() == pid) {
-					Hook.stopSelf(pid);
+				if (Process.myPid() == pid && Hook.stopSelf(pid)) {
+					return null;
+				} else {
+					return invoke(thiz, args);
 				}
-				return invoke(thiz, args);
 			}
 		});
 	}

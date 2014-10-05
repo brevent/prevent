@@ -48,8 +48,8 @@ public class XposedMod implements IXposedHookZygoteInit {
 			@Override
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 				int pid = (Integer) param.args[0];
-				if (Process.myPid() == pid) {
-					Hook.stopSelf(pid);
+				if (Process.myPid() == pid && Hook.stopSelf(pid)) {
+					param.setResult(null);
 				}
 			}
 		});
