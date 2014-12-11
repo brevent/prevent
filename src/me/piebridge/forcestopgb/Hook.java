@@ -6,10 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.net.Uri;
-import android.os.Build;
-import android.os.Process;
-import android.os.RemoteException;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
@@ -19,6 +15,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.net.Uri;
+import android.os.Build;
+import android.os.RemoteException;
+import android.os.UserHandle;
 import android.util.Log;
 import android.view.inputmethod.InputMethod;
 
@@ -175,7 +175,7 @@ public class Hook {
 		final ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 		for (RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
 			if (service.service.getPackageName().equals(packageName)) {
-				context.sendBroadcast(new Intent(ACTION_FORCESTOP, Uri.fromParts("package", packageName, String.valueOf(System.currentTimeMillis()))));
+				context.sendBroadcast(getStopIntent(packageName));
 				break;
 			}
 		}
@@ -184,7 +184,7 @@ public class Hook {
 	private static void forceStopPackage(String packageName) {
 		try {
 			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
-				ActivityManagerNative.getDefault().forceStopPackage(packageName, Process.myUid());
+				ActivityManagerNative.getDefault().forceStopPackage(packageName, UserHandle.myUserId());
 			} else {
 				ActivityManagerNative.getDefault().forceStopPackage(packageName);
 			}
@@ -326,11 +326,15 @@ public class Hook {
 		Activity activity = context.get();
 		if (activity != null) {
 			Log.d(TAG, "Process.killProcess(self) is called in activity");
-			activity.finish();
-			return true;
+			activity.sendBroadcast(getStopIntent(activity.getPackageName()));
+			return false;
 		} else {
 			return false;
 		}
 	}
 
+	private static Intent getStopIntent(String packageName) {
+		Uri uri = Uri.fromParts("package", packageName, String.valueOf(System.currentTimeMillis()));
+		return new Intent(ACTION_FORCESTOP, uri);
+	}
 }
