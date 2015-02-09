@@ -25,6 +25,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 				Hook.beforeActivity$onCreate((Activity) param.thisObject, param.args);
 			}
 		});
+
 		XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new XC_MethodHook() {
 			@Override
 			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -38,7 +39,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 				Hook.Result result = (Hook.Result) Hook.hookIntentFilter$match((IntentFilter) param.thisObject, param.args);
 				if (!result.isNone()) {
-					param.setResult(result.result);
+					param.setResult(result.getResult());
 				}
 			}
 		});
@@ -53,6 +54,14 @@ public class XposedMod implements IXposedHookZygoteInit {
 				}
 			}
 		});
+
+		XposedHelpers.findAndHookMethod(Activity.class, "moveTaskToBack", boolean.class, new XC_MethodHook() {
+			@Override
+			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+				Hook.afterActivity$moveTaskToBack((Activity) param.thisObject, (Boolean) param.getResult());
+			}
+		});
+
 	}
 
 }

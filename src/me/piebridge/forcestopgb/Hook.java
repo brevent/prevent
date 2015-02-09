@@ -5,6 +5,10 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -19,23 +23,28 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.os.Process;
 import android.util.Log;
 import android.view.inputmethod.InputMethod;
 
 public class Hook {
 
-	public static final String TAG = Hook.class.getPackage().getName();
+	public static final String PACKAGE_NAME = "me.piebridge.forcestopgb";
 
-	private static final String ACTION_HOOK = TAG + ".HOOK";
-	private static final String ACTION_FORCESTOP = TAG + ".FORCESTOP";
+	public static final String TAG = PACKAGE_NAME;
+
+	private static final String ACTION_PREFIX = TAG;
+	private static final String ACTION_HOOK = ACTION_PREFIX + ".HOOK";
+	private static final int ACTION_HOOK_ENABLED = -IntentFilter.NO_MATCH_ACTION;
+	private static final String ACTION_FORCESTOP = ACTION_PREFIX + ".FORCESTOP";
+	private static final String ACTION_COUNTER_INCREASE = ACTION_PREFIX + ".COUNTER_INCREASE";
+	private static final String ACTION_COUNTER_DECREASE = ACTION_PREFIX + ".COUNTER_DECREASE";
 
 	public static final String ACTION_XPOSED_SECTION = "de.robv.android.xposed.installer.OPEN_SECTION";
 
 	public static final int FLAG_ACTIVITY_LAUNCHER = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED;
 
 	private static long lastModified;
-
-	private static Map<String, Long> forceStopPackages = new HashMap<String, Long>();
 
 	private static Map<String, Boolean> preventPackages;
 
@@ -49,8 +58,8 @@ public class Hook {
 		}
 	}
 
-	private static void savePackages(String suffix) {
-		lastModified = PreventPackages.save(preventPackages, suffix);
+	private static void savePackages() {
+		lastModified = PreventPackages.save(preventPackages);
 	}
 
 	private static Field getField(Class<?> clazz, boolean canPrivate, String name) {
@@ -115,10 +124,10 @@ public class Hook {
 		return false;
 	}
 
-	private static ThreadLocal<Integer> count = new ThreadLocal<Integer>() {
+	private static ThreadLocal<AtomicInteger> counter = new ThreadLocal<AtomicInteger>() {
 		@Override
-		protected Integer initialValue() {
-			return 0;
+		protected AtomicInteger initialValue() {
+			return new AtomicInteger(0);
 		}
 	};
 
@@ -132,41 +141,64 @@ public class Hook {
 					packages.put(key, Boolean.TRUE);
 				}
 			}
-			PreventPackages.save(packages, "initPackages");
+			PreventPackages.save(packages);
 		}
 	}
 
+	private static boolean isLauncher(Intent intent) {
+		if (intent == null) {
+			return false;
+		}
+		if (!Intent.ACTION_MAIN.equals(intent.getAction())) {
+			return false;
+		}
+		Set<String> categories = intent.getCategories();
+		if (categories == null) {
+			return false;
+		}
+		if (!categories.contains(Intent.CATEGORY_INFO) && !categories.contains(Intent.CATEGORY_LAUNCHER)) {
+			return false;
+		}
+		if ((intent.getFlags() & (Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)) == 0) {
+			return false;
+		}
+		Log.d(TAG, "intent " + intent + " is launched by launcher");
+		return true;
+	}
+
 	public static void beforeActivity$onCreate(Activity thiz, Object... args) {
+		int count = counter.get().incrementAndGet();
 		Intent intent = thiz.getIntent();
-		android.util.Log.d(TAG, "before onCreate: " + intent + ", count: " + count.get());
-		count.set(count.get() + 1);
+		android.util.Log.d(TAG, "after onCreate: " + intent + ", count: " + count);
 		reloadPackagesIfNeeded();
-		String packageName = intent.getComponent().getPackageName();
+		String packageName = thiz.getPackageName();
+		thiz.sendBroadcast(new Intent(ACTION_COUNTER_INCREASE, Uri.fromParts("package", packageName, isLauncher(intent) ? String.valueOf(count) : null)));
 		if (!preventPackages.containsKey(packageName)) {
 			return;
 		}
 		context.set(thiz);
 		if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
 			preventPackages.put(packageName, Boolean.FALSE);
-			savePackages("beforeActivity$onCreate");
+			savePackages();
 		}
 	}
 
 	public static void afterActivity$onDestroy(Activity thiz, Object... args) {
-		count.set(count.get() - 1);
+		int count = counter.get().decrementAndGet();
 		Intent intent = thiz.getIntent();
-		android.util.Log.d(TAG, "after onDestroy: " + intent + ", count: " + count.get());
+		android.util.Log.d(TAG, "after onDestroy: " + intent + ", count: " + count);
 		reloadPackagesIfNeeded();
-		String packageName = intent.getComponent().getPackageName();
+		String packageName = thiz.getPackageName();
+		thiz.sendBroadcast(new Intent(ACTION_COUNTER_DECREASE, Uri.fromParts("package", packageName, null)));
 		if (!preventPackages.containsKey(packageName)) {
 			return;
 		}
-		if (count.get() == 0) {
+		if (count == 0) {
 			context.remove();
 		}
-		if (count.get() == 0 && Boolean.FALSE.equals(preventPackages.get(packageName))) {
+		if (count == 0 && Boolean.FALSE.equals(preventPackages.get(packageName))) {
 			preventPackages.put(packageName, Boolean.TRUE);
-			savePackages("afterActivity$onDestroy");
+			savePackages();
 			forceStopPackage(thiz, packageName);
 		}
 	}
@@ -188,41 +220,31 @@ public class Hook {
 			} else {
 				ActivityManagerNative.getDefault().forceStopPackage(packageName);
 			}
-			android.util.Log.d(TAG, "forceStopPackage " + packageName);
+			android.util.Log.i(TAG, "forceStopPackage " + packageName);
 		} catch (RuntimeException e) {
 			Log.e(TAG, "forceStopPackage", e);
 		} catch (RemoteException e) {
 			Log.e(TAG, "forceStopPackage", e);
 		}
+		reloadPackagesIfNeeded();
+		if (!preventPackages.containsKey(packageName)) {
+			return;
+		}
+		if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+			preventPackages.put(packageName, Boolean.TRUE);
+			savePackages();
+		}
 	}
+
+	private static Map<String, AtomicInteger> packageCounters = new HashMap<String, AtomicInteger>();
+
+	private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
 
 	public static Result hookIntentFilter$match(IntentFilter thiz, Object... args) {
 		String action = (String) args[0];
 		if (ACTION_HOOK.equals(action)) {
 			PreventPackages.ensureDirectory();
-			return new Result(int.class, -IntentFilter.NO_MATCH_ACTION);
-		} else if (ACTION_FORCESTOP.equals(action)) {
-			Uri data = (Uri) args[3];
-			if (data != null) {
-				final String ssp = data.getSchemeSpecificPart();
-				Long fragment = Long.parseLong(data.getFragment());
-				Long time = forceStopPackages.get(ssp);
-				if (time == null || time < fragment) {
-					forceStopPackages.put(ssp, fragment);
-					new Thread(new Runnable() {
-						@Override
-						public void run() {
-							try {
-								Thread.sleep(250);
-							} catch (InterruptedException e) {
-							}
-							Log.d(TAG, "force-stop " + ssp);
-							forceStopPackage(ssp);
-						}
-					}).run();
-				}
-			}
-			return Result.None;
+			return new Result(int.class, ACTION_HOOK_ENABLED);
 		}
 
 		if (InputMethod.SERVICE_INTERFACE.equals(action)) {
@@ -251,6 +273,48 @@ public class Hook {
 
 		// component.owner.packageName
 		String packageName = (String) getObjectField(owner, "packageName");
+
+		if (action.startsWith(ACTION_PREFIX)) {
+			if (!PACKAGE_NAME.equals(packageName) || Process.myUid() != 1000) {
+				return Result.None;
+			}
+			Uri data = (Uri) args[3];
+			String ssp = null;
+			int count = -1;
+			if (data != null) {
+				ssp = data.getSchemeSpecificPart();
+				if (ssp != null && !packageCounters.containsKey(ssp)) {
+					packageCounters.put(ssp, new AtomicInteger());
+				}
+			}
+			if (ssp == null) {
+			} else if (ACTION_COUNTER_INCREASE.equals(action)) {
+				if (data.getFragment() != null) {
+					count = Integer.parseInt(data.getFragment());
+					packageCounters.get(ssp).set(count);
+				} else {
+					count = packageCounters.get(ssp).incrementAndGet();
+				}
+			} else if (ACTION_COUNTER_DECREASE.equals(action)) {
+				count = packageCounters.get(ssp).decrementAndGet();
+			} else if (ACTION_FORCESTOP.equals(action)) {
+				count = 0;
+				final String stopPackageName = ssp;
+				packageCounters.get(ssp).set(0);
+				executor.schedule(new Runnable() {
+					@Override
+					public void run() {
+						Log.d(TAG, "force-stop " + stopPackageName + ", counter: " + packageCounters.get(stopPackageName).get());
+						if (packageCounters.get(stopPackageName).get() == 0) {
+							Log.i(TAG, "force-stop " + stopPackageName);
+							forceStopPackage(stopPackageName);
+						}
+					}
+				}, 400, TimeUnit.MILLISECONDS);
+			}
+			android.util.Log.d(TAG, "action: " + action + ", counter: " + count);
+			return Result.None;
+		}
 
 		// component.owner.applicationInfo
 		ApplicationInfo applicationInfo = (ApplicationInfo) getObjectField(owner, "applicationInfo");
@@ -294,8 +358,8 @@ public class Hook {
 
 	public static class Result {
 		public static final Result None = new Result();
-		public Class<?> type;
-		public Object result;
+		private Class<?> type;
+		private Object result;
 
 		private Result() {
 			type = Void.class;
@@ -316,16 +380,20 @@ public class Hook {
 		public boolean isNone() {
 			return Void.class.equals(this.type);
 		}
+
+		public Object getResult() {
+			return result;
+		}
 	}
 
 	public static boolean isHookEnabled() {
-		return new IntentFilter().match(ACTION_HOOK, null, null, null, null, null) == -IntentFilter.NO_MATCH_ACTION;
+		return new IntentFilter().match(ACTION_HOOK, null, null, null, null, null) == ACTION_HOOK_ENABLED;
 	}
 
 	public static boolean stopSelf(int pid) {
 		Activity activity = context.get();
 		if (activity != null) {
-			Log.d(TAG, "Process.killProcess(self) is called in activity");
+			Log.w(TAG, "Process.killProcess(self) is called in activity");
 			activity.sendBroadcast(getStopIntent(activity.getPackageName()));
 			return false;
 		} else {
@@ -336,5 +404,15 @@ public class Hook {
 	private static Intent getStopIntent(String packageName) {
 		Uri uri = Uri.fromParts("package", packageName, String.valueOf(System.currentTimeMillis()));
 		return new Intent(ACTION_FORCESTOP, uri);
+	}
+
+	public static void afterActivity$moveTaskToBack(Activity thiz, Boolean result) {
+		if (Boolean.TRUE.equals(result)) {
+            try {
+                Activity.class.getMethod("finish").invoke(thiz);
+            } catch (Exception e) {
+                Log.e(TAG, "call finish", e);
+            }
+		}
 	}
 }

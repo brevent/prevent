@@ -11,13 +11,14 @@ import android.os.Process;
 
 import com.saurik.substrate.MS;
 
-public class SubstrateHook extends Hook {
+public class SubstrateHook {
 
 	public static void initialize() {
 		try {
 			hookSystemServer$main();
 			hookActivity$onCreate();
 			hookActivity$onDestroy();
+			hookActivity$moveTaskToBack();
 			hookIntentFilter$match();
 			hookProcess$killProcess();
 		} catch (NoSuchMethodException e) {
@@ -50,7 +51,7 @@ public class SubstrateHook extends Hook {
 		MS.hookMethod(Activity.class, Activity$onCreate, new MS.MethodAlteration<Activity, Void>() {
 			@Override
 			public Void invoked(Activity thiz, Object... args) throws Throwable {
-				beforeActivity$onCreate(thiz, args);
+				Hook.beforeActivity$onCreate(thiz, args);
 				return invoke(thiz, args);
 			}
 		});
@@ -62,8 +63,20 @@ public class SubstrateHook extends Hook {
 			@Override
 			public Void invoked(Activity thiz, Object... args) throws Throwable {
 				invoke(thiz, args);
-				afterActivity$onDestroy(thiz, args);
+				Hook.afterActivity$onDestroy(thiz, args);
 				return null;
+			}
+		});
+	}
+
+	private static void hookActivity$moveTaskToBack() throws NoSuchMethodException {
+		Method Activity$moveTaskToBack = Activity.class.getDeclaredMethod("moveTaskToBack", boolean.class);
+		MS.hookMethod(Activity.class, Activity$moveTaskToBack, new MS.MethodAlteration<Activity, Boolean>() {
+			@Override
+			public Boolean invoked(Activity thiz, Object... args) throws Throwable {
+				Boolean result = invoke(thiz, args);
+				Hook.afterActivity$moveTaskToBack(thiz, result);
+				return result;
 			}
 		});
 	}
@@ -73,9 +86,9 @@ public class SubstrateHook extends Hook {
 		MS.hookMethod(IntentFilter.class, IntentFilter$match, new MS.MethodAlteration<IntentFilter, Integer>() {
 			@Override
 			public Integer invoked(IntentFilter thiz, Object... args) throws Throwable {
-				Hook.Result result = hookIntentFilter$match(thiz, args);
+				Hook.Result result = Hook.hookIntentFilter$match(thiz, args);
 				if (!result.isNone()) {
-					return (Integer) result.result;
+					return (Integer) result.getResult();
 				} else {
 					return invoke(thiz, args);
 				}

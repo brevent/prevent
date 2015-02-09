@@ -26,10 +26,10 @@ public class PackageReceiver extends BroadcastReceiver {
 		Map<String, Boolean> packages = PreventPackages.load();
 		if (added && !packages.containsKey(pkgName)) {
 			packages.put(pkgName, Boolean.TRUE);
-			PreventPackages.save(packages, "PackageReceiver");
+			PreventPackages.save(packages);
 		} else if (!added && packages.containsKey(pkgName)) {
 			packages.remove(pkgName);
-			PreventPackages.save(packages, "PackageReceiver");
+			PreventPackages.save(packages);
 		}
 	}
 }

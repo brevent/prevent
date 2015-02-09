@@ -263,7 +263,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 				preventPackages.remove(packageName);
 			}
 		}
-		PreventPackages.save(preventPackages, "Activity");
+		PreventPackages.save(preventPackages);
 		refreshIfNeeded(false);
 	}
 
@@ -304,7 +304,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 					}
 				}
 			}
-			PreventPackages.save(preventPackages, "Activity");
+			PreventPackages.save(preventPackages);
 			break;
 		case R.id.remove:
 			synchronized (packageLock) {
@@ -312,7 +312,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 					preventPackages.remove(packageName);
 				}
 			}
-			PreventPackages.save(preventPackages, "Activity");
+			PreventPackages.save(preventPackages);
 			break;
 		default:
 			return;

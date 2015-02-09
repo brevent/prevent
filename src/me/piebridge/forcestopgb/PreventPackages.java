@@ -18,10 +18,11 @@ public class PreventPackages {
 	public static final String DATADIR = "/data/data";
 	public static final String FORCESTOP = DATADIR + "/" + PreventPackages.class.getPackage().getName() + "/conf/forcestop.list";
 
-	public static synchronized long save(Map<String, Boolean> packages, String suffix) {
+	public static synchronized long save(Map<String, Boolean> packages) {
 		try {
+            String suffix = ".lock";
 			File file = new File(FORCESTOP + suffix);
-			while (file.exists() && System.currentTimeMillis() - file.lastModified() > 3000) {
+			while (file.exists() && System.currentTimeMillis() - file.lastModified() < 3000) {
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -89,7 +90,7 @@ public class PreventPackages {
 				confdir.delete();
 			}
 			confdir.mkdir();
-			save(new HashMap<String, Boolean>(), "ensureDirectory");
+			save(new HashMap<String, Boolean>());
 		}
 		FileUtils.setPermissions(confdir.getAbsolutePath(), 0777, -1, -1);
 	}
