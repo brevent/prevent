@@ -8,28 +8,28 @@ import android.content.Intent;
 
 public class PackageReceiver extends BroadcastReceiver {
 
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
-			// replacing
-		} else if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction())) {
-			savePackage(intent.getData().getSchemeSpecificPart(), false);
-		} else if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())) {
-			String pkgName = intent.getData().getSchemeSpecificPart();
-			if (context.getPackageManager().getLaunchIntentForPackage(pkgName) != null) {
-				savePackage(pkgName, true);
-			}
-		}
-	}
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+            // replacing
+        } else if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction())) {
+            savePackage(intent.getData().getSchemeSpecificPart(), false);
+        } else if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())) {
+            String pkgName = intent.getData().getSchemeSpecificPart();
+            if (context.getPackageManager().getLaunchIntentForPackage(pkgName) != null) {
+                savePackage(pkgName, true);
+            }
+        }
+    }
 
-	private void savePackage(String pkgName, boolean added) {
-		Map<String, Boolean> packages = PreventPackages.load();
-		if (added && !packages.containsKey(pkgName)) {
-			packages.put(pkgName, Boolean.TRUE);
-			PreventPackages.save(packages);
-		} else if (!added && packages.containsKey(pkgName)) {
-			packages.remove(pkgName);
-			PreventPackages.save(packages);
-		}
-	}
+    private void savePackage(String pkgName, boolean added) {
+        Map<String, Boolean> packages = PreventPackages.load();
+        if (added && !packages.containsKey(pkgName)) {
+            packages.put(pkgName, Boolean.TRUE);
+            PreventPackages.save(packages);
+        } else if (!added && packages.containsKey(pkgName)) {
+            packages.remove(pkgName);
+            PreventPackages.save(packages);
+        }
+    }
 }

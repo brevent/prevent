@@ -9,41 +9,41 @@ import android.content.pm.PackageManager;
 
 public class SettingFragmentApplications extends SettingFragment {
 
-	@Override
-	protected Set<String> getPackageNames(SettingActivity activity) {
-		Set<String> names = new HashSet<String>();
-		PackageManager pm = activity.getPackageManager();
-		for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
-			ApplicationInfo appInfo = pkgInfo.applicationInfo;
-			if (appInfo == null) {
-				continue;
-			}
-			if (!appInfo.enabled) {
-				continue;
-			}
-			if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 && pm.getLaunchIntentForPackage(appInfo.packageName) == null) {
-				continue;
-			}
-			names.add(appInfo.packageName);
-		}
-		return names;
-	}
+    @Override
+    protected Set<String> getPackageNames(SettingActivity activity) {
+        Set<String> names = new HashSet<String>();
+        PackageManager pm = activity.getPackageManager();
+        for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
+            ApplicationInfo appInfo = pkgInfo.applicationInfo;
+            if (appInfo == null) {
+                continue;
+            }
+            if (!appInfo.enabled) {
+                continue;
+            }
+            if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 && pm.getLaunchIntentForPackage(appInfo.packageName) == null) {
+                continue;
+            }
+            names.add(appInfo.packageName);
+        }
+        return names;
+    }
 
-	@Override
-	protected boolean canUseCache() {
-		return false;
-	}
+    @Override
+    protected boolean canUseCache() {
+        return false;
+    }
 
-	private static Position position;
+    private static Position position;
 
-	@Override
-	protected void setListPosition(Position _position) {
-		position = _position;
-	}
+    @Override
+    protected void setListPosition(Position _position) {
+        position = _position;
+    }
 
-	@Override
-	protected Position getListPosition() {
-		return position;
-	}
+    @Override
+    protected Position getListPosition() {
+        return position;
+    }
 
 }
