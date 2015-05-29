@@ -20,7 +20,7 @@ public class SubstrateHook {
             hookActivity$onCreate();
             hookActivity$onDestroy();
             hookActivity$moveTaskToBack();
-            hookActivity$startActivity();
+            hookActivity$startActivityForResult();
             hookIntentFilter$match();
             hookProcess$killProcess();
         } catch (NoSuchMethodException e) {
@@ -72,7 +72,7 @@ public class SubstrateHook {
     }
 
     private static void hookActivity$moveTaskToBack() throws NoSuchMethodException {
-        Method Activity$moveTaskToBack = Activity.class.getDeclaredMethod("moveTaskToBack", boolean.class);
+        Method Activity$moveTaskToBack = Activity.class.getMethod("moveTaskToBack", boolean.class);
         MS.hookMethod(Activity.class, Activity$moveTaskToBack, new MS.MethodAlteration<Activity, Boolean>() {
             @Override
             public Boolean invoked(Activity thiz, Object... args) throws Throwable {
@@ -83,9 +83,9 @@ public class SubstrateHook {
         });
     }
 
-    private static void hookActivity$startActivity() throws NoSuchMethodException {
-        Method Activity$startActivity = Activity.class.getDeclaredMethod("startActivity", Intent.class);
-        MS.hookMethod(Activity.class, Activity$startActivity, new MS.MethodAlteration<Activity, Void>() {
+    private static void hookActivity$startActivityForResult() throws NoSuchMethodException {
+        Method Activity$startActivityForResult = Activity.class.getMethod("startActivityForResult", Intent.class, int.class, Bundle.class);
+        MS.hookMethod(Activity.class, Activity$startActivityForResult, new MS.MethodAlteration<Activity, Void>() {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {
                 Intent intent = (Intent) args[0];
