@@ -69,7 +69,8 @@ public class XposedMod implements IXposedHookZygoteInit {
                 Intent intent = (Intent) param.args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
                     param.setResult(null);
-                    Hook.forceStopActivity((Activity) param.thisObject);
+                    android.util.Log.w(Hook.TAG, "call Home startActivityForResult: " + intent);
+                    Hook.forceStopActivityIfNeeded((Activity) param.thisObject);
                 }
             }
         });

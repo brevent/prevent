@@ -353,8 +353,8 @@ public abstract class SettingFragment extends ListFragment {
                                 }
                             }
                             applications.add(new AppInfo(name, label, running.get(name)).flags(info.flags));
-                        } catch (NameNotFoundException e) {
-                            e.printStackTrace();
+                        } catch (NameNotFoundException e) { // NOSONAR
+                            // do nothing
                         }
                     }
                     return applications;

@@ -90,7 +90,7 @@ public class SubstrateHook {
             public Void invoked(Activity thiz, Object... args) throws Throwable {
                 Intent intent = (Intent) args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    Hook.forceStopActivity(thiz);
+                    Hook.forceStopActivityIfNeeded(thiz);
                     return null;
                 } else {
                     return invoke(thiz, args);
