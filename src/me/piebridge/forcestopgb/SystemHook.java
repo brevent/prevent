@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.inputmethod.InputMethod;
 
 import java.io.BufferedInputStream;
@@ -42,6 +43,9 @@ public class SystemHook {
     protected static final String ACTION_FORCESTOP = ACTION_PREFIX + ".FORCESTOP";
     protected static final String ACTION_COUNTER_INCREASE = ACTION_PREFIX + ".COUNTER_INCREASE";
     protected static final String ACTION_COUNTER_DECREASE = ACTION_PREFIX + ".COUNTER_DECREASE";
+    protected static final String ACTION_MOVE_TASK_TO_BACK = ACTION_PREFIX + ".MOVE_TASK_TO_BACK";
+    protected static final String ACTION_START_HOME_ACTIVITY = ACTION_PREFIX + ".START_HOME_ACTIVITY";
+    protected static final String ACTION_SAVE_PACKAGE = ACTION_PREFIX + ".SAVE_PACKAGE";
 
     private static long lastModified;
 
@@ -52,6 +56,12 @@ public class SystemHook {
     private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new HashMap<String, HashMap<Integer, AtomicInteger>>();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
+
+    private static int lastKeyCode;
+
+    public static void onKeyPressed(int keyCode) {
+        lastKeyCode = keyCode;
+    }
 
     public static Result hookIntentFilter$match(IntentFilter thiz, Object... args) {
         String action = (String) args[0];
@@ -159,10 +169,10 @@ public class SystemHook {
         return count;
     }
 
-    private static boolean checkPid(int pid, String ssp) {
+    private static String getPackage(int pid) {
         File file = new File(new File("/proc", String.valueOf(pid)), "cmdline");
         if (!file.isFile() || !file.canRead()) {
-            return false;
+            return null;
         }
 
         try {
@@ -177,11 +187,14 @@ public class SystemHook {
             } finally {
                 is.close();
             }
-            return os.toString().trim().equals(ssp);
+            return os.toString().trim();
         } catch (IOException e) {
-            return true;
+            return null;
         }
+    }
 
+    private static boolean checkPid(int pid, String ssp) {
+        return ssp.equals(getPackage(pid));
     }
 
     private static void hookAsSystem(Object[] args) {
@@ -190,8 +203,9 @@ public class SystemHook {
         String ssp = null;
         int pid = 0;
         int count = -1;
+        String fragment = null;
         if (data != null) {
-            String fragment = data.getFragment();
+            fragment = data.getFragment();
             ssp = data.getSchemeSpecificPart();
             // max pid should be 65535
             if (fragment != null && fragment.length() < 6 && TextUtils.isDigitsOnly(fragment)) {
@@ -224,15 +238,32 @@ public class SystemHook {
             }
             count = countCounter(ssp);
             reloadPackagesIfNeeded();
-            if (count == 0 && Boolean.FALSE.equals(preventPackages.get(ssp))) {
-                preventPackages.put(ssp, Boolean.TRUE);
-                savePackages();
+            if (count == 0 && preventPackages.containsKey(ssp)) {
+                if (Boolean.FALSE.equals(preventPackages.get(ssp))) {
+                    preventPackages.put(ssp, Boolean.TRUE);
+                    savePackages();
+                }
                 forceStopPackageIfNeeded(ssp);
             }
+        } else if (ACTION_SAVE_PACKAGE.equals(action)) {
+            count = countCounter(ssp);
+            savePackage(ssp, Boolean.parseBoolean(fragment));
         } else if (ACTION_FORCESTOP.equals(action)) {
             count = 0;
             packageCounters.get(ssp).clear();
             forceStopPackage(ssp);
+        } else if (ACTION_MOVE_TASK_TO_BACK.equals(action) || ACTION_START_HOME_ACTIVITY.equals(action)) {
+            if (lastKeyCode == KeyEvent.KEYCODE_BACK) {
+                reloadPackagesIfNeeded();
+                if (preventPackages.containsKey(ssp)) {
+                    count = 0;
+                    packageCounters.get(ssp).clear();
+                    forceStopPackage(ssp);
+                }
+            }
+            if (count == -1) {
+                count = countCounter(ssp);
+            }
         }
         android.util.Log.d(TAG, "action: " + action + ", package: " + ssp + ", counter: " + count);
     }
@@ -304,10 +335,8 @@ public class SystemHook {
         if (!preventPackages.containsKey(packageName)) {
             return;
         }
-        if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
-            preventPackages.put(packageName, Boolean.TRUE);
-            savePackages();
-        }
+        preventPackages.put(packageName, Boolean.TRUE);
+        savePackages();
     }
 
     private static void reloadPackagesIfNeeded() {
@@ -320,6 +349,31 @@ public class SystemHook {
 
     private static void savePackages() {
         lastModified = PreventPackages.save(preventPackages);
+    }
+
+    public static void initPackages() {
+        boolean changed = false;
+        Map<String, Boolean> packages = PreventPackages.load();
+        for (String key : packages.keySet()) {
+            if (!packages.get(key)) {
+                changed = true;
+                packages.put(key, Boolean.TRUE);
+            }
+        }
+        if (changed) {
+            PreventPackages.save(packages);
+        }
+    }
+
+    private static void savePackage(String pkgName, boolean added) {
+        reloadPackagesIfNeeded();
+        if (added && !preventPackages.containsKey(pkgName)) {
+            preventPackages.put(pkgName, Boolean.TRUE);
+            savePackages();
+        } else if (!added && preventPackages.containsKey(pkgName)) {
+            preventPackages.remove(pkgName);
+            savePackages();
+        }
     }
 
     private static Field getField(Class<?> clazz, boolean canPrivate, String name) {

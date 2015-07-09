@@ -11,35 +11,7 @@ import java.util.Map;
 
 public class Hook extends SystemHook {
 
-    private static long lastModified;
-
-    private static Map<String, Boolean> preventPackages;
-
     private static ThreadLocal<Activity> context = new ThreadLocal<Activity>();
-
-    private static void reloadPackagesIfNeeded() {
-        long time = PreventPackages.lastModified();
-        if (time > lastModified || preventPackages == null) {
-            lastModified = time;
-            preventPackages = PreventPackages.load();
-        }
-    }
-
-    private static void savePackages() {
-        lastModified = PreventPackages.save(preventPackages);
-    }
-
-    public static void initPackages() {
-        Map<String, Boolean> packages = PreventPackages.load();
-        if (packages.containsValue(Boolean.FALSE)) {
-            for (String key : packages.keySet()) {
-                if (!packages.get(key)) {
-                    packages.put(key, Boolean.TRUE);
-                }
-            }
-            PreventPackages.save(packages);
-        }
-    }
 
     public static void beforeActivity$onCreate(Activity thiz, Object... args) {
         String packageName = thiz.getPackageName();
@@ -62,28 +34,11 @@ public class Hook extends SystemHook {
         Activity activity = context.get();
         if (activity != null) {
             Log.w(TAG, "Process.killProcess(self) is called in activity");
-            forceStopActivityIfNeeded(activity);
+            String packageName = activity.getPackageName();
+            activity.sendBroadcast(new Intent(ACTION_FORCESTOP, Uri.fromParts("package", packageName, null)));
         }
         context.remove();
         return false;
-    }
-
-    private static Intent getStopIntent(String packageName) {
-        Uri uri = Uri.fromParts("package", packageName, String.valueOf(System.currentTimeMillis()));
-        return new Intent(ACTION_FORCESTOP, uri);
-    }
-
-    public static void forceStopActivityIfNeeded(Activity thiz) {
-        reloadPackagesIfNeeded();
-        String packageName = thiz.getPackageName();
-        if (!preventPackages.containsKey(packageName)) {
-            return;
-        }
-        if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
-            preventPackages.put(packageName, Boolean.TRUE);
-            savePackages();
-            thiz.sendBroadcast(getStopIntent(thiz.getPackageName()));
-        }
     }
 
     public static void afterActivity$moveTaskToBack(Activity thiz, Boolean result) {
@@ -91,7 +46,13 @@ public class Hook extends SystemHook {
         android.util.Log.d(TAG, "moveTaskToBack: " + intent + ", result: " + result);
         if (Boolean.TRUE.equals(result)) {
             android.util.Log.d(TAG, "after moveTaskToBack: " + intent);
-            forceStopActivityIfNeeded(thiz);
+            String packageName = thiz.getPackageName();
+            thiz.sendBroadcast(new Intent(ACTION_MOVE_TASK_TO_BACK, Uri.fromParts("package", packageName, null)));
         }
+    }
+
+    public static void beforeActivity$startHomeActivityForResult(Activity thiz) {
+        String packageName = thiz.getPackageName();
+        thiz.sendBroadcast(new Intent(ACTION_START_HOME_ACTIVITY, Uri.fromParts("package", packageName, null)));
     }
 }

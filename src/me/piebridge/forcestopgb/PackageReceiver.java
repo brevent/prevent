@@ -5,6 +5,7 @@ import java.util.Map;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 
 public class PackageReceiver extends BroadcastReceiver {
 
@@ -13,23 +14,16 @@ public class PackageReceiver extends BroadcastReceiver {
         if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
             // replacing
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction())) {
-            savePackage(intent.getData().getSchemeSpecificPart(), false);
+            savePackage(context, intent.getData().getSchemeSpecificPart(), false);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())) {
             String pkgName = intent.getData().getSchemeSpecificPart();
             if (context.getPackageManager().getLaunchIntentForPackage(pkgName) != null) {
-                savePackage(pkgName, true);
+                savePackage(context, pkgName, true);
             }
         }
     }
 
-    private void savePackage(String pkgName, boolean added) {
-        Map<String, Boolean> packages = PreventPackages.load();
-        if (added && !packages.containsKey(pkgName)) {
-            packages.put(pkgName, Boolean.TRUE);
-            PreventPackages.save(packages);
-        } else if (!added && packages.containsKey(pkgName)) {
-            packages.remove(pkgName);
-            PreventPackages.save(packages);
-        }
+    private void savePackage(Context context, String pkgName, boolean added) {
+        context.sendBroadcast(new Intent(SystemHook.ACTION_SAVE_PACKAGE, Uri.fromParts("package", pkgName, String.valueOf(added))));
     }
 }

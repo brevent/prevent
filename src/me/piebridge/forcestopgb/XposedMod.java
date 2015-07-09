@@ -8,16 +8,18 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
+import android.view.KeyEvent;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class XposedMod implements IXposedHookZygoteInit {
 
     @Override
     public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
-        Hook.initPackages();
+        SystemHook.initPackages();
 
         // dynamic maintain force stopped package
         XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {
@@ -68,10 +70,24 @@ public class XposedMod implements IXposedHookZygoteInit {
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Intent intent = (Intent) param.args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    param.setResult(null);
                     android.util.Log.w(Hook.TAG, "call Home startActivityForResult: " + intent);
-                    Hook.forceStopActivityIfNeeded((Activity) param.thisObject);
+                    Hook.beforeActivity$startHomeActivityForResult((Activity) param.thisObject);
                 }
+            }
+        });
+
+        Class<?> PhoneWindowManager = Class.forName("com.android.internal.policy.impl.PhoneWindowManager");
+        XposedBridge.hookAllMethods(PhoneWindowManager, "interceptKeyBeforeQueueing", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                int keyCode;
+                if (param.args.length == 3) {
+                    KeyEvent event = (KeyEvent) param.args[0];
+                    keyCode = event.getKeyCode();
+                } else {
+                    keyCode = (Integer) param.args[3];
+                }
+                SystemHook.onKeyPressed(keyCode);
             }
         });
     }

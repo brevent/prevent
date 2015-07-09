@@ -37,7 +37,7 @@ public class SubstrateHook {
                     MS.hookMethod(SystemServer, SystemServer$main, new MS.MethodAlteration<Object, Void>() {
                         @Override
                         public Void invoked(Object thiz, Object... args) throws Throwable {
-                            Hook.initPackages();
+                            SystemHook.initPackages();
                             return invoke(thiz, args);
                         }
                     });
@@ -90,11 +90,9 @@ public class SubstrateHook {
             public Void invoked(Activity thiz, Object... args) throws Throwable {
                 Intent intent = (Intent) args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    Hook.forceStopActivityIfNeeded(thiz);
-                    return null;
-                } else {
-                    return invoke(thiz, args);
+                    Hook.beforeActivity$startHomeActivityForResult(thiz);
                 }
+                return invoke(thiz, args);
             }
         });
     }
