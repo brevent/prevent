@@ -98,23 +98,30 @@ public class SystemHook {
             hookAsSystem(args);
         }
 
-        // component.owner.activities
-        ArrayList<?> activities = (ArrayList<?>) getObjectField(owner, "activities");
         // component.owner.applicationInfo
         ApplicationInfo applicationInfo = (ApplicationInfo) getObjectField(owner, "applicationInfo");
+
+        // if the application is disabled, we do nothing
+        if (!applicationInfo.enabled) {
+            return Result.None;
+        }
+
+        // component.owner.providers
+        ArrayList<?> providers = (ArrayList<?>) getObjectField(owner, "providers");
+        if (providers.contains(component)) {
+            // we don't filter providers
+            return Result.None;
+        }
+
+        // component.owner.activities
+        ArrayList<?> activities = (ArrayList<?>) getObjectField(owner, "activities");
         if ((applicationInfo.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) {
             if (systemPackages.get(packageName) == null) {
                 systemPackages.put(packageName, hasLauncher(activities));
             }
-            // component.owner.providers
-            ArrayList<?> providers = (ArrayList<?>) getObjectField(owner, "providers");
-            if (providers.contains(component)) {
-                // we don't filter providers for system package
-                return Result.None;
-            }
         }
         if (activities.contains(component)) {
-            // we don't filter activities, otherwise, activity cannot be open directory
+            // we don't filter activities, otherwise cannot start activity
             return Result.None;
         }
 
