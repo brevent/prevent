@@ -231,18 +231,8 @@ public class SystemHook {
             }
         } else if (ACTION_FORCESTOP.equals(action)) {
             count = 0;
-            final String stopPackageName = ssp;
             packageCounters.get(ssp).clear();
-            executor.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    int counter = countCounter(stopPackageName);
-                    Log.d(TAG, "force-stop " + stopPackageName + ", counter: " + counter);
-                    if (counter == 0) {
-                        forceStopPackage(stopPackageName);
-                    }
-                }
-            }, 800, TimeUnit.MILLISECONDS);
+            forceStopPackage(ssp);
         }
         android.util.Log.d(TAG, "action: " + action + ", package: " + ssp + ", counter: " + count);
     }
@@ -286,7 +276,20 @@ public class SystemHook {
         return activityManager;
     }
 
-    private static void forceStopPackage(String packageName) {
+    private static void forceStopPackage(final String packageName) {
+        executor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                int counter = countCounter(packageName);
+                Log.d(TAG, "force-stop " + packageName + ", counter: " + counter);
+                if (counter == 0) {
+                    forceStopPackageNative(packageName);
+                }
+            }
+        }, 800, TimeUnit.MILLISECONDS);
+    }
+
+    private static void forceStopPackageNative(String packageName) {
         try {
             Method method = ActivityManager.class.getDeclaredMethod("forceStopPackage", String.class);
             method.setAccessible(true);
