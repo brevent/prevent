@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,7 +61,7 @@ public class SystemHook {
 
     private static Map<String, Integer> uids = new HashMap<String, Integer>();
 
-    private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new HashMap<String, HashMap<Integer, AtomicInteger>>();
+    private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, HashMap<Integer, AtomicInteger>>();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
 
@@ -180,7 +181,7 @@ public class SystemHook {
         }
         reloadPackagesIfNeeded();
         if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-            android.util.Log.d(TAG, "disallow " + packageName + ", action: " + action);
+            android.util.Log.v(TAG, "disallow " + packageName + ", action: " + action);
             return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
         }
         return Result.None;
@@ -293,14 +294,13 @@ public class SystemHook {
             count = savePackage(ssp, false, fragment);
         } else if (ACTION_FORCESTOP.equals(action)) {
             count = 0;
-            packageCounters.get(ssp).clear();
-            forceStopPackage(ssp);
+            forceStopPackageLater(ssp);
         } else if (ACTION_MOVE_TASK_TO_BACK.equals(action) || ACTION_START_HOME_ACTIVITY.equals(action)) {
             reloadPackagesIfNeeded();
             if (preventPackages.containsKey(ssp)) {
                 count = 0;
                 packageCounters.get(ssp).clear();
-                forceStopPackage(ssp);
+                forceStopPackageIfNeeded(ssp);
             } else {
                 count = countCounter(ssp);
             }
@@ -328,7 +328,29 @@ public class SystemHook {
         return false;
     }
 
-    private static void forceStopPackageIfNeeded(String packageName) {
+    private static void forceStopPackageIfNeeded(final String packageName) {
+        executor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                checkAndForceStopPackage(packageName);
+            }
+        }, 800, TimeUnit.MICROSECONDS);
+    }
+
+    private static void forceStopPackageLater(final String packageName) {
+        executor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                int count = countCounter(packageName);
+                if (count != 0) {
+                    packageCounters.get(packageName).clear();
+                    forceStopPackage(packageName);
+                }
+            }
+        }, 800, TimeUnit.MICROSECONDS);
+    }
+
+    private static void checkAndForceStopPackage(String packageName) {
         for (ActivityManager.RunningServiceInfo service : newActivityManagerIfNeeded().getRunningServices(Integer.MAX_VALUE)) {
             if (service.service.getPackageName().equals(packageName)) {
                 forceStopPackage(packageName);
@@ -360,16 +382,7 @@ public class SystemHook {
             preventPackages.put(packageName, Boolean.TRUE);
             savePackages();
         }
-        executor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                int counter = countCounter(packageName);
-                Log.d(TAG, "force-stop " + packageName + ", counter: " + counter);
-                if (counter == 0) {
-                    forceStopPackageNative(packageName);
-                }
-            }
-        }, 800, TimeUnit.MILLISECONDS);
+        forceStopPackageNative(packageName);
         killNoFather(packageName);
     }
 
@@ -378,18 +391,12 @@ public class SystemHook {
             Method method = ActivityManager.class.getDeclaredMethod("forceStopPackage", String.class);
             method.setAccessible(true);
             method.invoke(newActivityManagerIfNeeded(), packageName);
-            android.util.Log.i(TAG, "forceStopPackage " + packageName);
+            android.util.Log.i(TAG, "finish forceStopPackage " + packageName);
         } catch (RuntimeException e) {
             Log.e(TAG, "forceStopPackage", e);
         } catch (Exception e) {
             Log.e(TAG, "forceStopPackage", e);
         }
-        reloadPackagesIfNeeded();
-        if (!preventPackages.containsKey(packageName)) {
-            return;
-        }
-        preventPackages.put(packageName, Boolean.TRUE);
-        savePackages();
     }
 
     private static void reloadPackagesIfNeeded() {
@@ -441,7 +448,11 @@ public class SystemHook {
         if (uid == null) {
             return false;
         } else {
-            killNoFather(uid);
+            try {
+                killNoFather(uid);
+            } catch (Throwable t) {
+                Log.d(TAG, "cannot killNoFather for " + uid, t);
+            }
             return true;
         }
     }
