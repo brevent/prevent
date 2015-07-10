@@ -33,7 +33,11 @@ public class Hook extends SystemHook {
     public static boolean stopSelf(int pid) {
         Activity activity = context.get();
         if (activity != null) {
-            Log.w(TAG, "Process.killProcess(self) is called in activity");
+            if (pid != -1) {
+                Log.w(TAG, "Process.killProcess(self) is called in activity");
+            } else {
+                Log.w(TAG, "System.exit is called in activity");
+            }
             String packageName = activity.getPackageName();
             activity.sendBroadcast(new Intent(ACTION_FORCESTOP, Uri.fromParts("package", packageName, null)));
         }

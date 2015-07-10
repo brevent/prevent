@@ -125,6 +125,14 @@ public class SubstrateHook {
                 }
             }
         });
+        Method System$exit = System.class.getMethod("exit", int.class);
+        MS.hookMethod(Process.class, System$exit, new MS.MethodAlteration<System, Void>() {
+            @Override
+            public Void invoked(System thiz, Object... args) throws Throwable {
+                Hook.stopSelf(-1);
+                return null;
+            }
+        });
     }
 
 }

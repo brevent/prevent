@@ -58,6 +58,14 @@ public class XposedMod implements IXposedHookZygoteInit {
             }
         });
 
+        XposedHelpers.findAndHookMethod(System.class, "exit", int.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                Hook.stopSelf(-1);
+                param.setResult(null);
+            }
+        });
+
         XposedHelpers.findAndHookMethod(Activity.class, "moveTaskToBack", boolean.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {

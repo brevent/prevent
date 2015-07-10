@@ -308,6 +308,11 @@ public class SystemHook {
     }
 
     private static void forceStopPackage(final String packageName) {
+        reloadPackagesIfNeeded();
+        if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+            preventPackages.put(packageName, Boolean.TRUE);
+            savePackages();
+        }
         executor.schedule(new Runnable() {
             @Override
             public void run() {
