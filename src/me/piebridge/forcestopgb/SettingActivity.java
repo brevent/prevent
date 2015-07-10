@@ -4,6 +4,7 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,307 +34,314 @@ import android.support.v4.view.ViewPager;
 
 public class SettingActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
-	private ViewPager mPager;
-	private String[] mPageTitles;
-	private List<AbstractSet<String>> mPageSelections;;
-	private PagerAdapter mPagerAdapter;
-	private Object runningLock = new Object();
-	private Object packageLock = new Object();
-	private Map<String, Boolean> preventPackages;
-	private Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
-	private Button remove;
-	private Button cancel;
-	private Button prevent;
+    private ViewPager mPager;
+    private String[] mPageTitles;
+    private List<AbstractSet<String>> mPageSelections;
 
-	private static final int APPLICATIONS = 0;
-	private static final int PREVENTLIST = 1;
+    private final Object runningLock = new Object();
+    private final Object packageLock = new Object();
+    private Map<String, Boolean> preventPackages;
+    private Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
+    private Button remove;
+    private Button cancel;
+    private Button prevent;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-		setTheme(THEME_LIGHT.equals(sp.getString(THEME, THEME_LIGHT)) ? R.style.light : R.style.dark);
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
-		mPager = (ViewPager) findViewById(R.id.pager);
-		mPageTitles = new String[] { getString(R.string.applications), getString(R.string.preventlist) };
-		mPageSelections = new ArrayList<AbstractSet<String>>();
-		mPageSelections.add(new HashSet<String>());
-		mPageSelections.add(new HashSet<String>());
-		mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
-		mPager.setAdapter(mPagerAdapter);
-		mPager.setOnPageChangeListener(this);
-		remove = (Button) findViewById(R.id.remove);
-		cancel = (Button) findViewById(R.id.cancel);
-		prevent = (Button) findViewById(R.id.prevent);
-		cancel.setOnClickListener(this);
-		remove.setOnClickListener(this);
-		prevent.setOnClickListener(this);
-		cancel.setEnabled(false);
-		prevent.setEnabled(false);
-		remove.setEnabled(false);
-	}
+    private static final int APPLICATIONS = 0;
+    private static final int PREVENTLIST = 1;
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		getPreventPackages();
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				synchronized (runningLock) {
-					retrieveRunningProcesses();
-				}
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-				}
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						getPreventPackages();
-						refresh();
-					}
-				});
-			}
-		}).start();
-	}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        setTheme(THEME_LIGHT.equals(sp.getString(THEME, THEME_LIGHT)) ? R.style.light : R.style.dark);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        mPager = (ViewPager) findViewById(R.id.pager);
+        mPageTitles = new String[]{getString(R.string.applications), getString(R.string.preventlist)};
+        mPageSelections = new ArrayList<AbstractSet<String>>();
+        mPageSelections.add(new HashSet<String>());
+        mPageSelections.add(new HashSet<String>());
+        PagerAdapter mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
+        mPager.setAdapter(mPagerAdapter);
+        mPager.setOnPageChangeListener(this);
+        remove = (Button) findViewById(R.id.remove);
+        cancel = (Button) findViewById(R.id.cancel);
+        prevent = (Button) findViewById(R.id.prevent);
+        cancel.setOnClickListener(this);
+        remove.setOnClickListener(this);
+        prevent.setOnClickListener(this);
+        cancel.setEnabled(false);
+        prevent.setEnabled(false);
+        remove.setEnabled(false);
+    }
 
-	private class ScreenSlidePagerAdapter extends FragmentPagerAdapter {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getPreventPackages();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (runningLock) {
+                    retrieveRunningProcesses();
+                }
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException e) {
+                    // do nothing
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getPreventPackages();
+                        refresh();
+                    }
+                });
+            }
+        }).start();
+    }
 
-		public ScreenSlidePagerAdapter(FragmentManager fm) {
-			super(fm);
-		}
+    private class ScreenSlidePagerAdapter extends FragmentPagerAdapter {
 
-		@Override
-		public Fragment getItem(int position) {
-			switch (position) {
-			case APPLICATIONS:
-				return new SettingFragmentApplications();
-			case PREVENTLIST:
-				return new SettingFragmentPreventList();
-			default:
-				return null;
-			}
-		}
+        public ScreenSlidePagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
 
-		@Override
-		public int getCount() {
-			return mPageTitles.length;
-		}
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case APPLICATIONS:
+                    return new SettingFragmentApplications();
+                case PREVENTLIST:
+                    return new SettingFragmentPreventList();
+                default:
+                    return null;
+            }
+        }
 
-		@Override
-		public CharSequence getPageTitle(int position) {
-			return mPageTitles[position];
-		}
-	}
+        @Override
+        public int getCount() {
+            return mPageTitles.length;
+        }
 
-	private void retrieveRunningProcesses() {
-		running.clear();
-		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-		List<RunningAppProcessInfo> processes = manager.getRunningAppProcesses();
-		for (RunningAppProcessInfo process : processes) {
-			for (String pkg : process.pkgList) {
-				if (running.containsKey(pkg)) {
-					running.get(pkg).add(process.importance);
-				} else {
-					Set<Integer> importance = new HashSet<Integer>();
-					importance.add(process.importance);
-					running.put(pkg, importance);
-				}
-			}
-		}
-	}
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mPageTitles[position];
+        }
+    }
 
-	public Map<String, Set<Integer>> getRunningProcesses() {
-		synchronized (runningLock) {
-			return running;
-		}
-	}
+    private void retrieveRunningProcesses() {
+        running.clear();
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        List<RunningAppProcessInfo> processes = manager.getRunningAppProcesses();
+        for (RunningAppProcessInfo process : processes) {
+            for (String pkg : process.pkgList) {
+                if (running.containsKey(pkg)) {
+                    running.get(pkg).add(process.importance);
+                } else {
+                    Set<Integer> importance = new HashSet<Integer>();
+                    importance.add(process.importance);
+                    running.put(pkg, importance);
+                }
+            }
+        }
+    }
 
-	private long mtime;
-	public Map<String, Boolean> getPreventPackages() {
-		synchronized (packageLock) {
-			long time = PreventPackages.lastModified();
-			if (preventPackages == null || mtime < time) {
-				preventPackages = PreventPackages.load();
-				mtime = time;
-			}
-			return preventPackages;
-		}
-	}
+    public Map<String, Set<Integer>> getRunningProcesses() {
+        synchronized (runningLock) {
+            return running;
+        }
+    }
 
-	@Override
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.clear();
-		MenuItem item = menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
-			item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-		}
-		return super.onCreateOptionsMenu(menu);
-	}
+    private long mtime;
 
-	private static final String THEME = "theme";
-	private static final String THEME_LIGHT = "light";
-	private static final String THEME_DARK = "dark";
+    public Map<String, Boolean> getPreventPackages() {
+        synchronized (packageLock) {
+            long time = PreventPackages.lastModified();
+            if (preventPackages == null || mtime < time) {
+                preventPackages = PreventPackages.load();
+                mtime = time;
+            }
+            return preventPackages;
+        }
+    }
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.string.switch_theme:
-			final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-			String theme = sp.getString(THEME, THEME_LIGHT);
-			if (THEME_LIGHT.equals(theme)) {
-				sp.edit().putString(THEME, THEME_DARK).commit();
-			} else {
-				sp.edit().putString(THEME, THEME_LIGHT).commit();
-			}
-			RecreateUtil.recreate(this);
-			return true;
-		default:
-			return false;
-		}
-	}
+    @Override
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.clear();
+        MenuItem item = menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        }
+        return super.onCreateOptionsMenu(menu);
+    }
 
-	@Override
-	public void onPageScrollStateChanged(int position) {
-	}
+    private static final String THEME = "theme";
+    private static final String THEME_LIGHT = "light";
+    private static final String THEME_DARK = "dark";
 
-	@Override
-	public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-		if (positionOffset == 0) {
-			checkSelection(position);
-		}
-	}
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.string.switch_theme:
+                final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                String theme = sp.getString(THEME, THEME_LIGHT);
+                if (THEME_LIGHT.equals(theme)) {
+                    sp.edit().putString(THEME, THEME_DARK).apply();
+                } else {
+                    sp.edit().putString(THEME, THEME_LIGHT).apply();
+                }
+                RecreateUtil.recreate(this);
+                return true;
+            default:
+                return false;
+        }
+    }
 
-	@Override
-	public void onPageSelected(int position) {
-		checkSelection(position);
-	}
+    @Override
+    public void onPageScrollStateChanged(int position) {
+    }
 
-	public Set<String> getSelection() {
-		return mPageSelections.get(mPager.getCurrentItem());
-	}
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+        if (positionOffset == 0) {
+            checkSelection(position);
+        }
+    }
 
-	public void checkSelection() {
-		checkSelection(mPager.getCurrentItem());
-	}
+    @Override
+    public void onPageSelected(int position) {
+        checkSelection(position);
+    }
 
-	private void checkSelection(int position) {
-		if (position == APPLICATIONS) {
-			prevent.setVisibility(View.VISIBLE);
-			remove.setVisibility(View.GONE);
-		} else {
-			remove.setVisibility(View.VISIBLE);
-			prevent.setVisibility(View.GONE);
-		}
-		Set<String> selections = mPageSelections.get(position);
-		if (selections.size() > 0) {
-			cancel.setEnabled(true);
-			remove.setEnabled(true);
-			if (isSubSet(selections, getPreventPackages().keySet())) {
-				prevent.setEnabled(false);
-			} else {
-				prevent.setEnabled(true);
-			}
-		} else {
-			cancel.setEnabled(false);
-			prevent.setEnabled(false);
-			remove.setEnabled(false);
-		}
-	}
+    public Set<String> getSelection() {
+        return mPageSelections.get(mPager.getCurrentItem());
+    }
 
-	private boolean isSubSet(Set<String> a, Set<String> b) {
-		if (a.size() > b.size()) {
-			return false;
-		}
-		for (String s : a) {
-			if (!b.contains(s)) {
-				return false;
-			}
-		}
-		return true;
-	}
+    public void checkSelection() {
+        checkSelection(mPager.getCurrentItem());
+    }
 
-	public void changePrevent(String packageName, boolean prevent) {
-		synchronized (packageLock) {
-			if (prevent) {
-				preventPackages.put(packageName, !running.containsKey(packageName));
-			} else {
-				preventPackages.remove(packageName);
-			}
-		}
-		PreventPackages.save(preventPackages);
-		refreshIfNeeded(false);
-	}
+    private void checkSelection(int position) {
+        if (position == APPLICATIONS) {
+            prevent.setVisibility(View.VISIBLE);
+            remove.setVisibility(View.GONE);
+        } else {
+            remove.setVisibility(View.VISIBLE);
+            prevent.setVisibility(View.GONE);
+        }
+        Set<String> selections = mPageSelections.get(position);
+        if (selections.size() > 0) {
+            cancel.setEnabled(true);
+            remove.setEnabled(true);
+            if (isSubSet(selections, getPreventPackages().keySet())) {
+                prevent.setEnabled(false);
+            } else {
+                prevent.setEnabled(true);
+            }
+        } else {
+            cancel.setEnabled(false);
+            prevent.setEnabled(false);
+            remove.setEnabled(false);
+        }
+    }
 
-	private void refresh(int position, boolean force) {
-		SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, position);
-		fragment.refresh(force ? force : fragment.canUseCache());
-	}
+    private boolean isSubSet(Set<String> a, Set<String> b) {
+        if (a.size() > b.size()) {
+            return false;
+        }
+        for (String s : a) {
+            if (!b.contains(s)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-	private void refreshIfNeeded(boolean force) {
-		int position = mPager.getCurrentItem();
-		for (int item = 0; item < mPageTitles.length; ++item) {
-			if (item != position) {
-				refresh(item, force);
-			} else if (force) {
-				refresh(item, false);
-			}
-		}
-	}
+    public void changePrevent(String packageName, boolean prevent) {
+        String action = prevent ? SystemHook.ADD_PREVENT_PACKAGE : SystemHook.REMOVE_PREVENT_PACKAGE;
+        this.sendBroadcast(Hook.newIntent(action, packageName, null));
+        synchronized (packageLock) {
+            if (prevent) {
+                preventPackages.put(packageName, !running.containsKey(packageName));
+            } else {
+                preventPackages.remove(packageName);
+            }
+        }
+        refreshIfNeeded(false);
+    }
 
-	private void refresh() {
-		for (int item = 0; item < mPageTitles.length; ++item) {
-			refresh(item, true);
-		}
-	}
+    private void refresh(int position, boolean force) {
+        SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, position);
+        fragment.refresh(force || fragment.canUseCache());
+    }
 
-	@Override
-	public void onClick(View v) {
-		int position = mPager.getCurrentItem();
-		Set<String> selections = mPageSelections.get(position);
-		switch (v.getId()) {
-		case R.id.cancel:
-			break;
-		case R.id.prevent:
-			synchronized (packageLock) {
-				for (String packageName : selections) {
-					if (!preventPackages.containsKey(packageName)) {
-						preventPackages.put(packageName, !running.containsKey(packageName));
-					}
-				}
-			}
-			PreventPackages.save(preventPackages);
-			break;
-		case R.id.remove:
-			synchronized (packageLock) {
-				for (String packageName : selections) {
-					preventPackages.remove(packageName);
-				}
-			}
-			PreventPackages.save(preventPackages);
-			break;
-		default:
-			return;
-		}
-		selections.clear();
-		refreshIfNeeded(true);
-		checkSelection();
-	}
+    private void refreshIfNeeded(boolean force) {
+        int position = mPager.getCurrentItem();
+        for (int item = 0; item < mPageTitles.length; ++item) {
+            if (item != position) {
+                refresh(item, force);
+            } else if (force) {
+                refresh(item, false);
+            }
+        }
+    }
 
-	public int getColor(int colorId) {
-		return getResources().getColor(colorId);
-	}
+    private void refresh() {
+        for (int item = 0; item < mPageTitles.length; ++item) {
+            refresh(item, true);
+        }
+    }
 
-	public int getThemed(int resId) {
-		TypedValue tv = new TypedValue();
-		getTheme().resolveAttribute(resId, tv, true);
-		return tv.resourceId;
-	}
+    @Override
+    public void onClick(View v) {
+        int position = mPager.getCurrentItem();
+        Set<String> selections = mPageSelections.get(position);
+        switch (v.getId()) {
+            case R.id.cancel:
+                break;
+            case R.id.prevent:
+                synchronized (packageLock) {
+                    Iterator<String> it = selections.iterator();
+                    while (it.hasNext()) {
+                        String packageName = it.next();
+                        this.sendBroadcast(Hook.newIntent(SystemHook.ADD_PREVENT_PACKAGE, packageName, it.hasNext() ? SystemHook.DELAY_SAVE : null));
+                        if (!preventPackages.containsKey(packageName)) {
+                            preventPackages.put(packageName, !running.containsKey(packageName));
+                        }
+                    }
+                }
+                break;
+            case R.id.remove:
+                synchronized (packageLock) {
+                    Iterator<String> it = selections.iterator();
+                    while (it.hasNext()) {
+                        String packageName = it.next();
+                        this.sendBroadcast(Hook.newIntent(SystemHook.REMOVE_PREVENT_PACKAGE, packageName, it.hasNext() ? SystemHook.DELAY_SAVE : null));
+                        preventPackages.remove(packageName);
+                    }
+                }
+                break;
+            default:
+                return;
+        }
+        selections.clear();
+        refreshIfNeeded(true);
+        checkSelection();
+    }
 
-	public int getThemedColor(int resId) {
-		return getColor(getThemed(resId));
-	}
+    public int getColor(int colorId) {
+        return getResources().getColor(colorId);
+    }
+
+    public int getThemed(int resId) {
+        TypedValue tv = new TypedValue();
+        getTheme().resolveAttribute(resId, tv, true);
+        return tv.resourceId;
+    }
+
+    public int getThemedColor(int resId) {
+        return getColor(getThemed(resId));
+    }
 
 }

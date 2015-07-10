@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import android.os.FileUtils;
 
@@ -47,7 +48,7 @@ public class PreventPackages {
     }
 
     public static Map<String, Boolean> load() {
-        Map<String, Boolean> packages = new HashMap<String, Boolean>();
+        Map<String, Boolean> packages = new ConcurrentHashMap<String, Boolean>();
         try {
             String line;
             File file = new File(FORCESTOP);

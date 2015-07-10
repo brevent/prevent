@@ -1,18 +1,16 @@
 package me.piebridge.forcestopgb;
 
-import java.util.Set;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
-import android.view.KeyEvent;
+
+import java.util.Set;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class XposedMod implements IXposedHookZygoteInit {
@@ -40,7 +38,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedHelpers.findAndHookMethod(IntentFilter.class, "match", String.class, String.class, String.class, Uri.class, Set.class, String.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Hook.Result result = (Hook.Result) Hook.hookIntentFilter$match((IntentFilter) param.thisObject, param.args);
+                SystemHook.Result result = SystemHook.hookIntentFilter$match((IntentFilter) param.thisObject, param.args);
                 if (!result.isNone()) {
                     param.setResult(result.getResult());
                 }
@@ -78,24 +76,9 @@ public class XposedMod implements IXposedHookZygoteInit {
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Intent intent = (Intent) param.args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    android.util.Log.w(Hook.TAG, "call Home startActivityForResult: " + intent);
+                    android.util.Log.w(SystemHook.TAG, "call Home startActivityForResult: " + intent);
                     Hook.beforeActivity$startHomeActivityForResult((Activity) param.thisObject);
                 }
-            }
-        });
-
-        Class<?> PhoneWindowManager = Class.forName("com.android.internal.policy.impl.PhoneWindowManager");
-        XposedBridge.hookAllMethods(PhoneWindowManager, "interceptKeyBeforeQueueing", new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                int keyCode;
-                if (param.args.length == 3) {
-                    KeyEvent event = (KeyEvent) param.args[0];
-                    keyCode = event.getKeyCode();
-                } else {
-                    keyCode = (Integer) param.args[3];
-                }
-                SystemHook.onKeyPressed(keyCode);
             }
         });
     }

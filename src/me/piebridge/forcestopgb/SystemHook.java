@@ -7,10 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
+import android.os.FileUtils;
 import android.os.Handler;
+import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.inputmethod.InputMethod;
 
 import java.io.BufferedInputStream;
@@ -45,7 +46,11 @@ public class SystemHook {
     protected static final String ACTION_COUNTER_DECREASE = ACTION_PREFIX + ".COUNTER_DECREASE";
     protected static final String ACTION_MOVE_TASK_TO_BACK = ACTION_PREFIX + ".MOVE_TASK_TO_BACK";
     protected static final String ACTION_START_HOME_ACTIVITY = ACTION_PREFIX + ".START_HOME_ACTIVITY";
-    protected static final String ACTION_SAVE_PACKAGE = ACTION_PREFIX + ".SAVE_PACKAGE";
+    protected static final String REMOVE_PREVENT_PACKAGE = ACTION_PREFIX + ".REMOVE_PREVENT_PACKAGE";
+    protected static final String ADD_PREVENT_PACKAGE = ACTION_PREFIX + ".ADD_PREVENT_PACKAGE";
+    public static final String DELAY_SAVE = "delay";
+
+    private static final int SYSTEM_APP = ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
 
     private static long lastModified;
 
@@ -53,22 +58,35 @@ public class SystemHook {
 
     private static Map<String, Boolean> systemPackages = new HashMap<String, Boolean>();
 
+    private static Map<String, Integer> uids = new HashMap<String, Integer>();
+
     private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new HashMap<String, HashMap<Integer, AtomicInteger>>();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
 
-    private static int lastKeyCode;
-
-    public static void onKeyPressed(int keyCode) {
-        lastKeyCode = keyCode;
-    }
-
     public static Result hookIntentFilter$match(IntentFilter thiz, Object... args) {
         String action = (String) args[0];
+        if (action == null) {
+            return Result.None;
+        }
+
         if (ACTION_HOOK.equals(action)) {
             PreventPackages.ensureDirectory();
             return new Result(int.class, ACTION_HOOK_ENABLED);
         }
+
+        if (IntentFilter.class.equals(thiz.getClass())) {
+            return Result.None;
+        }
+
+        if (action.startsWith(ACTION_PREFIX)) {
+            if (isSystemHook()) {
+                hookAsSystem(args);
+            }
+            return Result.None;
+        }
+
+        android.util.Log.v(TAG, "action: " + action + ", filter: " + thiz);
 
         if (InputMethod.SERVICE_INTERFACE.equals(action)) {
             // input method
@@ -78,8 +96,15 @@ public class SystemHook {
             return Result.None;
         }
 
+        // for BroadcastIntentFilter
+        String packageName = (String) getObjectField(thiz, "packageName");
+        if (packageName != null) {
+            return disableBroadcastIntentIfNeeded(action, packageName);
+        }
+
         // thiz.activity or thiz.service or thiz.provider
-        Field field = getField(thiz.getClass(), "service", "activity", "provider");
+        // activity and receiver use the same ActivityIntentInfo
+        Field field = getField(thiz.getClass(), "activity", "service", "provider");
         if (field == null) {
             return Result.None;
         }
@@ -95,51 +120,64 @@ public class SystemHook {
         Object owner = getObjectField(component, "owner");
 
         // component.owner.packageName
-        String packageName = (String) getObjectField(owner, "packageName");
-
-        if (action != null && action.startsWith(ACTION_PREFIX)) {
-            if (isSystemHook(packageName)) {
-                hookAsSystem(args);
-            }
-            return Result.None;
-        }
+        packageName = (String) getObjectField(owner, "packageName");
 
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action) && isSystemHook(packageName)) {
             hookAsSystem(args);
+            return Result.None;
         }
 
         // component.owner.applicationInfo
-        ApplicationInfo applicationInfo = (ApplicationInfo) getObjectField(owner, "applicationInfo");
+        ApplicationInfo ai = (ApplicationInfo) getObjectField(owner, "applicationInfo");
 
-        // if the application is disabled, we do nothing
-        if (!applicationInfo.enabled) {
+        // component.owner.activities
+        ArrayList<?> activities = (ArrayList<?>) getObjectField(owner, "activities");
+        if (ai == null) {
+            // do nothing
+        } else if ((ai.flags & SYSTEM_APP) != 0) {
+            // system package
+            if (systemPackages.get(packageName) == null) {
+                systemPackages.put(packageName, hasLauncher(activities));
+            }
+        } else {
+            // normal package
+            if (!uids.containsKey(packageName) || uids.get(packageName) != ai.uid) {
+                Log.d(TAG, "package: " + packageName + ", uid: " + ai.uid);
+                uids.put(packageName, ai.uid);
+            }
+        }
+
+        if (activities != null && activities.contains(component)) {
+            // we don't filter activities, otherwise cannot start activity
             return Result.None;
         }
 
         // component.owner.providers
         ArrayList<?> providers = (ArrayList<?>) getObjectField(owner, "providers");
-        if (providers.contains(component)) {
+        if (providers != null && providers.contains(component)) {
             // we don't filter providers
             return Result.None;
         }
 
-        // component.owner.activities
-        ArrayList<?> activities = (ArrayList<?>) getObjectField(owner, "activities");
-        if ((applicationInfo.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) {
-            if (systemPackages.get(packageName) == null) {
-                systemPackages.put(packageName, hasLauncher(activities));
+        return disableIntentIfNotRunning(action, packageName);
+    }
+
+    private static Result disableBroadcastIntentIfNeeded(String action, String packageName) {
+        if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
+            if (!systemPackages.containsKey(packageName)) {
+                android.util.Log.d(TAG, "disallow " + packageName + ", action: " + action);
+                return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
             }
         }
-        if (activities.contains(component)) {
-            // we don't filter activities, otherwise cannot start activity
-            return Result.None;
-        }
 
+        return disableIntentIfNotRunning(action, packageName);
+    }
+
+    private static Result disableIntentIfNotRunning(String action, String packageName) {
         if (Boolean.FALSE.equals(systemPackages.get(packageName))) {
             // we don't filter system package has no launcher
             return Result.None;
         }
-
         reloadPackagesIfNeeded();
         if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
             android.util.Log.d(TAG, "disallow " + packageName + ", action: " + action);
@@ -148,8 +186,12 @@ public class SystemHook {
         return Result.None;
     }
 
+    private static boolean isSystemHook() {
+        return Process.myUid() == 1000;
+    }
+
     private static boolean isSystemHook(String packageName) {
-        return PACKAGE_NAME.equals(packageName) && android.os.Process.myUid() == 1000;
+        return PACKAGE_NAME.equals(packageName) && isSystemHook();
     }
 
     private static int countCounter(String ssp) {
@@ -159,7 +201,6 @@ public class SystemHook {
         while (iterator.hasNext()) {
             Map.Entry<Integer, AtomicInteger> entry = iterator.next();
             if (checkPid(entry.getKey(), ssp)) {
-                android.util.Log.d(TAG, "pid: " + entry.getKey() + ", count: " + entry.getValue());
                 count += entry.getValue().get();
             } else {
                 android.util.Log.d(TAG, "pid " + entry.getKey() + " is not for " + ssp);
@@ -197,7 +238,7 @@ public class SystemHook {
         return ssp.equals(getPackage(pid));
     }
 
-    private static void hookAsSystem(Object[] args) {
+    private static boolean hookAsSystem(Object[] args) {
         String action = (String) args[0];
         Uri data = (Uri) args[3];
         String ssp = null;
@@ -216,10 +257,11 @@ public class SystemHook {
             }
         }
         if (ssp == null) {
+            return false;
         } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             count = 0;
             packageCounters.get(ssp).clear();
-        } else if (pid != 0 && ACTION_COUNTER_INCREASE.equals(action)) {
+        } else if (ACTION_COUNTER_INCREASE.equals(action) && pid != 0) {
             if (!packageCounters.get(ssp).containsKey(pid)) {
                 packageCounters.get(ssp).put(pid, new AtomicInteger());
             }
@@ -230,7 +272,7 @@ public class SystemHook {
                 preventPackages.put(ssp, Boolean.FALSE);
                 savePackages();
             }
-        } else if (pid != 0 && ACTION_COUNTER_DECREASE.equals(action)) {
+        } else if (ACTION_COUNTER_DECREASE.equals(action) && pid != 0) {
             if (!packageCounters.get(ssp).containsKey(pid)) {
                 packageCounters.get(ssp).put(pid, new AtomicInteger());
             } else {
@@ -245,36 +287,40 @@ public class SystemHook {
                 }
                 forceStopPackageIfNeeded(ssp);
             }
-        } else if (ACTION_SAVE_PACKAGE.equals(action)) {
-            count = countCounter(ssp);
-            savePackage(ssp, Boolean.parseBoolean(fragment));
+        } else if (ADD_PREVENT_PACKAGE.equals(action)) {
+            count = savePackage(ssp, true, fragment);
+        } else if (REMOVE_PREVENT_PACKAGE.equals(action)) {
+            count = savePackage(ssp, false, fragment);
         } else if (ACTION_FORCESTOP.equals(action)) {
             count = 0;
             packageCounters.get(ssp).clear();
             forceStopPackage(ssp);
         } else if (ACTION_MOVE_TASK_TO_BACK.equals(action) || ACTION_START_HOME_ACTIVITY.equals(action)) {
-            if (lastKeyCode == KeyEvent.KEYCODE_BACK) {
-                reloadPackagesIfNeeded();
-                if (preventPackages.containsKey(ssp)) {
-                    count = 0;
-                    packageCounters.get(ssp).clear();
-                    forceStopPackage(ssp);
-                }
-            }
-            if (count == -1) {
+            reloadPackagesIfNeeded();
+            if (preventPackages.containsKey(ssp)) {
+                count = 0;
+                packageCounters.get(ssp).clear();
+                forceStopPackage(ssp);
+            } else {
                 count = countCounter(ssp);
             }
+        } else {
+            return false;
         }
         android.util.Log.d(TAG, "action: " + action + ", package: " + ssp + ", counter: " + count);
+        return true;
     }
 
     private static boolean hasLauncher(ArrayList<?> activities) {
         for (Object activity : activities) {
             @SuppressWarnings("unchecked")
             ArrayList<? extends IntentFilter> intents = (ArrayList<? extends IntentFilter>) getObjectField(activity, "intents");
+            if (intents == null) {
+                return false;
+            }
             for (IntentFilter intent : intents) {
                 if (intent.hasAction(Intent.ACTION_MAIN) && (intent.hasCategory(Intent.CATEGORY_INFO) || intent.hasCategory(Intent.CATEGORY_LAUNCHER))) {
-                    android.util.Log.d(TAG, "activity " + activity + " is launcher");
+                    android.util.Log.v(TAG, "activity " + activity + " is launcher");
                     return true;
                 }
             }
@@ -286,9 +332,10 @@ public class SystemHook {
         for (ActivityManager.RunningServiceInfo service : newActivityManagerIfNeeded().getRunningServices(Integer.MAX_VALUE)) {
             if (service.service.getPackageName().equals(packageName)) {
                 forceStopPackage(packageName);
-                break;
+                return;
             }
         }
+        killNoFather(packageName);
     }
 
     private static ActivityManager activityManager;
@@ -323,6 +370,7 @@ public class SystemHook {
                 }
             }
         }, 800, TimeUnit.MILLISECONDS);
+        killNoFather(packageName);
     }
 
     private static void forceStopPackageNative(String packageName) {
@@ -357,6 +405,7 @@ public class SystemHook {
     }
 
     public static void initPackages() {
+        android.util.Log.d(TAG, "initPackages");
         boolean changed = false;
         Map<String, Boolean> packages = PreventPackages.load();
         for (String key : packages.keySet()) {
@@ -370,14 +419,43 @@ public class SystemHook {
         }
     }
 
-    private static void savePackage(String pkgName, boolean added) {
+    private static int savePackage(String packageName, boolean added, String fragment) {
+        int count = countCounter(packageName);
         reloadPackagesIfNeeded();
-        if (added && !preventPackages.containsKey(pkgName)) {
-            preventPackages.put(pkgName, Boolean.TRUE);
-            savePackages();
-        } else if (!added && preventPackages.containsKey(pkgName)) {
-            preventPackages.remove(pkgName);
-            savePackages();
+        if (added && !preventPackages.containsKey(packageName)) {
+            preventPackages.put(packageName, count == 0);
+            if (!DELAY_SAVE.equals(fragment)) {
+                savePackages();
+            }
+        } else if (!added && preventPackages.containsKey(packageName)) {
+            preventPackages.remove(packageName);
+            if (!DELAY_SAVE.equals(fragment)) {
+                savePackages();
+            }
+        }
+        return count;
+    }
+
+    private static boolean killNoFather(String packageName) {
+        Integer uid = uids.get(packageName);
+        if (uid == null) {
+            return false;
+        } else {
+            killNoFather(uid);
+            return true;
+        }
+    }
+
+    private static void killNoFather(int uid) {
+        File proc = new File("/proc");
+        for (File file : proc.listFiles()) {
+            if (file.isDirectory() && TextUtils.isDigitsOnly(file.getName())) {
+                int pid = Integer.parseInt(file.getName());
+                if (FileUtils.getUid(file.getAbsolutePath()) == uid && Process.getParentPid(pid) == 1) {
+                    Process.killProcess(pid);
+                    Log.d(TAG, "kill " + pid + " without parent");
+                }
+            }
         }
     }
 
@@ -388,17 +466,15 @@ public class SystemHook {
         try {
             final Field field = clazz.getDeclaredField(name);
             boolean isPrivate = Modifier.isPrivate(field.getModifiers());
+            field.setAccessible(true);
             if (!isPrivate) {
                 return field;
             }
-            if (isPrivate && canPrivate) {
-                field.setAccessible(true);
+            if (canPrivate) {
                 return field;
             }
-            if (canPrivate) {
-                return clazz.getField(name);
-            }
         } catch (NoSuchFieldException e) {
+            // do nothing
         }
         return getField(clazz.getSuperclass(), false, name);
     }
@@ -423,6 +499,7 @@ public class SystemHook {
             try {
                 return field.get(object);
             } catch (IllegalAccessException e) {
+                Log.e(TAG, "field: " + field);
                 throw new IllegalAccessError(e.getMessage());
             }
         }

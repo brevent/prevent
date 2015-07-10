@@ -102,7 +102,7 @@ public class SubstrateHook {
         MS.hookMethod(IntentFilter.class, IntentFilter$match, new MS.MethodAlteration<IntentFilter, Integer>() {
             @Override
             public Integer invoked(IntentFilter thiz, Object... args) throws Throwable {
-                Hook.Result result = Hook.hookIntentFilter$match(thiz, args);
+                SystemHook.Result result = SystemHook.hookIntentFilter$match(thiz, args);
                 if (!result.isNone()) {
                     return (Integer) result.getResult();
                 } else {

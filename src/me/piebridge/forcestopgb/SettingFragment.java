@@ -224,8 +224,8 @@ public abstract class SettingFragment extends ListFragment {
         int flags;
         Drawable icon;
         String name = "";
-        String packageName = "";
-        Set<Integer> running = null;
+        String packageName;
+        Set<Integer> running;
 
         public AppInfo(String _packageName, String _name, Set<Integer> _running) {
             super();
@@ -257,7 +257,6 @@ public abstract class SettingFragment extends ListFragment {
     }
 
     static class ViewHolder {
-        boolean check;
         String label;
         String packageName;
         CheckBox checkView;
@@ -377,6 +376,7 @@ public abstract class SettingFragment extends ListFragment {
                             dialog.dismiss();
                         }
                     } catch (Exception e) {
+                        // do nothing
                     }
                 }
             }.execute();
@@ -441,6 +441,7 @@ public abstract class SettingFragment extends ListFragment {
                         try {
                             appInfo.icon = ((PackageManager) params[2]).getApplicationIcon(appInfo.packageName);
                         } catch (NameNotFoundException e) {
+                            // do nothing
                         }
                     }
                     holder.icon = appInfo.icon;
