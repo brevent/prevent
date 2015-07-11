@@ -21,5 +21,6 @@
     <string name="switch_theme">切换主题</string>
     <string name="app_notenabled">请在"Xposed Installer"中启用“阻止运行”，或者安装"Cydia Substrate"。</string>
     <string name="open">打开</string>
+    <string name="query_hint">按名称过滤，"-3"表示第三方程序</string>
 
 </resources>

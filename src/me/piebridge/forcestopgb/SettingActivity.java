@@ -276,6 +276,13 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         fragment.refresh(force || fragment.canUseCache());
     }
 
+    public void showFilter() {
+        for (int item = 0; item < mPageTitles.length; ++item) {
+            SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, item);
+            fragment.showFilter();
+        }
+    }
+
     private void refreshIfNeeded(boolean force) {
         int position = mPager.getCurrentItem();
         for (int item = 0; item < mPageTitles.length; ++item) {
