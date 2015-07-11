@@ -54,8 +54,6 @@ public class SystemHook {
 
     private static long lastModified;
 
-    private static boolean initialized = false;
-
     private static Map<String, Boolean> preventPackages;
 
     private static Map<String, Boolean> systemPackages = new HashMap<String, Boolean>();
@@ -87,8 +85,6 @@ public class SystemHook {
             return Result.None;
         }
 
-        Log.v(TAG, "action: " + action + ", filter: " + thiz);
-
         if (InputMethod.SERVICE_INTERFACE.equals(action)) {
             // input method
             return Result.None;
@@ -107,6 +103,7 @@ public class SystemHook {
         // activity and receiver use the same ActivityIntentInfo
         Field field = getField(thiz.getClass(), "activity", "service", "provider");
         if (field == null) {
+            Log.v(TAG, "not support action: " + action + ", filter: " + thiz);
             return Result.None;
         }
 
@@ -134,15 +131,18 @@ public class SystemHook {
         // component.owner.activities
         ArrayList<?> activities = (ArrayList<?>) getObjectField(owner, "activities");
         if (ai == null) {
-            // do nothing
-        } else if ((ai.flags & SYSTEM_APP) != 0) {
-            // system package
-            if (systemPackages.get(packageName) == null) {
-                systemPackages.put(packageName, hasLauncher(activities));
+            Log.w(TAG, "package " + packageName + " has no applicationInfo");
+        } else {
+            if ((ai.flags & SYSTEM_APP) != 0) {
+                // system package
+                if (systemPackages.get(packageName) == null) {
+                    systemPackages.put(packageName, hasLauncher(activities));
+                }
             }
-        } else if (!packageUids.containsKey(packageName) || packageUids.get(packageName) != ai.uid) {
-            Log.d(TAG, "package: " + packageName + ", uid: " + ai.uid);
-            packageUids.put(packageName, ai.uid);
+            if (!packageUids.containsKey(packageName) || packageUids.get(packageName) != ai.uid) {
+                Log.d(TAG, "package: " + packageName + ", uid: " + ai.uid);
+                packageUids.put(packageName, ai.uid);
+            }
         }
 
         if (activities != null && activities.contains(component)) {
@@ -157,13 +157,17 @@ public class SystemHook {
             return Result.None;
         }
 
-        return disableIntentIfNotRunning(action, packageName);
+        return disableIntentIfNotRunning(action, packageName, component.toString());
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object thiz, Object[] args) {
-        ApplicationInfo info = (ApplicationInfo) SystemHook.getObjectField(args[0], "info");
         if (!isSystemHook()) {
             Log.e(SystemHook.TAG, "non-system call for ActivityManagerService$startProcessLocked");
+            return true;
+        }
+        ApplicationInfo info = (ApplicationInfo) SystemHook.getObjectField(args[0], "info");
+        if (info == null) {
+            Log.w(SystemHook.TAG, "no info field for " + args[0]);
             return true;
         }
         boolean disallow = "broadcast".equals(args[1]);
@@ -195,17 +199,17 @@ public class SystemHook {
             }
         }
 
-        return disableIntentIfNotRunning(action, packageName);
+        return disableIntentIfNotRunning(action, packageName, packageName);
     }
 
-    private static Result disableIntentIfNotRunning(String action, String packageName) {
+    private static Result disableIntentIfNotRunning(String action, String packageName, Object content) {
         if (Boolean.FALSE.equals(systemPackages.get(packageName))) {
             // we don't filter system package has no launcher
             return Result.None;
         }
         reloadPackagesIfNeeded();
         if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-            Log.v(TAG, "disallow " + packageName + ", action: " + action);
+            Log.v(TAG, "disallow " + content + ", action: " + action);
             return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
         }
         return Result.None;
@@ -272,11 +276,8 @@ public class SystemHook {
 
     private static boolean checkPid(int pid, String packageName) {
         String processName = getPackage(pid);
-        if (processName != null) {
-            return processName.startsWith(packageName) && Process.getUidForPid(pid) == packageUids.get(packageName);
-        } else {
-            return false;
-        }
+        Integer uid = packageUids.get(packageName);
+        return processName != null && uid != null && processName.startsWith(packageName) && Process.getUidForPid(pid) == uid;
     }
 
     private static boolean hookAsSystem(Object[] args) {
@@ -284,7 +285,7 @@ public class SystemHook {
         Uri data = (Uri) args[3];
         String packageName = null;
         int pid = 0;
-        int count = -1;
+        int count;
         String fragment = null;
         if (data != null) {
             fragment = data.getFragment();
@@ -372,7 +373,7 @@ public class SystemHook {
             public void run() {
                 checkAndForceStopPackage(packageName);
             }
-        }, 400, TimeUnit.MILLISECONDS);
+        }, 800, TimeUnit.MILLISECONDS);
     }
 
     private static void forceStopPackageLater(final String packageName) {
@@ -387,7 +388,7 @@ public class SystemHook {
                     checkAndForceStopPackage(packageName);
                 }
             }
-        }, 400, TimeUnit.MILLISECONDS);
+        }, 800, TimeUnit.MILLISECONDS);
     }
 
     private static void checkAndForceStopPackage(String packageName) {
@@ -495,12 +496,15 @@ public class SystemHook {
         for (File file : proc.listFiles()) {
             if (file.isDirectory() && TextUtils.isDigitsOnly(file.getName())) {
                 int pid = Integer.parseInt(file.getName());
-                if (Process.getUidForPid(pid) == uid && Process.getParentPid(pid) == 1) {
+                if (Process.getUidForPid(pid) != uid) {
+                    continue;
+                }
+                if (Process.getParentPid(pid) == 1) {
                     Process.killProcess(pid);
                     Log.d(TAG, "kill " + pid + " without parent belongs to " + packageName);
-                } else if (isZombie(pid)) {
-                    Process.killProcess(pid);
-                    Log.d(TAG, "kill " + pid + " zombie belongs to " + packageName);
+//                } else if (isZombie(pid)) {
+//                    Process.killProcess(pid);
+//                    Log.d(TAG, "kill " + pid + " zombie belongs to " + packageName);
                 }
             }
         }

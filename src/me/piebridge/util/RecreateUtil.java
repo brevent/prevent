@@ -20,10 +20,12 @@ public class RecreateUtil {
                 field.setAccessible(true);
                 return field;
             } catch (NoSuchFieldException e) {
+                // do nothing
             }
             try {
                 return clazz.getField(name);
             } catch (NoSuchFieldException e) {
+                // do nothing
             }
         }
         return null;
