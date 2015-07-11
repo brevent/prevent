@@ -1,5 +1,8 @@
 package me.piebridge.forcestopgb;
 
+import java.lang.reflect.Method;
+import java.util.Set;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -7,17 +10,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
 
-import java.util.Set;
-
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class XposedMod implements IXposedHookZygoteInit {
 
     @Override
     public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
-        SystemHook.initPackages();
+        SystemHook.resetPackages();
 
         // dynamic maintain force stopped package
         XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {
@@ -76,11 +78,24 @@ public class XposedMod implements IXposedHookZygoteInit {
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Intent intent = (Intent) param.args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    android.util.Log.w(SystemHook.TAG, "call Home startActivityForResult: " + intent);
-                    Hook.beforeActivity$startHomeActivityForResult((Activity) param.thisObject);
+                    Hook.beforeActivity$startHomeActivityForResult((Activity) param.thisObject, intent);
                 }
             }
         });
+
+        Class<?> ActivityManagerService = Class.forName("com.android.server.am.ActivityManagerService");
+        for (Method method : ActivityManagerService.getDeclaredMethods()) {
+            if ("startProcessLocked".equals(method.getName()) && method.getParameterTypes().length == 3) {
+                XposedBridge.hookMethod(method, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        if (!SystemHook.beforeActivityManagerService$startProcessLocked(param.thisObject, param.args)) {
+                            param.setResult(null);
+                        }
+                    }
+                });
+            }
+        }
     }
 
 }

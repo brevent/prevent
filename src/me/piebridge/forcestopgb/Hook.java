@@ -1,7 +1,6 @@
 package me.piebridge.forcestopgb;
 
 import android.app.Activity;
-import android.app.AndroidAppHelper;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
@@ -46,15 +45,15 @@ public class Hook {
 
     public static void afterActivity$moveTaskToBack(Activity thiz, Boolean result) {
         Intent intent = thiz.getIntent();
-        android.util.Log.d(SystemHook.TAG, "moveTaskToBack: " + intent + ", result: " + result);
+        Log.d(SystemHook.TAG, "moveTaskToBack: " + intent + ", result: " + result);
         if (Boolean.TRUE.equals(result)) {
-            android.util.Log.d(SystemHook.TAG, "after moveTaskToBack: " + intent);
             String packageName = thiz.getPackageName();
             thiz.sendBroadcast(newIntent(SystemHook.ACTION_MOVE_TASK_TO_BACK, packageName, null));
         }
     }
 
-    public static void beforeActivity$startHomeActivityForResult(Activity thiz) {
+    public static void beforeActivity$startHomeActivityForResult(Activity thiz, Intent intent) {
+        Log.w(SystemHook.TAG, "call Home startActivityForResult: " + intent);
         String packageName = thiz.getPackageName();
         thiz.sendBroadcast(newIntent(SystemHook.ACTION_START_HOME_ACTIVITY, packageName, null));
     }
@@ -64,4 +63,5 @@ public class Hook {
         intent.setPackage(SystemHook.PACKAGE_NAME);
         return intent;
     }
+
 }

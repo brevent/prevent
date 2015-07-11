@@ -1,19 +1,5 @@
 package me.piebridge.forcestopgb;
 
-import android.app.ActivityManager;
-import android.appwidget.AppWidgetManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.net.Uri;
-import android.os.FileUtils;
-import android.os.Handler;
-import android.os.Process;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.inputmethod.InputMethod;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -32,6 +18,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import android.app.ActivityManager;
+import android.appwidget.AppWidgetManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Process;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.inputmethod.InputMethod;
 
 public class SystemHook {
 
@@ -55,11 +54,13 @@ public class SystemHook {
 
     private static long lastModified;
 
+    private static boolean initialized = false;
+
     private static Map<String, Boolean> preventPackages;
 
     private static Map<String, Boolean> systemPackages = new HashMap<String, Boolean>();
 
-    private static Map<String, Integer> uids = new HashMap<String, Integer>();
+    private static Map<String, Integer> packageUids = new HashMap<String, Integer>();
 
     private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, HashMap<Integer, AtomicInteger>>();
 
@@ -72,7 +73,6 @@ public class SystemHook {
         }
 
         if (ACTION_HOOK.equals(action)) {
-            PreventPackages.ensureDirectory();
             return new Result(int.class, ACTION_HOOK_ENABLED);
         }
 
@@ -87,7 +87,7 @@ public class SystemHook {
             return Result.None;
         }
 
-        android.util.Log.v(TAG, "action: " + action + ", filter: " + thiz);
+        Log.v(TAG, "action: " + action + ", filter: " + thiz);
 
         if (InputMethod.SERVICE_INTERFACE.equals(action)) {
             // input method
@@ -140,12 +140,9 @@ public class SystemHook {
             if (systemPackages.get(packageName) == null) {
                 systemPackages.put(packageName, hasLauncher(activities));
             }
-        } else {
-            // normal package
-            if (!uids.containsKey(packageName) || uids.get(packageName) != ai.uid) {
-                Log.d(TAG, "package: " + packageName + ", uid: " + ai.uid);
-                uids.put(packageName, ai.uid);
-            }
+        } else if (!packageUids.containsKey(packageName) || packageUids.get(packageName) != ai.uid) {
+            Log.d(TAG, "package: " + packageName + ", uid: " + ai.uid);
+            packageUids.put(packageName, ai.uid);
         }
 
         if (activities != null && activities.contains(component)) {
@@ -163,10 +160,37 @@ public class SystemHook {
         return disableIntentIfNotRunning(action, packageName);
     }
 
+    public static boolean beforeActivityManagerService$startProcessLocked(Object thiz, Object[] args) {
+        ApplicationInfo info = (ApplicationInfo) SystemHook.getObjectField(args[0], "info");
+        if (!isSystemHook()) {
+            Log.e(SystemHook.TAG, "non-system call for ActivityManagerService$startProcessLocked");
+            return true;
+        }
+        boolean disallow = "broadcast".equals(args[1]);
+        if (disallow) {
+            reloadPackagesIfNeeded();
+        }
+        if (disallow && Boolean.TRUE.equals(preventPackages.get(info.packageName))) {
+            Field field = getField(args[0].getClass(), true, "pid");
+            if (field != null) {
+                try {
+                    field.setInt(args[0], 0);
+                } catch (IllegalAccessException e) {
+                    Log.e(TAG, "field: " + field, e);
+                }
+            }
+            Log.d(SystemHook.TAG, "disallow start " + info.packageName + " for " + args[1] + " " + args[2]);
+            return false;
+        } else {
+            Log.d(SystemHook.TAG, "allow start " + info.packageName + " for " + args[1] + " " + args[2]);
+            return true;
+        }
+    }
+
     private static Result disableBroadcastIntentIfNeeded(String action, String packageName) {
         if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             if (!systemPackages.containsKey(packageName)) {
-                android.util.Log.d(TAG, "disallow " + packageName + ", action: " + action);
+                Log.d(TAG, "disallow " + packageName + ", action: " + action);
                 return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
             }
         }
@@ -181,38 +205,48 @@ public class SystemHook {
         }
         reloadPackagesIfNeeded();
         if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-            android.util.Log.v(TAG, "disallow " + packageName + ", action: " + action);
+            Log.v(TAG, "disallow " + packageName + ", action: " + action);
             return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
         }
         return Result.None;
     }
 
     private static boolean isSystemHook() {
-        return Process.myUid() == 1000;
+        return Process.myUid() == Process.SYSTEM_UID;
     }
 
     private static boolean isSystemHook(String packageName) {
         return PACKAGE_NAME.equals(packageName) && isSystemHook();
     }
 
-    private static int countCounter(String ssp) {
-        HashMap<Integer, AtomicInteger> values = packageCounters.get(ssp);
+    private static int countCounter(String packageName) {
+        HashMap<Integer, AtomicInteger> values = packageCounters.get(packageName);
         int count = 0;
         Iterator<Map.Entry<Integer, AtomicInteger>> iterator = values.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Integer, AtomicInteger> entry = iterator.next();
-            if (checkPid(entry.getKey(), ssp)) {
+            if (checkPid(entry.getKey(), packageName)) {
                 count += entry.getValue().get();
             } else {
-                android.util.Log.d(TAG, "pid " + entry.getKey() + " is not for " + ssp);
+                Log.d(TAG, "pid " + entry.getKey() + " is not for " + packageName);
                 iterator.remove();
             }
         }
         return count;
     }
 
+    private static boolean isZombie(int pid) {
+        File file = new File(new File("/proc", String.valueOf(pid)), "stat");
+        String content = getContent(file);
+        return content != null && content.contains(" Z ");
+    }
+
     private static String getPackage(int pid) {
         File file = new File(new File("/proc", String.valueOf(pid)), "cmdline");
+        return getContent(file);
+    }
+
+    private static String getContent(File file) {
         if (!file.isFile() || !file.canRead()) {
             return null;
         }
@@ -235,79 +269,83 @@ public class SystemHook {
         }
     }
 
-    private static boolean checkPid(int pid, String ssp) {
-        return ssp.equals(getPackage(pid));
+
+    private static boolean checkPid(int pid, String packageName) {
+        String processName = getPackage(pid);
+        if (processName != null) {
+            return processName.startsWith(packageName) && Process.getUidForPid(pid) == packageUids.get(packageName);
+        } else {
+            return false;
+        }
     }
 
     private static boolean hookAsSystem(Object[] args) {
         String action = (String) args[0];
         Uri data = (Uri) args[3];
-        String ssp = null;
+        String packageName = null;
         int pid = 0;
         int count = -1;
         String fragment = null;
         if (data != null) {
             fragment = data.getFragment();
-            ssp = data.getSchemeSpecificPart();
+            packageName = data.getSchemeSpecificPart();
             // max pid should be 65535
             if (fragment != null && fragment.length() < 6 && TextUtils.isDigitsOnly(fragment)) {
                 pid = Integer.parseInt(fragment);
             }
-            if (ssp != null && !packageCounters.containsKey(ssp)) {
-                packageCounters.put(ssp, new HashMap<Integer, AtomicInteger>());
+            if (packageName != null && !packageCounters.containsKey(packageName)) {
+                packageCounters.put(packageName, new HashMap<Integer, AtomicInteger>());
             }
         }
-        if (ssp == null) {
+        if (packageName == null) {
             return false;
         } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             count = 0;
-            packageCounters.get(ssp).clear();
+            packageCounters.get(packageName).clear();
         } else if (ACTION_COUNTER_INCREASE.equals(action) && pid != 0) {
-            if (!packageCounters.get(ssp).containsKey(pid)) {
-                packageCounters.get(ssp).put(pid, new AtomicInteger());
+            if (!packageCounters.get(packageName).containsKey(pid)) {
+                packageCounters.get(packageName).put(pid, new AtomicInteger());
             }
-            packageCounters.get(ssp).get(pid).incrementAndGet();
-            count = countCounter(ssp);
+            packageCounters.get(packageName).get(pid).incrementAndGet();
+            count = countCounter(packageName);
             reloadPackagesIfNeeded();
-            if (Boolean.TRUE.equals(preventPackages.get(ssp))) {
-                preventPackages.put(ssp, Boolean.FALSE);
+            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                preventPackages.put(packageName, Boolean.FALSE);
                 savePackages();
             }
         } else if (ACTION_COUNTER_DECREASE.equals(action) && pid != 0) {
-            if (!packageCounters.get(ssp).containsKey(pid)) {
-                packageCounters.get(ssp).put(pid, new AtomicInteger());
+            if (!packageCounters.get(packageName).containsKey(pid)) {
+                packageCounters.get(packageName).put(pid, new AtomicInteger());
             } else {
-                packageCounters.get(ssp).get(pid).decrementAndGet();
+                packageCounters.get(packageName).get(pid).decrementAndGet();
             }
-            count = countCounter(ssp);
+            count = countCounter(packageName);
             reloadPackagesIfNeeded();
-            if (count == 0 && preventPackages.containsKey(ssp)) {
-                if (Boolean.FALSE.equals(preventPackages.get(ssp))) {
-                    preventPackages.put(ssp, Boolean.TRUE);
+            if (count == 0 && preventPackages.containsKey(packageName)) {
+                if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+                    preventPackages.put(packageName, Boolean.TRUE);
                     savePackages();
                 }
-                forceStopPackageIfNeeded(ssp);
+                forceStopPackageIfNeeded(packageName);
             }
         } else if (ADD_PREVENT_PACKAGE.equals(action)) {
-            count = savePackage(ssp, true, fragment);
+            count = savePackage(packageName, true, fragment);
         } else if (REMOVE_PREVENT_PACKAGE.equals(action)) {
-            count = savePackage(ssp, false, fragment);
+            count = savePackage(packageName, false, fragment);
         } else if (ACTION_FORCESTOP.equals(action)) {
-            count = 0;
-            forceStopPackageLater(ssp);
+            count = countCounter(packageName);
+            forceStopPackageLater(packageName);
         } else if (ACTION_MOVE_TASK_TO_BACK.equals(action) || ACTION_START_HOME_ACTIVITY.equals(action)) {
+            count = countCounter(packageName);
             reloadPackagesIfNeeded();
-            if (preventPackages.containsKey(ssp)) {
-                count = 0;
-                packageCounters.get(ssp).clear();
-                forceStopPackageIfNeeded(ssp);
-            } else {
-                count = countCounter(ssp);
+            if (preventPackages.containsKey(packageName)) {
+                packageCounters.get(packageName).clear();
+                forceStopPackageIfNeeded(packageName);
             }
         } else {
             return false;
         }
-        android.util.Log.d(TAG, "action: " + action + ", package: " + ssp + ", counter: " + count);
+        Log.d(TAG, "action: " + action + ", package: " + packageName + ", counter: " + count);
         return true;
     }
 
@@ -320,7 +358,7 @@ public class SystemHook {
             }
             for (IntentFilter intent : intents) {
                 if (intent.hasAction(Intent.ACTION_MAIN) && (intent.hasCategory(Intent.CATEGORY_INFO) || intent.hasCategory(Intent.CATEGORY_LAUNCHER))) {
-                    android.util.Log.v(TAG, "activity " + activity + " is launcher");
+                    Log.v(TAG, "activity " + activity + " is launcher");
                     return true;
                 }
             }
@@ -334,7 +372,7 @@ public class SystemHook {
             public void run() {
                 checkAndForceStopPackage(packageName);
             }
-        }, 800, TimeUnit.MICROSECONDS);
+        }, 400, TimeUnit.MILLISECONDS);
     }
 
     private static void forceStopPackageLater(final String packageName) {
@@ -345,18 +383,22 @@ public class SystemHook {
                 if (count != 0) {
                     packageCounters.get(packageName).clear();
                     forceStopPackage(packageName);
+                } else {
+                    checkAndForceStopPackage(packageName);
                 }
             }
-        }, 800, TimeUnit.MICROSECONDS);
+        }, 400, TimeUnit.MILLISECONDS);
     }
 
     private static void checkAndForceStopPackage(String packageName) {
         for (ActivityManager.RunningServiceInfo service : newActivityManagerIfNeeded().getRunningServices(Integer.MAX_VALUE)) {
             if (service.service.getPackageName().equals(packageName)) {
+                Log.d(TAG, "package " + packageName + " has running services, force stop it");
                 forceStopPackage(packageName);
                 return;
             }
         }
+        Log.d(TAG, "package " + packageName + " has no running services, ignore it");
         killNoFather(packageName);
     }
 
@@ -371,7 +413,7 @@ public class SystemHook {
             constructor.setAccessible(true);
             activityManager = (ActivityManager) constructor.newInstance(null, null);
         } catch (Exception e) {
-            android.util.Log.e(TAG, "cannot set new activityManager", e);
+            Log.e(TAG, "cannot set new activityManager", e);
         }
         return activityManager;
     }
@@ -388,10 +430,11 @@ public class SystemHook {
 
     private static void forceStopPackageNative(String packageName) {
         try {
+            Log.i(TAG, "start forceStopPackage " + packageName);
             Method method = ActivityManager.class.getDeclaredMethod("forceStopPackage", String.class);
             method.setAccessible(true);
             method.invoke(newActivityManagerIfNeeded(), packageName);
-            android.util.Log.i(TAG, "finish forceStopPackage " + packageName);
+            Log.i(TAG, "finish forceStopPackage " + packageName);
         } catch (RuntimeException e) {
             Log.e(TAG, "forceStopPackage", e);
         } catch (Exception e) {
@@ -411,19 +454,9 @@ public class SystemHook {
         lastModified = PreventPackages.save(preventPackages);
     }
 
-    public static void initPackages() {
-        android.util.Log.d(TAG, "initPackages");
-        boolean changed = false;
-        Map<String, Boolean> packages = PreventPackages.load();
-        for (String key : packages.keySet()) {
-            if (!packages.get(key)) {
-                changed = true;
-                packages.put(key, Boolean.TRUE);
-            }
-        }
-        if (changed) {
-            PreventPackages.save(packages);
-        }
+    public static void resetPackages() {
+        Log.d(TAG, "resetPackages");
+        PreventPackages.resetPackages();
     }
 
     private static int savePackage(String packageName, boolean added, String fragment) {
@@ -444,12 +477,12 @@ public class SystemHook {
     }
 
     private static boolean killNoFather(String packageName) {
-        Integer uid = uids.get(packageName);
+        Integer uid = packageUids.get(packageName);
         if (uid == null) {
             return false;
         } else {
             try {
-                killNoFather(uid);
+                killNoFather(uid, packageName);
             } catch (Throwable t) {
                 Log.d(TAG, "cannot killNoFather for " + uid, t);
             }
@@ -457,14 +490,17 @@ public class SystemHook {
         }
     }
 
-    private static void killNoFather(int uid) {
+    private static void killNoFather(int uid, String packageName) {
         File proc = new File("/proc");
         for (File file : proc.listFiles()) {
             if (file.isDirectory() && TextUtils.isDigitsOnly(file.getName())) {
                 int pid = Integer.parseInt(file.getName());
-                if (FileUtils.getUid(file.getAbsolutePath()) == uid && Process.getParentPid(pid) == 1) {
+                if (Process.getUidForPid(pid) == uid && Process.getParentPid(pid) == 1) {
                     Process.killProcess(pid);
-                    Log.d(TAG, "kill " + pid + " without parent");
+                    Log.d(TAG, "kill " + pid + " without parent belongs to " + packageName);
+                } else if (isZombie(pid)) {
+                    Process.killProcess(pid);
+                    Log.d(TAG, "kill " + pid + " zombie belongs to " + packageName);
                 }
             }
         }
@@ -510,8 +546,7 @@ public class SystemHook {
             try {
                 return field.get(object);
             } catch (IllegalAccessException e) {
-                Log.e(TAG, "field: " + field);
-                throw new IllegalAccessError(e.getMessage());
+                Log.e(TAG, "field: " + field, e);
             }
         }
         return null;

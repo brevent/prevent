@@ -17,6 +17,7 @@ public class SubstrateHook {
     public static void initialize() {
         try {
             hookSystemServer$main();
+            hookActivityManagerService$startProcessLocked();
             hookActivity$onCreate();
             hookActivity$onDestroy();
             hookActivity$moveTaskToBack();
@@ -37,12 +38,34 @@ public class SubstrateHook {
                     MS.hookMethod(SystemServer, SystemServer$main, new MS.MethodAlteration<Object, Void>() {
                         @Override
                         public Void invoked(Object thiz, Object... args) throws Throwable {
-                            SystemHook.initPackages();
+                            SystemHook.resetPackages();
                             return invoke(thiz, args);
                         }
                     });
                 } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
+                    // do nothing
+                }
+            }
+        });
+    }
+
+    private static void hookActivityManagerService$startProcessLocked() {
+        MS.hookClassLoad("com.android.server.am.ActivityManagerService", new MS.ClassLoadHook() {
+            @Override
+            public void classLoaded(Class<?> ActivityManagerService) {
+                for (Method method : ActivityManagerService.getDeclaredMethods()) {
+                    if ("startProcessLocked".equals(method.getName()) && method.getParameterTypes().length == 3) {
+                        MS.hookMethod(ActivityManagerService, method, new MS.MethodAlteration<Object, Void>() {
+                            @Override
+                            public Void invoked(Object thiz, Object... args) throws Throwable {
+                                if (!SystemHook.beforeActivityManagerService$startProcessLocked(thiz, args)) {
+                                    return null;
+                                } else {
+                                    return invoke(thiz, args);
+                                }
+                            }
+                        });
+                    }
                 }
             }
         });
@@ -90,7 +113,7 @@ public class SubstrateHook {
             public Void invoked(Activity thiz, Object... args) throws Throwable {
                 Intent intent = (Intent) args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    Hook.beforeActivity$startHomeActivityForResult(thiz);
+                    Hook.beforeActivity$startHomeActivityForResult(thiz, intent);
                 }
                 return invoke(thiz, args);
             }
