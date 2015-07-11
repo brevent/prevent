@@ -6,9 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,13 +18,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import android.app.ActivityManager;
+import android.app.ActivityThread;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
-import android.os.Handler;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
@@ -53,6 +51,8 @@ public class SystemHook {
     private static final int SYSTEM_APP = ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
 
     private static long lastModified;
+
+    private static ActivityManager activityManager;
 
     private static Map<String, Boolean> preventPackages;
 
@@ -122,7 +122,6 @@ public class SystemHook {
 
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action) && isSystemHook(packageName)) {
             hookAsSystem(args);
-            return Result.None;
         }
 
         // component.owner.applicationInfo
@@ -183,6 +182,7 @@ public class SystemHook {
                     Log.e(TAG, "field: " + field, e);
                 }
             }
+            forceStopPackageLaterIfPrevent(info.packageName);
             Log.d(SystemHook.TAG, "disallow start " + info.packageName + " for " + args[1] + " " + args[2]);
             return false;
         } else {
@@ -199,10 +199,15 @@ public class SystemHook {
             }
         }
 
-        return disableIntentIfNotRunning(action, packageName, packageName);
+        Result result = disableIntentIfNotRunning(action, packageName, packageName);
+        if (!Result.None.equals(result)) {
+            Log.d(TAG, "force stop " + packageName + " to prevent broadcast");
+            forceStopPackageLaterIfPrevent(packageName);
+        }
+        return result;
     }
 
-    private static Result disableIntentIfNotRunning(String action, String packageName, Object content) {
+    private static Result disableIntentIfNotRunning(String action, String packageName, String content) {
         if (Boolean.FALSE.equals(systemPackages.get(packageName))) {
             // we don't filter system package has no launcher
             return Result.None;
@@ -273,7 +278,6 @@ public class SystemHook {
         }
     }
 
-
     private static boolean checkPid(int pid, String packageName) {
         String processName = getPackage(pid);
         Integer uid = packageUids.get(packageName);
@@ -303,6 +307,11 @@ public class SystemHook {
         } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             count = 0;
             packageCounters.get(packageName).clear();
+            reloadPackagesIfNeeded();
+            if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+                preventPackages.put(packageName, Boolean.TRUE);
+                savePackages();
+            }
         } else if (ACTION_COUNTER_INCREASE.equals(action) && pid != 0) {
             if (!packageCounters.get(packageName).containsKey(pid)) {
                 packageCounters.get(packageName).put(pid, new AtomicInteger());
@@ -391,8 +400,20 @@ public class SystemHook {
         }, 800, TimeUnit.MILLISECONDS);
     }
 
+    private static void forceStopPackageLaterIfPrevent(final String packageName) {
+        executor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                reloadPackagesIfNeeded();
+                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                    forceStopPackage(packageName);
+                }
+            }
+        }, 800, TimeUnit.MILLISECONDS);
+    }
+
     private static void checkAndForceStopPackage(String packageName) {
-        for (ActivityManager.RunningServiceInfo service : newActivityManagerIfNeeded().getRunningServices(Integer.MAX_VALUE)) {
+        for (ActivityManager.RunningServiceInfo service : getActivityManager().getRunningServices(Integer.MAX_VALUE)) {
             if (service.service.getPackageName().equals(packageName)) {
                 Log.d(TAG, "package " + packageName + " has running services, force stop it");
                 forceStopPackage(packageName);
@@ -403,18 +424,9 @@ public class SystemHook {
         killNoFather(packageName);
     }
 
-    private static ActivityManager activityManager;
-
-    private static ActivityManager newActivityManagerIfNeeded() {
-        if (activityManager != null) {
-            return activityManager;
-        }
-        try {
-            Constructor<?> constructor = ActivityManager.class.getDeclaredConstructor(Context.class, Handler.class);
-            constructor.setAccessible(true);
-            activityManager = (ActivityManager) constructor.newInstance(null, null);
-        } catch (Exception e) {
-            Log.e(TAG, "cannot set new activityManager", e);
+    private static ActivityManager getActivityManager() {
+        if (activityManager == null) {
+            activityManager = (ActivityManager) ActivityThread.currentApplication().getSystemService(Context.ACTIVITY_SERVICE);
         }
         return activityManager;
     }
@@ -425,22 +437,13 @@ public class SystemHook {
             preventPackages.put(packageName, Boolean.TRUE);
             savePackages();
         }
-        forceStopPackageNative(packageName);
-        killNoFather(packageName);
-    }
-
-    private static void forceStopPackageNative(String packageName) {
         try {
-            Log.i(TAG, "start forceStopPackage " + packageName);
-            Method method = ActivityManager.class.getDeclaredMethod("forceStopPackage", String.class);
-            method.setAccessible(true);
-            method.invoke(newActivityManagerIfNeeded(), packageName);
-            Log.i(TAG, "finish forceStopPackage " + packageName);
-        } catch (RuntimeException e) {
-            Log.e(TAG, "forceStopPackage", e);
-        } catch (Exception e) {
-            Log.e(TAG, "forceStopPackage", e);
+            getActivityManager().forceStopPackage(packageName);
+            Log.i(TAG, "finish force stop package " + packageName);
+        } catch (Throwable t) {
+            Log.e(TAG, "cannot force stop package" + packageName, t);
         }
+        killNoFather(packageName);
     }
 
     private static void reloadPackagesIfNeeded() {
