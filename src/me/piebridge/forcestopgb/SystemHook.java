@@ -71,7 +71,7 @@ public class SystemHook {
         }
 
         if (ACTION_HOOK.equals(action)) {
-            return new Result(int.class, ACTION_HOOK_ENABLED);
+            return Result.HOOK_ENABLED;
         }
 
         if (IntentFilter.class.equals(thiz.getClass())) {
@@ -195,12 +195,12 @@ public class SystemHook {
         if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             if (!systemPackages.containsKey(packageName)) {
                 Log.d(TAG, "disallow " + packageName + ", action: " + action);
-                return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
+                return Result.NO_MATCH;
             }
         }
 
         Result result = disableIntentIfNotRunning(action, packageName, packageName);
-        if (!Result.None.equals(result)) {
+        if (!result.isNone()) {
             Log.d(TAG, "force stop " + packageName + " to prevent broadcast");
             forceStopPackageLaterIfPrevent(packageName);
         }
@@ -215,7 +215,7 @@ public class SystemHook {
         reloadPackagesIfNeeded();
         if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
             Log.v(TAG, "disallow " + content + ", action: " + action);
-            return new Result(int.class, IntentFilter.NO_MATCH_ACTION);
+            return Result.NO_MATCH;
         }
         return Result.None;
     }
@@ -561,6 +561,8 @@ public class SystemHook {
 
     public static class Result {
         public static final Result None = new Result();
+        public static final Result HOOK_ENABLED = new Result(int.class, ACTION_HOOK_ENABLED);
+        public static final Result NO_MATCH = new Result(int.class, IntentFilter.NO_MATCH_ACTION);
         private Class<?> type;
         private Object result;
 

@@ -49,6 +49,24 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private static final int APPLICATIONS = 0;
     private static final int PREVENTLIST = 1;
 
+    private Integer dangerousColor = null;
+
+    private Integer transparentColor = null;
+
+    public int getDangerousColor() {
+        if (dangerousColor == null) {
+            dangerousColor = getThemedColor(R.attr.color_dangerous);
+        }
+        return dangerousColor;
+    }
+
+    public int getTransparentColor() {
+        if (transparentColor == null) {
+            transparentColor = getColor(android.R.color.transparent);
+        }
+        return transparentColor;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
@@ -191,6 +209,8 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 } else {
                     sp.edit().putString(THEME, THEME_LIGHT).apply();
                 }
+                dangerousColor = null;
+                transparentColor = null;
                 RecreateUtil.recreate(this);
                 return true;
             default:

@@ -286,7 +286,6 @@ public abstract class SettingFragment extends ListFragment {
 
     static class AppInfo implements Comparable<AppInfo> {
         int flags;
-        Drawable icon;
         String name = "";
         String packageName;
         Set<Integer> running;
@@ -339,6 +338,7 @@ public abstract class SettingFragment extends ListFragment {
         private LayoutInflater inflater;
         private SettingActivity mActivity;
         private static Map<String, String> labels = new HashMap<String, String>();
+        private final CompoundButton.OnCheckedChangeListener mListener;
 
         private ArrayList<AppInfo> mAppInfos = new ArrayList<AppInfo>();
         private Set<String> mNames = new HashSet<String>();
@@ -406,6 +406,19 @@ public abstract class SettingFragment extends ListFragment {
             mActivity = activity;
             pm = mActivity.getPackageManager();
             inflater = LayoutInflater.from(activity);
+            mListener = new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    ViewHolder holder = (ViewHolder) buttonView.getTag();
+                    Set<String> selections = mActivity.getSelection();
+                    if (isChecked) {
+                        selections.add(holder.packageName);
+                    } else {
+                        selections.remove(holder.packageName);
+                    }
+                    mActivity.checkSelection();
+                }
+            };
         }
 
         public Adapter(final SettingActivity activity, Set<String> names, boolean cache) {
@@ -522,19 +535,7 @@ public abstract class SettingFragment extends ListFragment {
                 viewHolder.summaryView = (TextView) view.findViewById(R.id.summary);
                 viewHolder.loadingView = (TextView) view.findViewById(R.id.loading);
                 viewHolder.preventView = (ImageView) view.findViewById(R.id.prevent);
-                viewHolder.checkView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        ViewHolder holder = (ViewHolder) buttonView.getTag();
-                        Set<String> selections = mActivity.getSelection();
-                        if (isChecked) {
-                            selections.add(holder.packageName);
-                        } else {
-                            selections.remove(holder.packageName);
-                        }
-                        mActivity.checkSelection();
-                    }
-                });
+                viewHolder.checkView.setOnCheckedChangeListener(mListener);
                 viewHolder.checkView.setTag(viewHolder);
                 view.setTag(viewHolder);
             }
@@ -549,9 +550,9 @@ public abstract class SettingFragment extends ListFragment {
             holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
             Boolean result = mActivity.getPreventPackages().get(appInfo.packageName);
             if (appInfo.isSystem()) {
-                view.setBackgroundColor(mActivity.getThemedColor(R.attr.color_dangerous));
+                view.setBackgroundColor(mActivity.getDangerousColor());
             } else {
-                view.setBackgroundColor(mActivity.getColor(android.R.color.transparent));
+                view.setBackgroundColor(mActivity.getTransparentColor());
             }
             holder.canUninstall = ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) || ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0);
             if (result == null) {
@@ -565,14 +566,11 @@ public abstract class SettingFragment extends ListFragment {
                 protected ViewHolder doInBackground(Object... params) {
                     ViewHolder holder = (ViewHolder) params[0];
                     AppInfo appInfo = (AppInfo) params[1];
-                    if (appInfo.icon == null) {
-                        try {
-                            appInfo.icon = ((PackageManager) params[2]).getApplicationIcon(appInfo.packageName);
-                        } catch (NameNotFoundException e) {
-                            // do nothing
-                        }
+                    try {
+                        holder.icon = ((PackageManager) params[2]).getApplicationIcon(appInfo.packageName);
+                    } catch (NameNotFoundException e) {
+                        // do nothing
                     }
-                    holder.icon = appInfo.icon;
                     holder.running = mActivity.getRunningProcesses().get(appInfo.packageName);
                     return holder;
                 }
@@ -581,8 +579,8 @@ public abstract class SettingFragment extends ListFragment {
                 protected void onPostExecute(ViewHolder holder) {
                     holder.iconView.setImageDrawable(holder.icon);
                     holder.loadingView.setVisibility(View.GONE);
-                    holder.summaryView.setVisibility(View.VISIBLE);
                     holder.summaryView.setText(formatRunning(holder.running));
+                    holder.summaryView.setVisibility(View.VISIBLE);
                 }
             }.execute(holder, appInfo, pm);
             return view;
