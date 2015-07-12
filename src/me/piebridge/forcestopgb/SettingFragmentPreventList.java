@@ -14,6 +14,11 @@ public class SettingFragmentPreventList extends SettingFragment {
         return true;
     }
 
+    @Override
+    protected int getQueryHint() {
+        return R.string.query_hint_system;
+    }
+
     private static Position position;
 
     @Override

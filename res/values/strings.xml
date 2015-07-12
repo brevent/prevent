@@ -22,5 +22,6 @@
     <string name="app_notenabled">Please enable "Prevent Running" in "Xposed Installer", or install "Cydia Substrate".</string>
     <string name="open">Open</string>
     <string name="query_hint">filter by name, "-3" for third party apps</string>
+    <string name="query_hint_system">filter by name, "-s" for system apps</string>
 
 </resources>

@@ -56,7 +56,6 @@ public abstract class SettingFragment extends ListFragment {
     private View filter;
     private CheckBox check;
     private EditText query;
-    private boolean filtering;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -107,7 +106,6 @@ public abstract class SettingFragment extends ListFragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int after) {
-                filtering = true;
                 if (mAdapter != null) {
                     mAdapter.getFilter().filter(s);
                 }
@@ -116,8 +114,8 @@ public abstract class SettingFragment extends ListFragment {
             @Override
             public void afterTextChanged(Editable s) {
             }
-
         });
+        query.setHint(getQueryHint());
         return view;
     }
 
@@ -231,6 +229,8 @@ public abstract class SettingFragment extends ListFragment {
     protected abstract void setListPosition(Position position);
 
     protected abstract Position getListPosition();
+
+    protected abstract int getQueryHint();
 
     private void saveListPosition() {
         ListView l = getListView();
@@ -378,7 +378,9 @@ public abstract class SettingFragment extends ListFragment {
                 } else {
                     mFiltered.clear();
                     for (AppInfo appInfo : mAppInfos) {
-                        if (appInfo.name.contains(filter) || ("-3".equals(filter) && !appInfo.isSystem()) || ("-s".equals(filter) && appInfo.isSystem())) {
+                        if (appInfo.name.toLowerCase(Locale.US).contains(filter)
+                                || ("-3".equals(filter) && !appInfo.isSystem())
+                                || ("-s".equals(filter) && appInfo.isSystem())) {
                             values.add(appInfo);
                             mFiltered.add(appInfo.packageName);
                         }

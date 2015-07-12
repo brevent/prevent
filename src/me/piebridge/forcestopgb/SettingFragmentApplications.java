@@ -34,6 +34,11 @@ public class SettingFragmentApplications extends SettingFragment {
         return false;
     }
 
+    @Override
+    protected int getQueryHint() {
+        return R.string.query_hint;
+    }
+
     private static Position position;
 
     @Override
