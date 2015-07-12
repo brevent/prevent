@@ -371,4 +371,13 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         return getColor(getThemed(resId));
     }
 
+    @Override
+    protected void onPause() {
+        for (int item = 0; item < mPageTitles.length; ++item) {
+            SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, item);
+            fragment.saveListPosition();
+        }
+        super.onPause();
+    }
+
 }
