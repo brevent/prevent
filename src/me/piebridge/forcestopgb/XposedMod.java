@@ -14,6 +14,9 @@ import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import me.piebridge.forcestopgb.hook.Hook;
+import me.piebridge.forcestopgb.hook.HookResult;
+import me.piebridge.forcestopgb.hook.SystemHook;
 
 public class XposedMod implements IXposedHookZygoteInit {
 
@@ -25,14 +28,14 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Hook.beforeActivity$onCreate((Activity) param.thisObject, param.args);
+                Hook.beforeActivity$onCreate((Activity) param.thisObject);
             }
         });
 
         XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                Hook.afterActivity$onDestroy((Activity) param.thisObject, param.args);
+                Hook.afterActivity$onDestroy((Activity) param.thisObject);
             }
         });
 
@@ -40,7 +43,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedHelpers.findAndHookMethod(IntentFilter.class, "match", String.class, String.class, String.class, Uri.class, Set.class, String.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                SystemHook.Result result = SystemHook.hookIntentFilter$match((IntentFilter) param.thisObject, param.args);
+                HookResult result = SystemHook.hookIntentFilter$match((IntentFilter) param.thisObject, param.args);
                 if (!result.isNone()) {
                     param.setResult(result.getResult());
                 }
@@ -78,7 +81,7 @@ public class XposedMod implements IXposedHookZygoteInit {
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Intent intent = (Intent) param.args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    Hook.beforeActivity$startHomeActivityForResult((Activity) param.thisObject, intent);
+                    Hook.beforeActivity$startHomeActivityForResult((Activity) param.thisObject);
                 }
             }
         });
@@ -89,7 +92,7 @@ public class XposedMod implements IXposedHookZygoteInit {
                 XposedBridge.hookMethod(method, new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        if (!SystemHook.beforeActivityManagerService$startProcessLocked(param.thisObject, param.args)) {
+                        if (!SystemHook.beforeActivityManagerService$startProcessLocked(param.args)) {
                             param.setResult(null);
                         }
                     }

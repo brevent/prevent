@@ -1,8 +1,12 @@
-package me.piebridge.forcestopgb;
+package me.piebridge.forcestopgb.ui;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+
+import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.forcestopgb.hook.SystemHook;
+import me.piebridge.forcestopgb.hook.Hook;
 
 public class PackageReceiver extends BroadcastReceiver {
 
@@ -12,12 +16,10 @@ public class PackageReceiver extends BroadcastReceiver {
             // replacing
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction())) {
             String packageName = intent.getData().getSchemeSpecificPart();
-            context.sendBroadcast(Hook.newIntent(SystemHook.REMOVE_PREVENT_PACKAGE, packageName, null));
+            PreventUtils.remove(context, new String[]{packageName});
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())) {
             String packageName = intent.getData().getSchemeSpecificPart();
-            if (context.getPackageManager().getLaunchIntentForPackage(packageName) != null) {
-                context.sendBroadcast(Hook.newIntent(SystemHook.ADD_PREVENT_PACKAGE, packageName, null));
-            }
+            PreventUtils.add(context, new String[] {packageName});
         }
     }
 

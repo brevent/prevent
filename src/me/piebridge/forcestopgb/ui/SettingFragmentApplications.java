@@ -1,4 +1,4 @@
-package me.piebridge.forcestopgb;
+package me.piebridge.forcestopgb.ui;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -6,6 +6,8 @@ import java.util.Set;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+
+import me.piebridge.forcestopgb.R;
 
 public class SettingFragmentApplications extends SettingFragment {
 
@@ -37,18 +39,6 @@ public class SettingFragmentApplications extends SettingFragment {
     @Override
     protected int getQueryHint() {
         return R.string.query_hint;
-    }
-
-    private static Position position;
-
-    @Override
-    protected void setListPosition(Position _position) {
-        position = _position;
-    }
-
-    @Override
-    protected Position getListPosition() {
-        return position;
     }
 
 }

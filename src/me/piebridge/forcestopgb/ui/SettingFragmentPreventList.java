@@ -1,6 +1,8 @@
-package me.piebridge.forcestopgb;
+package me.piebridge.forcestopgb.ui;
 
 import java.util.Set;
+
+import me.piebridge.forcestopgb.R;
 
 public class SettingFragmentPreventList extends SettingFragment {
 
@@ -18,18 +20,5 @@ public class SettingFragmentPreventList extends SettingFragment {
     protected int getQueryHint() {
         return R.string.query_hint_system;
     }
-
-    private static Position position;
-
-    @Override
-    protected void setListPosition(Position _position) {
-        position = _position;
-    }
-
-    @Override
-    protected Position getListPosition() {
-        return position;
-    }
-
 
 }

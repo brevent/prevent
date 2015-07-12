@@ -12,7 +12,15 @@ import android.os.Process;
 
 import com.saurik.substrate.MS;
 
+import me.piebridge.forcestopgb.hook.Hook;
+import me.piebridge.forcestopgb.hook.HookResult;
+import me.piebridge.forcestopgb.hook.SystemHook;
+
 public class SubstrateHook {
+
+    private SubstrateHook() {
+
+    }
 
     public static void initialize() {
         try {
@@ -58,7 +66,7 @@ public class SubstrateHook {
                         MS.hookMethod(ActivityManagerService, method, new MS.MethodAlteration<Object, Void>() {
                             @Override
                             public Void invoked(Object thiz, Object... args) throws Throwable {
-                                if (!SystemHook.beforeActivityManagerService$startProcessLocked(thiz, args)) {
+                                if (!SystemHook.beforeActivityManagerService$startProcessLocked(args)) {
                                     return null;
                                 } else {
                                     return invoke(thiz, args);
@@ -76,7 +84,7 @@ public class SubstrateHook {
         MS.hookMethod(Activity.class, Activity$onCreate, new MS.MethodAlteration<Activity, Void>() {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {
-                Hook.beforeActivity$onCreate(thiz, args);
+                Hook.beforeActivity$onCreate(thiz);
                 return invoke(thiz, args);
             }
         });
@@ -88,7 +96,7 @@ public class SubstrateHook {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {
                 invoke(thiz, args);
-                Hook.afterActivity$onDestroy(thiz, args);
+                Hook.afterActivity$onDestroy(thiz);
                 return null;
             }
         });
@@ -113,7 +121,7 @@ public class SubstrateHook {
             public Void invoked(Activity thiz, Object... args) throws Throwable {
                 Intent intent = (Intent) args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    Hook.beforeActivity$startHomeActivityForResult(thiz, intent);
+                    Hook.beforeActivity$startHomeActivityForResult(thiz);
                 }
                 return invoke(thiz, args);
             }
@@ -125,7 +133,7 @@ public class SubstrateHook {
         MS.hookMethod(IntentFilter.class, IntentFilter$match, new MS.MethodAlteration<IntentFilter, Integer>() {
             @Override
             public Integer invoked(IntentFilter thiz, Object... args) throws Throwable {
-                SystemHook.Result result = SystemHook.hookIntentFilter$match(thiz, args);
+                HookResult result = SystemHook.hookIntentFilter$match(thiz, args);
                 if (!result.isNone()) {
                     return (Integer) result.getResult();
                 } else {

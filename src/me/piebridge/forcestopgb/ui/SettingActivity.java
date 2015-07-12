@@ -1,4 +1,30 @@
-package me.piebridge.forcestopgb;
+package me.piebridge.forcestopgb.ui;
+
+import android.annotation.TargetApi;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.AbstractSet;
 import java.util.ArrayList;
@@ -9,28 +35,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.forcestopgb.R;
+import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.util.RecreateUtil;
-
-import android.annotation.TargetApi;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Build;
-import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.util.TypedValue;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 
 public class SettingActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
@@ -39,8 +46,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private List<AbstractSet<String>> mPageSelections;
 
     private final Object runningLock = new Object();
-    private final Object packageLock = new Object();
-    private Map<String, Boolean> preventPackages;
+    private Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
     private Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
     private Button remove;
     private Button cancel;
@@ -52,6 +58,8 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private Integer dangerousColor = null;
 
     private Integer transparentColor = null;
+
+    private BroadcastReceiver mBroadcastReceiver;
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -90,12 +98,32 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         cancel.setEnabled(false);
         prevent.setEnabled(false);
         remove.setEnabled(false);
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                JSONObject json = null;
+                try {
+                    json = new JSONObject(getResultData());
+                } catch (JSONException e) { // NOSONAR
+                    // do nothing
+                    android.util.Log.d(CommonIntent.TAG, "cannot convert to json", e);
+                }
+                if (json != null) {
+                    preventPackages.clear();
+                    Iterator<String> it = json.keys();
+                    while (it.hasNext()) {
+                        String key = it.next();
+                        preventPackages.put(key, json.optBoolean(key));
+                    }
+                }
+                refresh();
+            }
+        };
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        getPreventPackages();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -107,13 +135,8 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 } catch (InterruptedException e) {
                     // do nothing
                 }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        getPreventPackages();
-                        refresh();
-                    }
-                });
+                Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES, Uri.fromParts("package", getPackageName(), null));
+                sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
             }
         }).start();
     }
@@ -170,17 +193,8 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
-    private long mtime;
-
     public Map<String, Boolean> getPreventPackages() {
-        synchronized (packageLock) {
-            long time = PreventPackages.lastModified();
-            if (preventPackages == null || mtime < time) {
-                preventPackages = PreventPackages.load();
-                mtime = time;
-            }
-            return preventPackages;
-        }
+        return preventPackages;
     }
 
     @Override
@@ -279,14 +293,11 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     public void changePrevent(String packageName, boolean prevent) {
-        String action = prevent ? SystemHook.ADD_PREVENT_PACKAGE : SystemHook.REMOVE_PREVENT_PACKAGE;
-        this.sendBroadcast(Hook.newIntent(action, packageName, null));
-        synchronized (packageLock) {
-            if (prevent) {
-                preventPackages.put(packageName, !running.containsKey(packageName));
-            } else {
-                preventPackages.remove(packageName);
-            }
+        PreventUtils.update(this, new String[]{packageName}, prevent);
+        if (prevent) {
+            preventPackages.put(packageName, !running.containsKey(packageName));
+        } else {
+            preventPackages.remove(packageName);
         }
         refreshIfNeeded(false);
     }
@@ -294,13 +305,6 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private void refresh(int position, boolean force) {
         SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, position);
         fragment.refresh(force || fragment.canUseCache());
-    }
-
-    public void showFilter() {
-        for (int item = 0; item < mPageTitles.length; ++item) {
-            SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, item);
-            fragment.showFilter();
-        }
     }
 
     private void refreshIfNeeded(boolean force) {
@@ -328,25 +332,15 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             case R.id.cancel:
                 break;
             case R.id.prevent:
-                synchronized (packageLock) {
-                    Iterator<String> it = selections.iterator();
-                    while (it.hasNext()) {
-                        String packageName = it.next();
-                        this.sendBroadcast(Hook.newIntent(SystemHook.ADD_PREVENT_PACKAGE, packageName, it.hasNext() ? SystemHook.DELAY_SAVE : null));
-                        if (!preventPackages.containsKey(packageName)) {
-                            preventPackages.put(packageName, !running.containsKey(packageName));
-                        }
-                    }
+                PreventUtils.add(this, selections.toArray(new String[0]));
+                for (String packageName : selections) {
+                    preventPackages.put(packageName, !running.containsKey(packageName));
                 }
                 break;
             case R.id.remove:
-                synchronized (packageLock) {
-                    Iterator<String> it = selections.iterator();
-                    while (it.hasNext()) {
-                        String packageName = it.next();
-                        this.sendBroadcast(Hook.newIntent(SystemHook.REMOVE_PREVENT_PACKAGE, packageName, it.hasNext() ? SystemHook.DELAY_SAVE : null));
-                        preventPackages.remove(packageName);
-                    }
+                PreventUtils.remove(this, selections.toArray(new String[0]));
+                for (String packageName : selections) {
+                    preventPackages.remove(packageName);
                 }
                 break;
             default:

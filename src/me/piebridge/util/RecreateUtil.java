@@ -13,22 +13,8 @@ import android.os.IBinder;
 
 public class RecreateUtil {
 
-    private static Field scanField(Class<?> clazz, String... names) {
-        for (String name : names) {
-            try {
-                final Field field = clazz.getDeclaredField(name);
-                field.setAccessible(true);
-                return field;
-            } catch (NoSuchFieldException e) {
-                // do nothing
-            }
-            try {
-                return clazz.getField(name);
-            } catch (NoSuchFieldException e) {
-                // do nothing
-            }
-        }
-        return null;
+    private RecreateUtil() {
+
     }
 
     public static void recreate(Activity activity) {
@@ -51,11 +37,11 @@ public class RecreateUtil {
     }
 
     private static void recreateGB(Activity activity) throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        Field Activity$mToken = scanField(Activity.class, "mToken");
+        Field Activity$mToken = ReflectUtil.getField(Activity.class, "mToken");
         IBinder mToken = (IBinder) Activity$mToken.get(activity);
-        Field Activity$mMainThread = scanField(Activity.class, "mMainThread");
+        Field Activity$mMainThread = ReflectUtil.getField(Activity.class, "mMainThread");
         Object mMainThread = Activity$mMainThread.get(activity);
-        Field ActivityThread$mAppThread = scanField(mMainThread.getClass(), "mAppThread");
+        Field ActivityThread$mAppThread = ReflectUtil.getField(mMainThread.getClass(), "mAppThread");
         Object mAppThread = ActivityThread$mAppThread.get(mMainThread);
         // @formatter:off
         Method method = mAppThread.getClass().getMethod("scheduleRelaunchActivity",

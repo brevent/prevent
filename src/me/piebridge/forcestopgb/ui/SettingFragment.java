@@ -1,4 +1,4 @@
-package me.piebridge.forcestopgb;
+package me.piebridge.forcestopgb.ui;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -23,7 +23,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -51,6 +50,9 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import me.piebridge.forcestopgb.hook.Hook;
+import me.piebridge.forcestopgb.R;
+
 public abstract class SettingFragment extends ListFragment {
 
     private Adapter mAdapter;
@@ -59,8 +61,8 @@ public abstract class SettingFragment extends ListFragment {
     private Set<String> prevNames = null;
     private View filter;
     private CheckBox check;
-    private EditText query;
     private int headerIconWidth;
+    private static Map<String, Position> positions = new HashMap<String, Position>();
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -97,13 +99,13 @@ public abstract class SettingFragment extends ListFragment {
         View view = inflater.inflate(R.layout.list, container, false);
         filter = view.findViewById(R.id.filter);
         check = (CheckBox) filter.findViewById(R.id.filter_check);
-        query = (EditText) filter.findViewById(R.id.filter_query);
         check.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 selectAll(check.isChecked());
             }
         });
+        EditText query = (EditText) filter.findViewById(R.id.filter_query);
         query.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int before, int after) {
@@ -148,7 +150,7 @@ public abstract class SettingFragment extends ListFragment {
             int width = getHeaderIconWidth();
             if (holder.icon.getMinimumWidth() <= width) {
                 menu.setHeaderIcon(holder.icon);
-            } else if (BitmapDrawable.class.isAssignableFrom(holder.icon.getClass())){
+            } else if (BitmapDrawable.class.isAssignableFrom(holder.icon.getClass())) {
                 Bitmap icon = ((BitmapDrawable) holder.icon).getBitmap();
                 Bitmap bitmap = Bitmap.createScaledBitmap(icon, width, width, false);
                 menu.setHeaderIcon(new BitmapDrawable(getResources(), bitmap));
@@ -191,8 +193,6 @@ public abstract class SettingFragment extends ListFragment {
             case R.string.open:
                 try {
                     mActivity.startActivity(getMainIntent(holder.packageName));
-                } catch (ActivityNotFoundException e) {
-                    // do nothing
                 } catch (Exception e) {
                     // do nothing
                 }
@@ -245,10 +245,6 @@ public abstract class SettingFragment extends ListFragment {
 
     protected abstract boolean canUseCache();
 
-    protected abstract void setListPosition(Position position);
-
-    protected abstract Position getListPosition();
-
     protected abstract int getQueryHint();
 
     public void saveListPosition() {
@@ -257,6 +253,14 @@ public abstract class SettingFragment extends ListFragment {
         View v = l.getChildAt(0);
         int top = (v == null) ? 0 : v.getTop();
         setListPosition(new Position(position, top));
+    }
+
+    private void setListPosition(Position position) {
+        positions.put(getClass().getName(), position);
+    }
+
+    private Position getListPosition() {
+        return positions.get(getClass().getName());
     }
 
     private void setNewAdapterIfNeeded(SettingActivity activity, boolean force) {
@@ -270,7 +274,7 @@ public abstract class SettingFragment extends ListFragment {
             if (mAdapter != null) {
                 setListAdapter(null);
             }
-            mAdapter = new Adapter(activity, names, canUseCache());
+            mAdapter = new Adapter(activity, names, canUseCache(), filter);
             setListAdapter(mAdapter);
             if (prevNames == null) {
                 prevNames = new HashSet<String>();
@@ -284,12 +288,6 @@ public abstract class SettingFragment extends ListFragment {
             if (position != null) {
                 getListView().setSelectionFromTop(position.position, position.top);
             }
-        }
-    }
-
-    public void showFilter() {
-        if (filter != null) {
-            filter.setVisibility(View.VISIBLE);
         }
     }
 
@@ -363,64 +361,7 @@ public abstract class SettingFragment extends ListFragment {
         private Set<String> mNames = new HashSet<String>();
         private Set<String> mFiltered;
         private Filter mFilter;
-
-        public Filter getFilter() {
-            if (mFilter == null) {
-                mFilter = new SimpleFilter();
-            }
-            return mFilter;
-        }
-
-        public Collection<String> getAllPackages() {
-            if (mFiltered == null) {
-                return mNames;
-            } else {
-                return mFiltered;
-            }
-        }
-
-        class SimpleFilter extends Filter {
-            @Override
-            protected FilterResults performFiltering(CharSequence prefix) {
-                FilterResults results = new FilterResults();
-                String filter = null;
-                if (prefix != null && prefix.length() > 0) {
-                    filter = prefix.toString().toLowerCase(Locale.US);
-                }
-                if (mFiltered == null) {
-                    mFiltered = new HashSet<String>();
-                }
-                List<AppInfo> values = new ArrayList<AppInfo>();
-                if (filter == null) {
-                    values.addAll(mAppInfos);
-                    mFiltered.addAll(mNames);
-                } else {
-                    mFiltered.clear();
-                    for (AppInfo appInfo : mAppInfos) {
-                        if (appInfo.name.toLowerCase(Locale.US).contains(filter)
-                                || ("-3".equals(filter) && !appInfo.isSystem())
-                                || ("-s".equals(filter) && appInfo.isSystem())) {
-                            values.add(appInfo);
-                            mFiltered.add(appInfo.packageName);
-                        }
-                    }
-                }
-                results.values = values;
-                results.count = values.size();
-                return results;
-            }
-
-            @Override
-            @SuppressWarnings("unchecked")
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                setNotifyOnChange(false);
-                clear();
-                for (AppInfo appInfo : (List<AppInfo>) results.values) {
-                    add(appInfo);
-                }
-                notifyDataSetChanged();
-            }
-        }
+        private View mView;
 
         public Adapter(SettingActivity activity) {
             super(activity, R.layout.item);
@@ -442,8 +383,9 @@ public abstract class SettingFragment extends ListFragment {
             };
         }
 
-        public Adapter(final SettingActivity activity, Set<String> names, boolean cache) {
+        public Adapter(final SettingActivity activity, Set<String> names, boolean cache, View view) {
             this(activity);
+            mView = view;
             if (!cache && !Hook.isHookEnabled()) {
                 // @formatter:off
                 new AlertDialog.Builder(activity)
@@ -539,7 +481,9 @@ public abstract class SettingFragment extends ListFragment {
                     } catch (Exception e) {
                         // do nothing
                     }
-                    mActivity.showFilter();
+                    if (mView != null) {
+                        mView.setVisibility(View.VISIBLE);
+                    }
                 }
             }.execute();
         }
@@ -647,6 +591,65 @@ public abstract class SettingFragment extends ListFragment {
                     }
                 }
                 return buffer.toString();
+            }
+        }
+
+
+        public Filter getFilter() {
+            if (mFilter == null) {
+                mFilter = new SimpleFilter();
+            }
+            return mFilter;
+        }
+
+        public Collection<String> getAllPackages() {
+            if (mFiltered == null) {
+                return mNames;
+            } else {
+                return mFiltered;
+            }
+        }
+
+        private class SimpleFilter extends Filter {
+            @Override
+            protected FilterResults performFiltering(CharSequence prefix) {
+                FilterResults results = new FilterResults();
+                String filter = null;
+                if (prefix != null && prefix.length() > 0) {
+                    filter = prefix.toString().toLowerCase(Locale.US);
+                }
+                if (mFiltered == null) {
+                    mFiltered = new HashSet<String>();
+                }
+                List<AppInfo> values = new ArrayList<AppInfo>();
+                if (filter == null) {
+                    values.addAll(mAppInfos);
+                    mFiltered.addAll(mNames);
+                } else {
+                    mFiltered.clear();
+                    for (AppInfo appInfo : mAppInfos) {
+                        if (appInfo.name.toLowerCase(Locale.US).contains(filter)
+                                || ("-3".equals(filter) && !appInfo.isSystem())
+                                || ("-s".equals(filter) && appInfo.isSystem())) {
+                            values.add(appInfo);
+                            mFiltered.add(appInfo.packageName);
+                        }
+                    }
+                }
+                results.values = values;
+                results.count = values.size();
+                return results;
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                setNotifyOnChange(false);
+                clear();
+                for (AppInfo appInfo : (List<AppInfo>) results.values) {
+                    add(appInfo);
+                }
+                notifyDataSetChanged();
             }
         }
 
