@@ -23,6 +23,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -30,6 +33,7 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -56,6 +60,7 @@ public abstract class SettingFragment extends ListFragment {
     private View filter;
     private CheckBox check;
     private EditText query;
+    private int headerIconWidth;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -124,6 +129,13 @@ public abstract class SettingFragment extends ListFragment {
         l.showContextMenuForChild(v);
     }
 
+    private int getHeaderIconWidth() {
+        if (headerIconWidth == 0) {
+            headerIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, getResources().getDisplayMetrics());
+        }
+        return headerIconWidth;
+    }
+
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         if (mActivity == null || menu == null || menuInfo == null) {
@@ -133,7 +145,14 @@ public abstract class SettingFragment extends ListFragment {
         ViewHolder holder = (ViewHolder) ((AdapterContextMenuInfo) menuInfo).targetView.getTag();
         menu.setHeaderTitle(holder.nameView.getText());
         if (holder.icon != null) {
-            menu.setHeaderIcon(holder.icon);
+            int width = getHeaderIconWidth();
+            if (holder.icon.getMinimumWidth() <= width) {
+                menu.setHeaderIcon(holder.icon);
+            } else if (BitmapDrawable.class.isAssignableFrom(holder.icon.getClass())){
+                Bitmap icon = ((BitmapDrawable) holder.icon).getBitmap();
+                Bitmap bitmap = Bitmap.createScaledBitmap(icon, width, width, false);
+                menu.setHeaderIcon(new BitmapDrawable(getResources(), bitmap));
+            }
         }
         menu.add(Menu.NONE, R.string.app_info, Menu.NONE, R.string.app_info);
         if (mActivity.getPreventPackages().containsKey(holder.packageName)) {
