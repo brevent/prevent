@@ -3,8 +3,11 @@ package me.piebridge.forcestopgb.ui;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -125,19 +128,17 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     protected void onResume() {
         super.onResume();
-        if (!Hook.isHookEnabled()) {
-            return;
+        if (Hook.isHookEnabled()) {
+            initPackages();
         }
+    }
+
+    private void initPackages() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 synchronized (runningLock) {
                     retrieveRunningProcesses();
-                }
-                try {
-                    Thread.sleep(250);
-                } catch (InterruptedException e) {
-                    // do nothing
                 }
                 Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES, Uri.fromParts("package", getPackageName(), null));
                 sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
@@ -336,13 +337,13 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             case R.id.cancel:
                 break;
             case R.id.prevent:
-                PreventUtils.add(this, selections.toArray(new String[0]));
+                PreventUtils.add(this, selections.toArray(new String[selections.size()]));
                 for (String packageName : selections) {
                     preventPackages.put(packageName, !running.containsKey(packageName));
                 }
                 break;
             case R.id.remove:
-                PreventUtils.remove(this, selections.toArray(new String[0]));
+                PreventUtils.remove(this, selections.toArray(new String[selections.size()]));
                 for (String packageName : selections) {
                     preventPackages.remove(packageName);
                 }

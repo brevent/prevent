@@ -1,21 +1,10 @@
 package me.piebridge.forcestopgb.ui;
 
-import java.text.Collator;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -50,8 +39,20 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import me.piebridge.forcestopgb.hook.Hook;
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
 import me.piebridge.forcestopgb.R;
+import me.piebridge.forcestopgb.hook.Hook;
 
 public abstract class SettingFragment extends ListFragment {
 
@@ -263,7 +264,36 @@ public abstract class SettingFragment extends ListFragment {
         return positions.get(getClass().getName());
     }
 
+    private void showDialog() {
+        final Context context = mActivity;
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.app_name);
+        builder.setMessage(R.string.app_notenabled);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setCancelable(false);
+        builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
+                intent.setPackage("de.robv.android.xposed.installer");
+                intent.putExtra("section", "modules");
+                intent.putExtra("module", context.getPackageName());
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                try {
+                    startActivity(intent);
+                } catch (ActivityNotFoundException e) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.saurik.substrate")));
+                }
+            }
+        });
+        builder.create().show();
+    }
+
     private void setNewAdapterIfNeeded(SettingActivity activity, boolean force) {
+        if (!Hook.isHookEnabled()) {
+            showDialog();
+            return;
+        }
         Set<String> names;
         if (force || prevNames == null) {
             names = getPackageNames(activity);
@@ -386,32 +416,8 @@ public abstract class SettingFragment extends ListFragment {
         public Adapter(final SettingActivity activity, Set<String> names, boolean cache, View view) {
             this(activity);
             mView = view;
-            if (!cache && !Hook.isHookEnabled()) {
-                // @formatter:off
-                new AlertDialog.Builder(activity)
-                        .setTitle(R.string.app_name)
-                        .setMessage(R.string.app_notenabled)
-                        .setIcon(R.drawable.ic_launcher)
-                        .setPositiveButton(activity.getString(android.R.string.ok), new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Intent intent = new Intent("de.robv.android.xposed.installer.OPEN_SECTION")
-                                        .setPackage("de.robv.android.xposed.installer")
-                                        .putExtra("section", "modules")
-                                        .putExtra("module", mActivity.getPackageName())
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                try {
-                                    activity.startActivity(intent);
-                                } catch (ActivityNotFoundException e) {
-                                    activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.saurik.substrate")));
-                                }
-                            }
-                        }).create().show();
-                // @formatter:on
-            } else {
-                mNames.addAll(names);
-                addAll(names, cache);
-            }
+            mNames.addAll(names);
+            addAll(names, cache);
         }
 
         public void addAll(final Set<String> names, final boolean cache) {
