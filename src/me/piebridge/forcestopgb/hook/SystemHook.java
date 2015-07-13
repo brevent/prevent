@@ -1,5 +1,19 @@
 package me.piebridge.forcestopgb.hook;
 
+import android.app.ActivityManager;
+import android.app.ActivityThread;
+import android.app.Application;
+import android.appwidget.AppWidgetManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageParser;
+import android.os.Process;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.inputmethod.InputMethod;
 
 import org.json.JSONObject;
 
@@ -17,20 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import android.app.ActivityManager;
-import android.app.ActivityThread;
-import android.app.Application;
-import android.appwidget.AppWidgetManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.os.Process;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.inputmethod.InputMethod;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.common.CommonIntent;
@@ -82,6 +82,9 @@ public final class SystemHook {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             String packageName = intent.getData().getSchemeSpecificPart();
+            if ("android".equals(packageName)) {
+                return;
+            }
             if (packageName != null && !packageCounters.containsKey(packageName)) {
                 packageCounters.put(packageName, new HashMap<Integer, AtomicInteger>());
             }
@@ -148,8 +151,10 @@ public final class SystemHook {
                 packageCounters.remove(packageName);
                 if (preventPackages.containsKey(packageName)) {
                     preventPackages.put(packageName, Boolean.TRUE);
-                    logForceStop(action, packageName, "if needed");
-                    forceStopPackageIfNeeded(packageName);
+                    if (!Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
+                        logForceStop(action, packageName, "if needed");
+                        forceStopPackageIfNeeded(packageName);
+                    }
                 }
             } else if (CommonIntent.ACTION_FORCE_STOP.equals(action)) {
                 logRequest(action, packageName, -1);
@@ -182,7 +187,11 @@ public final class SystemHook {
     public static HookResult hookIntentFilter$match(IntentFilter thiz, Object... args) {
         String action = (String) args[0];
 
-        if (action == null || Intent.ACTION_MAIN.equals(action)) {
+        if (action == null) {
+            return HookResult.None;
+        }
+
+        if (Intent.ACTION_MAIN.equals(action) || Intent.ACTION_VIEW.equals(action)) {
             return HookResult.None;
         }
 
@@ -194,12 +203,7 @@ public final class SystemHook {
             return HookResult.None;
         }
 
-        if (Intent.ACTION_VIEW.equals(action)) {
-            return HookResult.None;
-        } else if (InputMethod.SERVICE_INTERFACE.equals(action)) {
-            // input method
-            return HookResult.None;
-        } else if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
+        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
             // app widget
             return HookResult.None;
         }
@@ -216,17 +220,40 @@ public final class SystemHook {
             return HookResult.None;
         }
 
+        if ("android".equals(packageName) || "system".equals(packageName)) {
+            return HookResult.None;
+        }
+
         loadPreventPackagesIfNeeded();
-        if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
+
+        if (BuildConfig.DEBUG) {
+            Log.v(TAG, "filter: " + filter + ", action: " + action + ", packageName: " + packageName);
+        }
+        if (PackageParser.ActivityIntentInfo.class.equals(clazz)) {
+            @SuppressWarnings("unchecked")
+            PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) thiz).activity;
+            if (activity.owner.activities.contains(activity)) {
+                return HookResult.None;
+            }
+        } else if (PackageParser.ServiceIntentInfo.class.equals(clazz)) {
+            return HookResult.None;
+        } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
+            // special BroadcastFilter
             if (preventPackages.containsKey(packageName)) {
                 logDisallow(filter, action, packageName);
                 return HookResult.NO_MATCH;
+            } else {
+                return HookResult.None;
             }
         }
 
         if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
             if (BuildConfig.DEBUG) {
                 logDisallow(filter, action, packageName);
+            }
+            if (filter.startsWith("BroadcastFilter")) {
+                Log.d(TAG, packageName + " receives broadcast, force stop it");
+                forceStopPackageLaterIfPrevent(packageName);
             }
             return HookResult.NO_MATCH;
         }
