@@ -365,6 +365,9 @@ public final class SystemHook {
         forceStopExecutor.schedule(new Runnable() {
             @Override
             public void run() {
+                if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+                    return;
+                }
                 int count = countCounter(packageName);
                 if (count != 0) {
                     packageCounters.remove(packageName);
@@ -388,6 +391,9 @@ public final class SystemHook {
     }
 
     private static void checkAndForceStopPackage(String packageName) {
+        if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+            return;
+        }
         for (ActivityManager.RunningServiceInfo service : getActivityManager().getRunningServices(Integer.MAX_VALUE)) {
             if (service.service.getPackageName().equals(packageName)) {
                 Log.d(TAG, packageName + " has running services, force stop it");
@@ -407,8 +413,8 @@ public final class SystemHook {
     }
 
     private static void forceStopPackage(final String packageName) {
-        if ((preventPackages.containsKey(packageName))) {
-            preventPackages.put(packageName, Boolean.TRUE);
+        if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+            return;
         }
         try {
             HiddenAPI.forceStopPackage(getActivityManager(), packageName);
