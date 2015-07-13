@@ -358,7 +358,7 @@ public final class SystemHook {
             public void run() {
                 checkAndForceStopPackage(packageName);
             }
-        }, 250, TimeUnit.MILLISECONDS);
+        }, 400, TimeUnit.MILLISECONDS);
     }
 
     private static void forceStopPackageLater(final String packageName) {
@@ -376,7 +376,7 @@ public final class SystemHook {
                     checkAndForceStopPackage(packageName);
                 }
             }
-        }, 250, TimeUnit.MILLISECONDS);
+        }, 400, TimeUnit.MILLISECONDS);
     }
 
     private static void forceStopPackageLaterIfPrevent(final String packageName) {
@@ -387,7 +387,7 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, 250, TimeUnit.MILLISECONDS);
+        }, 400, TimeUnit.MILLISECONDS);
     }
 
     private static void checkAndForceStopPackage(String packageName) {
