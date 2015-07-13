@@ -4,10 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import me.piebridge.forcestopgb.common.CommonIntent;
-import me.piebridge.forcestopgb.hook.SystemHook;
-import me.piebridge.forcestopgb.hook.Hook;
-
 public class PackageReceiver extends BroadcastReceiver {
 
     @Override
