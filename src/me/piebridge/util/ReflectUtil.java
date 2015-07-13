@@ -36,25 +36,12 @@ public class ReflectUtil {
         return getField(clazz, true, name);
     }
 
-    public static Field getField(Class<?> clazz, String... names) {
-        for (String name : names) {
-            final Field field = getField(clazz, name);
-            if (field != null) {
-                return field;
-            }
+    public static Object getObjectField(Object object, Field field) {
+        try {
+            return field.get(object);
+        } catch (IllegalAccessException e) {
+            return null;
         }
-        return null;
-    }
-
-    public static Object getObjectField(Object object, String name) {
-        Field field = getField(object.getClass(), name);
-        if (field != null) {
-            try {
-                return field.get(object);
-            } catch (IllegalAccessException e) {
-            }
-        }
-        return null;
     }
 
 }
