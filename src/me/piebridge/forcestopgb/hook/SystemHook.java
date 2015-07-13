@@ -52,9 +52,9 @@ public final class SystemHook {
 
     private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, HashMap<Integer, AtomicInteger>>();
 
-    private static ScheduledThreadPoolExecutor forceStopExecutor = new ScheduledThreadPoolExecutor(1);
+    private static ScheduledThreadPoolExecutor forceStopExecutor = new ScheduledThreadPoolExecutor(2);
 
-    private static ScheduledThreadPoolExecutor logExecutor = new ScheduledThreadPoolExecutor(1);
+    private static ScheduledThreadPoolExecutor logExecutor = new ScheduledThreadPoolExecutor(2);
 
     private static Field ProcessRecord$info;
 
@@ -358,7 +358,7 @@ public final class SystemHook {
             public void run() {
                 checkAndForceStopPackage(packageName);
             }
-        }, 800, TimeUnit.MILLISECONDS);
+        }, 250, TimeUnit.MILLISECONDS);
     }
 
     private static void forceStopPackageLater(final String packageName) {
@@ -376,7 +376,7 @@ public final class SystemHook {
                     checkAndForceStopPackage(packageName);
                 }
             }
-        }, 800, TimeUnit.MILLISECONDS);
+        }, 250, TimeUnit.MILLISECONDS);
     }
 
     private static void forceStopPackageLaterIfPrevent(final String packageName) {
@@ -387,7 +387,7 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, 800, TimeUnit.MILLISECONDS);
+        }, 250, TimeUnit.MILLISECONDS);
     }
 
     private static void checkAndForceStopPackage(String packageName) {
