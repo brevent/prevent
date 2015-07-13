@@ -37,6 +37,7 @@ import java.util.Set;
 
 import me.piebridge.forcestopgb.R;
 import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.forcestopgb.hook.Hook;
 import me.piebridge.util.RecreateUtil;
 
 public class SettingActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
@@ -124,6 +125,9 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     protected void onResume() {
         super.onResume();
+        if (!Hook.isHookEnabled()) {
+            return;
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
