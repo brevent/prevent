@@ -89,7 +89,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         mPageSelections.add(new HashSet<String>());
         PagerAdapter mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
         mPager.setAdapter(mPagerAdapter);
-        mPager.setOnPageChangeListener(this);
+        mPager.addOnPageChangeListener(this);
         remove = (Button) findViewById(R.id.remove);
         cancel = (Button) findViewById(R.id.cancel);
         prevent = (Button) findViewById(R.id.prevent);
