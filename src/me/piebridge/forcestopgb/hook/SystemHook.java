@@ -32,6 +32,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.inputmethod.InputMethod;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.util.HiddenAPI;
 import me.piebridge.util.ReflectUtil;
@@ -53,8 +54,6 @@ public final class SystemHook {
     private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, HashMap<Integer, AtomicInteger>>();
 
     private static ScheduledThreadPoolExecutor forceStopExecutor = new ScheduledThreadPoolExecutor(2);
-
-    private static ScheduledThreadPoolExecutor logExecutor = new ScheduledThreadPoolExecutor(2);
 
     private static Field ProcessRecord$info;
 
@@ -213,20 +212,22 @@ public final class SystemHook {
         String filter = thiz.toString();
         String packageName = getPackageName(filter);
         if (packageName == null) {
-            logUnknownSync(filter, action);
+            logUnknown(filter, action);
             return HookResult.None;
         }
 
         loadPreventPackagesIfNeeded();
         if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             if (preventPackages.containsKey(packageName)) {
-                logDisallowSync(filter, action, packageName);
+                logDisallow(filter, action, packageName);
                 return HookResult.NO_MATCH;
             }
         }
 
         if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-            logDisallowSync(filter, action, packageName);
+            if (BuildConfig.DEBUG) {
+                logDisallow(filter, action, packageName);
+            }
             return HookResult.NO_MATCH;
         }
 
@@ -279,13 +280,13 @@ public final class SystemHook {
                 }
             }
             forceStopPackageLaterIfPrevent(info.packageName);
-            logStartProcessSync("disallow", info.packageName, hostingType, hostingName);
+            logStartProcess("disallow", info.packageName, hostingType, hostingName);
             return false;
         } else {
             if (preventPackages.containsKey(info.packageName)) {
                 preventPackages.put(info.packageName, Boolean.TRUE);
             }
-            logStartProcessSync("allow", info.packageName, hostingType, hostingName);
+            logStartProcess("allow", info.packageName, hostingType, hostingName);
             return true;
         }
     }
@@ -401,7 +402,7 @@ public final class SystemHook {
                 return;
             }
         }
-        Log.v(TAG, packageName + " has no running services");
+        Log.d(TAG, packageName + " has no running services");
         killNoFather(packageName);
     }
 
@@ -507,64 +508,36 @@ public final class SystemHook {
         Log.d(TAG, sb.toString());
     }
 
-
-    private static void logUnknownSync(final String filter, final String action) {
-        final int tid = Process.myTid();
-        logExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-                StringBuilder sb = new StringBuilder();
-                sb.append("[");
-                sb.append(tid);
-                sb.append("] ");
-                sb.append("cannot get package from ");
-                sb.append(filter);
-                sb.append(", action: ");
-                sb.append(action);
-                Log.v(TAG, sb.toString());
-            }
-        });
+    private static void logUnknown(final String filter, final String action) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("cannot get package from ");
+        sb.append(filter);
+        sb.append(", action: ");
+        sb.append(action);
+        Log.w(TAG, sb.toString());
     }
 
-    private static void logDisallowSync(final String filter, final String action, final String packageName) {
-        final int tid = Process.myTid();
-        logExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-                StringBuilder sb = new StringBuilder();
-                sb.append("[");
-                sb.append(tid);
-                sb.append("] ");
-                sb.append("disallow ");
-                sb.append(filter);
-                sb.append(", action: ");
-                sb.append(action);
-                sb.append(", package: ");
-                sb.append(packageName);
-                Log.v(TAG, sb.toString());
-            }
-        });
+    private static void logDisallow(final String filter, final String action, final String packageName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("disallow ");
+        sb.append(filter);
+        sb.append(", action: ");
+        sb.append(action);
+        sb.append(", package: ");
+        sb.append(packageName);
+        Log.v(TAG, sb.toString());
     }
 
-    private static void logStartProcessSync(final String allow, final String packageName, final String hostingType, final String hostingName) {
-        final int tid = Process.myTid();
-        logExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-                StringBuilder sb = new StringBuilder();
-                sb.append("[");
-                sb.append(tid);
-                sb.append("] ");
-                sb.append(allow);
-                sb.append(" start ");
-                sb.append(packageName);
-                sb.append(" for ");
-                sb.append(hostingType);
-                sb.append(" ");
-                sb.append(hostingName);
-                Log.d(TAG, sb.toString());
-            }
-        });
+    private static void logStartProcess(final String allow, final String packageName, final String hostingType, final String hostingName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(allow);
+        sb.append(" start ");
+        sb.append(packageName);
+        sb.append(" for ");
+        sb.append(hostingType);
+        sb.append(" ");
+        sb.append(hostingName);
+        Log.d(TAG, sb.toString());
     }
 
 }
