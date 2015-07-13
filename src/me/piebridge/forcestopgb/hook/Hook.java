@@ -15,18 +15,17 @@ public class Hook {
 
     public static void beforeActivity$onCreate(Activity thiz) {
         String packageName = thiz.getPackageName();
-        Intent intent = new Intent(CommonIntent.ACTION_UPDATE_COUNTER, Uri.fromParts("package", packageName, null));
+        Intent intent = new Intent(CommonIntent.ACTION_INCREASE_COUNTER, Uri.fromParts("package", packageName, null));
         intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
-        intent.putExtra(CommonIntent.EXTRA_DELTA, 1);
+        intent.putExtra(CommonIntent.EXTRA_UID, thiz.getApplicationInfo().uid);
         thiz.sendBroadcast(intent);
         context.set(thiz);
     }
 
     public static void afterActivity$onDestroy(Activity thiz) {
         String packageName = thiz.getPackageName();
-        Intent intent = new Intent(CommonIntent.ACTION_UPDATE_COUNTER, Uri.fromParts("package", packageName, null));
+        Intent intent = new Intent(CommonIntent.ACTION_DECREASE_COUNTER, Uri.fromParts("package", packageName, null));
         intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
-        intent.putExtra(CommonIntent.EXTRA_DELTA, -1);
         thiz.sendBroadcast(intent);
     }
 
@@ -51,8 +50,8 @@ public class Hook {
     }
 
     public static void afterActivity$moveTaskToBack(Activity thiz, Boolean result) {
-        Log.d(CommonIntent.TAG, "moveTaskToBack: " + thiz + ", result: " + result);
         if (Boolean.TRUE.equals(result)) {
+            Log.d(CommonIntent.TAG, "moveTaskToBack: " + thiz.getClass());
             String packageName = thiz.getPackageName();
             Intent intent = new Intent(CommonIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts("package", packageName, null));
             thiz.sendBroadcast(intent);
@@ -60,7 +59,7 @@ public class Hook {
     }
 
     public static void beforeActivity$startHomeActivityForResult(Activity thiz) {
-        Log.w(CommonIntent.TAG, "start home activity: " + thiz);
+        Log.w(CommonIntent.TAG, "start home activity: " + thiz.getClass());
         String packageName = thiz.getPackageName();
         Intent intent = new Intent(CommonIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts("package", packageName, null));
         thiz.sendBroadcast(intent);

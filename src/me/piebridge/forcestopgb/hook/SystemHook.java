@@ -10,7 +10,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -53,7 +52,13 @@ public final class SystemHook {
 
     private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, HashMap<Integer, AtomicInteger>>();
 
-    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
+    private static ScheduledThreadPoolExecutor forceStopExecutor = new ScheduledThreadPoolExecutor(1);
+
+    private static ScheduledThreadPoolExecutor logExecutor = new ScheduledThreadPoolExecutor(1);
+
+    private static Field ProcessRecord$info;
+
+    private static Field ProcessRecord$pid;
 
     private SystemHook() {
 
@@ -64,7 +69,8 @@ public final class SystemHook {
             super();
             this.addAction(CommonIntent.ACTION_GET_PACKAGES);
             this.addAction(CommonIntent.ACTION_UPDATE_PREVENT);
-            this.addAction(CommonIntent.ACTION_UPDATE_COUNTER);
+            this.addAction(CommonIntent.ACTION_INCREASE_COUNTER);
+            this.addAction(CommonIntent.ACTION_DECREASE_COUNTER);
             this.addAction(Intent.ACTION_PACKAGE_RESTARTED);
             this.addAction(CommonIntent.ACTION_ACTIVITY_DESTROY);
             this.addAction(CommonIntent.ACTION_FORCE_STOP);
@@ -81,8 +87,10 @@ public final class SystemHook {
                 packageCounters.put(packageName, new HashMap<Integer, AtomicInteger>());
             }
             if (CommonIntent.ACTION_GET_PACKAGES.equals(action)) {
+                logRequest(action, packageName, -1);
                 setResultData(new JSONObject(preventPackages).toString());
             } else if (CommonIntent.ACTION_UPDATE_PREVENT.equals(action)) {
+                logRequest(action, packageName, -1);
                 String[] packages = intent.getStringArrayExtra(CommonIntent.EXTRA_PACKAGES);
                 boolean prevent = intent.getBooleanExtra(CommonIntent.EXTRA_PREVENT, true);
                 for (String name : packages) {
@@ -93,53 +101,71 @@ public final class SystemHook {
                         preventPackages.remove(name);
                     }
                 }
-                executor.submit(new Runnable() {
+                forceStopExecutor.submit(new Runnable() {
                     @Override
                     public void run() {
                         Packages.save(preventPackages);
                     }
                 });
-            } else if (CommonIntent.ACTION_UPDATE_COUNTER.equals(action)) {
+            } else if (CommonIntent.ACTION_INCREASE_COUNTER.equals(action) || CommonIntent.ACTION_DECREASE_COUNTER.equals(action)) {
+                int uid = intent.getIntExtra(CommonIntent.EXTRA_UID, 0);
                 int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
-                int delta = intent.getIntExtra(CommonIntent.EXTRA_DELTA, 0);
-                if (pid > 0) {
-                    if (!packageCounters.get(packageName).containsKey(pid)) {
-                        packageCounters.get(packageName).put(pid, new AtomicInteger());
+                if (uid > 0) {
+                    packageUids.put(packageName, uid);
+                }
+
+                AtomicInteger pidCounter;
+                HashMap<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
+                if (CommonIntent.ACTION_INCREASE_COUNTER.equals(action)) {
+                    if (packageCounter == null) {
+                        packageCounter = new HashMap<Integer, AtomicInteger>();
+                        packageCounters.put(packageName, packageCounter);
                     }
-                    packageCounters.get(packageName).get(pid).addAndGet(delta);
+                    pidCounter = packageCounter.get(pid);
+                    if (pidCounter == null) {
+                        pidCounter = new AtomicInteger();
+                        packageCounter.put(pid, pidCounter);
+                    }
+                    pidCounter.incrementAndGet();
+                } else if (packageCounter != null) {
+                    pidCounter = packageCounter.get(pid);
+                    if (pidCounter != null) {
+                        pidCounter.decrementAndGet();
+                    }
                 }
                 int count = countCounter(packageName);
-                Log.d(TAG, "action: " + action + ", package: " + packageName + ", count: " + count);
+                logRequest(action, packageName, count);
                 if (!preventPackages.containsKey(packageName)) {
                     // do nothing
                 } else if (count > 0) {
                     preventPackages.put(packageName, Boolean.FALSE);
                 } else {
                     preventPackages.put(packageName, Boolean.TRUE);
-                    Log.d(TAG, "count is 0, force stop " + packageName + " if needed");
+                    logForceStop(action, packageName, "if needed");
                     forceStopPackageIfNeeded(packageName);
                 }
             } else if (CommonIntent.ACTION_ACTIVITY_DESTROY.equals(action) || Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
-                Log.d(TAG, "action: " + action + ", package: " + packageName);
+                logRequest(action, packageName, -1);
                 packageCounters.remove(packageName);
                 if (preventPackages.containsKey(packageName)) {
-                    Log.d(TAG, "force stop " + packageName + " if needed");
                     preventPackages.put(packageName, Boolean.TRUE);
+                    logForceStop(action, packageName, "if needed");
                     forceStopPackageIfNeeded(packageName);
                 }
             } else if (CommonIntent.ACTION_FORCE_STOP.equals(action)) {
+                logRequest(action, packageName, -1);
                 packageCounters.remove(packageName);
                 if (preventPackages.containsKey(packageName)) {
                     preventPackages.put(packageName, Boolean.TRUE);
                 }
-                Log.d(TAG, "action: " + action + ", package: " + packageName + ", force stop later");
+                logForceStop(action, packageName, "later");
                 forceStopPackageLater(packageName);
             }
         }
     }
 
     private static void loadPreventPackagesIfNeeded() {
-        if (isSystemHook() && preventPackages == null) {
+        if (preventPackages == null && isSystemHook()) {
             Log.d(TAG, "load prevent packages");
             preventPackages = Packages.load();
         }
@@ -157,19 +183,21 @@ public final class SystemHook {
     public static HookResult hookIntentFilter$match(IntentFilter thiz, Object... args) {
         String action = (String) args[0];
 
+        if (action == null || Intent.ACTION_MAIN.equals(action)) {
+            return HookResult.None;
+        }
+
         if (CommonIntent.ACTION_CHECK_HOOK.equals(action)) {
             return HookResult.HOOK_ENABLED;
         }
 
-        if (IntentFilter.class.equals(thiz.getClass()) || HookIntentFilter.class.equals(thiz.getClass())) {
+        if (action.startsWith(CommonIntent.ACTION_NAMESPACE)) {
             return HookResult.None;
         }
 
-        if (action != null && action.startsWith(CommonIntent.ACTION_NAMESPACE)) {
+        if (Intent.ACTION_VIEW.equals(action)) {
             return HookResult.None;
-        }
-
-        if (InputMethod.SERVICE_INTERFACE.equals(action)) {
+        } else if (InputMethod.SERVICE_INTERFACE.equals(action)) {
             // input method
             return HookResult.None;
         } else if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
@@ -177,61 +205,48 @@ public final class SystemHook {
             return HookResult.None;
         }
 
-        // for BroadcastIntentFilter
-        String packageName = (String) ReflectUtil.getObjectField(thiz, "packageName");
-        if (packageName != null) {
-            return disableBroadcastIntentIfNeeded(action, packageName);
-        }
-
-        // thiz.activity or thiz.service or thiz.provider
-        // activity and receiver use the same ActivityIntentInfo
-        Field field = ReflectUtil.getField(thiz.getClass(), "activity", "service", "provider");
-        if (field == null) {
+        Class<?> clazz = thiz.getClass();
+        if (IntentFilter.class.equals(clazz) || HookIntentFilter.class.equals(clazz)) {
             return HookResult.None;
         }
 
-        Object component;
-        try {
-            component = field.get(thiz);
-        } catch (IllegalAccessException e) {
-            return HookResult.None;
-        }
-
-        // component.owner
-        Object owner = ReflectUtil.getObjectField(component, "owner");
-
-        // component.owner.packageName
-        packageName = (String) ReflectUtil.getObjectField(owner, "packageName");
-
-        // component.owner.applicationInfo
-        ApplicationInfo ai = (ApplicationInfo) ReflectUtil.getObjectField(owner, "applicationInfo");
-
-        // component.owner.activities
-        ArrayList<?> activities = (ArrayList<?>) ReflectUtil.getObjectField(owner, "activities");
-        if (ai != null && (!packageUids.containsKey(packageName) || packageUids.get(packageName) != ai.uid)) {
-            Log.d(TAG, "package: " + packageName + ", uid: " + ai.uid);
-            packageUids.put(packageName, ai.uid);
-        }
-
-        if (activities != null && activities.contains(component)) {
-            // we don't filter activities, otherwise cannot start activity
-            return HookResult.None;
-        }
-
-        // component.owner.providers
-        ArrayList<?> providers = (ArrayList<?>) ReflectUtil.getObjectField(owner, "providers");
-        if (providers != null && providers.contains(component)) {
-            // we don't filter providers
+        String filter = thiz.toString();
+        String packageName = getPackageName(filter);
+        if (packageName == null) {
+            logUnknownSync(filter, action);
             return HookResult.None;
         }
 
         loadPreventPackagesIfNeeded();
+        if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
+            if (preventPackages.containsKey(packageName)) {
+                logDisallowSync(filter, action, packageName);
+                return HookResult.NO_MATCH;
+            }
+        }
 
         if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-            Log.v(TAG, "disallow " + component + ", action: " + action);
+            logDisallowSync(filter, action, packageName);
             return HookResult.NO_MATCH;
         }
+
         return HookResult.None;
+    }
+
+    private static String getPackageName(String filter) {
+        int space = filter.indexOf(' ') + 1;
+        int slash = filter.indexOf('/', space);
+        if (space != 0 && slash != -1) {
+            String name = filter.substring(space, slash);
+            space = name.lastIndexOf(' ');
+            if (space != -1) {
+                return name.substring(space + 1);
+            } else {
+                return name;
+            }
+        } else {
+            return null;
+        }
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) {
@@ -240,47 +255,39 @@ public final class SystemHook {
             return true;
         }
         registerHookReceiverIfNeeded();
-        ApplicationInfo info = (ApplicationInfo) ReflectUtil.getObjectField(args[0], "info");
+        Object app = args[0];
+        String hostingType = (String) args[1];
+        String hostingName = (String) args[2];
+        if (ProcessRecord$info == null) {
+            ProcessRecord$info = ReflectUtil.getField(app.getClass(), "info");
+        }
+        ApplicationInfo info = (ApplicationInfo) ReflectUtil.getObjectField(app, ProcessRecord$info);
         if (info == null) {
-            Log.w(SystemHook.TAG, "no info field for " + args[0]);
+            Log.w(SystemHook.TAG, "no info field for " + app);
             return true;
         }
-        boolean disallow = "broadcast".equals(args[1]);
+        boolean disallow = "broadcast".equals(hostingType);
         loadPreventPackagesIfNeeded();
         if (disallow && Boolean.TRUE.equals(preventPackages.get(info.packageName))) {
-            Field field = ReflectUtil.getField(args[0].getClass(), "pid");
-            if (field != null) {
+            if (ProcessRecord$pid == null) {
+                ProcessRecord$pid = ReflectUtil.getField(app.getClass(), "pid");
+            }
+            if (ProcessRecord$pid != null) {
                 try {
-                    field.setInt(args[0], 0);
-                } catch (IllegalAccessException e) {
-                    Log.e(TAG, "field: " + field, e);
+                    ProcessRecord$pid.setInt(app, 0);
+                } catch (IllegalAccessException e) { // NOSNAR
                 }
             }
             forceStopPackageLaterIfPrevent(info.packageName);
-            Log.d(SystemHook.TAG, "disallow start " + info.packageName + " for " + args[1] + " " + args[2]);
+            logStartProcessSync("disallow", info.packageName, hostingType, hostingName);
             return false;
         } else {
-            Log.d(SystemHook.TAG, "allow start " + info.packageName + " for " + args[1] + " " + args[2]);
+            if (preventPackages.containsKey(info.packageName)) {
+                preventPackages.put(info.packageName, Boolean.TRUE);
+            }
+            logStartProcessSync("allow", info.packageName, hostingType, hostingName);
             return true;
         }
-    }
-
-    private static HookResult disableBroadcastIntentIfNeeded(String action, String packageName) {
-        if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
-            if (preventPackages.containsKey(packageName)) {
-                Log.d(TAG, "disallow " + packageName + ", action: " + action);
-                return HookResult.NO_MATCH;
-            }
-        }
-
-        if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-            Log.v(TAG, "disallow " + packageName + ", action: " + action);
-            Log.d(TAG, "force stop " + packageName + " to prevent broadcast");
-            forceStopPackageLaterIfPrevent(packageName);
-            return HookResult.NO_MATCH;
-        }
-
-        return HookResult.None;
     }
 
     private static boolean isSystemHook() {
@@ -299,7 +306,7 @@ public final class SystemHook {
             if (checkPid(entry.getKey(), packageName)) {
                 count += entry.getValue().get();
             } else {
-                Log.d(TAG, "pid " + entry.getKey() + " is not for " + packageName);
+                logIgnore(entry.getKey(), packageName);
                 iterator.remove();
             }
         }
@@ -346,7 +353,7 @@ public final class SystemHook {
     }
 
     private static void forceStopPackageIfNeeded(final String packageName) {
-        executor.schedule(new Runnable() {
+        forceStopExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 checkAndForceStopPackage(packageName);
@@ -355,7 +362,7 @@ public final class SystemHook {
     }
 
     private static void forceStopPackageLater(final String packageName) {
-        executor.schedule(new Runnable() {
+        forceStopExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 int count = countCounter(packageName);
@@ -370,7 +377,7 @@ public final class SystemHook {
     }
 
     private static void forceStopPackageLaterIfPrevent(final String packageName) {
-        executor.schedule(new Runnable() {
+        forceStopExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
@@ -383,12 +390,12 @@ public final class SystemHook {
     private static void checkAndForceStopPackage(String packageName) {
         for (ActivityManager.RunningServiceInfo service : getActivityManager().getRunningServices(Integer.MAX_VALUE)) {
             if (service.service.getPackageName().equals(packageName)) {
-                Log.d(TAG, "package " + packageName + " has running services, force stop it");
+                Log.d(TAG, packageName + " has running services, force stop it");
                 forceStopPackage(packageName);
                 return;
             }
         }
-        Log.d(TAG, "package " + packageName + " has no running services, ignore it");
+        Log.v(TAG, packageName + " has no running services");
         killNoFather(packageName);
     }
 
@@ -441,14 +448,117 @@ public final class SystemHook {
                 }
                 if (HiddenAPI.getParentPid(pid) == 1) {
                     Process.killProcess(pid);
-                    Log.d(TAG, "kill " + pid + " without parent belongs to " + packageName);
+                    logKill(pid, "without parent", packageName);
 //                } else if (isZombie(pid)) {
 //                    Process.killProcess(pid);
-//                    Log.d(TAG, "kill " + pid + " zombie belongs to " + packageName);
+//                    logKill(pid, "zombie", packageName);
                 }
             }
         }
     }
 
+    private static void logKill(int pid, String reason, String packageName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("kill ");
+        sb.append(pid);
+        sb.append("(");
+        sb.append(reason);
+        sb.append("), package: ");
+        sb.append(packageName);
+        Log.d(TAG, sb.toString());
+    }
+
+    private static void logForceStop(String action, String packageName, String message) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("action: ");
+        sb.append(action);
+        sb.append(", force stop ");
+        sb.append(packageName);
+        sb.append(" ");
+        sb.append(message);
+        Log.d(TAG, sb.toString());
+    }
+
+    private static void logIgnore(int key, String packageName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("pid ");
+        sb.append(key);
+        sb.append(" is not for ");
+        sb.append(packageName);
+        Log.d(TAG, sb.toString());
+    }
+
+    private static void logRequest(String action, String packageName, int count) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("action: ");
+        sb.append(action);
+        sb.append(", packageName: ");
+        sb.append(packageName);
+        if (count >= 0) {
+            sb.append(", count: ");
+            sb.append(count);
+        }
+        Log.d(TAG, sb.toString());
+    }
+
+
+    private static void logUnknownSync(final String filter, final String action) {
+        final int tid = Process.myTid();
+        logExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                StringBuilder sb = new StringBuilder();
+                sb.append("[");
+                sb.append(tid);
+                sb.append("] ");
+                sb.append("cannot get package from ");
+                sb.append(filter);
+                sb.append(", action: ");
+                sb.append(action);
+                Log.v(TAG, sb.toString());
+            }
+        });
+    }
+
+    private static void logDisallowSync(final String filter, final String action, final String packageName) {
+        final int tid = Process.myTid();
+        logExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                StringBuilder sb = new StringBuilder();
+                sb.append("[");
+                sb.append(tid);
+                sb.append("] ");
+                sb.append("disallow ");
+                sb.append(filter);
+                sb.append(", action: ");
+                sb.append(action);
+                sb.append(", package: ");
+                sb.append(packageName);
+                Log.v(TAG, sb.toString());
+            }
+        });
+    }
+
+    private static void logStartProcessSync(final String allow, final String packageName, final String hostingType, final String hostingName) {
+        final int tid = Process.myTid();
+        logExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                StringBuilder sb = new StringBuilder();
+                sb.append("[");
+                sb.append(tid);
+                sb.append("] ");
+                sb.append(allow);
+                sb.append(" start ");
+                sb.append(packageName);
+                sb.append(" for ");
+                sb.append(hostingType);
+                sb.append(" ");
+                sb.append(hostingName);
+                Log.d(TAG, sb.toString());
+            }
+        });
+    }
 
 }
