@@ -17,7 +17,11 @@ public class HiddenAPI {
     }
 
     public static int getParentPid(int pid) {
-        return Process.getParentPid(pid);
+        String[] procStatusLabels = { "PPid:" };
+        long[] procStatusValues = new long[1];
+        procStatusValues[0] = -1;
+        Process.readProcLines("/proc/" + pid + "/status", procStatusLabels, procStatusValues);
+        return (int) procStatusValues[0];
     }
 
     public static void forceStopPackage(ActivityManager activityManager, String packageName) {
