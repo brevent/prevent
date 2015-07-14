@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         versionCode Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())
-        versionName 'git describe --tags'.execute().text.trim()
+        versionName 'git describe --tags'.execute().text.trim().substring(1)
     }
 
     buildTypes {
