@@ -147,7 +147,7 @@ public final class SystemHook {
                 logRequest(action, packageName, count);
                 if (count <= 0 && preventPackages.containsKey(packageName)) {
                     preventPackages.put(packageName, Boolean.TRUE);
-                    logForceStop(action, packageName, "if needed in 30s");
+                    logForceStop(action, packageName, "if needed in 60s");
                     forceStopPackageIfNeeded(packageName);
                 }
             } else if (CommonIntent.ACTION_ACTIVITY_DESTROY.equals(action)) {
@@ -155,7 +155,7 @@ public final class SystemHook {
                 packageCounters.remove(packageName);
                 if (preventPackages.containsKey(packageName)) {
                     preventPackages.put(packageName, Boolean.TRUE);
-                    logForceStop(action, packageName, "later in 3s");
+                    logForceStop(action, packageName, "later in 30s");
                     forceStopPackageLater(packageName);
                 }
             } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
@@ -373,7 +373,7 @@ public final class SystemHook {
                     killNoFather(packageName);
                 }
             }
-        }, 30, TimeUnit.SECONDS);
+        }, 60, TimeUnit.SECONDS);
     }
 
     private static void forceStopPackageForce(final String packageName) {
@@ -396,7 +396,7 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, 3, TimeUnit.SECONDS);
+        }, 30, TimeUnit.SECONDS);
     }
 
     private static void forceStopPackageLaterIfPrevent(final String packageName) {
