@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageParser;
 import android.os.Binder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
@@ -57,7 +59,7 @@ public final class SystemHook {
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
 
-    private static Set<String> SAVE_ACTIONS = new HashSet<String>(Arrays.asList(
+    private static Set<String> SAFE_ACTIONS = new HashSet<String>(Arrays.asList(
             AppWidgetManager.ACTION_APPWIDGET_UPDATE
     ));
 
@@ -72,10 +74,9 @@ public final class SystemHook {
             this.addAction(CommonIntent.ACTION_UPDATE_PREVENT);
             this.addAction(CommonIntent.ACTION_INCREASE_COUNTER);
             this.addAction(CommonIntent.ACTION_DECREASE_COUNTER);
-            this.addAction(Intent.ACTION_PACKAGE_RESTARTED);
             this.addAction(CommonIntent.ACTION_ACTIVITY_DESTROY);
             this.addAction(CommonIntent.ACTION_FORCE_STOP);
-            this.addDataScheme("package");
+            this.addDataScheme(CommonIntent.SCHEME);
         }
     }
 
@@ -131,7 +132,6 @@ public final class SystemHook {
                 int count = countCounter(packageName);
                 logRequest(action, packageName, count);
                 if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                    Log.w(TAG, "activity is prevent!");
                     preventPackages.put(packageName, Boolean.FALSE);
                 }
             } else if (CommonIntent.ACTION_DECREASE_COUNTER.equals(action)) {
@@ -172,22 +172,6 @@ public final class SystemHook {
         }
     }
 
-    private static void loadPreventPackagesIfNeeded() {
-        if (preventPackages == null && isSystemHook()) {
-            Log.d(TAG, "load prevent packages");
-            preventPackages = Packages.load();
-        }
-    }
-
-    private static void registerHookReceiverIfNeeded() {
-        if (isSystemHook() && !registered) {
-            Application application = ActivityThread.currentApplication();
-            application.registerReceiver(new HookBroadcaseReceiver(), new HookIntentFilter());
-            registered = true;
-            Log.d(TAG, "registered receiver");
-        }
-    }
-
     public static HookResult hookIntentFilter$match(Object filter, Object... args) {
         String action = (String) args[0];
 
@@ -195,29 +179,37 @@ public final class SystemHook {
             return HookResult.None;
         }
 
+        if (BuildConfig.DEBUG) {
+            Log.v(TAG, "action: " + action + ", filter: " + filter);
+        }
+
         if (CommonIntent.ACTION_CHECK_HOOK.equals(action)) {
             return HookResult.HOOK_ENABLED;
+        }
+
+        if (CommonIntent.SCHEME.equals(args[2])) {
+            return HookResult.MATCH;
+        }
+
+        if (SAFE_ACTIONS.contains(action)) {
+            return HookResult.None;
         }
 
         if (!isSystemHook()) {
             return HookResult.None;
         }
 
-        if (action.startsWith(CommonIntent.ACTION_NAMESPACE)) {
-            return HookResult.None;
-        }
-
-        if (SAVE_ACTIONS.contains(action)) {
-            return HookResult.None;
+        if (preventPackages == null) {
+            Log.d(TAG, "load prevent packages");
+            preventPackages = Packages.load();
         }
 
         if (filter instanceof PackageParser.ActivityIntentInfo) {
-            // for receiver
+            // for receiver, we don't block for activity
             @SuppressWarnings("unchecked")
             PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) filter).activity;
             PackageParser.Package owner = activity.owner;
             String packageName = owner.applicationInfo.packageName;
-            loadPreventPackagesIfNeeded();
             if (Boolean.TRUE.equals(preventPackages.get(packageName)) && owner.receivers.contains(activity)) {
                 if (BuildConfig.DEBUG) {
                     logDisallow(filter.toString(), action, packageName);
@@ -229,7 +221,6 @@ public final class SystemHook {
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
             PackageParser.Package owner = service.owner;
             String packageName = owner.applicationInfo.packageName;
-            loadPreventPackagesIfNeeded();
             if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
                 if (BuildConfig.DEBUG) {
                     logDisallow(filter.toString(), action, packageName);
@@ -255,18 +246,35 @@ public final class SystemHook {
         if (!isSystemHook()) {
             Log.e(SystemHook.TAG, "non-system call for ActivityManagerService$startProcessLocked");
             return true;
+        } else {
+            if (!registered) {
+                HandlerThread thread = new HandlerThread("PreventService");
+                thread.start();
+                Handler handler = new Handler(thread.getLooper());
+                Application application = ActivityThread.currentApplication();
+
+                BroadcastReceiver receiver = new HookBroadcaseReceiver();
+                application.registerReceiver(receiver, new HookIntentFilter(), null, handler);
+
+                IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
+                filter.addDataScheme("package");
+                application.registerReceiver(receiver, filter, null, handler);
+                registered = true;
+                Log.d(TAG, "registered receiver");
+            }
+            if (preventPackages == null) {
+                Log.d(TAG, "load prevent packages");
+                preventPackages = Packages.load();
+            }
         }
-        registerHookReceiverIfNeeded();
         Object app = args[0];
         String hostingType = (String) args[1];
         String hostingName = (String) args[2];
         String packageName = ProcessRecordUtils.getPackageName(app);
-        if (packageName == null) {
-            Log.w(SystemHook.TAG, "cannot get package name from " + app);
-            return true;
+        if (BuildConfig.DEBUG) {
+            Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", app: " + app);
         }
         boolean disallow = "broadcast".equals(hostingType);
-        loadPreventPackagesIfNeeded();
         if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName))) {
             ProcessRecordUtils.setPid(app, 0);
             forceStopPackageLaterIfPrevent(packageName);
@@ -407,9 +415,9 @@ public final class SystemHook {
         killNoFather(packageName);
     }
 
-    public static void resetPackages() {
-        Log.d(TAG, "resetPackages");
-        Packages.resetPackages();
+    public static void initPreventRunning() {
+        Log.i(TAG, "init prevent running");
+        Packages.initPackages();
     }
 
     private static boolean killNoFather(String packageName) {
@@ -486,16 +494,7 @@ public final class SystemHook {
             sb.append(", count: ");
             sb.append(count);
         }
-        Log.d(TAG, sb.toString());
-    }
-
-    private static void logUnknown(final String filter, final String action) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("cannot get package from ");
-        sb.append(filter);
-        sb.append(", action: ");
-        sb.append(action);
-        Log.w(TAG, sb.toString());
+        Log.i(TAG, sb.toString());
     }
 
     private static void logDisallow(final String filter, final String action, final String packageName) {
@@ -512,7 +511,7 @@ public final class SystemHook {
             sb.append(", callingPid: ");
             sb.append(Binder.getCallingPid());
         }
-        Log.v(TAG, sb.toString());
+        Log.d(TAG, sb.toString());
     }
 
     private static void logStartProcess(final String allow, final String packageName, final String hostingType, final String hostingName) {

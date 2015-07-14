@@ -23,7 +23,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 
     @Override
     public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
-        SystemHook.resetPackages();
+        SystemHook.initPreventRunning();
 
         // dynamic maintain force stopped package
         XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {

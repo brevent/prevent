@@ -46,7 +46,7 @@ public class SubstrateHook {
                     MS.hookMethod(SystemServer, SystemServer$main, new MS.MethodAlteration<Object, Void>() {
                         @Override
                         public Void invoked(Object thiz, Object... args) throws Throwable {
-                            SystemHook.resetPackages();
+                            SystemHook.initPreventRunning();
                             return invoke(thiz, args);
                         }
                     });

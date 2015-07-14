@@ -70,7 +70,7 @@ final class Packages {
         return packages;
     }
 
-    public static void resetPackages() {
+    public static void initPackages() {
         File file = new File(FORCESTOP);
         File parent = file.getParentFile();
         if (!parent.isDirectory()) {

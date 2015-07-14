@@ -1,5 +1,6 @@
 package me.piebridge.forcestopgb.common;
 
+import android.content.Intent;
 import android.content.IntentFilter;
 
 /**
@@ -30,6 +31,10 @@ public final class CommonIntent {
     public static String EXTRA_DELTA = ACTION_NAMESPACE + "DELTA";
     public static String EXTRA_PACKAGES = ACTION_NAMESPACE + "PACKAGES";
     public static String EXTRA_PREVENT = ACTION_NAMESPACE + "PREVENT";
+
+    public static final int INTENT_FLAG = Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_DEBUG_LOG_RESOLUTION;
+
+    public static final String SCHEME = "prevent";
 
     private CommonIntent() {
 
