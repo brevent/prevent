@@ -16,7 +16,8 @@ public class PreventUtils {
     }
 
     static void update(Context context, String[] packages, boolean add) {
-        Intent intent = new Intent(CommonIntent.ACTION_UPDATE_PREVENT, Uri.fromParts("package", context.getPackageName(), null));
+        Intent intent = new Intent(CommonIntent.ACTION_UPDATE_PREVENT, Uri.fromParts(CommonIntent.SCHEME, context.getPackageName(), null));
+        intent.setFlags(CommonIntent.INTENT_FLAG);
         intent.putExtra(CommonIntent.EXTRA_PACKAGES, packages);
         intent.putExtra(CommonIntent.EXTRA_PREVENT, add);
         context.sendBroadcast(intent);
