@@ -8,12 +8,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageParser;
+import android.os.Binder;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.inputmethod.InputMethod;
 
 import org.json.JSONObject;
 
@@ -23,10 +22,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -34,8 +35,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.util.BroadcastFilterUtils;
 import me.piebridge.util.HiddenAPI;
-import me.piebridge.util.ReflectUtil;
+import me.piebridge.util.ProcessRecordUtils;
 
 public final class SystemHook {
 
@@ -55,9 +57,9 @@ public final class SystemHook {
 
     private static ScheduledThreadPoolExecutor forceStopExecutor = new ScheduledThreadPoolExecutor(2);
 
-    private static Field ProcessRecord$info;
-
-    private static Field ProcessRecord$pid;
+    private static Set<String> SAVE_ACTIONS = new HashSet<String>(Arrays.asList(
+            AppWidgetManager.ACTION_APPWIDGET_UPDATE
+    ));
 
     private SystemHook() {
 
@@ -115,7 +117,6 @@ public final class SystemHook {
                 if (uid > 0) {
                     packageUids.put(packageName, uid);
                 }
-
                 AtomicInteger pidCounter;
                 HashMap<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
                 if (CommonIntent.ACTION_INCREASE_COUNTER.equals(action)) {
@@ -184,93 +185,63 @@ public final class SystemHook {
         }
     }
 
-    public static HookResult hookIntentFilter$match(IntentFilter filter, Object... args) {
+    public static HookResult hookIntentFilter$match(Object filter, Object... args) {
         String action = (String) args[0];
 
         if (CommonIntent.ACTION_CHECK_HOOK.equals(action)) {
             return HookResult.HOOK_ENABLED;
         }
 
-        String filterString = filter.toString();
-        String packageName = getPackageName(filterString);
-        if ("android".equals(packageName) || "system".equals(packageName)) {
+        if (!isSystemHook()) {
             return HookResult.None;
         }
 
-        boolean isStatic = false;
-
-        boolean isDynamic = isDynamicBroadcast(filterString);
-
-        if (!isDynamic) {
-            isStatic = isStaticBroadcast(filter);
-        }
-
-        if (!isStatic && !isDynamic) {
+        if (action.startsWith(CommonIntent.ACTION_NAMESPACE)) {
             return HookResult.None;
         }
 
-        if (BuildConfig.DEBUG) {
-            Log.v(TAG, "filter: " + filterString + ", action: " + action + ", packageName: " + packageName);
-        }
-
-        // allow special broadcast
-        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
-            // app widget
+        if (SAVE_ACTIONS.contains(action)) {
             return HookResult.None;
         }
 
-        loadPreventPackagesIfNeeded();
-        Boolean running = preventPackages.get(packageName);
-
-        // disallow special broadcast
-        if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action) && running != null) {
-            logDisallow(filterString, action, packageName);
-            return HookResult.NO_MATCH;
-        }
-
-        if (Boolean.TRUE.equals(running)) {
+        if (filter instanceof PackageParser.ActivityIntentInfo) {
+            // for receiver
+            @SuppressWarnings("unchecked")
+            PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) filter).activity;
+            PackageParser.Package owner = activity.owner;
+            String packageName = owner.applicationInfo.packageName;
+            loadPreventPackagesIfNeeded();
+            if (Boolean.TRUE.equals(preventPackages.get(packageName)) && owner.receivers.contains(activity)) {
+                if (BuildConfig.DEBUG) {
+                    logDisallow(filter.toString(), action, packageName);
+                }
+                return HookResult.NO_MATCH;
+            }
+        } else if (filter instanceof PackageParser.ServiceIntentInfo && Binder.getCallingUid() != Process.SYSTEM_UID) {
+            // for service
+            PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
+            PackageParser.Package owner = service.owner;
+            String packageName = owner.applicationInfo.packageName;
+            loadPreventPackagesIfNeeded();
+            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                if (BuildConfig.DEBUG) {
+                    logDisallow(filter.toString(), action, packageName);
+                }
+                return HookResult.NO_MATCH;
+            }
+        } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
+            // for dynamic broadcast, we only disable ACTION_CLOSE_SYSTEM_DIALOGS
+            String packageName = BroadcastFilterUtils.getPackageName(filter);
+            if (preventPackages.containsKey(packageName)) {
+                logDisallow(filter.toString(), action, packageName);
+                return HookResult.NO_MATCH;
+            }
             if (BuildConfig.DEBUG) {
-                logDisallow(filterString, action, packageName);
+                Log.v(TAG, "filter:  " + filter + ", action: " + action + ", package: " + packageName);
             }
-            if (isDynamic) {
-                Log.d(TAG, packageName + " receives broadcast, force stop it");
-                forceStopPackageLaterIfPrevent(packageName);
-            }
-            return HookResult.NO_MATCH;
         }
 
         return HookResult.None;
-    }
-
-    private static boolean isStaticBroadcast(IntentFilter filter) {
-        if (PackageParser.ActivityIntentInfo.class.equals(filter.getClass())) {
-            @SuppressWarnings("unchecked")
-            PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) filter).activity;
-            if (activity.owner.receivers.contains(activity)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean isDynamicBroadcast(String filter) {
-        return filter.startsWith("BroadcastFilter");
-    }
-
-    private static String getPackageName(String filter) {
-        int space = filter.indexOf(' ') + 1;
-        int slash = filter.indexOf('/', space);
-        if (space != 0 && slash != -1) {
-            String name = filter.substring(space, slash);
-            space = name.lastIndexOf(' ');
-            if (space != -1) {
-                return name.substring(space + 1);
-            } else {
-                return name;
-            }
-        } else {
-            return null;
-        }
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) {
@@ -282,34 +253,25 @@ public final class SystemHook {
         Object app = args[0];
         String hostingType = (String) args[1];
         String hostingName = (String) args[2];
-        if (ProcessRecord$info == null) {
-            ProcessRecord$info = ReflectUtil.getField(app.getClass(), "info");
-        }
-        ApplicationInfo info = (ApplicationInfo) ReflectUtil.getObjectField(app, ProcessRecord$info);
-        if (info == null) {
-            Log.w(SystemHook.TAG, "no info field for " + app);
+        String packageName = ProcessRecordUtils.getPackageName(app);
+        if (packageName == null) {
+            Log.w(SystemHook.TAG, "cannot get package name from " + app);
             return true;
         }
         boolean disallow = "broadcast".equals(hostingType);
         loadPreventPackagesIfNeeded();
-        if (disallow && Boolean.TRUE.equals(preventPackages.get(info.packageName))) {
-            if (ProcessRecord$pid == null) {
-                ProcessRecord$pid = ReflectUtil.getField(app.getClass(), "pid");
-            }
-            if (ProcessRecord$pid != null) {
-                try {
-                    ProcessRecord$pid.setInt(app, 0);
-                } catch (IllegalAccessException e) { // NOSNAR
-                }
-            }
-            forceStopPackageLaterIfPrevent(info.packageName);
-            logStartProcess("disallow", info.packageName, hostingType, hostingName);
+        if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName))) {
+            ProcessRecordUtils.setPid(app, 0);
+            forceStopPackageLaterIfPrevent(packageName);
+            logStartProcess("disallow", packageName, hostingType, hostingName);
             return false;
         } else {
-            if (preventPackages.containsKey(info.packageName)) {
-                preventPackages.put(info.packageName, Boolean.TRUE);
+            if ("activity".equals(hostingType) && Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                preventPackages.put(packageName, Boolean.FALSE);
             }
-            logStartProcess("allow", info.packageName, hostingType, hostingName);
+            if (BuildConfig.DEBUG) {
+                logStartProcess("allow", packageName, hostingType, hostingName);
+            }
             return true;
         }
     }
@@ -548,6 +510,10 @@ public final class SystemHook {
         sb.append(action);
         sb.append(", package: ");
         sb.append(packageName);
+        sb.append(", callingUid: ");
+        sb.append(Binder.getCallingUid());
+        sb.append(", callingPid: ");
+        sb.append(Binder.getCallingPid());
         Log.v(TAG, sb.toString());
     }
 
