@@ -150,15 +150,19 @@ public final class SystemHook {
                     logForceStop(action, packageName, "if needed in 30s");
                     forceStopPackageIfNeeded(packageName);
                 }
-            } else if (CommonIntent.ACTION_ACTIVITY_DESTROY.equals(action) || Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
+            } else if (CommonIntent.ACTION_ACTIVITY_DESTROY.equals(action)) {
                 logRequest(action, packageName, -1);
                 packageCounters.remove(packageName);
                 if (preventPackages.containsKey(packageName)) {
                     preventPackages.put(packageName, Boolean.TRUE);
-                    if (!Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
-                        logForceStop(action, packageName, "if needed in 30s");
-                        forceStopPackageIfNeeded(packageName);
-                    }
+                    logForceStop(action, packageName, "later in 3s");
+                    forceStopPackageLater(packageName);
+                }
+            } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
+                logRequest(action, packageName, -1);
+                packageCounters.remove(packageName);
+                if (preventPackages.containsKey(packageName)) {
+                    preventPackages.put(packageName, Boolean.TRUE);
                 }
             } else if (CommonIntent.ACTION_FORCE_STOP.equals(action)) {
                 logRequest(action, packageName, -1);
@@ -382,6 +386,17 @@ public final class SystemHook {
                 }
             }
         }, 400, TimeUnit.MILLISECONDS);
+    }
+
+    private static void forceStopPackageLater(final String packageName) {
+        executor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                    forceStopPackage(packageName);
+                }
+            }
+        }, 3, TimeUnit.SECONDS);
     }
 
     private static void forceStopPackageLaterIfPrevent(final String packageName) {
