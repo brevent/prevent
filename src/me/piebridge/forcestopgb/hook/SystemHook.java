@@ -184,74 +184,55 @@ public final class SystemHook {
         }
     }
 
-    public static HookResult hookIntentFilter$match(IntentFilter thiz, Object... args) {
+    public static HookResult hookIntentFilter$match(IntentFilter filter, Object... args) {
         String action = (String) args[0];
-
-        if (action == null) {
-            return HookResult.None;
-        }
-
-        if (Intent.ACTION_MAIN.equals(action) || Intent.ACTION_VIEW.equals(action)) {
-            return HookResult.None;
-        }
 
         if (CommonIntent.ACTION_CHECK_HOOK.equals(action)) {
             return HookResult.HOOK_ENABLED;
         }
 
-        if (action.startsWith(CommonIntent.ACTION_NAMESPACE)) {
+        String filterString = filter.toString();
+        String packageName = getPackageName(filterString);
+        if ("android".equals(packageName) || "system".equals(packageName)) {
             return HookResult.None;
         }
 
+        boolean isStatic = false;
+
+        boolean isDynamic = isDynamicBroadcast(filterString);
+
+        if (!isDynamic) {
+            isStatic = isStaticBroadcast(filter);
+        }
+
+        if (!isStatic && !isDynamic) {
+            return HookResult.None;
+        }
+
+        if (BuildConfig.DEBUG) {
+            Log.v(TAG, "filter: " + filterString + ", action: " + action + ", packageName: " + packageName);
+        }
+
+        // allow special broadcast
         if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
             // app widget
             return HookResult.None;
         }
 
-        Class<?> clazz = thiz.getClass();
-        if (IntentFilter.class.equals(clazz) || HookIntentFilter.class.equals(clazz)) {
-            return HookResult.None;
-        }
-
-        String filter = thiz.toString();
-        String packageName = getPackageName(filter);
-        if (packageName == null) {
-            logUnknown(filter, action);
-            return HookResult.None;
-        }
-
-        if ("android".equals(packageName) || "system".equals(packageName)) {
-            return HookResult.None;
-        }
-
         loadPreventPackagesIfNeeded();
+        Boolean running = preventPackages.get(packageName);
 
-        if (BuildConfig.DEBUG) {
-            Log.v(TAG, "filter: " + filter + ", action: " + action + ", packageName: " + packageName);
-        }
-        if (PackageParser.ActivityIntentInfo.class.equals(clazz)) {
-            @SuppressWarnings("unchecked")
-            PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) thiz).activity;
-            if (activity.owner.activities.contains(activity)) {
-                return HookResult.None;
-            }
-        } else if (PackageParser.ServiceIntentInfo.class.equals(clazz)) {
-            return HookResult.None;
-        } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
-            // special BroadcastFilter
-            if (preventPackages.containsKey(packageName)) {
-                logDisallow(filter, action, packageName);
-                return HookResult.NO_MATCH;
-            } else {
-                return HookResult.None;
-            }
+        // disallow special broadcast
+        if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action) && running != null) {
+            logDisallow(filterString, action, packageName);
+            return HookResult.NO_MATCH;
         }
 
-        if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+        if (Boolean.TRUE.equals(running)) {
             if (BuildConfig.DEBUG) {
-                logDisallow(filter, action, packageName);
+                logDisallow(filterString, action, packageName);
             }
-            if (filter.startsWith("BroadcastFilter")) {
+            if (isDynamic) {
                 Log.d(TAG, packageName + " receives broadcast, force stop it");
                 forceStopPackageLaterIfPrevent(packageName);
             }
@@ -259,6 +240,21 @@ public final class SystemHook {
         }
 
         return HookResult.None;
+    }
+
+    private static boolean isStaticBroadcast(IntentFilter filter) {
+        if (PackageParser.ActivityIntentInfo.class.equals(filter.getClass())) {
+            @SuppressWarnings("unchecked")
+            PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) filter).activity;
+            if (activity.owner.receivers.contains(activity)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isDynamicBroadcast(String filter) {
+        return filter.startsWith("BroadcastFilter");
     }
 
     private static String getPackageName(String filter) {
