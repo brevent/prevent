@@ -180,7 +180,7 @@ public final class SystemHook {
         String action = (String) args[0];
 
         if (Intent.ACTION_MAIN.equals(action) || Intent.ACTION_VIEW.equals(action)) {
-            return HookResult.None;
+            return HookResult.NONE;
         }
 
         if (BuildConfig.DEBUG) {
@@ -192,15 +192,15 @@ public final class SystemHook {
         }
 
         if (CommonIntent.SCHEME.equals(args[2])) {
-            return HookResult.MATCH;
+            return HookResult.MATCH_SCHEME;
         }
 
         if (SAFE_ACTIONS.contains(action)) {
-            return HookResult.None;
+            return HookResult.NONE;
         }
 
         if (!isSystemHook()) {
-            return HookResult.None;
+            return HookResult.NONE;
         }
 
         if (preventPackages == null) {
@@ -243,7 +243,7 @@ public final class SystemHook {
             }
         }
 
-        return HookResult.None;
+        return HookResult.NONE;
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) {
