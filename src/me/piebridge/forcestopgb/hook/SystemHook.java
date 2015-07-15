@@ -119,6 +119,7 @@ public final class SystemHook {
                 executor.submit(new Runnable() {
                     @Override
                     public void run() {
+                        Log.d(CommonIntent.TAG, "update prevent packages");
                         Packages.save(preventPackages);
                     }
                 });
@@ -188,7 +189,6 @@ public final class SystemHook {
 
     public static HookResult hookIntentFilter$match(Object filter, Object[] args) { // NOSONAR
         if (!isSystemHook()) {
-            Log.w(TAG, "non system call for hookIntentFilter$match");
             return HookResult.NONE;
         }
 
@@ -255,7 +255,6 @@ public final class SystemHook {
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
         if (!isSystemHook()) {
-            Log.e(SystemHook.TAG, "non system call for ActivityManagerService$startProcessLocked");
             return true;
         } else {
             if (!registered) {
@@ -285,7 +284,7 @@ public final class SystemHook {
         if (BuildConfig.DEBUG) {
             Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", app: " + app);
         }
-        boolean disallow = "broadcast".equals(hostingType) || "service".equals(hostingType);
+        boolean disallow = "broadcast".equals(hostingType);
         if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName))) {
             ProcessRecordUtils.setPid(app, 0);
             forceStopPackageLaterIfPrevent(packageName);

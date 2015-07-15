@@ -3,6 +3,7 @@ package me.piebridge.forcestopgb.hook;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.Process;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -28,7 +29,6 @@ final class Packages {
     }
 
     public static void save(Map<String, Boolean> packages) {
-        android.util.Log.d(CommonIntent.TAG, "save packages");
         File lock = new File(FORCESTOP + ".lock");
         while (lock.exists() && System.currentTimeMillis() - lock.lastModified() < 3000) {
             try {
@@ -79,6 +79,7 @@ final class Packages {
         Map<String, Boolean> packages;
         if (fileDeprecated.isFile() && fileDeprecated.canRead()) {
             packages = load(fileDeprecated);
+            Log.d(CommonIntent.TAG, "migrate packages");
             save(packages);
             fileDeprecated.delete();
             fileDeprecated.getParentFile().delete();
