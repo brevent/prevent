@@ -63,8 +63,18 @@ public final class SystemHook {
             AppWidgetManager.ACTION_APPWIDGET_UPDATE
     ));
 
+    private static ClassLoader classLoader;
+
     private SystemHook() {
 
+    }
+
+    public static void setClassLoader(ClassLoader classLoader) {
+        SystemHook.classLoader = classLoader;
+    }
+
+    public static ClassLoader getClassLoader() {
+        return SystemHook.classLoader;
     }
 
     private static class HookIntentFilter extends IntentFilter {
@@ -177,6 +187,11 @@ public final class SystemHook {
     }
 
     public static HookResult hookIntentFilter$match(Object filter, Object[] args) { // NOSONAR
+        if (!isSystemHook()) {
+            Log.w(TAG, "non system call for hookIntentFilter$match");
+            return HookResult.NONE;
+        }
+
         String action = (String) args[0];
 
         if (Intent.ACTION_MAIN.equals(action) || Intent.ACTION_VIEW.equals(action)) {
@@ -187,19 +202,11 @@ public final class SystemHook {
             Log.v(TAG, "action: " + action + ", filter: " + filter);
         }
 
-        if (CommonIntent.ACTION_CHECK_HOOK.equals(action)) {
-            return HookResult.HOOK_ENABLED;
-        }
-
         if (CommonIntent.SCHEME.equals(args[2])) {
             return HookResult.MATCH_SCHEME;
         }
 
         if (SAFE_ACTIONS.contains(action)) {
-            return HookResult.NONE;
-        }
-
-        if (!isSystemHook()) {
             return HookResult.NONE;
         }
 
@@ -248,7 +255,7 @@ public final class SystemHook {
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
         if (!isSystemHook()) {
-            Log.e(SystemHook.TAG, "non-system call for ActivityManagerService$startProcessLocked");
+            Log.e(SystemHook.TAG, "non system call for ActivityManagerService$startProcessLocked");
             return true;
         } else {
             if (!registered) {
@@ -278,7 +285,7 @@ public final class SystemHook {
         if (BuildConfig.DEBUG) {
             Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", app: " + app);
         }
-        boolean disallow = "broadcast".equals(hostingType);
+        boolean disallow = "broadcast".equals(hostingType) || "service".equals(hostingType);
         if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName))) {
             ProcessRecordUtils.setPid(app, 0);
             forceStopPackageLaterIfPrevent(packageName);
@@ -438,11 +445,6 @@ public final class SystemHook {
         killNoFather(packageName);
     }
 
-    public static void initPreventRunning() {
-        Log.i(TAG, "init prevent running");
-        Packages.initPackages();
-    }
-
     private static boolean killNoFather(String packageName) {
         Integer uid = packageUids.get(packageName);
         if (uid == null) {
@@ -542,10 +544,15 @@ public final class SystemHook {
         sb.append(allow);
         sb.append(" start ");
         sb.append(packageName);
-        sb.append(" for ");
-        sb.append(hostingType);
-        sb.append(" ");
-        sb.append(hostingName);
+        sb.append(" for");
+        if (hostingType != null) {
+            sb.append(" ");
+            sb.append(hostingType);
+        }
+        if (hostingName != null) {
+            sb.append(" ");
+            sb.append(hostingName);
+        }
         Log.d(TAG, sb.toString());
     }
 

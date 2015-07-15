@@ -6,6 +6,7 @@ import android.util.Log;
 import java.lang.reflect.Field;
 
 import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.forcestopgb.hook.SystemHook;
 
 /**
  * Created by thom on 15/7/14.
@@ -23,8 +24,14 @@ public class ProcessRecordUtils {
     }
 
     static {
+        initReflection();
+    }
+
+    public static void initReflection() {
+        Log.d(CommonIntent.TAG, "init ProcessRecordUtils");
+        ClassLoader classLoader = SystemHook.getClassLoader();
         try {
-            ProcessRecord = Class.forName("com.android.server.am.ProcessRecord");
+            ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
             ProcessRecord$info = ProcessRecord.getDeclaredField("info");
             ProcessRecord$info.setAccessible(true);
             ProcessRecord$pid = ProcessRecord.getDeclaredField("pid");
@@ -79,4 +86,5 @@ public class ProcessRecordUtils {
             Log.e(CommonIntent.TAG, "cannot set pid", e);
         }
     }
+
 }

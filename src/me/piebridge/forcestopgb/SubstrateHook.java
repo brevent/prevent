@@ -7,12 +7,14 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
 import android.util.Log;
 
 import com.saurik.substrate.MS;
 
+import de.robv.android.xposed.XposedHelpers;
 import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.forcestopgb.hook.Hook;
 import me.piebridge.forcestopgb.hook.HookResult;
@@ -26,56 +28,63 @@ public class SubstrateHook {
 
     public static void initialize() {
         try {
-            hookSystemServer$main();
+            hookIntentFilter$match();
             hookActivityManagerService$startProcessLocked();
             hookActivity$onCreate();
             hookActivity$onDestroy();
             hookActivity$moveTaskToBack();
             hookActivity$startActivityForResult();
-            hookIntentFilter$match();
             hookProcess$killProcess();
         } catch (Throwable t) { // NOSONAR
             Log.d(CommonIntent.TAG, "cannot initialize", t);
         }
     }
 
-    private static void hookSystemServer$main() { // NOSONAR
-        MS.hookClassLoad("com.android.server.SystemServer", new MS.ClassLoadHook() {
+    private static void hookActivityManagerService$startProcessLocked() { // NOSONAR
+        MS.hookClassLoad("com.android.server.am.ActivityManagerService", new MS.ClassLoadHook() {
             @Override
-            public void classLoaded(Class<?> SystemServer) { // NOSONAR
+            public void classLoaded(Class<?> ActivityManagerService) { // NOSONAR
                 try {
-                    Method SystemServer$main = SystemServer.getDeclaredMethod("main", String[].class); // NOSONAR
-                    MS.hookMethod(SystemServer, SystemServer$main, new MS.MethodAlteration<Object, Void>() {
+
+                    final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+                    SystemHook.setClassLoader(classLoader);;
+
+                    Class<?> ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader); // NOSONAR
+                    Method startProcessLocked;
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                        startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class);
+                    } else {
+                        startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class, String.class, String.class, String[].class);
+                    }
+                    MS.hookMethod(ActivityManagerService, startProcessLocked, new MS.MethodAlteration<Object, Void>() {
                         @Override
                         public Void invoked(Object thiz, Object... args) throws Throwable {
-                            SystemHook.initPreventRunning();
-                            return invoke(thiz, args);
+                            if (!SystemHook.beforeActivityManagerService$startProcessLocked(args)) {
+                                return null;
+                            } else {
+                                return invoke(thiz, args);
+                            }
                         }
                     });
                 } catch (NoSuchMethodException e) { // NOSONAR
+                    // do nothing
+                } catch (ClassNotFoundException e) {
                     // do nothing
                 }
             }
         });
     }
 
-    private static void hookActivityManagerService$startProcessLocked() { // NOSONAR
-        MS.hookClassLoad("com.android.server.am.ActivityManagerService", new MS.ClassLoadHook() {
+    private static void hookIntentFilter$match() throws NoSuchMethodException { // NOSONAR
+        Method IntentFilter$match = IntentFilter.class.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class); // NOSONAR
+        MS.hookMethod(IntentFilter.class, IntentFilter$match, new MS.MethodAlteration<IntentFilter, Integer>() {
             @Override
-            public void classLoaded(Class<?> ActivityManagerService) { // NOSONAR
-                for (Method method : ActivityManagerService.getDeclaredMethods()) {
-                    if ("startProcessLocked".equals(method.getName()) && method.getParameterTypes().length == 3) {
-                        MS.hookMethod(ActivityManagerService, method, new MS.MethodAlteration<Object, Void>() {
-                            @Override
-                            public Void invoked(Object thiz, Object... args) throws Throwable {
-                                if (!SystemHook.beforeActivityManagerService$startProcessLocked(args)) {
-                                    return null;
-                                } else {
-                                    return invoke(thiz, args);
-                                }
-                            }
-                        });
-                    }
+            public Integer invoked(IntentFilter thiz, Object... args) throws Throwable {
+                HookResult result = SystemHook.hookIntentFilter$match(thiz, args);
+                if (!result.isNone()) {
+                    return (Integer) result.getResult();
+                } else {
+                    return invoke(thiz, args);
                 }
             }
         });
@@ -126,21 +135,6 @@ public class SubstrateHook {
                     Hook.beforeActivity$startHomeActivityForResult(thiz);
                 }
                 return invoke(thiz, args);
-            }
-        });
-    }
-
-    private static void hookIntentFilter$match() throws NoSuchMethodException { // NOSONAR
-        Method IntentFilter$match = IntentFilter.class.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class); // NOSONAR
-        MS.hookMethod(IntentFilter.class, IntentFilter$match, new MS.MethodAlteration<IntentFilter, Integer>() {
-            @Override
-            public Integer invoked(IntentFilter thiz, Object... args) throws Throwable {
-                HookResult result = SystemHook.hookIntentFilter$match(thiz, args);
-                if (!result.isNone()) {
-                    return (Integer) result.getResult();
-                } else {
-                    return invoke(thiz, args);
-                }
             }
         });
     }

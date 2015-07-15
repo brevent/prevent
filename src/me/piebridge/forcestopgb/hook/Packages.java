@@ -20,7 +20,8 @@ import me.piebridge.forcestopgb.common.CommonIntent;
 
 final class Packages {
 
-    public static final String FORCESTOP = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
+    public static final String FORCESTOP_DEPRECATED = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";;
+    public static final String FORCESTOP = Environment.getDataDirectory() + "/system/forcestop.list";
 
     private Packages() {
 
@@ -50,14 +51,13 @@ final class Packages {
         }
     }
 
-    public static Map<String, Boolean> load() {
+    private static Map<String, Boolean> load(File file) {
         Map<String, Boolean> packages = new ConcurrentHashMap<String, Boolean>();
+        if (!file.exists()) {
+            return packages;
+        }
         try {
             String line;
-            File file = new File(FORCESTOP);
-            if (!file.exists()) {
-                return packages;
-            }
             BufferedReader reader = new BufferedReader(new FileReader(file));
             while ((line = reader.readLine()) != null) {
                 int index = line.indexOf('=');
@@ -74,23 +74,17 @@ final class Packages {
         return packages;
     }
 
-    public static void initPackages() {
-        File file = new File(FORCESTOP);
-        File parent = file.getParentFile();
-        if (!parent.isDirectory()) {
-            if (parent.exists()) {
-                parent.delete();
-            }
-            parent.mkdir();
+    public static Map<String, Boolean> load() {
+        File fileDeprecated = new File(FORCESTOP_DEPRECATED);
+        Map<String, Boolean> packages;
+        if (fileDeprecated.isFile() && fileDeprecated.canRead()) {
+            packages = load(fileDeprecated);
+            save(packages);
+            fileDeprecated.delete();
+        } else {
+            packages = load(new File(FORCESTOP));
         }
-        FileUtils.setPermissions(parent.getAbsolutePath(), 0750, Process.SYSTEM_UID, Process.SYSTEM_UID);
-        if (!file.isFile()) {
-            if (file.exists()) {
-                file.delete();
-            }
-            save(new HashMap<String, Boolean>());
-        }
-        FileUtils.setPermissions(FORCESTOP, 0640, Process.SYSTEM_UID, Process.SYSTEM_UID);
+        return packages;
     }
 
 }

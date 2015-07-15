@@ -290,7 +290,7 @@ public abstract class SettingFragment extends ListFragment {
     }
 
     private void setNewAdapterIfNeeded(SettingActivity activity, boolean force) {
-        if (!Hook.isHookEnabled()) {
+        if (!activity.isHookEnabled()) {
             showDialog();
             return;
         }

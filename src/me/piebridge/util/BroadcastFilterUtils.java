@@ -7,6 +7,7 @@ import android.util.Log;
 import java.lang.reflect.Field;
 
 import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.forcestopgb.hook.SystemHook;
 
 /**
  * Created by thom on 15/7/14.
@@ -23,12 +24,18 @@ public class BroadcastFilterUtils {
     }
 
     static {
+        initReflections();
+    }
+
+    private static void initReflections() {
+        Log.d(CommonIntent.TAG, "init BroadcastFilterUtils");
+        ClassLoader classLoader = SystemHook.getClassLoader();
         try {
-            BroadcastFilter = Class.forName("com.android.server.am.BroadcastFilter");
+            BroadcastFilter = Class.forName("com.android.server.am.BroadcastFilter", false, classLoader);
             BroadcastFilter$receiverList = BroadcastFilter.getDeclaredField("receiverList");
             BroadcastFilter$receiverList.setAccessible(true);
 
-            ReceiverList = Class.forName("com.android.server.am.ReceiverList");
+            ReceiverList = Class.forName("com.android.server.am.ReceiverList", false, classLoader);
             ReceiverList$app = ReceiverList.getDeclaredField("app");
             ReceiverList$app.setAccessible(true);
         } catch (ClassNotFoundException e) {
@@ -36,8 +43,6 @@ public class BroadcastFilterUtils {
         } catch (NoSuchFieldException e) {
             Log.e(CommonIntent.TAG, "cannot find fields for BroadcastFilterUtils", e);
         }
-
-
     }
 
     public static String getPackageName(Object filter) {

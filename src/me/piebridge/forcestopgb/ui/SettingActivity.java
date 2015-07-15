@@ -37,7 +37,6 @@ import java.util.Set;
 
 import me.piebridge.forcestopgb.R;
 import me.piebridge.forcestopgb.common.CommonIntent;
-import me.piebridge.forcestopgb.hook.Hook;
 import me.piebridge.util.RecreateUtil;
 
 public class SettingActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
@@ -61,6 +60,8 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private Integer transparentColor = null;
 
     private BroadcastReceiver mBroadcastReceiver;
+
+    private static boolean hookEnabled;
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -102,23 +103,19 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                JSONObject json = null;
                 String result = getResultData();
+                hookEnabled = result != null;
                 try {
-                    if (result != null) {
-                        json = new JSONObject(result);
-                    }
-                } catch (JSONException e) { // NOSONAR
-                    // do nothing
-                    android.util.Log.d(CommonIntent.TAG, "cannot convert to json", e);
-                }
-                if (json != null) {
+                    JSONObject json = new JSONObject(result);
                     preventPackages.clear();
                     Iterator<String> it = json.keys();
                     while (it.hasNext()) {
                         String key = it.next();
                         preventPackages.put(key, json.optBoolean(key));
                     }
+                } catch (JSONException e) { // NOSONAR
+                    // do nothing
+                    android.util.Log.d(CommonIntent.TAG, "cannot convert to json", e);
                 }
                 refresh();
             }
@@ -128,9 +125,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     protected void onResume() {
         super.onResume();
-        if (Hook.isHookEnabled()) {
-            initPackages();
-        }
+        initPackages();
     }
 
     private void initPackages() {
@@ -145,6 +140,10 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
             }
         }).start();
+    }
+
+    public boolean isHookEnabled() {
+        return hookEnabled;
     }
 
     private class ScreenSlidePagerAdapter extends FragmentPagerAdapter {

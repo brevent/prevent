@@ -2,7 +2,6 @@ package me.piebridge.forcestopgb.hook;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Process;
 import android.util.Log;
@@ -22,8 +21,7 @@ public class Hook {
         Intent intent = new Intent(CommonIntent.ACTION_INCREASE_COUNTER, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
         intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
         intent.putExtra(CommonIntent.EXTRA_UID, activity.getApplicationInfo().uid);
-        intent.setFlags(CommonIntent.INTENT_FLAG);
-        activity.sendBroadcast(intent);
+        sendBroadcast(activity, intent);
         context.set(activity);
     }
 
@@ -31,12 +29,7 @@ public class Hook {
         String packageName = activity.getPackageName();
         Intent intent = new Intent(CommonIntent.ACTION_DECREASE_COUNTER, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
         intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
-        intent.setFlags(CommonIntent.INTENT_FLAG);
-        activity.sendBroadcast(intent);
-    }
-
-    public static boolean isHookEnabled() {
-        return new IntentFilter().match(CommonIntent.ACTION_CHECK_HOOK, null, null, null, null, null) == CommonIntent.ACTION_HOOK_ENABLED;
+        sendBroadcast(activity, intent);
     }
 
     public static boolean stopSelf(int pid) {
@@ -49,8 +42,7 @@ public class Hook {
             }
             String packageName = activity.getPackageName();
             Intent intent = new Intent(CommonIntent.ACTION_FORCE_STOP, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
-            intent.setFlags(CommonIntent.INTENT_FLAG);
-            activity.sendBroadcast(intent);
+            sendBroadcast(activity, intent);
         }
         context.remove();
         return false;
@@ -61,8 +53,7 @@ public class Hook {
             Log.d(CommonIntent.TAG, "moveTaskToBack: " + activity.getClass());
             String packageName = activity.getPackageName();
             Intent intent = new Intent(CommonIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
-            intent.addFlags(CommonIntent.INTENT_FLAG);
-            activity.sendBroadcast(intent);
+            sendBroadcast(activity, intent);
         }
     }
 
@@ -70,7 +61,11 @@ public class Hook {
         Log.w(CommonIntent.TAG, "start home activity: " + activity.getClass());
         String packageName = activity.getPackageName();
         Intent intent = new Intent(CommonIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
-        intent.setFlags(CommonIntent.INTENT_FLAG);
+        sendBroadcast(activity, intent);
+    }
+
+    private static void sendBroadcast(Activity activity, Intent intent) {
+        intent.addFlags(CommonIntent.INTENT_FLAG);
         activity.sendBroadcast(intent);
     }
 

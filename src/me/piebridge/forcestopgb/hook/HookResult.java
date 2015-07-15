@@ -14,7 +14,6 @@ public final class HookResult {
 
     public static final HookResult MATCH_SCHEME = new HookResult(int.class, IntentFilter.MATCH_CATEGORY_SCHEME | IntentFilter.MATCH_ADJUSTMENT_NORMAL);
     public static final HookResult NONE = new HookResult(Void.class, null);
-    public static final HookResult HOOK_ENABLED = new HookResult(int.class, CommonIntent.ACTION_HOOK_ENABLED);
     public static final HookResult NO_MATCH = new HookResult(int.class, IntentFilter.NO_MATCH_ACTION);
 
     private HookResult(Class<?> type, Integer result) {
