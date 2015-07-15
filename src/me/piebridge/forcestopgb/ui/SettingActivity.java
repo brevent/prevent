@@ -103,8 +103,11 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             @Override
             public void onReceive(Context context, Intent intent) {
                 JSONObject json = null;
+                String result = getResultData();
                 try {
-                    json = new JSONObject(getResultData());
+                    if (result != null) {
+                        json = new JSONObject(result);
+                    }
                 } catch (JSONException e) { // NOSONAR
                     // do nothing
                     android.util.Log.d(CommonIntent.TAG, "cannot convert to json", e);
