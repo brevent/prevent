@@ -1,7 +1,6 @@
 package me.piebridge.forcestopgb.hook;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
@@ -14,22 +13,26 @@ public class Hook {
 
     private static ThreadLocal<Activity> context = new ThreadLocal<Activity>();
 
-    public static void beforeActivity$onCreate(Activity thiz) {
-        String packageName = thiz.getPackageName();
-        Intent intent = new Intent(CommonIntent.ACTION_INCREASE_COUNTER, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
-        intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
-        intent.putExtra(CommonIntent.EXTRA_UID, thiz.getApplicationInfo().uid);
-        intent.setFlags(CommonIntent.INTENT_FLAG);
-        thiz.sendBroadcast(intent);
-        context.set(thiz);
+    private Hook() {
+
     }
 
-    public static void afterActivity$onDestroy(Activity thiz) {
-        String packageName = thiz.getPackageName();
+    public static void beforeActivity$onCreate(Activity activity) { // NOSONAR
+        String packageName = activity.getPackageName();
+        Intent intent = new Intent(CommonIntent.ACTION_INCREASE_COUNTER, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
+        intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
+        intent.putExtra(CommonIntent.EXTRA_UID, activity.getApplicationInfo().uid);
+        intent.setFlags(CommonIntent.INTENT_FLAG);
+        activity.sendBroadcast(intent);
+        context.set(activity);
+    }
+
+    public static void afterActivity$onDestroy(Activity activity) { // NOSONAR
+        String packageName = activity.getPackageName();
         Intent intent = new Intent(CommonIntent.ACTION_DECREASE_COUNTER, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
         intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
         intent.setFlags(CommonIntent.INTENT_FLAG);
-        thiz.sendBroadcast(intent);
+        activity.sendBroadcast(intent);
     }
 
     public static boolean isHookEnabled() {
@@ -53,22 +56,22 @@ public class Hook {
         return false;
     }
 
-    public static void afterActivity$moveTaskToBack(Activity thiz, Boolean result) {
+    public static void afterActivity$moveTaskToBack(Activity activity, Boolean result) { // NOSONAR
         if (Boolean.TRUE.equals(result)) {
-            Log.d(CommonIntent.TAG, "moveTaskToBack: " + thiz.getClass());
-            String packageName = thiz.getPackageName();
+            Log.d(CommonIntent.TAG, "moveTaskToBack: " + activity.getClass());
+            String packageName = activity.getPackageName();
             Intent intent = new Intent(CommonIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
             intent.addFlags(CommonIntent.INTENT_FLAG);
-            thiz.sendBroadcast(intent);
+            activity.sendBroadcast(intent);
         }
     }
 
-    public static void beforeActivity$startHomeActivityForResult(Activity thiz) {
-        Log.w(CommonIntent.TAG, "start home activity: " + thiz.getClass());
-        String packageName = thiz.getPackageName();
+    public static void beforeActivity$startHomeActivityForResult(Activity activity) { // NOSONAR
+        Log.w(CommonIntent.TAG, "start home activity: " + activity.getClass());
+        String packageName = activity.getPackageName();
         Intent intent = new Intent(CommonIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
         intent.setFlags(CommonIntent.INTENT_FLAG);
-        thiz.sendBroadcast(intent);
+        activity.sendBroadcast(intent);
     }
 
 }

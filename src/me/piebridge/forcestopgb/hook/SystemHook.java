@@ -176,7 +176,7 @@ public final class SystemHook {
         }
     }
 
-    public static HookResult hookIntentFilter$match(Object filter, Object... args) {
+    public static HookResult hookIntentFilter$match(Object filter, Object[] args) { // NOSONAR
         String action = (String) args[0];
 
         if (Intent.ACTION_MAIN.equals(action) || Intent.ACTION_VIEW.equals(action)) {
@@ -246,7 +246,7 @@ public final class SystemHook {
         return HookResult.NONE;
     }
 
-    public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) {
+    public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
         if (!isSystemHook()) {
             Log.e(SystemHook.TAG, "non-system call for ActivityManagerService$startProcessLocked");
             return true;
@@ -347,6 +347,7 @@ public final class SystemHook {
             }
             return os.toString().trim();
         } catch (IOException e) {
+            Log.e(TAG, "cannot read file " + file, e);
             return null;
         }
     }
@@ -354,7 +355,14 @@ public final class SystemHook {
     private static boolean checkPid(int pid, String packageName) {
         String processName = getPackage(pid);
         Integer uid = packageUids.get(packageName);
-        return processName != null && uid != null && processName.startsWith(packageName) && HiddenAPI.getUidForPid(pid) == uid;
+        if (processName != null && uid != null && processName.startsWith(packageName)) {
+            try {
+                return HiddenAPI.getUidForPid(pid) == uid;
+            } catch (Throwable t) { // NOSONAR
+                Log.e(TAG, "cannot get uid for " + pid, t);
+            }
+        }
+        return false;
     }
 
     private static void forceStopPackageIfNeeded(final String packageName) {
@@ -424,7 +432,7 @@ public final class SystemHook {
         try {
             HiddenAPI.forceStopPackage(getActivityManager(), packageName);
             Log.i(TAG, "finish force stop package " + packageName);
-        } catch (Throwable t) {
+        } catch (Throwable t) { // NOSONAR
             Log.e(TAG, "cannot force stop package" + packageName, t);
         }
         killNoFather(packageName);
@@ -442,7 +450,7 @@ public final class SystemHook {
         } else {
             try {
                 killNoFather(uid, packageName);
-            } catch (Throwable t) {
+            } catch (Throwable t) { // NOSONAR
                 Log.d(TAG, "cannot killNoFather for " + uid, t);
             }
             return true;

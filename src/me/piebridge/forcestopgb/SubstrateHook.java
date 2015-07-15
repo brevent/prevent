@@ -9,9 +9,11 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
+import android.util.Log;
 
 import com.saurik.substrate.MS;
 
+import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.forcestopgb.hook.Hook;
 import me.piebridge.forcestopgb.hook.HookResult;
 import me.piebridge.forcestopgb.hook.SystemHook;
@@ -32,17 +34,17 @@ public class SubstrateHook {
             hookActivity$startActivityForResult();
             hookIntentFilter$match();
             hookProcess$killProcess();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+        } catch (Throwable t) { // NOSONAR
+            Log.d(CommonIntent.TAG, "cannot initialize", t);
         }
     }
 
-    private static void hookSystemServer$main() {
+    private static void hookSystemServer$main() { // NOSONAR
         MS.hookClassLoad("com.android.server.SystemServer", new MS.ClassLoadHook() {
             @Override
-            public void classLoaded(Class<?> SystemServer) {
+            public void classLoaded(Class<?> SystemServer) { // NOSONAR
                 try {
-                    Method SystemServer$main = SystemServer.getDeclaredMethod("main", String[].class);
+                    Method SystemServer$main = SystemServer.getDeclaredMethod("main", String[].class); // NOSONAR
                     MS.hookMethod(SystemServer, SystemServer$main, new MS.MethodAlteration<Object, Void>() {
                         @Override
                         public Void invoked(Object thiz, Object... args) throws Throwable {
@@ -50,17 +52,17 @@ public class SubstrateHook {
                             return invoke(thiz, args);
                         }
                     });
-                } catch (NoSuchMethodException e) {
+                } catch (NoSuchMethodException e) { // NOSONAR
                     // do nothing
                 }
             }
         });
     }
 
-    private static void hookActivityManagerService$startProcessLocked() {
+    private static void hookActivityManagerService$startProcessLocked() { // NOSONAR
         MS.hookClassLoad("com.android.server.am.ActivityManagerService", new MS.ClassLoadHook() {
             @Override
-            public void classLoaded(Class<?> ActivityManagerService) {
+            public void classLoaded(Class<?> ActivityManagerService) { // NOSONAR
                 for (Method method : ActivityManagerService.getDeclaredMethods()) {
                     if ("startProcessLocked".equals(method.getName()) && method.getParameterTypes().length == 3) {
                         MS.hookMethod(ActivityManagerService, method, new MS.MethodAlteration<Object, Void>() {
@@ -79,8 +81,8 @@ public class SubstrateHook {
         });
     }
 
-    private static void hookActivity$onCreate() throws NoSuchMethodException {
-        Method Activity$onCreate = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
+    private static void hookActivity$onCreate() throws NoSuchMethodException { // NOSONAR
+        Method Activity$onCreate = Activity.class.getDeclaredMethod("onCreate", Bundle.class); // NOSONAR
         MS.hookMethod(Activity.class, Activity$onCreate, new MS.MethodAlteration<Activity, Void>() {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {
@@ -90,8 +92,8 @@ public class SubstrateHook {
         });
     }
 
-    private static void hookActivity$onDestroy() throws NoSuchMethodException {
-        Method Activity$onDestroy = Activity.class.getDeclaredMethod("onDestroy");
+    private static void hookActivity$onDestroy() throws NoSuchMethodException { // NOSONAR
+        Method Activity$onDestroy = Activity.class.getDeclaredMethod("onDestroy"); // NOSONAR
         MS.hookMethod(Activity.class, Activity$onDestroy, new MS.MethodAlteration<Activity, Void>() {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {
@@ -102,8 +104,8 @@ public class SubstrateHook {
         });
     }
 
-    private static void hookActivity$moveTaskToBack() throws NoSuchMethodException {
-        Method Activity$moveTaskToBack = Activity.class.getMethod("moveTaskToBack", boolean.class);
+    private static void hookActivity$moveTaskToBack() throws NoSuchMethodException { // NOSONAR
+        Method Activity$moveTaskToBack = Activity.class.getMethod("moveTaskToBack", boolean.class); // NOSONAR
         MS.hookMethod(Activity.class, Activity$moveTaskToBack, new MS.MethodAlteration<Activity, Boolean>() {
             @Override
             public Boolean invoked(Activity thiz, Object... args) throws Throwable {
@@ -114,8 +116,8 @@ public class SubstrateHook {
         });
     }
 
-    private static void hookActivity$startActivityForResult() throws NoSuchMethodException {
-        Method Activity$startActivityForResult = Activity.class.getMethod("startActivityForResult", Intent.class, int.class, Bundle.class);
+    private static void hookActivity$startActivityForResult() throws NoSuchMethodException { // NOSONAR
+        Method Activity$startActivityForResult = Activity.class.getMethod("startActivityForResult", Intent.class, int.class, Bundle.class); // NOSONAR
         MS.hookMethod(Activity.class, Activity$startActivityForResult, new MS.MethodAlteration<Activity, Void>() {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {
@@ -128,8 +130,8 @@ public class SubstrateHook {
         });
     }
 
-    private static void hookIntentFilter$match() throws NoSuchMethodException {
-        Method IntentFilter$match = IntentFilter.class.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
+    private static void hookIntentFilter$match() throws NoSuchMethodException { // NOSONAR
+        Method IntentFilter$match = IntentFilter.class.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class); // NOSONAR
         MS.hookMethod(IntentFilter.class, IntentFilter$match, new MS.MethodAlteration<IntentFilter, Integer>() {
             @Override
             public Integer invoked(IntentFilter thiz, Object... args) throws Throwable {
@@ -143,8 +145,8 @@ public class SubstrateHook {
         });
     }
 
-    private static void hookProcess$killProcess() throws NoSuchMethodException {
-        Method Process$killProcess = Process.class.getMethod("killProcess", int.class);
+    private static void hookProcess$killProcess() throws NoSuchMethodException { // NOSONAR
+        Method Process$killProcess = Process.class.getMethod("killProcess", int.class); // NOSONAR
         MS.hookMethod(Process.class, Process$killProcess, new MS.MethodAlteration<Process, Void>() {
             @Override
             public Void invoked(Process thiz, Object... args) throws Throwable {
@@ -156,7 +158,7 @@ public class SubstrateHook {
                 }
             }
         });
-        Method System$exit = System.class.getMethod("exit", int.class);
+        Method System$exit = System.class.getMethod("exit", int.class); // NOSONAR
         MS.hookMethod(Process.class, System$exit, new MS.MethodAlteration<System, Void>() {
             @Override
             public Void invoked(System thiz, Object... args) throws Throwable {

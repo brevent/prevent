@@ -26,7 +26,7 @@ public class ReflectUtil {
             if (canPrivate) {
                 return field;
             }
-        } catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException e) { // NOSONAR
             // do nothing
         }
         return getField(clazz.getSuperclass(), false, name);
@@ -34,14 +34,6 @@ public class ReflectUtil {
 
     public static Field getField(Class<?> clazz, String name) {
         return getField(clazz, true, name);
-    }
-
-    public static Object getObjectField(Object object, Field field) {
-        try {
-            return field.get(object);
-        } catch (IllegalAccessException e) {
-            return null;
-        }
     }
 
 }

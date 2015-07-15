@@ -194,7 +194,7 @@ public abstract class SettingFragment extends ListFragment {
             case R.string.open:
                 try {
                     mActivity.startActivity(getMainIntent(holder.packageName));
-                } catch (Exception e) {
+                } catch (Exception e) { // NOSONAR
                     // do nothing
                 }
                 return true;
@@ -281,7 +281,7 @@ public abstract class SettingFragment extends ListFragment {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try {
                     startActivity(intent);
-                } catch (ActivityNotFoundException e) {
+                } catch (ActivityNotFoundException e) { // NOSONAR
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.saurik.substrate")));
                 }
             }
@@ -325,9 +325,9 @@ public abstract class SettingFragment extends ListFragment {
         int position;
         int top;
 
-        public Position(int _position, int _top) {
-            position = _position;
-            top = _top;
+        public Position(int position, int top) {
+            this.position = position;
+            this.top = top;
         }
     }
 
@@ -337,13 +337,22 @@ public abstract class SettingFragment extends ListFragment {
         String packageName;
         Set<Integer> running;
 
-        public AppInfo(String _packageName, String _name, Set<Integer> _running) {
+        public AppInfo(String packageName, String name, Set<Integer> running) {
             super();
-            packageName = _packageName;
-            if (_name != null) {
-                name = _name;
+            this.packageName = packageName;
+            if (name != null) {
+                this.name = name;
             }
-            running = _running;
+            this.running = running;
+        }
+
+        public AppInfo setFlags(int flags) {
+            this.flags = flags;
+            return this;
+        }
+
+        public boolean isSystem() {
+            return (flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
         }
 
         @Override
@@ -356,13 +365,14 @@ public abstract class SettingFragment extends ListFragment {
             return Collator.getInstance().compare(toString(), another.toString());
         }
 
-        public AppInfo flags(int _flags) {
-            flags = _flags;
-            return this;
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof AppInfo && compareTo((AppInfo) obj) == 0;
         }
 
-        public boolean isSystem() {
-            return (flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+        @Override
+        public int hashCode() {
+            return toString().hashCode();
         }
     }
 
@@ -459,7 +469,7 @@ public abstract class SettingFragment extends ListFragment {
                                     label = info.loadLabel(pm).toString();
                                 }
                             }
-                            applications.add(new AppInfo(name, label, running.get(name)).flags(info.flags));
+                            applications.add(new AppInfo(name, label, running.get(name)).setFlags(info.flags));
                         } catch (NameNotFoundException e) { // NOSONAR
                             // do nothing
                         }
@@ -469,7 +479,7 @@ public abstract class SettingFragment extends ListFragment {
 
                 @Override
                 protected void onProgressUpdate(Integer... progress) {
-                    if (!cache) {
+                    if (dialog != null) {
                         dialog.setProgress(progress[0]);
                     }
                 }
@@ -480,12 +490,8 @@ public abstract class SettingFragment extends ListFragment {
                         add(application);
                         mAppInfos.add(application);
                     }
-                    try {
-                        if (!cache) {
-                            dialog.dismiss();
-                        }
-                    } catch (Exception e) {
-                        // do nothing
+                    if (dialog != null) {
+                        dialog.dismiss();
                     }
                     if (mView != null) {
                         mView.setVisibility(View.VISIBLE);
@@ -539,7 +545,7 @@ public abstract class SettingFragment extends ListFragment {
                     AppInfo appInfo = (AppInfo) params[1];
                     try {
                         holder.icon = ((PackageManager) params[2]).getApplicationIcon(appInfo.packageName);
-                    } catch (NameNotFoundException e) {
+                    } catch (NameNotFoundException e) { // NOSONAR
                         // do nothing
                     }
                     holder.running = mActivity.getRunningProcesses().get(appInfo.packageName);
@@ -620,23 +626,23 @@ public abstract class SettingFragment extends ListFragment {
             @Override
             protected FilterResults performFiltering(CharSequence prefix) {
                 FilterResults results = new FilterResults();
-                String filter = null;
+                String query = null;
                 if (prefix != null && prefix.length() > 0) {
-                    filter = prefix.toString().toLowerCase(Locale.US);
+                    query = prefix.toString().toLowerCase(Locale.US);
                 }
                 if (mFiltered == null) {
                     mFiltered = new HashSet<String>();
                 }
                 List<AppInfo> values = new ArrayList<AppInfo>();
-                if (filter == null) {
+                if (query == null) {
                     values.addAll(mAppInfos);
                     mFiltered.addAll(mNames);
                 } else {
                     mFiltered.clear();
                     for (AppInfo appInfo : mAppInfos) {
-                        if (appInfo.name.toLowerCase(Locale.US).contains(filter)
-                                || ("-3".equals(filter) && !appInfo.isSystem())
-                                || ("-s".equals(filter) && appInfo.isSystem())) {
+                        if (appInfo.name.toLowerCase(Locale.US).contains(query)
+                                || ("-3".equals(query) && !appInfo.isSystem())
+                                || ("-s".equals(query) && appInfo.isSystem())) {
                             values.add(appInfo);
                             mFiltered.add(appInfo.packageName);
                         }

@@ -22,6 +22,10 @@ final class Packages {
 
     public static final String FORCESTOP = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
 
+    private Packages() {
+
+    }
+
     public static void save(Map<String, Boolean> packages) {
         android.util.Log.d(CommonIntent.TAG, "save packages");
         File lock = new File(FORCESTOP + ".lock");

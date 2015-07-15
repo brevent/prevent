@@ -17,9 +17,9 @@ public final class HookResult {
     public static final HookResult HOOK_ENABLED = new HookResult(int.class, CommonIntent.ACTION_HOOK_ENABLED);
     public static final HookResult NO_MATCH = new HookResult(int.class, IntentFilter.NO_MATCH_ACTION);
 
-    private HookResult(Class<?> _type, Integer _result) {
-        type = _type;
-        result = _result;
+    private HookResult(Class<?> type, Integer result) {
+        this.type = type;
+        this.result = result;
     }
 
     public boolean isNone() {
@@ -27,7 +27,7 @@ public final class HookResult {
     }
 
     public Integer getResult() {
-        return result;
+        return this.result;
     }
 
 }

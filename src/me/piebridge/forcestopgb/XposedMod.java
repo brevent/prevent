@@ -87,7 +87,7 @@ public class XposedMod implements IXposedHookZygoteInit {
             }
         });
 
-        Class<?> ActivityManagerService = Class.forName("com.android.server.am.ActivityManagerService");
+        Class<?> ActivityManagerService = Class.forName("com.android.server.am.ActivityManagerService"); // NOSONAR
         for (Method method : ActivityManagerService.getDeclaredMethods()) {
             if ("startProcessLocked".equals(method.getName()) && method.getParameterTypes().length == 3) {
                 XposedBridge.hookMethod(method, new XC_MethodHook() {

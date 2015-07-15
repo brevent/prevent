@@ -23,10 +23,8 @@ public class RecreateUtil {
         } else {
             try {
                 recreateGB(activity);
-            } catch (InvocationTargetException e) {
-                e.getTargetException().printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Throwable t) { // NOSONAR
+                // do nothing
             }
         }
     }
@@ -37,11 +35,11 @@ public class RecreateUtil {
     }
 
     private static void recreateGB(Activity activity) throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        Field Activity$mToken = ReflectUtil.getField(Activity.class, "mToken");
+        Field Activity$mToken = ReflectUtil.getField(Activity.class, "mToken"); // NOSONAR
         IBinder mToken = (IBinder) Activity$mToken.get(activity);
-        Field Activity$mMainThread = ReflectUtil.getField(Activity.class, "mMainThread");
+        Field Activity$mMainThread = ReflectUtil.getField(Activity.class, "mMainThread"); // NOSONAR
         Object mMainThread = Activity$mMainThread.get(activity);
-        Field ActivityThread$mAppThread = ReflectUtil.getField(mMainThread.getClass(), "mAppThread");
+        Field ActivityThread$mAppThread = ReflectUtil.getField(mMainThread.getClass(), "mAppThread"); // NOSONAR
         Object mAppThread = ActivityThread$mAppThread.get(mMainThread);
         // @formatter:off
         Method method = mAppThread.getClass().getMethod("scheduleRelaunchActivity",
