@@ -81,6 +81,7 @@ final class Packages {
             packages = load(fileDeprecated);
             save(packages);
             fileDeprecated.delete();
+            fileDeprecated.getParentFile().delete();
         } else {
             packages = load(new File(FORCESTOP));
         }
