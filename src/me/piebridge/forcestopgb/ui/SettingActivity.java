@@ -105,6 +105,9 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             public void onReceive(Context context, Intent intent) {
                 String result = getResultData();
                 hookEnabled = result != null;
+                if (result == null) {
+                    return;
+                }
                 try {
                     JSONObject json = new JSONObject(result);
                     preventPackages.clear();
