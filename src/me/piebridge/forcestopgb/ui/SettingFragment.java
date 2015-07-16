@@ -52,7 +52,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.R;
-import me.piebridge.forcestopgb.hook.Hook;
 
 public abstract class SettingFragment extends ListFragment {
 
@@ -63,6 +62,7 @@ public abstract class SettingFragment extends ListFragment {
     private View filter;
     private CheckBox check;
     private int headerIconWidth;
+    private AlertDialog noHookDialog;
     private static Map<String, Position> positions = new HashMap<String, Position>();
 
     @Override
@@ -286,14 +286,27 @@ public abstract class SettingFragment extends ListFragment {
                 }
             }
         });
-        builder.create().show();
+        noHookDialog = builder.create();
+        noHookDialog.show();
+    }
+
+    private void dismissDialogIfNeeded() {
+        if (noHookDialog != null) {
+            noHookDialog.dismiss();
+            noHookDialog = null;
+        }
     }
 
     private void setNewAdapterIfNeeded(SettingActivity activity, boolean force) {
         if (!activity.isHookEnabled()) {
             showDialog();
-            return;
+        } else {
+            dismissDialogIfNeeded();
+            doSetNewAdapterIfNeeded(activity, force);
         }
+    }
+
+    private void doSetNewAdapterIfNeeded(SettingActivity activity, boolean force) {
         Set<String> names;
         if (force || prevNames == null) {
             names = getPackageNames(activity);
