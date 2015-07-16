@@ -1,8 +1,6 @@
 package me.piebridge.forcestopgb.hook;
 
 import android.os.Environment;
-import android.os.FileUtils;
-import android.os.Process;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -11,7 +9,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -21,7 +18,7 @@ import me.piebridge.forcestopgb.common.CommonIntent;
 
 final class Packages {
 
-    public static final String FORCESTOP_DEPRECATED = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";;
+    public static final String FORCESTOP_DEPRECATED = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
     public static final String FORCESTOP = Environment.getDataDirectory() + "/system/forcestop.list";
 
     private Packages() {

@@ -1,6 +1,5 @@
 package me.piebridge.util;
 
-import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.util.Log;
 

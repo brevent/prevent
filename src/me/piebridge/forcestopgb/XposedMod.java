@@ -15,7 +15,6 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
-import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.forcestopgb.hook.Hook;
 import me.piebridge.forcestopgb.hook.HookResult;
 import me.piebridge.forcestopgb.hook.SystemHook;
@@ -29,7 +28,6 @@ public class XposedMod implements IXposedHookZygoteInit {
             XposedBridge.hookAllMethods(ActivityThread, "systemMain", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    android.util.Log.d(CommonIntent.TAG, "hook ActivityThread.systemMain, uid: " + Process.myUid());
                     hookSystem(Thread.currentThread().getContextClassLoader());
                 }
             });
@@ -37,14 +35,16 @@ public class XposedMod implements IXposedHookZygoteInit {
             hookSystem(null);
         }
 
-        hookZygote();
+        hookActivity();
+        hookSuicide();
+        hookDestroy();
     }
 
-    private static void hookSystem(ClassLoader classLoader) throws Throwable {
+    private static void hookSystem(ClassLoader classLoader) throws ClassNotFoundException, NoSuchMethodException {
         SystemHook.setClassLoader(classLoader);
 
-        Class<?> ActivityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader);
-        Class<?> ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
+        Class<?> ActivityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader); // NOSONAR
+        Class<?> ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader); // NOSONAR
         Method startProcessLocked;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class);
@@ -60,7 +60,7 @@ public class XposedMod implements IXposedHookZygoteInit {
             }
         });
 
-        Class<?> IntentFilter = Class.forName("android.content.IntentFilter", false, classLoader);
+        Class<?> IntentFilter = Class.forName("android.content.IntentFilter", false, classLoader); // NOSONAR
         Method match = IntentFilter.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
         XposedBridge.hookMethod(match, new XC_MethodHook() {
             @Override
@@ -73,7 +73,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         });
     }
 
-    private static void hookZygote() {
+    private static void hookActivity() {
         XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
@@ -87,7 +87,9 @@ public class XposedMod implements IXposedHookZygoteInit {
                 Hook.afterActivity$onDestroy((Activity) param.thisObject);
             }
         });
+    }
 
+    private static void hookSuicide() {
         XposedHelpers.findAndHookMethod(Process.class, "killProcess", int.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
@@ -105,7 +107,9 @@ public class XposedMod implements IXposedHookZygoteInit {
                 param.setResult(null);
             }
         });
+    }
 
+    private static void hookDestroy() {
         XposedHelpers.findAndHookMethod(Activity.class, "moveTaskToBack", boolean.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -123,4 +127,5 @@ public class XposedMod implements IXposedHookZygoteInit {
             }
         });
     }
+
 }

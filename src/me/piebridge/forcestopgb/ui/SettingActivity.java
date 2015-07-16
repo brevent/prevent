@@ -219,6 +219,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 
     @Override
     public void onPageScrollStateChanged(int position) {
+        // do nothing
     }
 
     @Override
@@ -250,7 +251,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             prevent.setVisibility(View.GONE);
         }
         Set<String> selections = mPageSelections.get(position);
-        if (selections.size() > 0) {
+        if (!selections.isEmpty()) {
             cancel.setEnabled(true);
             remove.setEnabled(true);
             if (isSubSet(selections, getPreventPackages().keySet())) {

@@ -95,95 +95,113 @@ public final class SystemHook {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             String packageName = intent.getData().getSchemeSpecificPart();
-            if ("android".equals(packageName)) {
-                return;
-            }
-            if (packageName != null && !packageCounters.containsKey(packageName)) {
-                packageCounters.put(packageName, new HashMap<Integer, AtomicInteger>());
-            }
             if (CommonIntent.ACTION_GET_PACKAGES.equals(action)) {
                 logRequest(action, packageName, -1);
                 setResultData(new JSONObject(preventPackages).toString());
             } else if (CommonIntent.ACTION_UPDATE_PREVENT.equals(action)) {
-                logRequest(action, packageName, -1);
-                String[] packages = intent.getStringArrayExtra(CommonIntent.EXTRA_PACKAGES);
-                boolean prevent = intent.getBooleanExtra(CommonIntent.EXTRA_PREVENT, true);
-                for (String name : packages) {
-                    if (prevent) {
-                        int count = countCounter(name);
-                        preventPackages.put(name, count == 0);
-                    } else {
-                        preventPackages.remove(name);
-                    }
-                }
-                executor.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d(CommonIntent.TAG, "update prevent packages");
-                        Packages.save(preventPackages);
-                    }
-                });
+                handleUpdatePrevent(action, packageName, intent);
             } else if (CommonIntent.ACTION_INCREASE_COUNTER.equals(action)) {
-                int uid = intent.getIntExtra(CommonIntent.EXTRA_UID, 0);
-                int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
-                if (uid > 0) {
-                    packageUids.put(packageName, uid);
-                }
-                Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
-                if (packageCounter == null) {
-                    packageCounter = new HashMap<Integer, AtomicInteger>();
-                    packageCounters.put(packageName, packageCounter);
-                }
-                AtomicInteger pidCounter = packageCounter.get(pid);
-                if (pidCounter == null) {
-                    pidCounter = new AtomicInteger();
-                    packageCounter.put(pid, pidCounter);
-                }
-                pidCounter.incrementAndGet();
-                int count = countCounter(packageName);
-                logRequest(action, packageName, count);
-                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                    preventPackages.put(packageName, Boolean.FALSE);
-                }
+                handleIncreaseCounter(action, packageName, intent);
             } else if (CommonIntent.ACTION_DECREASE_COUNTER.equals(action)) {
-                Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
-                if (packageCounter != null) {
-                    int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
-                    AtomicInteger pidCounter = packageCounter.get(pid);
-                    if (pidCounter != null) {
-                        pidCounter.decrementAndGet();
-                    }
-                }
-                int count = countCounter(packageName);
-                logRequest(action, packageName, count);
-                if (count <= 0 && preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.TRUE);
-                    logForceStop(action, packageName, "if needed in 60s");
-                    forceStopPackageIfNeeded(packageName);
-                }
+                handleDecreaseCounter(action, packageName, intent);
             } else if (CommonIntent.ACTION_ACTIVITY_DESTROY.equals(action)) {
-                logRequest(action, packageName, -1);
-                packageCounters.remove(packageName);
-                if (preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.TRUE);
-                    logForceStop(action, packageName, "later in 30s");
-                    forceStopPackageLater(packageName);
-                }
+                handleDestroy(action, packageName);
             } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
-                logRequest(action, packageName, -1);
-                packageCounters.remove(packageName);
-                if (preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.TRUE);
-                }
+                handlePackageRestarted(action, packageName);
             } else if (CommonIntent.ACTION_FORCE_STOP.equals(action)) {
-                logRequest(action, packageName, -1);
-                packageCounters.remove(packageName);
-                if (preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.TRUE);
-                }
-                logForceStop(action, packageName, "force");
-                forceStopPackageForce(packageName);
+                handleForceStop(action, packageName);
             }
+        }
+
+        private void handleUpdatePrevent(String action, String packageName, Intent intent) {
+            logRequest(action, packageName, -1);
+            String[] packages = intent.getStringArrayExtra(CommonIntent.EXTRA_PACKAGES);
+            boolean prevent = intent.getBooleanExtra(CommonIntent.EXTRA_PREVENT, true);
+            for (String name : packages) {
+                if (prevent) {
+                    int count = countCounter(name);
+                    preventPackages.put(name, count == 0);
+                } else {
+                    preventPackages.remove(name);
+                }
+            }
+            executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(CommonIntent.TAG, "update prevent packages");
+                    Packages.save(preventPackages);
+                }
+            });
+        }
+
+        private void handleIncreaseCounter(String action, String packageName, Intent intent) {
+            int uid = intent.getIntExtra(CommonIntent.EXTRA_UID, 0);
+            int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
+            if (uid > 0) {
+                packageUids.put(packageName, uid);
+            }
+            Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
+            if (packageCounter == null) {
+                packageCounter = new HashMap<Integer, AtomicInteger>();
+                packageCounters.put(packageName, packageCounter);
+            }
+            AtomicInteger pidCounter = packageCounter.get(pid);
+            if (pidCounter == null) {
+                pidCounter = new AtomicInteger();
+                packageCounter.put(pid, pidCounter);
+            }
+            pidCounter.incrementAndGet();
+            int count = countCounter(packageName);
+            logRequest(action, packageName, count);
+            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                preventPackages.put(packageName, Boolean.FALSE);
+            }
+        }
+
+        private void handleDecreaseCounter(String action, String packageName, Intent intent) {
+            Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
+            if (packageCounter != null) {
+                int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
+                AtomicInteger pidCounter = packageCounter.get(pid);
+                if (pidCounter != null) {
+                    pidCounter.decrementAndGet();
+                }
+            }
+            int count = countCounter(packageName);
+            logRequest(action, packageName, count);
+            if (count <= 0 && preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
+                logForceStop(action, packageName, "if needed in 60s");
+                forceStopPackageIfNeeded(packageName);
+            }
+        }
+
+        private void handleDestroy(String action, String packageName) {
+            logRequest(action, packageName, -1);
+            packageCounters.remove(packageName);
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
+                logForceStop(action, packageName, "later in 30s");
+                forceStopPackageLater(packageName);
+            }
+        }
+
+        private void handlePackageRestarted(String action, String packageName) {
+            logRequest(action, packageName, -1);
+            packageCounters.remove(packageName);
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
+            }
+        }
+
+        private void handleForceStop(String action, String packageName) {
+            logRequest(action, packageName, -1);
+            packageCounters.remove(packageName);
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
+            }
+            logForceStop(action, packageName, "force");
+            forceStopPackageForce(packageName);
         }
     }
 
@@ -194,7 +212,7 @@ public final class SystemHook {
 
         String action = (String) args[0];
 
-        if (Intent.ACTION_MAIN.equals(action) || Intent.ACTION_VIEW.equals(action)) {
+        if (Intent.ACTION_MAIN.equals(action)) {
             return HookResult.NONE;
         }
 
@@ -328,18 +346,12 @@ public final class SystemHook {
         return count;
     }
 
-    private static boolean isZombie(int pid) {
-        File file = new File(new File("/proc", String.valueOf(pid)), "stat");
-        String content = getContent(file);
-        return content != null && content.contains(" Z ");
-    }
-
     private static String getPackage(int pid) {
         File file = new File(new File("/proc", String.valueOf(pid)), "cmdline");
         return getContent(file);
     }
 
-    private synchronized static String getContent(File file) {
+    private static synchronized String getContent(File file) {
         if (!file.isFile() || !file.canRead()) {
             return null;
         }
@@ -473,9 +485,6 @@ public final class SystemHook {
                 if (HiddenAPI.getParentPid(pid) == 1) {
                     Process.killProcess(pid);
                     logKill(pid, "without parent", packageName);
-//                } else if (isZombie(pid)) {
-//                    Process.killProcess(pid);
-//                    logKill(pid, "zombie", packageName);
                 }
             }
         }

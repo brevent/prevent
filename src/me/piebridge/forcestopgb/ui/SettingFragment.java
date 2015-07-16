@@ -7,11 +7,9 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -63,6 +61,7 @@ public abstract class SettingFragment extends ListFragment {
     private CheckBox check;
     private int headerIconWidth;
     private AlertDialog noHookDialog;
+    private static Map<String, String> labels = new HashMap<String, String>();
     private static Map<String, Position> positions = new HashMap<String, Position>();
 
     @Override
@@ -150,14 +149,7 @@ public abstract class SettingFragment extends ListFragment {
         ViewHolder holder = (ViewHolder) ((AdapterContextMenuInfo) menuInfo).targetView.getTag();
         menu.setHeaderTitle(holder.nameView.getText());
         if (holder.icon != null) {
-            int width = getHeaderIconWidth();
-            if (holder.icon.getMinimumWidth() <= width) {
-                menu.setHeaderIcon(holder.icon);
-            } else if (BitmapDrawable.class.isAssignableFrom(holder.icon.getClass())) {
-                Bitmap icon = ((BitmapDrawable) holder.icon).getBitmap();
-                Bitmap bitmap = Bitmap.createScaledBitmap(icon, width, width, false);
-                menu.setHeaderIcon(new BitmapDrawable(getResources(), bitmap));
-            }
+            setHeaderIcon(menu, holder.icon);
         }
         menu.add(Menu.NONE, R.string.app_info, Menu.NONE, R.string.app_info);
         if (mActivity.getPreventPackages().containsKey(holder.packageName)) {
@@ -173,70 +165,75 @@ public abstract class SettingFragment extends ListFragment {
         }
     }
 
+    private void setHeaderIcon(ContextMenu menu, Drawable icon) {
+        int width = getHeaderIconWidth();
+        if (icon.getMinimumWidth() <= width) {
+            menu.setHeaderIcon(icon);
+        } else if (icon instanceof BitmapDrawable) {
+            Bitmap bitmap = Bitmap.createScaledBitmap(((BitmapDrawable) icon).getBitmap(), width, width, false);
+            menu.setHeaderIcon(new BitmapDrawable(getResources(), bitmap));
+        }
+    }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         if (mActivity == null || item == null) {
             return false;
         }
         ViewHolder holder = (ViewHolder) ((AdapterContextMenuInfo) item.getMenuInfo()).targetView.getTag();
-        String packageName = holder.packageName;
-        switch (item.getItemId()) {
+        return onContextItemSelected(holder, holder.packageName, item.getItemId());
+    }
+
+    private boolean onContextItemSelected(ViewHolder holder, String packageName, int id) {
+        switch (id) {
             case R.string.app_info:
-                mActivity.startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)));
-                return true;
-            case R.string.remove:
-                holder.preventView.setVisibility(View.GONE);
-                mActivity.changePrevent(packageName, false);
-                return true;
-            case R.string.prevent:
-                holder.preventView.setVisibility(View.VISIBLE);
-                holder.preventView.setImageResource(holder.running != null ? R.drawable.ic_menu_stop : R.drawable.ic_menu_block);
-                mActivity.changePrevent(packageName, true);
-                return true;
-            case R.string.open:
-                startPackage(holder.packageName);
-                return true;
             case R.string.uninstall:
-                mActivity.startActivity(new Intent(Intent.ACTION_DELETE, Uri.fromParts("package", packageName, null)));
-                return true;
+                return startActivity(id, packageName);
+            case R.string.open:
+                return startPackage(packageName);
+            case R.string.remove:
+            case R.string.prevent:
+                return updatePrevent(id, holder, packageName);
             default:
                 return false;
         }
     }
 
-    private void startPackage(String packageName) {
-        try {
-            mActivity.startActivity(getMainIntent(packageName));
-        } catch (Exception e) { // NOSONAR
-            // do nothing
+    private boolean startActivity(int id, String packageName) {
+        String action;
+        if (id == R.string.app_info) {
+            action = android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS;
+        } else if (id == R.string.uninstall) {
+            action = Intent.ACTION_DELETE;
+        } else {
+            return false;
         }
+        mActivity.startActivity(new Intent(action, Uri.fromParts("package", packageName, null)));
+        return true;
+    }
+
+    private boolean startPackage(String packageName) {
+        Intent intent = getMainIntent(packageName);
+        if (intent != null) {
+            mActivity.startActivity(intent);
+        }
+        return true;
+    }
+
+    private boolean updatePrevent(int id, ViewHolder holder, String packageName) {
+        if (id == R.string.prevent) {
+            holder.preventView.setVisibility(View.VISIBLE);
+            holder.preventView.setImageResource(holder.running != null ? R.drawable.ic_menu_stop : R.drawable.ic_menu_block);
+            mActivity.changePrevent(packageName, true);
+        } else if (id == R.string.remove) {
+            holder.preventView.setVisibility(View.GONE);
+            mActivity.changePrevent(packageName, false);
+        }
+        return true;
     }
 
     private Intent getMainIntent(String packageName) {
-        PackageManager pm = mActivity.getPackageManager();
-        Intent launcher = pm.getLaunchIntentForPackage(packageName);
-        if (launcher != null) {
-            return launcher;
-        } else {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.setPackage(packageName);
-            List<ResolveInfo> ris = pm.queryIntentActivities(intent, 0);
-            if (ris != null && ris.size() > 0) {
-                // find the first exported activity
-                for (ResolveInfo ri : ris) {
-                    ActivityInfo ai = ri.activityInfo;
-                    if (!ai.exported) {
-                        continue;
-                    }
-                    if (ai.enabled) {
-                        return new Intent().setFlags(Intent.FLAG_ACTIVITY_NEW_TASK).setClassName(ai.packageName, ai.name);
-                    } else {
-                        return null;
-                    }
-                }
-            }
-        }
-        return null;
+        return mActivity.getPackageManager().getLaunchIntentForPackage(packageName);
     }
 
     public void refresh(boolean force) {
@@ -335,22 +332,22 @@ public abstract class SettingFragment extends ListFragment {
             mAdapter.notifyDataSetChanged();
             Position position = getListPosition();
             if (position != null) {
-                getListView().setSelectionFromTop(position.position, position.top);
+                getListView().setSelectionFromTop(position.pos, position.top);
             }
         }
     }
 
-    static class Position {
-        int position;
+    private static class Position {
+        int pos;
         int top;
 
-        public Position(int position, int top) {
-            this.position = position;
+        public Position(int pos, int top) {
+            this.pos = pos;
             this.top = top;
         }
     }
 
-    static class AppInfo implements Comparable<AppInfo> {
+    private static class AppInfo implements Comparable<AppInfo> {
         int flags;
         String name = "";
         String packageName;
@@ -395,7 +392,7 @@ public abstract class SettingFragment extends ListFragment {
         }
     }
 
-    static class ViewHolder {
+    private static class ViewHolder {
         String label;
         String packageName;
         CheckBox checkView;
@@ -409,11 +406,10 @@ public abstract class SettingFragment extends ListFragment {
         boolean canUninstall;
     }
 
-    static class Adapter extends ArrayAdapter<AppInfo> {
+    private class Adapter extends ArrayAdapter<AppInfo> {
         private PackageManager pm;
         private LayoutInflater inflater;
         private SettingActivity mActivity;
-        private static Map<String, String> labels = new HashMap<String, String>();
         private final CompoundButton.OnCheckedChangeListener mListener;
 
         private List<AppInfo> mAppInfos = new ArrayList<AppInfo>();
@@ -421,6 +417,7 @@ public abstract class SettingFragment extends ListFragment {
         private Set<String> mFiltered;
         private Filter mFilter;
         private View mView;
+        private boolean mCache;
 
         public Adapter(SettingActivity activity) {
             super(activity, R.layout.item);
@@ -445,78 +442,9 @@ public abstract class SettingFragment extends ListFragment {
         public Adapter(final SettingActivity activity, Set<String> names, boolean cache, View view) {
             this(activity);
             mView = view;
+            mCache = cache;
             mNames.addAll(names);
-            addAll(names, cache);
-        }
-
-        public void addAll(final Set<String> names, final boolean cache) {
-            new AsyncTask<Void, Integer, Set<AppInfo>>() {
-                ProgressDialog dialog;
-
-                @Override
-                protected void onPreExecute() {
-                    if (!cache) {
-                        labels.clear();
-                        dialog = new ProgressDialog(mActivity);
-                        dialog.setMessage(mActivity.getString(R.string.loading));
-                        dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                        dialog.setCancelable(false);
-                        dialog.setMax(names.size());
-                        dialog.show();
-                    }
-                }
-
-                @Override
-                protected Set<AppInfo> doInBackground(Void... params) {
-                    Map<String, Set<Integer>> running = mActivity.getRunningProcesses();
-                    Set<AppInfo> applications = new TreeSet<AppInfo>();
-                    int i = 1;
-                    for (String name : names) {
-                        try {
-                            publishProgress(++i);
-                            ApplicationInfo info = pm.getApplicationInfo(name, 0);
-                            if (!info.enabled) {
-                                continue;
-                            }
-                            String label;
-                            if (!cache) {
-                                label = info.loadLabel(pm).toString();
-                                labels.put(name, label);
-                            } else {
-                                label = labels.get(name);
-                                if (label == null) {
-                                    label = info.loadLabel(pm).toString();
-                                }
-                            }
-                            applications.add(new AppInfo(name, label, running.get(name)).setFlags(info.flags));
-                        } catch (NameNotFoundException e) { // NOSONAR
-                            // do nothing
-                        }
-                    }
-                    return applications;
-                }
-
-                @Override
-                protected void onProgressUpdate(Integer... progress) {
-                    if (dialog != null) {
-                        dialog.setProgress(progress[0]);
-                    }
-                }
-
-                @Override
-                protected void onPostExecute(Set<AppInfo> applications) {
-                    for (AppInfo application : applications) {
-                        add(application);
-                        mAppInfos.add(application);
-                    }
-                    if (dialog != null) {
-                        dialog.dismiss();
-                    }
-                    if (mView != null) {
-                        mView.setVisibility(View.VISIBLE);
-                    }
-                }
-            }.execute();
+            new RetrieveInfoTask().execute();
         }
 
         @Override
@@ -557,72 +485,8 @@ public abstract class SettingFragment extends ListFragment {
                 holder.preventView.setVisibility(View.VISIBLE);
                 holder.preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
             }
-            new AsyncTask<Object, Void, ViewHolder>() {
-                @Override
-                protected ViewHolder doInBackground(Object... params) {
-                    ViewHolder holder = (ViewHolder) params[0];
-                    AppInfo appInfo = (AppInfo) params[1];
-                    try {
-                        holder.icon = ((PackageManager) params[2]).getApplicationIcon(appInfo.packageName);
-                    } catch (NameNotFoundException e) { // NOSONAR
-                        // do nothing
-                    }
-                    holder.running = mActivity.getRunningProcesses().get(appInfo.packageName);
-                    return holder;
-                }
-
-                @Override
-                protected void onPostExecute(ViewHolder holder) {
-                    holder.iconView.setImageDrawable(holder.icon);
-                    holder.loadingView.setVisibility(View.GONE);
-                    holder.summaryView.setText(formatRunning(holder.running));
-                    holder.summaryView.setVisibility(View.VISIBLE);
-                }
-            }.execute(holder, appInfo, pm);
+            new RetriveIconTask().execute(holder, appInfo);
             return view;
-        }
-
-        private CharSequence formatRunning(Set<Integer> running) {
-            if (running == null) {
-                return mActivity.getString(R.string.notrunning);
-            } else {
-                Set<String> sets = new TreeSet<String>();
-                for (Integer i : running) {
-                    switch (i) {
-                        case RunningAppProcessInfo.IMPORTANCE_BACKGROUND:
-                            sets.add(mActivity.getString(R.string.background));
-                            break;
-                        case RunningAppProcessInfo.IMPORTANCE_EMPTY:
-                            sets.add(mActivity.getString(R.string.empty));
-                            break;
-                        case RunningAppProcessInfo.IMPORTANCE_FOREGROUND:
-                            sets.add(mActivity.getString(R.string.foreground));
-                            break;
-                        case RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE:
-                            sets.add(mActivity.getString(R.string.perceptible));
-                            break;
-                        case RunningAppProcessInfo.IMPORTANCE_SERVICE:
-                            sets.add(mActivity.getString(R.string.service));
-                            break;
-                        case RunningAppProcessInfo.IMPORTANCE_VISIBLE:
-                            sets.add(mActivity.getString(R.string.visible));
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                StringBuilder buffer = new StringBuilder();
-                Iterator<?> it = sets.iterator();
-                while (true) {
-                    buffer.append(it.next());
-                    if (it.hasNext()) {
-                        buffer.append(", ");
-                    } else {
-                        break;
-                    }
-                }
-                return buffer.toString();
-            }
         }
 
 
@@ -659,9 +523,7 @@ public abstract class SettingFragment extends ListFragment {
                 } else {
                     mFiltered.clear();
                     for (AppInfo appInfo : mAppInfos) {
-                        if (appInfo.name.toLowerCase(Locale.US).contains(query)
-                                || ("-3".equals(query) && !appInfo.isSystem())
-                                || ("-s".equals(query) && appInfo.isSystem())) {
+                        if (match(query, appInfo)) {
                             values.add(appInfo);
                             mFiltered.add(appInfo.packageName);
                         }
@@ -682,8 +544,164 @@ public abstract class SettingFragment extends ListFragment {
                 }
                 notifyDataSetChanged();
             }
+
+            private boolean match(String query, AppInfo appInfo) {
+                return contains(query, appInfo) || queryForThirdParty(query, appInfo) || queryForSystem(query, appInfo);
+            }
+
+            private boolean contains(String query, AppInfo appInfo) {
+                return appInfo.name.toLowerCase(Locale.US).contains(query);
+            }
+
+            private boolean queryForThirdParty(String query, AppInfo appInfo) {
+                return "-3".equals(query) && !appInfo.isSystem();
+            }
+
+            private boolean queryForSystem(String query, AppInfo appInfo) {
+                return "-s".equals(query) && appInfo.isSystem();
+            }
+        }
+
+        private class RetrieveInfoTask extends AsyncTask<Void, Integer, Set<AppInfo>> {
+            ProgressDialog dialog;
+
+            @Override
+            protected void onPreExecute() {
+                if (!mCache) {
+                    labels.clear();
+                    dialog = new ProgressDialog(mActivity);
+                    dialog.setMessage(mActivity.getString(R.string.loading));
+                    dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                    dialog.setCancelable(false);
+                    dialog.setMax(mNames.size());
+                    dialog.show();
+                }
+            }
+
+            @Override
+            protected Set<AppInfo> doInBackground(Void... params) {
+                Map<String, Set<Integer>> running = mActivity.getRunningProcesses();
+                Set<AppInfo> applications = new TreeSet<AppInfo>();
+                int i = 1;
+                for (String name : mNames) {
+                    publishProgress(++i);
+                    ApplicationInfo info;
+                    try {
+                        info = pm.getApplicationInfo(name, 0);
+                    } catch (NameNotFoundException e) { // NOSONAR
+                        info = null;
+                    }
+                    if (info == null || !info.enabled) {
+                        continue;
+                    }
+                    String label;
+                    if (!mCache) {
+                        label = info.loadLabel(pm).toString();
+                        labels.put(name, label);
+                    } else {
+                        label = labels.get(name);
+                        if (label == null) {
+                            label = info.loadLabel(pm).toString();
+                        }
+                    }
+                    applications.add(new AppInfo(name, label, running.get(name)).setFlags(info.flags));
+                }
+                return applications;
+            }
+
+            @Override
+            protected void onProgressUpdate(Integer... progress) {
+                if (dialog != null) {
+                    dialog.setProgress(progress[0]);
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Set<AppInfo> applications) {
+                for (AppInfo application : applications) {
+                    add(application);
+                    mAppInfos.add(application);
+                }
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+                if (mView != null) {
+                    mView.setVisibility(View.VISIBLE);
+                }
+            }
         }
 
     }
 
+    private class RetriveIconTask extends AsyncTask<Object, Void, ViewHolder> {
+        final PackageManager pm = mActivity.getPackageManager();
+
+        @Override
+        protected ViewHolder doInBackground(Object... params) {
+            ViewHolder holder = (ViewHolder) params[0];
+            AppInfo appInfo = (AppInfo) params[1];
+            try {
+                holder.icon = pm.getApplicationIcon(appInfo.packageName);
+            } catch (NameNotFoundException e) { // NOSONAR
+                // do nothing
+            }
+            holder.running = mActivity.getRunningProcesses().get(appInfo.packageName);
+            return holder;
+        }
+
+        @Override
+        protected void onPostExecute(ViewHolder holder) {
+            holder.iconView.setImageDrawable(holder.icon);
+            holder.loadingView.setVisibility(View.GONE);
+            holder.summaryView.setText(formatRunning(holder.running));
+            holder.summaryView.setVisibility(View.VISIBLE);
+        }
+
+        private CharSequence formatRunning(Set<Integer> running) {
+            if (running == null) {
+                return mActivity.getString(R.string.notrunning);
+            } else {
+                return doFormatRunning(running);
+            }
+        }
+
+        private CharSequence doFormatRunning(Set<Integer> running) {
+            Set<String> sets = new TreeSet<String>();
+            for (Integer i : running) {
+                switch (i) {
+                    case RunningAppProcessInfo.IMPORTANCE_BACKGROUND:
+                        sets.add(mActivity.getString(R.string.background));
+                        break;
+                    case RunningAppProcessInfo.IMPORTANCE_EMPTY:
+                        sets.add(mActivity.getString(R.string.empty));
+                        break;
+                    case RunningAppProcessInfo.IMPORTANCE_FOREGROUND:
+                        sets.add(mActivity.getString(R.string.foreground));
+                        break;
+                    case RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE:
+                        sets.add(mActivity.getString(R.string.perceptible));
+                        break;
+                    case RunningAppProcessInfo.IMPORTANCE_SERVICE:
+                        sets.add(mActivity.getString(R.string.service));
+                        break;
+                    case RunningAppProcessInfo.IMPORTANCE_VISIBLE:
+                        sets.add(mActivity.getString(R.string.visible));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            StringBuilder buffer = new StringBuilder();
+            Iterator<?> it = sets.iterator();
+            while (true) {
+                buffer.append(it.next());
+                if (it.hasNext()) {
+                    buffer.append(", ");
+                } else {
+                    break;
+                }
+            }
+            return buffer.toString();
+        }
+    }
 }

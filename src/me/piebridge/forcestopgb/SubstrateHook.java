@@ -1,8 +1,5 @@
 package me.piebridge.forcestopgb;
 
-import java.lang.reflect.Method;
-import java.util.Set;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -14,7 +11,9 @@ import android.util.Log;
 
 import com.saurik.substrate.MS;
 
-import de.robv.android.xposed.XposedHelpers;
+import java.lang.reflect.Method;
+import java.util.Set;
+
 import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.forcestopgb.hook.Hook;
 import me.piebridge.forcestopgb.hook.HookResult;
@@ -45,31 +44,34 @@ public class SubstrateHook {
             @Override
             public void classLoaded(Class<?> ActivityManagerService) { // NOSONAR
                 try {
-
-                    final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-                    SystemHook.setClassLoader(classLoader);;
-
-                    Class<?> ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader); // NOSONAR
-                    Method startProcessLocked;
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                        startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class);
-                    } else {
-                        startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class, String.class, String.class, String[].class);
-                    }
-                    MS.hookMethod(ActivityManagerService, startProcessLocked, new MS.MethodAlteration<Object, Void>() {
-                        @Override
-                        public Void invoked(Object thiz, Object... args) throws Throwable {
-                            if (!SystemHook.beforeActivityManagerService$startProcessLocked(args)) {
-                                return null;
-                            } else {
-                                return invoke(thiz, args);
-                            }
-                        }
-                    });
+                    hookActivityManagerService(ActivityManagerService);
                 } catch (NoSuchMethodException e) { // NOSONAR
                     // do nothing
-                } catch (ClassNotFoundException e) {
+                } catch (ClassNotFoundException e) { // NOSONAR
                     // do nothing
+                }
+            }
+        });
+    }
+
+    private static void hookActivityManagerService(Class<?> ActivityManagerService) throws ClassNotFoundException, NoSuchMethodException { // NOSONAR
+        final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        SystemHook.setClassLoader(classLoader);
+
+        Class<?> ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader); // NOSONAR
+        Method startProcessLocked;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class);
+        } else {
+            startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class, String.class, String.class, String[].class);
+        }
+        MS.hookMethod(ActivityManagerService, startProcessLocked, new MS.MethodAlteration<Object, Void>() {
+            @Override
+            public Void invoked(Object thiz, Object... args) throws Throwable {
+                if (!SystemHook.beforeActivityManagerService$startProcessLocked(args)) {
+                    return null;
+                } else {
+                    return invoke(thiz, args);
                 }
             }
         });

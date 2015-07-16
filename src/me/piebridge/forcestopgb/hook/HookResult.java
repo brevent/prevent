@@ -2,8 +2,6 @@ package me.piebridge.forcestopgb.hook;
 
 import android.content.IntentFilter;
 
-import me.piebridge.forcestopgb.common.CommonIntent;
-
 /**
  * Created by thom on 15/7/12.
  */
