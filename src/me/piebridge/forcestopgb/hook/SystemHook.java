@@ -55,7 +55,7 @@ public final class SystemHook {
 
     private static Map<String, Integer> packageUids = new HashMap<String, Integer>();
 
-    private static Map<String, HashMap<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, HashMap<Integer, AtomicInteger>>();
+    private static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
 
@@ -129,7 +129,7 @@ public final class SystemHook {
                 if (uid > 0) {
                     packageUids.put(packageName, uid);
                 }
-                HashMap<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
+                Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
                 if (packageCounter == null) {
                     packageCounter = new HashMap<Integer, AtomicInteger>();
                     packageCounters.put(packageName, packageCounter);
@@ -146,7 +146,7 @@ public final class SystemHook {
                     preventPackages.put(packageName, Boolean.FALSE);
                 }
             } else if (CommonIntent.ACTION_DECREASE_COUNTER.equals(action)) {
-                HashMap<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
+                Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
                 if (packageCounter != null) {
                     int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
                     AtomicInteger pidCounter = packageCounter.get(pid);
@@ -311,7 +311,7 @@ public final class SystemHook {
 
     private static int countCounter(String packageName) {
         int count = 0;
-        HashMap<Integer, AtomicInteger> values = packageCounters.get(packageName);
+        Map<Integer, AtomicInteger> values = packageCounters.get(packageName);
         if (values == null) {
             return count;
         }

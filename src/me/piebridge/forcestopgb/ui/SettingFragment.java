@@ -110,6 +110,7 @@ public abstract class SettingFragment extends ListFragment {
         query.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int before, int after) {
+                // do nothing
             }
 
             @Override
@@ -121,6 +122,7 @@ public abstract class SettingFragment extends ListFragment {
 
             @Override
             public void afterTextChanged(Editable s) {
+                // do nothing
             }
         });
         query.setHint(getQueryHint());
@@ -192,17 +194,21 @@ public abstract class SettingFragment extends ListFragment {
                 mActivity.changePrevent(packageName, true);
                 return true;
             case R.string.open:
-                try {
-                    mActivity.startActivity(getMainIntent(holder.packageName));
-                } catch (Exception e) { // NOSONAR
-                    // do nothing
-                }
+                startPackage(holder.packageName);
                 return true;
             case R.string.uninstall:
                 mActivity.startActivity(new Intent(Intent.ACTION_DELETE, Uri.fromParts("package", packageName, null)));
                 return true;
             default:
                 return false;
+        }
+    }
+
+    private void startPackage(String packageName) {
+        try {
+            mActivity.startActivity(getMainIntent(packageName));
+        } catch (Exception e) { // NOSONAR
+            // do nothing
         }
     }
 
@@ -410,7 +416,7 @@ public abstract class SettingFragment extends ListFragment {
         private static Map<String, String> labels = new HashMap<String, String>();
         private final CompoundButton.OnCheckedChangeListener mListener;
 
-        private ArrayList<AppInfo> mAppInfos = new ArrayList<AppInfo>();
+        private List<AppInfo> mAppInfos = new ArrayList<AppInfo>();
         private Set<String> mNames = new HashSet<String>();
         private Set<String> mFiltered;
         private Filter mFilter;
@@ -444,7 +450,7 @@ public abstract class SettingFragment extends ListFragment {
         }
 
         public void addAll(final Set<String> names, final boolean cache) {
-            new AsyncTask<Void, Integer, TreeSet<AppInfo>>() {
+            new AsyncTask<Void, Integer, Set<AppInfo>>() {
                 ProgressDialog dialog;
 
                 @Override
@@ -461,9 +467,9 @@ public abstract class SettingFragment extends ListFragment {
                 }
 
                 @Override
-                protected TreeSet<AppInfo> doInBackground(Void... params) {
+                protected Set<AppInfo> doInBackground(Void... params) {
                     Map<String, Set<Integer>> running = mActivity.getRunningProcesses();
-                    TreeSet<AppInfo> applications = new TreeSet<AppInfo>();
+                    Set<AppInfo> applications = new TreeSet<AppInfo>();
                     int i = 1;
                     for (String name : names) {
                         try {
@@ -498,7 +504,7 @@ public abstract class SettingFragment extends ListFragment {
                 }
 
                 @Override
-                protected void onPostExecute(TreeSet<AppInfo> applications) {
+                protected void onPostExecute(Set<AppInfo> applications) {
                     for (AppInfo application : applications) {
                         add(application);
                         mAppInfos.add(application);
@@ -580,7 +586,7 @@ public abstract class SettingFragment extends ListFragment {
             if (running == null) {
                 return mActivity.getString(R.string.notrunning);
             } else {
-                TreeSet<String> sets = new TreeSet<String>();
+                Set<String> sets = new TreeSet<String>();
                 for (Integer i : running) {
                     switch (i) {
                         case RunningAppProcessInfo.IMPORTANCE_BACKGROUND:

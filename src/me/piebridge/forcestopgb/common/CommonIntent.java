@@ -22,10 +22,10 @@ public final class CommonIntent {
     public static final String ACTION_GET_PACKAGES = ACTION_NAMESPACE + "GET_PACKAGES";
     public static final String ACTION_UPDATE_PREVENT = ACTION_NAMESPACE + "UPDATE_PREVENT";
 
-    public static String EXTRA_UID = ACTION_NAMESPACE + "UID";
-    public static String EXTRA_PID = ACTION_NAMESPACE + "PID";
-    public static String EXTRA_PACKAGES = ACTION_NAMESPACE + "PACKAGES";
-    public static String EXTRA_PREVENT = ACTION_NAMESPACE + "PREVENT";
+    public static final String EXTRA_UID = ACTION_NAMESPACE + "UID";
+    public static final String EXTRA_PID = ACTION_NAMESPACE + "PID";
+    public static final String EXTRA_PACKAGES = ACTION_NAMESPACE + "PACKAGES";
+    public static final String EXTRA_PREVENT = ACTION_NAMESPACE + "PREVENT";
 
     public static final int INTENT_FLAG = Intent.FLAG_RECEIVER_REGISTERED_ONLY;
 

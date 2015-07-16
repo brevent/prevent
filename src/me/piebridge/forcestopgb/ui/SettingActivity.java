@@ -55,6 +55,10 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private static final int APPLICATIONS = 0;
     private static final int PREVENTLIST = 1;
 
+    private static final String THEME = "theme";
+    private static final String THEME_LIGHT = "light";
+    private static final String THEME_DARK = "dark";
+
     private Integer dangerousColor = null;
 
     private Integer transparentColor = null;
@@ -100,29 +104,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         cancel.setEnabled(false);
         prevent.setEnabled(false);
         remove.setEnabled(false);
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String result = getResultData();
-                hookEnabled = result != null;
-                if (result == null) {
-                    return;
-                }
-                try {
-                    JSONObject json = new JSONObject(result);
-                    preventPackages.clear();
-                    Iterator<String> it = json.keys();
-                    while (it.hasNext()) {
-                        String key = it.next();
-                        preventPackages.put(key, json.optBoolean(key));
-                    }
-                } catch (JSONException e) { // NOSONAR
-                    // do nothing
-                    android.util.Log.d(CommonIntent.TAG, "cannot convert to json", e);
-                }
-                refresh();
-            }
-        };
+        mBroadcastReceiver = new HookReceiver();
     }
 
     @Override
@@ -216,27 +198,22 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         return super.onCreateOptionsMenu(menu);
     }
 
-    private static final String THEME = "theme";
-    private static final String THEME_LIGHT = "light";
-    private static final String THEME_DARK = "dark";
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.string.switch_theme:
-                final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                String theme = sp.getString(THEME, THEME_LIGHT);
-                if (THEME_LIGHT.equals(theme)) {
-                    sp.edit().putString(THEME, THEME_DARK).apply();
-                } else {
-                    sp.edit().putString(THEME, THEME_LIGHT).apply();
-                }
-                dangerousColor = null;
-                transparentColor = null;
-                RecreateUtil.recreate(this);
-                return true;
-            default:
-                return false;
+        if (item.getItemId() == R.string.switch_theme) {
+            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            String theme = sp.getString(THEME, THEME_LIGHT);
+            if (THEME_LIGHT.equals(theme)) {
+                sp.edit().putString(THEME, THEME_DARK).apply();
+            } else {
+                sp.edit().putString(THEME, THEME_LIGHT).apply();
+            }
+            dangerousColor = null;
+            transparentColor = null;
+            RecreateUtil.recreate(this);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -334,25 +311,19 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 
     @Override
     public void onClick(View v) {
+        int id = v.getId();
         int position = mPager.getCurrentItem();
         Set<String> selections = mPageSelections.get(position);
-        switch (v.getId()) {
-            case R.id.cancel:
-                break;
-            case R.id.prevent:
-                PreventUtils.add(this, selections.toArray(new String[selections.size()]));
-                for (String packageName : selections) {
-                    preventPackages.put(packageName, !running.containsKey(packageName));
-                }
-                break;
-            case R.id.remove:
-                PreventUtils.remove(this, selections.toArray(new String[selections.size()]));
-                for (String packageName : selections) {
-                    preventPackages.remove(packageName);
-                }
-                break;
-            default:
-                return;
+        if (id == R.id.prevent) {
+            PreventUtils.add(this, selections.toArray(new String[selections.size()]));
+            for (String packageName : selections) {
+                preventPackages.put(packageName, !running.containsKey(packageName));
+            }
+        } else if (id == R.id.remove) {
+            PreventUtils.remove(this, selections.toArray(new String[selections.size()]));
+            for (String packageName : selections) {
+                preventPackages.remove(packageName);
+            }
         }
         selections.clear();
         refreshIfNeeded(true);
@@ -380,6 +351,33 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             fragment.saveListPosition();
         }
         super.onPause();
+    }
+
+    private class HookReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String result = getResultData();
+            hookEnabled = result != null;
+            if (result != null) {
+                handlePackages(result);
+            }
+        }
+
+        private void handlePackages(String result) {
+            try {
+                JSONObject json = new JSONObject(result);
+                preventPackages.clear();
+                Iterator<String> it = json.keys();
+                while (it.hasNext()) {
+                    String key = it.next();
+                    preventPackages.put(key, json.optBoolean(key));
+                }
+            } catch (JSONException e) { // NOSONAR
+                // do nothing
+                android.util.Log.d(CommonIntent.TAG, "cannot convert to json", e);
+            }
+            refresh();
+        }
     }
 
 }
