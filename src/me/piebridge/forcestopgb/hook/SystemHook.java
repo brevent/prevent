@@ -291,8 +291,12 @@ public final class SystemHook {
             logStartProcess("disallow", packageName, hostingType, hostingName);
             return false;
         } else {
-            if ("activity".equals(hostingType) && Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                preventPackages.put(packageName, Boolean.FALSE);
+            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                if ("activity".equals(hostingType)) {
+                    preventPackages.put(packageName, Boolean.FALSE);
+                } else {
+                    logStartProcess("won't disallow", packageName, hostingType, hostingName);
+                }
             }
             if (BuildConfig.DEBUG) {
                 logStartProcess("allow", packageName, hostingType, hostingName);
