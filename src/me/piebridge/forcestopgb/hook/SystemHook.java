@@ -312,7 +312,7 @@ public final class SystemHook {
             if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
                 if ("activity".equals(hostingType)) {
                     preventPackages.put(packageName, Boolean.FALSE);
-                } else {
+                } else if ("service".equals(hostingType)) {
                     logStartProcess("can't disallow", packageName, hostingType, hostingName);
                     forceStopPackageLaterIfPrevent(packageName);
                 }
