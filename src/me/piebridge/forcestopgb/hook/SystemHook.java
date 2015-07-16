@@ -438,7 +438,7 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, 10, TimeUnit.SECONDS);
+        }, 30, TimeUnit.SECONDS);
     }
 
     private static ActivityManager getActivityManager() {
