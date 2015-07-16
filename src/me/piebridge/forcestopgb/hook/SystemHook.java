@@ -314,6 +314,7 @@ public final class SystemHook {
                     preventPackages.put(packageName, Boolean.FALSE);
                 } else {
                     logStartProcess("won't disallow", packageName, hostingType, hostingName);
+                    forceStopPackageLaterIfPrevent(packageName);
                 }
             }
             if (BuildConfig.DEBUG) {
