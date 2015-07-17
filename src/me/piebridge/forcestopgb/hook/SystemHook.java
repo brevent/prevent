@@ -192,7 +192,7 @@ public final class SystemHook {
                 }
             }
             if (stop) {
-                logForceStop(action, packageName, "destroy if needed");
+                logForceStop(action, packageName, "destroy if needed in " + TIME_DESTROY_IF_NEEDED + "s");
                 forceStopPackageIfNeeded(packageName, TIME_DESTROY_IF_NEEDED);
             }
             killNoFather(packageName);
@@ -209,7 +209,7 @@ public final class SystemHook {
                 }
             }
             if (stop) {
-                logForceStop(action, packageName, "destroy");
+                logForceStop(action, packageName, "destroy in " + TIME_DESTROY + "s");
                 forceStopPackageLater(packageName, TIME_DESTROY);
             }
             killNoFather(packageName);
@@ -233,8 +233,8 @@ public final class SystemHook {
                     preventPackages.put(packageName, Boolean.TRUE);
                 }
             }
-            logForceStop(action, packageName, "force");
-            forceStopPackageForce(packageName);
+            logForceStop(action, packageName, "force in " + TIME_IMMEDIATE + "s");
+            forceStopPackageForce(packageName, TIME_IMMEDIATE);
             killNoFather(packageName);
         }
     }
@@ -460,7 +460,7 @@ public final class SystemHook {
         }, second, TimeUnit.SECONDS);
     }
 
-    private static void forceStopPackageForce(final String packageName) {
+    private static void forceStopPackageForce(final String packageName, int second) {
         executor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -469,7 +469,7 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, TIME_IMMEDIATE, TimeUnit.SECONDS);
+        }, second, TimeUnit.SECONDS);
     }
 
     private static void forceStopPackageLater(final String packageName, int second) {
