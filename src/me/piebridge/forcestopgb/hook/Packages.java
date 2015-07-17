@@ -21,15 +21,18 @@ final class Packages {
     public static final String FORCESTOP_DEPRECATED = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
     public static final String FORCESTOP = Environment.getDataDirectory() + "/system/forcestop.list";
 
+    private static final int MAX_WAIT = 3000;
+    private static final int SINGLE_WAIT = 1000;
+
     private Packages() {
 
     }
 
     public static void save(Map<String, Boolean> packages) {
         File lock = new File(FORCESTOP + ".lock");
-        while (lock.exists() && System.currentTimeMillis() - lock.lastModified() < 3000) {
+        while (lock.exists() && System.currentTimeMillis() - lock.lastModified() < MAX_WAIT) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(SINGLE_WAIT);
             } catch (InterruptedException e) { // NOSONAR
                 // do nothing
             }

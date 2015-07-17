@@ -60,6 +60,7 @@ public abstract class SettingFragment extends ListFragment {
     private View filter;
     private CheckBox check;
     private int headerIconWidth;
+    private static final int HEADER_ICON_WIDTH = 48;
     private AlertDialog noHookDialog;
     private static Map<String, String> labels = new HashMap<String, String>();
     private static Map<String, Position> positions = new HashMap<String, Position>();
@@ -135,7 +136,7 @@ public abstract class SettingFragment extends ListFragment {
 
     private int getHeaderIconWidth() {
         if (headerIconWidth == 0) {
-            headerIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, getResources().getDisplayMetrics());
+            headerIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, HEADER_ICON_WIDTH, getResources().getDisplayMetrics());
         }
         return headerIconWidth;
     }

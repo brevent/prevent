@@ -47,11 +47,17 @@ public final class SystemHook {
 
     private static boolean registered = false;
 
-    private static byte[] buffer = new byte[1024];
-
     private static final int TIME_PREVENT = 6;
     private static final int TIME_DESTROY = 6;
     private static final int TIME_DESTROY_IF_NEEDED = 12;
+
+    // we should force stop immediately, but later in 400ms to wait user actual exit
+    private static final int TIME_IMMEDIATE = 400;
+
+    private static final String ACTION = "action: ";
+    private static final String FILTER = "filter: ";
+    private static final String PACKAGE = "package: ";
+
 
     private static ActivityManager activityManager;
 
@@ -61,9 +67,10 @@ public final class SystemHook {
 
     private static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
 
-    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
+    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
 
     private static Set<String> SAFE_ACTIONS = new HashSet<String>(Arrays.asList(
+            Intent.ACTION_MAIN,
             AppWidgetManager.ACTION_APPWIDGET_UPDATE
     ));
 
@@ -214,18 +221,20 @@ public final class SystemHook {
             return HookResult.NONE;
         }
 
-        String action = (String) args[0];
-
-        if (Intent.ACTION_MAIN.equals(action)) {
-            return HookResult.NONE;
-        }
+        String action = (String) args[0x0];
 
         if (BuildConfig.DEBUG) {
-            Log.v(TAG, "action: " + action + ", filter: " + filter);
-        }
-
-        if (CommonIntent.SCHEME.equals(args[2])) {
-            return HookResult.MATCH_SCHEME;
+            StringBuilder sb = new StringBuilder();
+            sb.append(ACTION);
+            sb.append(action);
+            sb.append(", ");
+            sb.append(FILTER);
+            sb.append(filter);
+            sb.append(", callingUid: ");
+            sb.append(Binder.getCallingUid());
+            sb.append(", callingPid: ");
+            sb.append(Binder.getCallingPid());
+            Log.v(TAG, sb.toString());
         }
 
         if (SAFE_ACTIONS.contains(action)) {
@@ -268,7 +277,7 @@ public final class SystemHook {
                 return HookResult.NO_MATCH;
             }
             if (BuildConfig.DEBUG) {
-                Log.v(TAG, "filter:  " + filter + ", action: " + action + ", package: " + packageName);
+                Log.v(TAG, ACTION + action + ", filter:  " + filter + ", package: " + packageName);
             }
         }
 
@@ -299,9 +308,9 @@ public final class SystemHook {
                 preventPackages = Packages.load();
             }
         }
-        Object app = args[0];
-        String hostingType = (String) args[1];
-        String hostingName = (String) args[2];
+        Object app = args[0x0];
+        String hostingType = (String) args[0x1];
+        String hostingName = (String) args[0x2];
         String packageName = ProcessRecordUtils.getPackageName(app);
         if (BuildConfig.DEBUG) {
             Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", app: " + app);
@@ -356,7 +365,7 @@ public final class SystemHook {
         return getContent(file);
     }
 
-    private static synchronized String getContent(File file) {
+    private static String getContent(File file) {
         if (!file.isFile() || !file.canRead()) {
             return null;
         }
@@ -366,6 +375,7 @@ public final class SystemHook {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 int length;
+                byte[] buffer = new byte[0x1000];
                 while ((length = is.read(buffer)) != -1) {
                     os.write(buffer, 0, length);
                 }
@@ -420,7 +430,7 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, 400, TimeUnit.MILLISECONDS);
+        }, TIME_IMMEDIATE, TimeUnit.MILLISECONDS);
     }
 
     private static void forceStopPackageLater(final String packageName, int second) {
@@ -501,14 +511,15 @@ public final class SystemHook {
         sb.append(pid);
         sb.append("(");
         sb.append(reason);
-        sb.append("), package: ");
+        sb.append("), ");
+        sb.append(PACKAGE);
         sb.append(packageName);
         Log.d(TAG, sb.toString());
     }
 
     private static void logForceStop(String action, String packageName, String message) {
         StringBuilder sb = new StringBuilder();
-        sb.append("action: ");
+        sb.append(ACTION);
         sb.append(action);
         sb.append(", force stop ");
         sb.append(packageName);
@@ -528,9 +539,10 @@ public final class SystemHook {
 
     private static void logRequest(String action, String packageName, int count) {
         StringBuilder sb = new StringBuilder();
-        sb.append("action: ");
+        sb.append(ACTION);
         sb.append(action);
-        sb.append(", packageName: ");
+        sb.append(", ");
+        sb.append(PACKAGE);
         sb.append(packageName);
         if (count >= 0) {
             sb.append(", count: ");
@@ -542,10 +554,13 @@ public final class SystemHook {
     private static void logDisallow(final String filter, final String action, final String packageName) {
         StringBuilder sb = new StringBuilder();
         sb.append("disallow ");
-        sb.append(filter);
-        sb.append(", action: ");
+        sb.append(ACTION);
         sb.append(action);
-        sb.append(", package: ");
+        sb.append(", ");
+        sb.append(FILTER);
+        sb.append(filter);
+        sb.append(", ");
+        sb.append(PACKAGE);
         sb.append(packageName);
         if (BuildConfig.DEBUG) {
             sb.append(", callingUid: ");
