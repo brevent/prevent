@@ -37,6 +37,7 @@ import java.util.Set;
 
 import me.piebridge.forcestopgb.R;
 import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.forcestopgb.common.Packages;
 import me.piebridge.util.RecreateUtil;
 
 public class SettingActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
@@ -285,6 +286,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         } else {
             preventPackages.remove(packageName);
         }
+        Packages.save(preventPackages);
         refreshIfNeeded(false);
     }
 
@@ -320,11 +322,13 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             for (String packageName : selections) {
                 preventPackages.put(packageName, !running.containsKey(packageName));
             }
+            Packages.save(preventPackages);
         } else if (id == R.id.remove) {
             PreventUtils.remove(this, selections.toArray(new String[selections.size()]));
             for (String packageName : selections) {
                 preventPackages.remove(packageName);
             }
+            Packages.save(preventPackages);
         }
         selections.clear();
         refreshIfNeeded(true);

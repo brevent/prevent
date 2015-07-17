@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.forcestopgb.common.Packages;
 import me.piebridge.util.BroadcastFilterUtils;
 import me.piebridge.util.HiddenAPI;
 import me.piebridge.util.ProcessRecordUtils;
@@ -135,13 +136,6 @@ public final class SystemHook {
                     preventPackages.remove(name);
                 }
             }
-            executor.submit(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d(CommonIntent.TAG, "update prevent packages");
-                    Packages.save(preventPackages);
-                }
-            });
         }
 
         private void handleIncreaseCounter(String action, String packageName, Intent intent) {

@@ -1,6 +1,7 @@
-package me.piebridge.forcestopgb.hook;
+package me.piebridge.forcestopgb.common;
 
 import android.os.Environment;
+import android.os.FileUtils;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -16,10 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import me.piebridge.forcestopgb.common.CommonIntent;
 
-final class Packages {
+public final class Packages {
 
-    public static final String FORCESTOP_DEPRECATED = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
-    public static final String FORCESTOP = Environment.getDataDirectory() + "/system/forcestop.list";
+    public static final String FORCESTOP = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
+    public static final String FORCESTOP_DEPRECATED = Environment.getDataDirectory() + "/system/forcestop.list";
 
     private static final int MAX_WAIT = 3000;
     private static final int SINGLE_WAIT = 1000;
@@ -30,6 +31,14 @@ final class Packages {
 
     public static void save(Map<String, Boolean> packages) {
         File lock = new File(FORCESTOP + ".lock");
+        File conf = lock.getParentFile();
+        if (conf.isFile()) {
+            conf.delete();
+        }
+        if (!conf.isDirectory()) {
+            conf.mkdir();
+        }
+        FileUtils.setPermissions(conf.getAbsolutePath(), 0755, -1, -1);
         while (lock.exists() && System.currentTimeMillis() - lock.lastModified() < MAX_WAIT) {
             try {
                 Thread.sleep(SINGLE_WAIT);
@@ -46,6 +55,7 @@ final class Packages {
             }
             writer.close();
             lock.renameTo(new File(FORCESTOP));
+            FileUtils.setPermissions(FORCESTOP, 0644, -1, -1);
         } catch (IOException e) { // NOSONAR
             // do nothing
         }
@@ -76,15 +86,11 @@ final class Packages {
 
     public static Map<String, Boolean> load() {
         File fileDeprecated = new File(FORCESTOP_DEPRECATED);
-        Map<String, Boolean> packages;
-        if (fileDeprecated.isFile() && fileDeprecated.canRead()) {
-            packages = load(fileDeprecated);
+        Map<String, Boolean> packages = load(new File(FORCESTOP));
+        if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
             Log.d(CommonIntent.TAG, "migrate packages");
-            save(packages);
+            packages.putAll(load(fileDeprecated));
             fileDeprecated.delete();
-            fileDeprecated.getParentFile().delete();
-        } else {
-            packages = load(new File(FORCESTOP));
         }
         return packages;
     }
