@@ -74,6 +74,8 @@ public final class SystemHook {
 
     private static ClassLoader classLoader;
 
+    private static int FIRST_APPLICATION_UID = 10000;
+
     private SystemHook() {
 
     }
@@ -477,7 +479,7 @@ public final class SystemHook {
 
     private static boolean killNoFather(final String packageName) {
         final Integer uid = packageUids.get(packageName);
-        if (uid == null) {
+        if (uid == null || uid < FIRST_APPLICATION_UID) {
             return false;
         }
         executor.submit(new Runnable() {
