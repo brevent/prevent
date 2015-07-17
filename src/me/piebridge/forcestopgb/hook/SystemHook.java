@@ -57,10 +57,8 @@ public final class SystemHook {
     private static final String FILTER = "filter: ";
     private static final String PACKAGE = "package: ";
 
-
     private static ActivityManager activityManager;
 
-    private static Object preventLock = new Object();
     private static Map<String, Boolean> preventPackages;
 
     private static Map<String, Integer> packageUids = new HashMap<String, Integer>();
@@ -139,10 +137,8 @@ public final class SystemHook {
         }
 
         private void handleIncreaseCounter(String action, String packageName, Intent intent) {
-            synchronized (preventLock) {
-                if (preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.FALSE);
-                }
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.FALSE);
             }
             int uid = intent.getIntExtra(CommonIntent.EXTRA_UID, 0);
             int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
@@ -178,14 +174,8 @@ public final class SystemHook {
             if (count > 0) {
                 return;
             }
-            boolean stop = false;
-            synchronized (preventLock) {
-                if (preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.TRUE);
-                    stop = true;
-                }
-            }
-            if (stop) {
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
                 logForceStop(action, packageName, "destroy if needed in " + TIME_DESTROY_IF_NEEDED + "s");
                 forceStopPackageIfNeeded(packageName, TIME_DESTROY_IF_NEEDED);
                 killNoFather(packageName);
@@ -195,14 +185,8 @@ public final class SystemHook {
         private void handleDestroy(String action, String packageName) {
             logRequest(action, packageName, -1);
             packageCounters.remove(packageName);
-            boolean stop = false;
-            synchronized (preventLock) {
-                if (preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.TRUE);
-                    stop = true;
-                }
-            }
-            if (stop) {
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
                 logForceStop(action, packageName, "destroy in " + TIME_DESTROY + "s");
                 forceStopPackageLater(packageName, TIME_DESTROY);
             }
@@ -212,20 +196,16 @@ public final class SystemHook {
         private void handlePackageRestarted(String action, String packageName) {
             logRequest(action, packageName, -1);
             packageCounters.remove(packageName);
-            synchronized (preventLock) {
-                if (preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.TRUE);
-                }
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
             }
         }
 
         private void handleForceStop(String action, String packageName) {
             logRequest(action, packageName, -1);
             packageCounters.remove(packageName);
-            synchronized (preventLock) {
-                if (preventPackages.containsKey(packageName)) {
-                    preventPackages.put(packageName, Boolean.TRUE);
-                }
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
             }
             logForceStop(action, packageName, "force in " + TIME_IMMEDIATE + "s");
             forceStopPackageForce(packageName, TIME_IMMEDIATE);
@@ -259,12 +239,8 @@ public final class SystemHook {
         }
 
         if (preventPackages == null) {
-            synchronized (preventLock) {
-                if (preventPackages == null) {
-                    Log.d(TAG, "load prevent packages");
-                    preventPackages = Packages.load();
-                }
-            }
+            Log.d(TAG, "load prevent packages");
+            preventPackages = Packages.load();
         }
 
         if (filter instanceof PackageParser.ActivityIntentInfo) {
@@ -327,12 +303,8 @@ public final class SystemHook {
             }
 
             if (preventPackages == null) {
-                synchronized (preventLock) {
-                    if (preventPackages == null) {
-                        Log.d(TAG, "load prevent packages");
-                        preventPackages = Packages.load();
-                    }
-                }
+                Log.d(TAG, "load prevent packages");
+                preventPackages = Packages.load();
             }
         }
         Object app = args[0x0];
@@ -349,19 +321,13 @@ public final class SystemHook {
             logStartProcess("disallow", packageName, hostingType, hostingName);
             return false;
         } else {
-            boolean stop = false;
-            synchronized (preventLock) {
-                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                    if ("activity".equals(hostingType)) {
-                        preventPackages.put(packageName, Boolean.FALSE);
-                    } else if ("service".equals(hostingType)) {
-                        stop = true;
-                    }
+            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                if ("activity".equals(hostingType)) {
+                    preventPackages.put(packageName, Boolean.FALSE);
+                } else if ("service".equals(hostingType)) {
+                    logStartProcess("can't disallow", packageName, hostingType, hostingName);
+                    forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
                 }
-            }
-            if (stop) {
-                logStartProcess("can't disallow", packageName, hostingType, hostingName);
-                forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
             }
             if (BuildConfig.DEBUG) {
                 logStartProcess("allow", packageName, hostingType, hostingName);
