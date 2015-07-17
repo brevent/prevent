@@ -253,11 +253,13 @@ public abstract class SettingFragment extends ListFragment {
     protected abstract int getQueryHint();
 
     public void saveListPosition() {
-        ListView l = getListView();
-        int position = l.getFirstVisiblePosition();
-        View v = l.getChildAt(0);
-        int top = (v == null) ? 0 : v.getTop();
-        setListPosition(new Position(position, top));
+        if (mAdapter != null) {
+            ListView l = getListView();
+            int position = l.getFirstVisiblePosition();
+            View v = l.getChildAt(0);
+            int top = (v == null) ? 0 : v.getTop();
+            setListPosition(new Position(position, top));
+        }
     }
 
     private void setListPosition(Position position) {

@@ -121,11 +121,9 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 synchronized (runningLock) {
                     retrieveRunningProcesses();
                 }
-                if (hookEnabled == null) {
-                    Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES, Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
-                    intent.setFlags(CommonIntent.INTENT_FLAG);
-                    sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
-                }
+                Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES, Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
+                intent.setFlags(CommonIntent.INTENT_FLAG);
+                sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
             }
         }).start();
     }
