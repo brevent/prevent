@@ -23,5 +23,6 @@
     <string name="open">Open</string>
     <string name="query_hint">filter by name, "-3" for third party apps</string>
     <string name="query_hint_system">filter by name, "-s" for system apps</string>
+    <string name="checking">Checking status, please wait...</string>
 
 </resources>

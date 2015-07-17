@@ -302,12 +302,27 @@ public abstract class SettingFragment extends ListFragment {
     }
 
     private void setNewAdapterIfNeeded(SettingActivity activity, boolean force) {
-        if (!activity.isHookEnabled()) {
-            showDialog();
-        } else {
+        Boolean hookEnabled = activity.getHookEnabled();
+        if (Boolean.TRUE.equals(hookEnabled)) {
             dismissDialogIfNeeded();
             doSetNewAdapterIfNeeded(activity, force);
+        } else if (Boolean.FALSE.equals(hookEnabled)) {
+            dismissDialogIfNeeded();
+            showDialog();
+        } else {
+            showCheckDialog();
         }
+    }
+
+    private void showCheckDialog() {
+        final Context context = mActivity;
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.app_name);
+        builder.setMessage(R.string.checking);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setCancelable(false);
+        noHookDialog = builder.create();
+        noHookDialog.show();
     }
 
     private void doSetNewAdapterIfNeeded(SettingActivity activity, boolean force) {

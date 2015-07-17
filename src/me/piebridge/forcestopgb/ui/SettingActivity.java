@@ -66,7 +66,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 
     private BroadcastReceiver mBroadcastReceiver;
 
-    private static boolean hookEnabled;
+    private static Boolean hookEnabled;
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -121,14 +121,16 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 synchronized (runningLock) {
                     retrieveRunningProcesses();
                 }
-                Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES, Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
-                intent.setFlags(CommonIntent.INTENT_FLAG);
-                sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
+                if (hookEnabled == null) {
+                    Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES, Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
+                    intent.setFlags(CommonIntent.INTENT_FLAG);
+                    sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
+                }
             }
         }).start();
     }
 
-    public boolean isHookEnabled() {
+    public Boolean getHookEnabled() {
         return hookEnabled;
     }
 
@@ -362,9 +364,11 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         @Override
         public void onReceive(Context context, Intent intent) {
             String result = getResultData();
-            hookEnabled = result != null;
             if (result != null) {
+                hookEnabled = true;
                 handlePackages(result);
+            } else {
+                hookEnabled = false;
             }
         }
 

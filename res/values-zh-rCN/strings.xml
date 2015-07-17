@@ -23,5 +23,6 @@
     <string name="open">打开</string>
     <string name="query_hint">按名称过滤，"-3"表示第三方程序</string>
     <string name="query_hint_system">按名称过滤，"-s"表示系统应用</string>
+    <string name="checking">正在检查状态，请稍候...</string>
 
 </resources>
