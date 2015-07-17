@@ -402,14 +402,14 @@ public final class SystemHook {
     }
 
     private static void forceStopPackageIfNeeded(final String packageName, int second) {
+        if (activityManager == null) {
+            Log.e(TAG, "activityManager is null, cannot check running services for " + packageName);
+            return;
+        }
         executor.schedule(new Runnable() {
             @Override
             public void run() {
                 if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                    return;
-                }
-                if (activityManager == null) {
-                    Log.e(TAG, "activityManager is null, cannot check running services for " + packageName);
                     return;
                 }
                 for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {

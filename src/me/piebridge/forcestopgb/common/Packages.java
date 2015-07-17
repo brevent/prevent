@@ -38,7 +38,7 @@ public final class Packages {
         if (!conf.isDirectory()) {
             conf.mkdir();
         }
-        FileUtils.setPermissions(conf.getAbsolutePath(), 0755, -1, -1);
+        FileUtils.setPermissions(conf.getAbsolutePath(), 0755, -1, -1); // NOSONAR
         while (lock.exists() && System.currentTimeMillis() - lock.lastModified() < MAX_WAIT) {
             try {
                 Thread.sleep(SINGLE_WAIT);
@@ -55,7 +55,7 @@ public final class Packages {
             }
             writer.close();
             lock.renameTo(new File(FORCESTOP));
-            FileUtils.setPermissions(FORCESTOP, 0644, -1, -1);
+            FileUtils.setPermissions(FORCESTOP, 0644, -1, -1); // NOSONAR
         } catch (IOException e) { // NOSONAR
             // do nothing
         }
