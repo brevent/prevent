@@ -101,7 +101,7 @@ public final class SystemHook {
         }
     }
 
-    private static class HookBroadcaseReceiver extends BroadcastReceiver {
+    private static class HookBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -294,7 +294,7 @@ public final class SystemHook {
                 Handler handler = new Handler(thread.getLooper());
                 Application application = ActivityThread.currentApplication();
 
-                BroadcastReceiver receiver = new HookBroadcaseReceiver();
+                BroadcastReceiver receiver = new HookBroadcastReceiver();
                 application.registerReceiver(receiver, new HookIntentFilter(), null, handler);
 
                 IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
