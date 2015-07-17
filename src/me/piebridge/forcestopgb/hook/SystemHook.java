@@ -180,8 +180,8 @@ public final class SystemHook {
                 preventPackages.put(packageName, Boolean.TRUE);
                 logForceStop(action, packageName, "destroy if needed in " + TIME_DESTROY_IF_NEEDED + "s");
                 forceStopPackageIfNeeded(packageName, TIME_DESTROY_IF_NEEDED);
-                killNoFather(packageName);
             }
+            killNoFather(packageName);
         }
 
         private void handleDestroy(String action, String packageName) {
