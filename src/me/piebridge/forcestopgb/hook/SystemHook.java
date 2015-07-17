@@ -205,8 +205,8 @@ public final class SystemHook {
             if (stop) {
                 logForceStop(action, packageName, "destroy in " + TIME_DESTROY + "s");
                 forceStopPackageLater(packageName, TIME_DESTROY);
-                killNoFather(packageName);
             }
+            killNoFather(packageName);
         }
 
         private void handlePackageRestarted(String action, String packageName) {
