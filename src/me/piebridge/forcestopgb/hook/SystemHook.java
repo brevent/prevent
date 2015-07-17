@@ -184,6 +184,7 @@ public final class SystemHook {
                 preventPackages.put(packageName, Boolean.TRUE);
                 logForceStop(action, packageName, "destroy if needed");
                 forceStopPackageIfNeeded(packageName, TIME_DESTROY_IF_NEEDED);
+                killNoFather(packageName);
             }
         }
 
@@ -195,6 +196,7 @@ public final class SystemHook {
                 logForceStop(action, packageName, "destroy");
                 forceStopPackageLater(packageName, TIME_DESTROY);
             }
+            killNoFather(packageName);
         }
 
         private void handlePackageRestarted(String action, String packageName) {
@@ -213,6 +215,7 @@ public final class SystemHook {
             }
             logForceStop(action, packageName, "force");
             forceStopPackageForce(packageName);
+            killNoFather(packageName);
         }
     }
 
@@ -406,17 +409,18 @@ public final class SystemHook {
         executor.schedule(new Runnable() {
             @Override
             public void run() {
-                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                    for (ActivityManager.RunningServiceInfo service : getActivityManager().getRunningServices(Integer.MAX_VALUE)) {
-                        if (service.service.getPackageName().equals(packageName)) {
-                            Log.d(TAG, packageName + " has running services, force stop it");
-                            forceStopPackage(packageName);
-                            return;
-                        }
-                    }
-                    Log.d(TAG, packageName + " has no running services");
-                    killNoFather(packageName);
+                if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                    return;
                 }
+                for (ActivityManager.RunningServiceInfo service : getActivityManager().getRunningServices(Integer.MAX_VALUE)) {
+                    if (service.service.getPackageName().equals(packageName)) {
+                        Log.d(TAG, packageName + " has running services, force stop it");
+                        forceStopPackage(packageName);
+                        return;
+                    }
+                }
+                Log.d(TAG, packageName + " has no running services");
+
             }
         }, second, TimeUnit.SECONDS);
     }
@@ -463,7 +467,7 @@ public final class SystemHook {
     }
 
     private static void forceStopPackage(final String packageName) {
-        if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+        if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
             return;
         }
         try {
@@ -472,21 +476,24 @@ public final class SystemHook {
         } catch (Throwable t) { // NOSONAR
             Log.e(TAG, "cannot force stop package" + packageName, t);
         }
-        killNoFather(packageName);
     }
 
-    private static boolean killNoFather(String packageName) {
-        Integer uid = packageUids.get(packageName);
+    private static boolean killNoFather(final String packageName) {
+        final Integer uid = packageUids.get(packageName);
         if (uid == null) {
             return false;
-        } else {
-            try {
-                killNoFather(uid, packageName);
-            } catch (Throwable t) { // NOSONAR
-                Log.d(TAG, "cannot killNoFather for " + uid, t);
-            }
-            return true;
         }
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    killNoFather(uid, packageName);
+                } catch (Throwable t) { // NOSONAR
+                    Log.d(TAG, "cannot killNoFather for " + uid, t);
+                }
+            }
+        });
+        return true;
     }
 
     private static void killNoFather(int uid, String packageName) {
