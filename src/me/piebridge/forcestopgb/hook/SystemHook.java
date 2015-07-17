@@ -49,6 +49,10 @@ public final class SystemHook {
 
     private static byte[] buffer = new byte[1024];
 
+    private static final int TIME_PREVENT = 6;
+    private static final int TIME_DESTROY = 6;
+    private static final int TIME_DESTROY_IF_NEEDED = 12;
+
     private static ActivityManager activityManager;
 
     private static Map<String, Boolean> preventPackages;
@@ -171,8 +175,8 @@ public final class SystemHook {
             logRequest(action, packageName, count);
             if (count <= 0 && preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
-                logForceStop(action, packageName, "if needed in 60s");
-                forceStopPackageIfNeeded(packageName);
+                logForceStop(action, packageName, "destroy if needed");
+                forceStopPackageIfNeeded(packageName, TIME_DESTROY_IF_NEEDED);
             }
         }
 
@@ -181,8 +185,8 @@ public final class SystemHook {
             packageCounters.remove(packageName);
             if (preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
-                logForceStop(action, packageName, "later in 30s");
-                forceStopPackageLater(packageName);
+                logForceStop(action, packageName, "destroy");
+                forceStopPackageLater(packageName, TIME_DESTROY);
             }
         }
 
@@ -305,7 +309,7 @@ public final class SystemHook {
         boolean disallow = "broadcast".equals(hostingType);
         if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName))) {
             ProcessRecordUtils.setPid(app, 0);
-            forceStopPackageLaterIfPrevent(packageName);
+            forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
             logStartProcess("disallow", packageName, hostingType, hostingName);
             return false;
         } else {
@@ -314,7 +318,7 @@ public final class SystemHook {
                     preventPackages.put(packageName, Boolean.FALSE);
                 } else if ("service".equals(hostingType)) {
                     logStartProcess("can't disallow", packageName, hostingType, hostingName);
-                    forceStopPackageLaterIfPrevent(packageName);
+                    forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
                 }
             }
             if (BuildConfig.DEBUG) {
@@ -388,7 +392,7 @@ public final class SystemHook {
         return false;
     }
 
-    private static void forceStopPackageIfNeeded(final String packageName) {
+    private static void forceStopPackageIfNeeded(final String packageName, int second) {
         executor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -404,7 +408,7 @@ public final class SystemHook {
                     killNoFather(packageName);
                 }
             }
-        }, 60, TimeUnit.SECONDS);
+        }, second, TimeUnit.SECONDS);
     }
 
     private static void forceStopPackageForce(final String packageName) {
@@ -419,7 +423,7 @@ public final class SystemHook {
         }, 400, TimeUnit.MILLISECONDS);
     }
 
-    private static void forceStopPackageLater(final String packageName) {
+    private static void forceStopPackageLater(final String packageName, int second) {
         executor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -427,10 +431,10 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, 30, TimeUnit.SECONDS);
+        }, second, TimeUnit.SECONDS);
     }
 
-    private static void forceStopPackageLaterIfPrevent(final String packageName) {
+    private static void forceStopPackageLaterIfPrevent(final String packageName, int second) {
         executor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -438,7 +442,7 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, 30, TimeUnit.SECONDS);
+        }, second, TimeUnit.SECONDS);
     }
 
     private static ActivityManager getActivityManager() {
