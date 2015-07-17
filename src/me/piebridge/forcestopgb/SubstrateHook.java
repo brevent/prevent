@@ -147,11 +147,10 @@ public class SubstrateHook {
             @Override
             public Void invoked(Process thiz, Object... args) throws Throwable {
                 int pid = (Integer) args[0];
-                if (Process.myPid() == pid && Hook.stopSelf(pid)) {
-                    return null;
-                } else {
-                    return invoke(thiz, args);
+                if (Process.myPid() == pid) {
+                    Hook.stopSelf(pid);
                 }
+                return invoke(thiz, args);
             }
         });
         Method System$exit = System.class.getMethod("exit", int.class); // NOSONAR
@@ -159,7 +158,7 @@ public class SubstrateHook {
             @Override
             public Void invoked(System thiz, Object... args) throws Throwable {
                 Hook.stopSelf(-1);
-                return null;
+                return invoke(thiz, args);
             }
         });
     }
