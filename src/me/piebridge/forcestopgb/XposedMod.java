@@ -83,7 +83,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 
         XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new XC_MethodHook() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Hook.afterActivity$onDestroy((Activity) param.thisObject);
             }
         });

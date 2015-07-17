@@ -50,9 +50,7 @@ public final class SystemHook {
     private static final int TIME_PREVENT = 6;
     private static final int TIME_DESTROY = 6;
     private static final int TIME_DESTROY_IF_NEEDED = 12;
-
-    // we should force stop immediately, but later in 400ms to wait user actual exit
-    private static final int TIME_IMMEDIATE = 400;
+    private static final int TIME_IMMEDIATE = 1;
 
     private static final String ACTION = "action: ";
     private static final String FILTER = "filter: ";
@@ -61,6 +59,7 @@ public final class SystemHook {
 
     private static ActivityManager activityManager;
 
+    private static Object preventLock = new Object();
     private static Map<String, Boolean> preventPackages;
 
     private static Map<String, Integer> packageUids = new HashMap<String, Integer>();
@@ -146,6 +145,11 @@ public final class SystemHook {
         }
 
         private void handleIncreaseCounter(String action, String packageName, Intent intent) {
+            synchronized (preventLock) {
+                if (preventPackages.containsKey(packageName)) {
+                    preventPackages.put(packageName, Boolean.FALSE);
+                }
+            }
             int uid = intent.getIntExtra(CommonIntent.EXTRA_UID, 0);
             int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
             if (uid > 0) {
@@ -164,9 +168,6 @@ public final class SystemHook {
             pidCounter.incrementAndGet();
             int count = countCounter(packageName);
             logRequest(action, packageName, count);
-            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                preventPackages.put(packageName, Boolean.FALSE);
-            }
         }
 
         private void handleDecreaseCounter(String action, String packageName, Intent intent) {
@@ -180,19 +181,34 @@ public final class SystemHook {
             }
             int count = countCounter(packageName);
             logRequest(action, packageName, count);
-            if (count <= 0 && preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
+            if (count > 0) {
+                return;
+            }
+            boolean stop = false;
+            synchronized (preventLock) {
+                if (preventPackages.containsKey(packageName)) {
+                    preventPackages.put(packageName, Boolean.TRUE);
+                    stop = true;
+                }
+            }
+            if (stop) {
                 logForceStop(action, packageName, "destroy if needed");
                 forceStopPackageIfNeeded(packageName, TIME_DESTROY_IF_NEEDED);
-                killNoFather(packageName);
             }
+            killNoFather(packageName);
         }
 
         private void handleDestroy(String action, String packageName) {
             logRequest(action, packageName, -1);
             packageCounters.remove(packageName);
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
+            boolean stop = false;
+            synchronized (preventLock) {
+                if (preventPackages.containsKey(packageName)) {
+                    preventPackages.put(packageName, Boolean.TRUE);
+                    stop = true;
+                }
+            }
+            if (stop) {
                 logForceStop(action, packageName, "destroy");
                 forceStopPackageLater(packageName, TIME_DESTROY);
             }
@@ -202,16 +218,20 @@ public final class SystemHook {
         private void handlePackageRestarted(String action, String packageName) {
             logRequest(action, packageName, -1);
             packageCounters.remove(packageName);
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
+            synchronized (preventLock) {
+                if (preventPackages.containsKey(packageName)) {
+                    preventPackages.put(packageName, Boolean.TRUE);
+                }
             }
         }
 
         private void handleForceStop(String action, String packageName) {
             logRequest(action, packageName, -1);
             packageCounters.remove(packageName);
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
+            synchronized (preventLock) {
+                if (preventPackages.containsKey(packageName)) {
+                    preventPackages.put(packageName, Boolean.TRUE);
+                }
             }
             logForceStop(action, packageName, "force");
             forceStopPackageForce(packageName);
@@ -245,8 +265,12 @@ public final class SystemHook {
         }
 
         if (preventPackages == null) {
-            Log.d(TAG, "load prevent packages");
-            preventPackages = Packages.load();
+            synchronized (preventLock) {
+                if (preventPackages == null) {
+                    Log.d(TAG, "load prevent packages");
+                    preventPackages = Packages.load();
+                }
+            }
         }
 
         if (filter instanceof PackageParser.ActivityIntentInfo) {
@@ -306,9 +330,14 @@ public final class SystemHook {
                 registered = true;
                 Log.d(TAG, "registered receiver");
             }
+
             if (preventPackages == null) {
-                Log.d(TAG, "load prevent packages");
-                preventPackages = Packages.load();
+                synchronized (preventLock) {
+                    if (preventPackages == null) {
+                        Log.d(TAG, "load prevent packages");
+                        preventPackages = Packages.load();
+                    }
+                }
             }
         }
         Object app = args[0x0];
@@ -325,13 +354,19 @@ public final class SystemHook {
             logStartProcess("disallow", packageName, hostingType, hostingName);
             return false;
         } else {
-            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                if ("activity".equals(hostingType)) {
-                    preventPackages.put(packageName, Boolean.FALSE);
-                } else if ("service".equals(hostingType)) {
-                    logStartProcess("can't disallow", packageName, hostingType, hostingName);
-                    forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
+            boolean stop = false;
+            synchronized (preventLock) {
+                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                    if ("activity".equals(hostingType)) {
+                        preventPackages.put(packageName, Boolean.FALSE);
+                    } else if ("service".equals(hostingType)) {
+                        stop = true;
+                    }
                 }
+            }
+            if (stop) {
+                logStartProcess("can't disallow", packageName, hostingType, hostingName);
+                forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
             }
             if (BuildConfig.DEBUG) {
                 logStartProcess("allow", packageName, hostingType, hostingName);
@@ -434,7 +469,7 @@ public final class SystemHook {
                     forceStopPackage(packageName);
                 }
             }
-        }, TIME_IMMEDIATE, TimeUnit.MILLISECONDS);
+        }, TIME_IMMEDIATE, TimeUnit.SECONDS);
     }
 
     private static void forceStopPackageLater(final String packageName, int second) {

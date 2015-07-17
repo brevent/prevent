@@ -108,8 +108,8 @@ public class SubstrateHook {
         MS.hookMethod(Activity.class, Activity$onDestroy, new MS.MethodAlteration<Activity, Void>() {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {
-                invoke(thiz, args);
                 Hook.afterActivity$onDestroy(thiz);
+                invoke(thiz, args);
                 return null;
             }
         });
