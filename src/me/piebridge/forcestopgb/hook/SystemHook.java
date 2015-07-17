@@ -314,6 +314,7 @@ public final class SystemHook {
                 thread.start();
                 Handler handler = new Handler(thread.getLooper());
                 Application application = ActivityThread.currentApplication();
+                activityManager = (ActivityManager) ActivityThread.currentApplication().getSystemService(Context.ACTIVITY_SERVICE);
 
                 BroadcastReceiver receiver = new HookBroadcastReceiver();
                 application.registerReceiver(receiver, new HookIntentFilter(), null, handler);
@@ -441,7 +442,11 @@ public final class SystemHook {
                 if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
                     return;
                 }
-                for (ActivityManager.RunningServiceInfo service : getActivityManager().getRunningServices(Integer.MAX_VALUE)) {
+                if (activityManager == null) {
+                    Log.e(TAG, "activityManager is null, cannot check running services for " + packageName);
+                    return;
+                }
+                for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
                     if (service.service.getPackageName().equals(packageName)) {
                         Log.d(TAG, packageName + " has running services, force stop it");
                         forceStopPackage(packageName);
@@ -488,19 +493,16 @@ public final class SystemHook {
         }, second, TimeUnit.SECONDS);
     }
 
-    private static ActivityManager getActivityManager() {
-        if (activityManager == null) {
-            activityManager = (ActivityManager) ActivityThread.currentApplication().getSystemService(Context.ACTIVITY_SERVICE);
-        }
-        return activityManager;
-    }
-
     private static void forceStopPackage(final String packageName) {
         if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
             return;
         }
+        if (activityManager == null) {
+            Log.e(TAG, "activityManager is null, cannot force stop package" + packageName);
+            return;
+        }
         try {
-            HiddenAPI.forceStopPackage(getActivityManager(), packageName);
+            HiddenAPI.forceStopPackage(activityManager, packageName);
             Log.i(TAG, "finish force stop package " + packageName);
         } catch (Throwable t) { // NOSONAR
             Log.e(TAG, "cannot force stop package" + packageName, t);
