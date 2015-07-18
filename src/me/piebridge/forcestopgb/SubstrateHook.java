@@ -128,7 +128,12 @@ public class SubstrateHook {
     }
 
     private static void hookActivity$startActivityForResult() throws NoSuchMethodException { // NOSONAR
-        Method Activity$startActivityForResult = Activity.class.getMethod("startActivityForResult", Intent.class, int.class, Bundle.class); // NOSONAR
+        Method Activity$startActivityForResult; // NOSONAR
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+            Activity$startActivityForResult = Activity.class.getMethod("startActivityForResult", Intent.class, int.class, Bundle.class);
+        } else {
+            Activity$startActivityForResult = Activity.class.getMethod("startActivityForResult", Intent.class, int.class);
+        }
         MS.hookMethod(Activity.class, Activity$startActivityForResult, new MS.MethodAlteration<Activity, Void>() {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {

@@ -116,7 +116,7 @@ public class XposedMod implements IXposedHookZygoteInit {
             }
         });
 
-        XposedHelpers.findAndHookMethod(Activity.class, "startActivityForResult", Intent.class, int.class, Bundle.class, new XC_MethodHook() {
+        XC_MethodHook hookStartActivityForResult = new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Intent intent = (Intent) param.args[0];
@@ -124,7 +124,13 @@ public class XposedMod implements IXposedHookZygoteInit {
                     Hook.beforeActivity$startHomeActivityForResult((Activity) param.thisObject);
                 }
             }
-        });
+        };
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+            XposedHelpers.findAndHookMethod(Activity.class, "startActivityForResult", Intent.class, int.class, Bundle.class, hookStartActivityForResult);
+        } else {
+            XposedHelpers.findAndHookMethod(Activity.class, "startActivityForResult", Intent.class, int.class, hookStartActivityForResult);
+        }
     }
 
 }
