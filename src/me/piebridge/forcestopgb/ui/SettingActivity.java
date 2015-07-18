@@ -286,8 +286,12 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         } else {
             preventPackages.remove(packageName);
         }
-        Packages.save(preventPackages);
+        savePackages();
         refreshIfNeeded(false);
+    }
+
+    private void savePackages() {
+        Packages.save(preventPackages.keySet());
     }
 
     private void refresh(int position, boolean force) {
@@ -322,13 +326,13 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             for (String packageName : selections) {
                 preventPackages.put(packageName, !running.containsKey(packageName));
             }
-            Packages.save(preventPackages);
+            savePackages();
         } else if (id == R.id.remove) {
             PreventUtils.remove(this, selections.toArray(new String[selections.size()]));
             for (String packageName : selections) {
                 preventPackages.remove(packageName);
             }
-            Packages.save(preventPackages);
+            savePackages();
         }
         selections.clear();
         refreshIfNeeded(true);

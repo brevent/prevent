@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageParser;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -38,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.forcestopgb.common.Packages;
+import me.piebridge.forcestopgb.ui.Provider;
 import me.piebridge.util.BroadcastFilterUtils;
 import me.piebridge.util.HiddenAPI;
 import me.piebridge.util.ProcessRecordUtils;
@@ -47,6 +50,8 @@ public final class SystemHook {
     private static final String TAG = CommonIntent.TAG;
 
     private static boolean registered = false;
+    private static boolean gotprevent = false;
+    private static boolean firststart = true;
 
     private static final int TIME_PREVENT = 6;
     private static final int TIME_DESTROY = 6;
@@ -59,7 +64,7 @@ public final class SystemHook {
 
     private static ActivityManager activityManager;
 
-    private static Map<String, Boolean> preventPackages;
+    private static Map<String, Boolean> preventPackages = new ConcurrentHashMap<String, Boolean>();
 
     private static Map<String, Integer> packageUids = new HashMap<String, Integer>();
 
@@ -76,13 +81,18 @@ public final class SystemHook {
 
     private static int FIRST_APPLICATION_UID = 10000;
 
+    private static Application application;
+    private static BroadcastReceiver receiver;
+
     private SystemHook() {
 
     }
 
     public static void setClassLoader(ClassLoader classLoader) {
         SystemHook.classLoader = classLoader;
-    }
+        for (String name : Packages.load()) {
+            preventPackages.put(name, Boolean.TRUE);
+        }    }
 
     public static ClassLoader getClassLoader() {
         return SystemHook.classLoader;
@@ -105,7 +115,11 @@ public final class SystemHook {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            String packageName = intent.getData().getSchemeSpecificPart();
+            String packageName = null;
+            Uri data = intent.getData();
+            if (data != null) {
+                packageName = data.getSchemeSpecificPart();
+            }
             if (CommonIntent.ACTION_GET_PACKAGES.equals(action)) {
                 logRequest(action, packageName, -1);
                 setResultData(new JSONObject(preventPackages).toString());
@@ -240,11 +254,6 @@ public final class SystemHook {
             return HookResult.NONE;
         }
 
-        if (preventPackages == null) {
-            Log.d(TAG, "load prevent packages");
-            preventPackages = Packages.load();
-        }
-
         if (filter instanceof PackageParser.ActivityIntentInfo) {
             // for receiver, we don't block for activity
             @SuppressWarnings("unchecked")
@@ -283,36 +292,78 @@ public final class SystemHook {
         return HookResult.NONE;
     }
 
+    private static boolean registerReceiversIfNeeded() {
+        if (registered) {
+            return true;
+        }
+
+        HandlerThread thread = new HandlerThread("PreventService");
+        thread.start();
+        Handler handler = new Handler(thread.getLooper());
+
+        receiver = new HookBroadcastReceiver();
+
+        application = ActivityThread.currentApplication();
+        application.registerReceiver(receiver, new HookIntentFilter(), null, handler);
+
+        IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
+        filter.addDataScheme("package");
+        application.registerReceiver(receiver, filter, null, handler);
+
+        registered = true;
+        Log.d(TAG, "registered receiver");
+
+        activityManager = (ActivityManager) application.getSystemService(Context.ACTIVITY_SERVICE);
+        return false;
+    }
+
+    private static boolean retrievePreventsIfNeeded() {
+        // i think, the file can be read
+        // this is for android 5.X, selinux deny the read file for app
+        if (!preventPackages.isEmpty()) {
+            return true;
+        }
+        if (firststart) {
+            firststart = false;
+            return false;
+        }
+        if (gotprevent) {
+            return true;
+        }
+        if (application == null) {
+            return false;
+        }
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                Cursor cursor = application.getContentResolver().query(Provider.CONTENT_URI, null, null, null, null);
+                int index = cursor.getColumnIndex(Provider.COLUMN_PACKAGE);
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(index);
+                    if (!preventPackages.containsKey(name)) {
+                        preventPackages.put(name, Boolean.TRUE);
+                    }
+                }
+                Log.d(TAG, "prevents: " + preventPackages.keySet().toString());
+            }
+        });
+        gotprevent = true;
+        return true;
+    }
+
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
         if (!isSystemHook()) {
             return true;
-        } else {
-            if (!registered) {
-                HandlerThread thread = new HandlerThread("PreventService");
-                thread.start();
-                Handler handler = new Handler(thread.getLooper());
-                Application application = ActivityThread.currentApplication();
-                activityManager = (ActivityManager) ActivityThread.currentApplication().getSystemService(Context.ACTIVITY_SERVICE);
-
-                BroadcastReceiver receiver = new HookBroadcastReceiver();
-                application.registerReceiver(receiver, new HookIntentFilter(), null, handler);
-
-                IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
-                filter.addDataScheme("package");
-                application.registerReceiver(receiver, filter, null, handler);
-                registered = true;
-                Log.d(TAG, "registered receiver");
-            }
-
-            if (preventPackages == null) {
-                Log.d(TAG, "load prevent packages");
-                preventPackages = Packages.load();
-            }
         }
+
+        registerReceiversIfNeeded();
+        retrievePreventsIfNeeded();
+
         Object app = args[0x0];
         String hostingType = (String) args[0x1];
         String hostingName = (String) args[0x2];
         String packageName = ProcessRecordUtils.getPackageName(app);
+
         if (BuildConfig.DEBUG) {
             Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", app: " + app);
         }

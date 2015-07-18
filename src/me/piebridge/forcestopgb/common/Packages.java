@@ -10,12 +10,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
+import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-
-import me.piebridge.forcestopgb.common.CommonIntent;
 
 public final class Packages {
 
@@ -29,7 +26,7 @@ public final class Packages {
 
     }
 
-    public static void save(Map<String, Boolean> packages) {
+    public static void save(Set<String> packages) {
         File lock = new File(FORCESTOP + ".lock");
         File conf = lock.getParentFile();
         if (conf.isFile()) {
@@ -46,10 +43,9 @@ public final class Packages {
                 // do nothing
             }
         }
-        Set<String> keys = new TreeSet<String>(packages.keySet());
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(lock));
-            for (String key : keys) {
+            for (String key : packages) {
                 writer.write(key);
                 writer.write("\n");
             }
@@ -61,8 +57,8 @@ public final class Packages {
         }
     }
 
-    private static Map<String, Boolean> load(File file) {
-        Map<String, Boolean> packages = new ConcurrentHashMap<String, Boolean>();
+    private static Set<String> load(File file) {
+        Set<String> packages = new TreeSet<String>();
         if (!file.exists()) {
             return packages;
         }
@@ -75,7 +71,7 @@ public final class Packages {
                     line = line.substring(0, index);
                 }
                 line = line.trim();
-                packages.put(line, Boolean.TRUE);
+                packages.add(line);
             }
             reader.close();
         } catch (IOException e) { // NOSONAR
@@ -84,12 +80,12 @@ public final class Packages {
         return packages;
     }
 
-    public static Map<String, Boolean> load() {
+    public static Collection<String> load() {
         File fileDeprecated = new File(FORCESTOP_DEPRECATED);
-        Map<String, Boolean> packages = load(new File(FORCESTOP));
+        Set<String> packages = load(new File(FORCESTOP));
         if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
             Log.d(CommonIntent.TAG, "migrate packages");
-            packages.putAll(load(fileDeprecated));
+            packages.addAll(load(fileDeprecated));
             fileDeprecated.delete();
         }
         return packages;

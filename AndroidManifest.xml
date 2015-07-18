@@ -48,6 +48,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name=".ui.Provider"
+            android:authorities="me.piebridge.forcestopgb.provider" />
+
     </application>
 
 </manifest>
