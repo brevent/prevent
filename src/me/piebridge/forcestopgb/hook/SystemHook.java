@@ -20,7 +20,12 @@ import android.util.Log;
 
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,8 +70,6 @@ public final class SystemHook {
 
     private static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
 
-    private static Map<Integer, String> packagePids = new ConcurrentHashMap<Integer, String>();
-
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
 
     private static Set<String> SAFE_ACTIONS = new HashSet<String>(Arrays.asList(
@@ -89,8 +92,7 @@ public final class SystemHook {
         SystemHook.classLoader = classLoader;
         for (String name : Packages.load()) {
             preventPackages.put(name, Boolean.TRUE);
-        }
-    }
+        }    }
 
     public static ClassLoader getClassLoader() {
         return SystemHook.classLoader;
@@ -159,7 +161,6 @@ public final class SystemHook {
             if (uid > 0) {
                 packageUids.put(packageName, uid);
             }
-            packagePids.put(pid, packageName);
             Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
             if (packageCounter == null) {
                 packageCounter = new HashMap<Integer, AtomicInteger>();
@@ -177,8 +178,8 @@ public final class SystemHook {
 
         private void handleDecreaseCounter(String action, String packageName, Intent intent) {
             Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
-            int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
             if (packageCounter != null) {
+                int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
                 AtomicInteger pidCounter = packageCounter.get(pid);
                 if (pidCounter != null) {
                     pidCounter.decrementAndGet();
@@ -189,7 +190,6 @@ public final class SystemHook {
             if (count > 0) {
                 return;
             }
-            packagePids.remove(pid);
             if (preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
                 logForceStop(action, packageName, "destroy if needed in " + TIME_DESTROY_IF_NEEDED + "s");
@@ -412,8 +412,46 @@ public final class SystemHook {
         return count;
     }
 
+    private static String getPackage(int pid) {
+        File file = new File(new File("/proc", String.valueOf(pid)), "cmdline");
+        return getContent(file);
+    }
+
+    private static String getContent(File file) {
+        if (!file.isFile() || !file.canRead()) {
+            return null;
+        }
+
+        try {
+            InputStream is = new BufferedInputStream(new FileInputStream(file));
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            try {
+                int length;
+                byte[] buffer = new byte[0x1000];
+                while ((length = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, length);
+                }
+            } finally {
+                is.close();
+            }
+            return os.toString().trim();
+        } catch (IOException e) {
+            Log.e(TAG, "cannot read file " + file, e);
+            return null;
+        }
+    }
+
     private static boolean checkPid(int pid, String packageName) {
-        return packageName.equals(packagePids.get(pid));
+        String processName = getPackage(pid);
+        Integer uid = packageUids.get(packageName);
+        if (processName != null && uid != null && processName.startsWith(packageName)) {
+            try {
+                return HiddenAPI.getUidForPid(pid) == uid;
+            } catch (Throwable t) { // NOSONAR
+                Log.e(TAG, "cannot get uid for " + pid, t);
+            }
+        }
+        return false;
     }
 
     private static void forceStopPackageIfNeeded(final String packageName, int second) {
