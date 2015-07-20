@@ -112,6 +112,7 @@ public final class SystemHook {
             this.addAction(CommonIntent.ACTION_UPDATE_PREVENT);
             this.addAction(CommonIntent.ACTION_INCREASE_COUNTER);
             this.addAction(CommonIntent.ACTION_DECREASE_COUNTER);
+            this.addAction(CommonIntent.ACTION_RESTART);
             this.addAction(CommonIntent.ACTION_ACTIVITY_DESTROY);
             this.addAction(CommonIntent.ACTION_FORCE_STOP);
             this.addDataScheme(CommonIntent.SCHEME);
@@ -136,6 +137,11 @@ public final class SystemHook {
                 handleIncreaseCounter(action, packageName, intent);
             } else if (CommonIntent.ACTION_DECREASE_COUNTER.equals(action)) {
                 handleDecreaseCounter(action, packageName, intent);
+            } else if (CommonIntent.ACTION_RESTART.equals(action)) {
+                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                    preventPackages.put(packageName, Boolean.FALSE);
+                }
+                logRequest(action, packageName, -1);
             } else if (CommonIntent.ACTION_ACTIVITY_DESTROY.equals(action)) {
                 handleDestroy(action, packageName);
             } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
@@ -525,7 +531,6 @@ public final class SystemHook {
             @Override
             public void run() {
                 if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                    packageCounters.remove(packageName);
                     forceStopPackage(packageName);
                 }
             }
@@ -565,6 +570,7 @@ public final class SystemHook {
         try {
             HiddenAPI.forceStopPackage(activityManager, packageName);
             Log.i(TAG, "finish force stop package " + packageName);
+            packageCounters.remove(packageName);
         } catch (Throwable t) { // NOSONAR
             Log.e(TAG, "cannot force stop package" + packageName, t);
         }

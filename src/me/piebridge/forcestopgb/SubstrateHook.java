@@ -31,6 +31,7 @@ public class SubstrateHook {
             hookActivityManagerService$startProcessLocked();
             hookActivity$onCreate();
             hookActivity$onDestroy();
+            hookActivity$onRestart();
             hookActivity$moveTaskToBack();
             hookActivity$startActivityForResult();
             hookProcess$killProcess();
@@ -109,6 +110,18 @@ public class SubstrateHook {
             @Override
             public Void invoked(Activity thiz, Object... args) throws Throwable {
                 Hook.afterActivity$onDestroy(thiz);
+                invoke(thiz, args);
+                return null;
+            }
+        });
+    }
+
+    private static void hookActivity$onRestart() throws NoSuchMethodException { // NOSONAR
+        Method Activity$onRestart = Activity.class.getDeclaredMethod("onRestart"); // NOSONAR
+        MS.hookMethod(Activity.class, Activity$onRestart, new MS.MethodAlteration<Activity, Void>() {
+            @Override
+            public Void invoked(Activity thiz, Object... args) throws Throwable {
+                Hook.beforeActivity$onRestart(thiz);
                 invoke(thiz, args);
                 return null;
             }

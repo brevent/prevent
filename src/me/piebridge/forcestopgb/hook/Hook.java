@@ -32,6 +32,12 @@ public class Hook {
         sendBroadcast(activity, intent);
     }
 
+    public static void beforeActivity$onRestart(Activity activity) {
+        String packageName = activity.getPackageName();
+        Intent intent = new Intent(CommonIntent.ACTION_RESTART, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
+        sendBroadcast(activity, intent);
+    }
+
     public static boolean stopSelf(int pid) {
         Activity activity = context.get();
         if (activity != null) {

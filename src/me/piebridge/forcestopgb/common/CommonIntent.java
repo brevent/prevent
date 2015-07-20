@@ -16,6 +16,7 @@ public final class CommonIntent {
     public static final String ACTION_DECREASE_COUNTER = ACTION_NAMESPACE + "DECREASE_COUNTER";
     public static final String ACTION_ACTIVITY_DESTROY = ACTION_NAMESPACE + "ACTIVITY_DESTROY";
     public static final String ACTION_FORCE_STOP = ACTION_NAMESPACE + "FORCE_STOP";
+    public static final String ACTION_RESTART = ACTION_NAMESPACE + "RESTART";
 
     // for ui
     public static final String ACTION_GET_PACKAGES = ACTION_NAMESPACE + "GET_PACKAGES";
