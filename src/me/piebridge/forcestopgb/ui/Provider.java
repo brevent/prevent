@@ -14,8 +14,8 @@ import me.piebridge.forcestopgb.common.Packages;
  */
 public class Provider extends ContentProvider {
 
-    public static Uri CONTENT_URI = Uri.parse("content://me.piebridge.forcestopgb.provider");
-    public static String COLUMN_PACKAGE = Settings.NameValueTable.VALUE;
+    public static final Uri CONTENT_URI = Uri.parse("content://me.piebridge.forcestopgb.provider");
+    public static final String COLUMN_PACKAGE = Settings.NameValueTable.VALUE;
 
     @Override
     public boolean onCreate() {

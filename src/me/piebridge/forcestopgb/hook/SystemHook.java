@@ -83,7 +83,7 @@ public final class SystemHook {
 
     private static ClassLoader classLoader;
 
-    private static int FIRST_APPLICATION_UID = 10000;
+    private static final int FIRST_APPLICATION_UID = 10000;
 
     private static final int FLAG_SYSTEM_APP = ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
 
@@ -138,10 +138,7 @@ public final class SystemHook {
             } else if (CommonIntent.ACTION_DECREASE_COUNTER.equals(action)) {
                 handleDecreaseCounter(action, packageName, intent);
             } else if (CommonIntent.ACTION_RESTART.equals(action)) {
-                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                    preventPackages.put(packageName, Boolean.FALSE);
-                }
-                logRequest(action, packageName, -1);
+                handleRestart(action, packageName);
             } else if (CommonIntent.ACTION_ACTIVITY_DESTROY.equals(action)) {
                 handleDestroy(action, packageName);
             } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
@@ -221,6 +218,13 @@ public final class SystemHook {
                 forceStopPackageLater(packageName, TIME_SUICIDE);
             }
             killNoFather(packageName);
+        }
+
+        private void handleRestart(String action, String packageName) {
+            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                preventPackages.put(packageName, Boolean.FALSE);
+            }
+            logRequest(action, packageName, -1);
         }
 
         private void handlePackageRestarted(String action, String packageName) {
@@ -351,6 +355,12 @@ public final class SystemHook {
         if (application == null) {
             return false;
         }
+        doRetrievePrevents();
+        gotprevent = true;
+        return true;
+    }
+
+    private static void doRetrievePrevents() {
         executor.submit(new Runnable() {
             @Override
             public void run() {
@@ -365,8 +375,6 @@ public final class SystemHook {
                 Log.d(TAG, "prevents: " + preventPackages.keySet().toString());
             }
         });
-        gotprevent = true;
-        return true;
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
@@ -459,7 +467,7 @@ public final class SystemHook {
     }
 
     private static boolean isNormalProcessName(String processName, String packageName) {
-        return processName.equals(packageName) || processName.startsWith(packageName + ":");
+        return (processName != null) && (processName.equals(packageName) || processName.startsWith(packageName + ":"));
     }
 
     private static boolean checkPid(int pid, String packageName) {
@@ -471,21 +479,15 @@ public final class SystemHook {
             if (HiddenAPI.getUidForPid(pid) != uid) {
                 return false;
             }
-        } catch (Throwable t) {
+        } catch (Throwable t) { // NOSONAR
             Log.e(TAG, "cannot get uid for " + pid, t);
         }
         String processName = getPackage(pid);
-        if (processName == null) {
-            return false;
-        }
         if (isNormalProcessName(processName, packageName)) {
             return true;
         }
         Set<String> abnormalPackages = abnormalProcesses.get(processName);
-        if (abnormalPackages != null && abnormalPackages.contains(packageName)) {
-            return true;
-        }
-        return false;
+        return abnormalPackages != null && abnormalPackages.contains(packageName);
     }
 
     private static void setPid(int pid, String packageName) {
