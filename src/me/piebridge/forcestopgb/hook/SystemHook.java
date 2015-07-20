@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageParser;
 import android.database.Cursor;
 import android.net.Uri;
@@ -53,9 +54,9 @@ public final class SystemHook {
     private static boolean gotprevent = false;
     private static boolean firststart = true;
 
-    private static final int TIME_PREVENT = 6;
+    private static final int TIME_SUICIDE = 6;
     private static final int TIME_DESTROY = 6;
-    private static final int TIME_DESTROY_IF_NEEDED = 12;
+    private static final int TIME_PREVENT = 60;
     private static final int TIME_IMMEDIATE = 1;
 
     private static final String ACTION = "action: ";
@@ -74,14 +75,17 @@ public final class SystemHook {
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
 
-    private static Set<String> SAFE_ACTIONS = new HashSet<String>(Arrays.asList(
-            Intent.ACTION_MAIN,
+    private static Set<String> SAFE_RECEIVER_ACTIONS = new HashSet<String>(Arrays.asList(
+            // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
+            // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
             AppWidgetManager.ACTION_APPWIDGET_UPDATE
     ));
 
     private static ClassLoader classLoader;
 
     private static int FIRST_APPLICATION_UID = 10000;
+
+    private static final int FLAG_SYSTEM_APP = ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
 
     private static Application application;
     private static BroadcastReceiver receiver;
@@ -196,8 +200,8 @@ public final class SystemHook {
             }
             if (preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
-                logForceStop(action, packageName, "destroy if needed in " + TIME_DESTROY_IF_NEEDED + "s");
-                forceStopPackageIfNeeded(packageName, TIME_DESTROY_IF_NEEDED);
+                logForceStop(action, packageName, "destroy if needed in " + TIME_DESTROY + "s");
+                forceStopPackageIfNeeded(packageName, TIME_DESTROY);
             }
             killNoFather(packageName);
         }
@@ -207,8 +211,8 @@ public final class SystemHook {
             packageCounters.remove(packageName);
             if (preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
-                logForceStop(action, packageName, "destroy in " + TIME_DESTROY + "s");
-                forceStopPackageLater(packageName, TIME_DESTROY);
+                logForceStop(action, packageName, "destroy in " + TIME_SUICIDE + "s");
+                forceStopPackageLater(packageName, TIME_SUICIDE);
             }
             killNoFather(packageName);
         }
@@ -254,10 +258,6 @@ public final class SystemHook {
             Log.v(TAG, sb.toString());
         }
 
-        if (SAFE_ACTIONS.contains(action)) {
-            return HookResult.NONE;
-        }
-
         if (filter instanceof PackageParser.ActivityIntentInfo) {
             // for receiver, we don't block for activity
             @SuppressWarnings("unchecked")
@@ -265,17 +265,21 @@ public final class SystemHook {
             PackageParser.Package owner = activity.owner;
             String packageName = owner.applicationInfo.packageName;
             if (Boolean.TRUE.equals(preventPackages.get(packageName)) && owner.receivers.contains(activity)) {
+                if (SAFE_RECEIVER_ACTIONS.contains(action)) {
+                    return HookResult.NONE;
+                }
                 if (BuildConfig.DEBUG) {
                     logDisallow(filter.toString(), action, packageName);
                 }
                 return HookResult.NO_MATCH;
             }
-        } else if (filter instanceof PackageParser.ServiceIntentInfo && Binder.getCallingUid() != Process.SYSTEM_UID) {
-            // for service
+        } else if (filter instanceof PackageParser.ServiceIntentInfo) {
+            // for service, we try to find calling package
+            @SuppressWarnings("unchecked")
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
             PackageParser.Package owner = service.owner;
             String packageName = owner.applicationInfo.packageName;
-            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+            if (!isSystemPackage(owner) && Binder.getCallingUid() != Process.SYSTEM_UID && Boolean.TRUE.equals(preventPackages.get(packageName))) {
                 if (BuildConfig.DEBUG) {
                     logDisallow(filter.toString(), action, packageName);
                 }
@@ -289,11 +293,15 @@ public final class SystemHook {
                 return HookResult.NO_MATCH;
             }
             if (BuildConfig.DEBUG) {
-                Log.v(TAG, ACTION + action + ", filter:  " + filter + ", package: " + packageName);
+                Log.d(TAG, ACTION + action + ", filter:  " + filter + ", package: " + packageName);
             }
         }
 
         return HookResult.NONE;
+    }
+
+    private static boolean isSystemPackage(PackageParser.Package owner) {
+        return (owner.applicationInfo.flags & FLAG_SYSTEM_APP) != 0;
     }
 
     private static boolean registerReceiversIfNeeded() {
@@ -382,8 +390,7 @@ public final class SystemHook {
                 if ("activity".equals(hostingType)) {
                     preventPackages.put(packageName, Boolean.FALSE);
                 } else if ("service".equals(hostingType)) {
-                    logStartProcess("can't disallow", packageName, hostingType, hostingName);
-                    forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
+                    logStartProcess("wont disallow", packageName, hostingType, hostingName);
                 }
             }
             if (BuildConfig.DEBUG) {
