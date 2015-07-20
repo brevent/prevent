@@ -68,6 +68,8 @@ public final class SystemHook {
 
     private static Map<String, Integer> packageUids = new HashMap<String, Integer>();
 
+    private static Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
+
     private static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
@@ -92,7 +94,8 @@ public final class SystemHook {
         SystemHook.classLoader = classLoader;
         for (String name : Packages.load()) {
             preventPackages.put(name, Boolean.TRUE);
-        }    }
+        }
+    }
 
     public static ClassLoader getClassLoader() {
         return SystemHook.classLoader;
@@ -158,6 +161,7 @@ public final class SystemHook {
             }
             int uid = intent.getIntExtra(CommonIntent.EXTRA_UID, 0);
             int pid = intent.getIntExtra(CommonIntent.EXTRA_PID, 0);
+            setPid(pid, packageName);
             if (uid > 0) {
                 packageUids.put(packageName, uid);
             }
@@ -441,17 +445,48 @@ public final class SystemHook {
         }
     }
 
+    private static boolean isNormalProcessName(String processName, String packageName) {
+        return processName.equals(packageName) || processName.startsWith(packageName + ":");
+    }
+
     private static boolean checkPid(int pid, String packageName) {
-        String processName = getPackage(pid);
         Integer uid = packageUids.get(packageName);
-        if (processName != null && uid != null && processName.startsWith(packageName)) {
-            try {
-                return HiddenAPI.getUidForPid(pid) == uid;
-            } catch (Throwable t) { // NOSONAR
-                Log.e(TAG, "cannot get uid for " + pid, t);
+        if (uid == null) {
+            return false;
+        }
+        try {
+            if (HiddenAPI.getUidForPid(pid) != uid) {
+                return false;
             }
+        } catch (Throwable t) {
+            Log.e(TAG, "cannot get uid for " + pid, t);
+        }
+        String processName = getPackage(pid);
+        if (processName == null) {
+            return false;
+        }
+        if (isNormalProcessName(processName, packageName)) {
+            return true;
+        }
+        Set<String> abnormalPackages = abnormalProcesses.get(processName);
+        if (abnormalPackages != null && abnormalPackages.contains(packageName)) {
+            return true;
         }
         return false;
+    }
+
+    private static void setPid(int pid, String packageName) {
+        String processName = getPackage(pid);
+        if (processName != null && !isNormalProcessName(processName, packageName)) {
+            Set<String> abnormalProcess = abnormalProcesses.get(processName);
+            if (abnormalProcess == null) {
+                abnormalProcess = new HashSet<String>();
+                abnormalProcesses.put(processName, abnormalProcess);
+            }
+            if (abnormalProcess.add(packageName)) {
+                Log.d(TAG, "package " + packageName + " has abnormal process: " + processName);
+            }
+        }
     }
 
     private static void forceStopPackageIfNeeded(final String packageName, int second) {
