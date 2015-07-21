@@ -289,8 +289,9 @@ public final class SystemHook {
             @SuppressWarnings("unchecked")
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
             PackageParser.Package owner = service.owner;
-            String packageName = owner.applicationInfo.packageName;
-            if (!isSystemPackage(owner) && Binder.getCallingUid() != Process.SYSTEM_UID && Boolean.TRUE.equals(preventPackages.get(packageName))) {
+            ApplicationInfo ai = owner.applicationInfo;
+            String packageName = ai.packageName;
+            if (!isSystemPackage(ai) && Binder.getCallingUid() != Process.SYSTEM_UID && Boolean.TRUE.equals(preventPackages.get(packageName))) {
                 if (BuildConfig.DEBUG) {
                     logDisallow(filter.toString(), action, packageName);
                 }
@@ -311,8 +312,8 @@ public final class SystemHook {
         return HookResult.NONE;
     }
 
-    private static boolean isSystemPackage(PackageParser.Package owner) {
-        return (owner.applicationInfo.flags & FLAG_SYSTEM_APP) != 0;
+    private static boolean isSystemPackage(ApplicationInfo info) {
+        return (info.flags & FLAG_SYSTEM_APP) != 0;
     }
 
     private static boolean registerReceiversIfNeeded() {
