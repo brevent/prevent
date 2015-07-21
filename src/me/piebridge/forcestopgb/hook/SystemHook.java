@@ -6,6 +6,7 @@ import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,6 +18,7 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -280,28 +282,36 @@ public final class SystemHook {
                     return HookResult.NONE;
                 }
                 if (BuildConfig.DEBUG) {
-                    logDisallow(filter.toString(), action, packageName);
+                    logIntentFilter(true, filter, action, packageName);
                 }
                 return HookResult.NO_MATCH;
             }
         } else if (filter instanceof PackageParser.ServiceIntentInfo) {
+            if (shouldIgnore(action)) {
+                return HookResult.NO_MATCH;
+            }
             // for service, we try to find calling package
             @SuppressWarnings("unchecked")
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
             PackageParser.Package owner = service.owner;
             ApplicationInfo ai = owner.applicationInfo;
             String packageName = ai.packageName;
-            if (!isSystemPackage(ai) && Binder.getCallingUid() != Process.SYSTEM_UID && Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                if (BuildConfig.DEBUG) {
-                    logDisallow(filter.toString(), action, packageName);
+            boolean prevents = Boolean.TRUE.equals(preventPackages.get(packageName));
+            if (prevents) {
+                if (Binder.getCallingUid() != Process.SYSTEM_UID) {
+                    if (BuildConfig.DEBUG) {
+                        logIntentFilter(true, filter, action, packageName);
+                    }
+                    return HookResult.NO_MATCH;
+                } else {
+                    logIntentFilter(false, filter, action, packageName);
                 }
-                return HookResult.NO_MATCH;
             }
         } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             // for dynamic broadcast, we only disable ACTION_CLOSE_SYSTEM_DIALOGS
             String packageName = BroadcastFilterUtils.getPackageName(filter);
             if (preventPackages.containsKey(packageName)) {
-                logDisallow(filter.toString(), action, packageName);
+                logIntentFilter(true, filter, action, packageName);
                 return HookResult.NO_MATCH;
             }
             if (BuildConfig.DEBUG) {
@@ -312,8 +322,16 @@ public final class SystemHook {
         return HookResult.NONE;
     }
 
-    private static boolean isSystemPackage(ApplicationInfo info) {
-        return (info.flags & FLAG_SYSTEM_APP) != 0;
+    private static boolean shouldIgnore(String action) {
+        return shouldIgnoreLocation(action);
+    }
+
+    private static boolean shouldIgnoreLocation(String action) {
+        if (application == null || action == null) {
+            return false;
+        }
+        boolean enabled = (Settings.Secure.getInt(application.getContentResolver(), Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF) != Settings.Secure.LOCATION_MODE_OFF);
+        return !enabled && action.startsWith("com.android.location.service");
     }
 
     private static boolean registerReceiversIfNeeded() {
@@ -685,9 +703,10 @@ public final class SystemHook {
         Log.i(TAG, sb.toString());
     }
 
-    private static void logDisallow(final String filter, final String action, final String packageName) {
+    private static void logIntentFilter(boolean disallow, final Object filter, final String action, final String packageName) {
         StringBuilder sb = new StringBuilder();
-        sb.append("disallow ");
+        sb.append(disallow ? "disallow" : "allow");
+        sb.append(" ");
         sb.append(ACTION);
         sb.append(action);
         sb.append(", ");
@@ -696,13 +715,15 @@ public final class SystemHook {
         sb.append(", ");
         sb.append(PACKAGE);
         sb.append(packageName);
-        if (BuildConfig.DEBUG) {
-            sb.append(", callingUid: ");
-            sb.append(Binder.getCallingUid());
-            sb.append(", callingPid: ");
-            sb.append(Binder.getCallingPid());
+        sb.append(", callingUid: ");
+        sb.append(Binder.getCallingUid());
+        sb.append(", callingPid: ");
+        sb.append(Binder.getCallingPid());
+        if (disallow) {
+            Log.v(TAG, sb.toString());
+        } else {
+            Log.d(TAG, sb.toString());
         }
-        Log.d(TAG, sb.toString());
     }
 
     private static void logStartProcess(final String allow, final String packageName, final String hostingType, final Object hostingName) {
