@@ -6,7 +6,6 @@ import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -55,7 +54,6 @@ public final class SystemHook {
 
     private static boolean registered = false;
     private static boolean gotprevent = false;
-    private static boolean firststart = true;
 
     private static final int TIME_SUICIDE = 6;
     private static final int TIME_DESTROY = 6;
@@ -87,8 +85,6 @@ public final class SystemHook {
     private static ClassLoader classLoader;
 
     private static final int FIRST_APPLICATION_UID = 10000;
-
-    private static final int FLAG_SYSTEM_APP = ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
 
     private static Application application;
     private static BroadcastReceiver receiver;
@@ -360,20 +356,15 @@ public final class SystemHook {
     }
 
     private static boolean retrievePreventsIfNeeded() {
-        // i think, the file can be read
         // this is for android 5.X, selinux deny the read file for app
         if (!preventPackages.isEmpty()) {
             return true;
         }
-        if (firststart) {
-            firststart = false;
+        if (application == null) {
             return false;
         }
         if (gotprevent) {
             return true;
-        }
-        if (application == null) {
-            return false;
         }
         doRetrievePrevents();
         gotprevent = true;
@@ -427,13 +418,16 @@ public final class SystemHook {
         }
 
         registerReceiversIfNeeded();
-        retrievePreventsIfNeeded();
 
         ApplicationInfo info = (ApplicationInfo) args[0x1];
         Integer intentFlags = (Integer) args[0x3];
         String hostingType = (String) args[0x4];
         ComponentName hostingName = (ComponentName) args[0x5];
         String packageName = info.packageName;
+
+        if ("content provider".equals(hostingType)) {
+            retrievePreventsIfNeeded();
+        }
 
         if (BuildConfig.DEBUG) {
             Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", info: " + info);
