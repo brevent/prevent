@@ -234,6 +234,7 @@ public final class SystemHook {
             if (preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
             }
+            killNoFather(packageName);
         }
 
         private void handleForceStop(String action, String packageName) {
@@ -244,7 +245,6 @@ public final class SystemHook {
             }
             logForceStop(action, packageName, "force in " + TIME_IMMEDIATE + "s");
             forceStopPackageForce(packageName, TIME_IMMEDIATE);
-            killNoFather(packageName);
         }
     }
 
