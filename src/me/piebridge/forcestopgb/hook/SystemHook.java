@@ -5,6 +5,7 @@ import android.app.ActivityThread;
 import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -27,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +46,6 @@ import me.piebridge.forcestopgb.common.Packages;
 import me.piebridge.forcestopgb.ui.Provider;
 import me.piebridge.util.BroadcastFilterUtils;
 import me.piebridge.util.HiddenAPI;
-import me.piebridge.util.ProcessRecordUtils;
 
 public final class SystemHook {
 
@@ -377,6 +378,30 @@ public final class SystemHook {
         });
     }
 
+    private static boolean isWantedStartProcessLocked(Class<?>[] types) {
+        if (types == null || types.length < 0x6) {
+            return false;
+        }
+        return ApplicationInfo.class.equals(types[0x1])
+                && int.class.equals(types[0x3])
+                && String.class.equals(types[0x4])
+                && ComponentName.class.equals(types[0x5]);
+    }
+
+    public static Method getStartProcessLocked(Class<?> ActivityManagerService) { // NOSONAR
+        Method startProcessLocked = null;
+        for (Method method : ActivityManagerService.getDeclaredMethods()) {
+            if (!"startProcessLocked".equals(method.getName()) || !"ProcessRecord".equals(method.getReturnType().getSimpleName()) || !isWantedStartProcessLocked(method.getParameterTypes())) {
+                continue;
+            }
+            if (startProcessLocked == null || startProcessLocked.getParameterTypes().length < method.getParameterTypes().length) {
+                startProcessLocked = method;
+            }
+        }
+        Log.d(TAG, "will hook: " + startProcessLocked);
+        return startProcessLocked;
+    }
+
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
         if (!isSystemHook()) {
             return true;
@@ -385,17 +410,17 @@ public final class SystemHook {
         registerReceiversIfNeeded();
         retrievePreventsIfNeeded();
 
-        Object app = args[0x0];
-        String hostingType = (String) args[0x1];
-        String hostingName = (String) args[0x2];
-        String packageName = ProcessRecordUtils.getPackageName(app);
+        ApplicationInfo info = (ApplicationInfo) args[0x1];
+        Integer intentFlags = (Integer) args[0x3];
+        String hostingType = (String) args[0x4];
+        ComponentName hostingName = (ComponentName) args[0x5];
+        String packageName = info.packageName;
 
         if (BuildConfig.DEBUG) {
-            Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", app: " + app);
+            Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", info: " + info);
         }
         boolean disallow = "broadcast".equals(hostingType);
         if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName))) {
-            ProcessRecordUtils.setPid(app, 0);
             forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
             logStartProcess("disallow", packageName, hostingType, hostingName);
             return false;
@@ -404,6 +429,7 @@ public final class SystemHook {
                 if ("activity".equals(hostingType)) {
                     preventPackages.put(packageName, Boolean.FALSE);
                 } else if ("service".equals(hostingType)) {
+                    Log.d(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", info: " + info + ", flags: " + String.format("%08x", intentFlags));
                     logStartProcess("wont disallow", packageName, hostingType, hostingName);
                 }
             }
@@ -678,7 +704,7 @@ public final class SystemHook {
         Log.d(TAG, sb.toString());
     }
 
-    private static void logStartProcess(final String allow, final String packageName, final String hostingType, final String hostingName) {
+    private static void logStartProcess(final String allow, final String packageName, final String hostingType, final Object hostingName) {
         StringBuilder sb = new StringBuilder();
         sb.append(allow);
         sb.append(" start ");

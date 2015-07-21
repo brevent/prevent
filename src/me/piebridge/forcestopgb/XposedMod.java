@@ -44,13 +44,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         SystemHook.setClassLoader(classLoader);
 
         Class<?> ActivityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader); // NOSONAR
-        Class<?> ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader); // NOSONAR
-        Method startProcessLocked;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class);
-        } else {
-            startProcessLocked = ActivityManagerService.getDeclaredMethod("startProcessLocked", ProcessRecord, String.class, String.class, String.class, String.class, String[].class);
-        }
+        Method startProcessLocked = SystemHook.getStartProcessLocked(ActivityManagerService);
         XposedBridge.hookMethod(startProcessLocked, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
