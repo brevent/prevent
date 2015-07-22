@@ -21,17 +21,8 @@ public class ActivityManager {
     }
 
     public static class RunningAppProcessInfo {
-        public static final int IMPORTANCE_FOREGROUND = 100;
-        public static final int IMPORTANCE_VISIBLE = 200;
-        public static final int IMPORTANCE_PERCEPTIBLE = 130;
-        public static final int IMPORTANCE_SERVICE = 300;
-        public static final int IMPORTANCE_BACKGROUND = 400;
-        public static final int IMPORTANCE_EMPTY = 500;
-        public int importance;
-        public String pkgList[];
     }
 
     public static class RunningServiceInfo {
-        public ComponentName service;
     }
 }
