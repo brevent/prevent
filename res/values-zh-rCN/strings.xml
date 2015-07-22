@@ -19,10 +19,10 @@
     <string name="app_info">程序信息</string>
     <string name="uninstall">卸载</string>
     <string name="switch_theme">切换主题</string>
-    <string name="app_notenabled">请在"Xposed Installer"中启用“阻止运行”，或者安装"Cydia Substrate"。</string>
+    <string name="app_notenabled">请在“Xposed Installer”中启用“阻止运行”，或者安装“Cydia Substrate”。</string>
     <string name="open">打开</string>
-    <string name="query_hint">按名称过滤，"-3"表示第三方程序</string>
-    <string name="query_hint_system">按名称过滤，"-s"表示系统应用</string>
+    <string name="query_hint">\"-3\"表示用户应用</string>
+    <string name="query_hint_system">\"-s\"表示系统应用</string>
     <string name="checking">正在检查状态，请稍候...</string>
 
 </resources>
