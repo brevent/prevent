@@ -300,15 +300,16 @@ public final class SystemHook {
             ApplicationInfo ai = owner.applicationInfo;
             String packageName = ai.packageName;
             boolean prevents = Boolean.TRUE.equals(preventPackages.get(packageName));
-            if (prevents) {
-                if (Binder.getCallingUid() != Process.SYSTEM_UID) {
-                    if (BuildConfig.DEBUG) {
-                        logIntentFilter(true, filter, action, packageName);
-                    }
-                    return HookResult.NO_MATCH;
-                } else {
-                    logIntentFilter(false, filter, action, packageName);
+            if (!prevents) {
+                return HookResult.NONE;
+            }
+            if (Binder.getCallingUid() != Process.SYSTEM_UID) {
+                if (BuildConfig.DEBUG) {
+                    logIntentFilter(true, filter, action, packageName);
                 }
+                return HookResult.NO_MATCH;
+            } else {
+                logIntentFilter(false, filter, action, packageName);
             }
         } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             // for dynamic broadcast, we only disable ACTION_CLOSE_SYSTEM_DIALOGS
@@ -333,7 +334,7 @@ public final class SystemHook {
         if (application == null || action == null) {
             return false;
         }
-        boolean enabled = (Settings.Secure.getInt(application.getContentResolver(), Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF) != Settings.Secure.LOCATION_MODE_OFF);
+        boolean enabled = Settings.Secure.getInt(application.getContentResolver(), Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF) != Settings.Secure.LOCATION_MODE_OFF;
         return !enabled && action.startsWith("com.android.location.service");
     }
 
