@@ -41,13 +41,15 @@ public class Hook {
     public static boolean stopSelf(int pid) {
         Activity activity = context.get();
         if (activity != null) {
+            int uid = activity.getApplicationInfo().uid;
             if (pid != -1) {
-                Log.w(CommonIntent.TAG, "Process.killProcess(self) is called in activity");
+                Log.w(CommonIntent.TAG, "Process.killProcess(self) is called in activity, uid: " + uid);
             } else {
-                Log.w(CommonIntent.TAG, "System.exit is called in activity");
+                Log.w(CommonIntent.TAG, "System.exit is called in activity, uid: " + uid);
             }
             String packageName = activity.getPackageName();
             Intent intent = new Intent(CommonIntent.ACTION_FORCE_STOP, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
+            intent.putExtra(CommonIntent.EXTRA_UID, uid);
             sendBroadcast(activity, intent);
         }
         context.remove();

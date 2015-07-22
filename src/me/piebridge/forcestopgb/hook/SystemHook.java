@@ -143,7 +143,7 @@ public final class SystemHook {
             } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
                 handlePackageRestarted(action, packageName);
             } else if (CommonIntent.ACTION_FORCE_STOP.equals(action)) {
-                handleForceStop(action, packageName);
+                handleForceStop(action, packageName, intent);
             }
         }
 
@@ -235,14 +235,17 @@ public final class SystemHook {
             killNoFather(packageName);
         }
 
-        private void handleForceStop(String action, String packageName) {
+        private void handleForceStop(String action, String packageName, Intent intent) {
             logRequest(action, packageName, -1);
+            int uid = intent.getIntExtra(CommonIntent.EXTRA_UID, 0);
             packageCounters.remove(packageName);
             if (preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
             }
-            logForceStop(action, packageName, "force in " + TIME_IMMEDIATE + "s");
-            forceStopPackageForce(packageName, TIME_IMMEDIATE);
+            if (uid >= FIRST_APPLICATION_UID) {
+                logForceStop(action, packageName, "force in " + TIME_IMMEDIATE + "s" + ", uid: " + uid);
+                forceStopPackageForce(packageName, TIME_IMMEDIATE);
+            }
         }
     }
 
