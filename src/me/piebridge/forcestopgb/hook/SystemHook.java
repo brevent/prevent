@@ -415,7 +415,6 @@ public final class SystemHook {
                 startProcessLocked = method;
             }
         }
-        Log.d(TAG, "will hook: " + startProcessLocked);
         return startProcessLocked;
     }
 
