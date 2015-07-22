@@ -54,6 +54,16 @@ public class XposedMod implements IXposedHookZygoteInit {
             }
         });
 
+        Method cleanUpRemovedTaskLocked = SystemHook.getCleanUpRemovedTaskLocked(ActivityManagerService);
+        if (cleanUpRemovedTaskLocked != null) {
+            XposedBridge.hookMethod(cleanUpRemovedTaskLocked, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    SystemHook.afterActivityManagerService$cleanUpRemovedTaskLocked(param.args);
+                }
+            });
+        }
+
         Class<?> IntentFilter = Class.forName("android.content.IntentFilter", false, classLoader); // NOSONAR
         Method match = IntentFilter.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
         XposedBridge.hookMethod(match, new XC_MethodHook() {

@@ -48,6 +48,7 @@ import me.piebridge.forcestopgb.common.Packages;
 import me.piebridge.forcestopgb.ui.Provider;
 import me.piebridge.util.BroadcastFilterUtils;
 import me.piebridge.util.HiddenAPI;
+import me.piebridge.util.TaskRecordUtils;
 
 public final class SystemHook {
 
@@ -419,6 +420,15 @@ public final class SystemHook {
         return startProcessLocked;
     }
 
+    public static Method getCleanUpRemovedTaskLocked(Class<?> activityManagerService) {
+        for (Method method : activityManagerService.getDeclaredMethods()) {
+            if ("cleanUpRemovedTaskLocked".equals(method.getName()) && method.getParameterTypes().length == 0x2) {
+                return method;
+            }
+        }
+        return null;
+    }
+
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
         if (!isSystemHook()) {
             return true;
@@ -457,6 +467,19 @@ public final class SystemHook {
                 logStartProcess("allow", packageName, hostingType, hostingName);
             }
             return true;
+        }
+    }
+
+    public static void afterActivityManagerService$cleanUpRemovedTaskLocked(Object[] args) {
+        String packageName = TaskRecordUtils.getPackageName(args[0]);
+        Log.d(CommonIntent.TAG, "cleanUpRemovedTaskLocked: " + args[0] + ", package: " + packageName);
+        if (packageName != null) {
+            packageCounters.remove(packageName);
+            if (preventPackages.containsKey(packageName)) {
+                preventPackages.put(packageName, Boolean.TRUE);
+                logForceStop("removeTask", packageName, "force in " + TIME_IMMEDIATE + "s");
+                forceStopPackageForce(packageName, TIME_IMMEDIATE);
+            }
         }
     }
 

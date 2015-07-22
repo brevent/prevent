@@ -70,6 +70,18 @@ public class SubstrateHook {
                 }
             }
         });
+
+        Method cleanUpRemovedTaskLocked = SystemHook.getCleanUpRemovedTaskLocked(ActivityManagerService);
+        if (cleanUpRemovedTaskLocked != null) {
+            MS.hookMethod(ActivityManagerService, cleanUpRemovedTaskLocked, new MS.MethodAlteration<Object, Object>() {
+                @Override
+                public Object invoked(Object thiz, Object... args) throws Throwable {
+                    Object result = invoke(thiz, args);
+                    SystemHook.afterActivityManagerService$cleanUpRemovedTaskLocked(args);
+                    return result;
+                }
+            });
+        }
     }
 
     private static void hookIntentFilter$match() throws NoSuchMethodException { // NOSONAR
