@@ -372,6 +372,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             } else {
                 hookEnabled = false;
             }
+            refresh();
         }
 
         private void handlePackages(String result) {
@@ -387,7 +388,6 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 // do nothing
                 android.util.Log.d(CommonIntent.TAG, "cannot convert to json", e);
             }
-            refresh();
         }
     }
 
