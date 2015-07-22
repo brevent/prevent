@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.forcestopgb.common.Packages;
+import me.piebridge.forcestopgb.ui.PreventUtils;
 import me.piebridge.forcestopgb.ui.Provider;
 import me.piebridge.util.BroadcastFilterUtils;
 import me.piebridge.util.HiddenAPI;
@@ -453,7 +454,7 @@ public final class SystemHook {
             Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", info: " + info);
         }
         boolean disallow = "broadcast".equals(hostingType);
-        if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName))) {
+        if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName)) && !PackageUtils.isSystemPackage(application, packageName)) {
             forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
             logStartProcess("disallow", packageName, hostingType, hostingName);
             return false;

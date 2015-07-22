@@ -34,4 +34,8 @@ public class PackageUtils {
             return false;
         }
     }
+
+    public static boolean isSystemPackage(Context context, String packageName) {
+        return isSystemPackage(context.getPackageManager(), packageName);
+    }
 }
