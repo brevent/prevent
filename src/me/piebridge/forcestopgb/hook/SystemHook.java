@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,9 +57,12 @@ public final class SystemHook {
     private static boolean gotprevent = false;
 
     private static final int TIME_SUICIDE = 6;
-    private static final int TIME_DESTROY = 6;
+    private static final int TIME_DESTROY = 12;
     private static final int TIME_PREVENT = 60;
     private static final int TIME_IMMEDIATE = 1;
+
+    private static long lastChecking;
+    private static final long MILLISECONDS = 1000;
 
     private static final String ACTION = "action: ";
     private static final String FILTER = "filter: ";
@@ -203,7 +207,7 @@ public final class SystemHook {
             if (preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
                 logForceStop(action, packageName, "destroy if needed in " + TIME_DESTROY + "s");
-                forceStopPackageIfNeeded(packageName, TIME_DESTROY);
+                checkRunningServices(packageName, TIME_DESTROY);
             }
             killNoFather(packageName);
         }
@@ -546,28 +550,32 @@ public final class SystemHook {
         }
     }
 
-    private static void forceStopPackageIfNeeded(final String packageName, int second) {
+    private static boolean checkRunningServices(final String packageName, int second) {
         if (activityManager == null) {
             Log.e(TAG, "activityManager is null, cannot check running services for " + packageName);
-            return;
+            return false;
         }
+        long now = System.currentTimeMillis();
+        if (now - lastChecking <= second * MILLISECONDS) {
+            return false;
+        }
+        lastChecking = now;
         executor.schedule(new Runnable() {
             @Override
             public void run() {
-                if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                    return;
-                }
-                for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
-                    if (service.service.getPackageName().equals(packageName)) {
-                        Log.d(TAG, packageName + " has running services, force stop it");
-                        forceStopPackage(packageName);
-                        return;
+                List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+                for (int i = services.size() - 1; i >= 0; --i) {
+                    ActivityManager.RunningServiceInfo service = services.get(i);
+                    String name = service.service.getPackageName();
+                    boolean prevents = Boolean.TRUE.equals(preventPackages.get(name));
+                    if (prevents && (name.equals(packageName) || service.uid >= FIRST_APPLICATION_UID)) {
+                        Log.d(TAG, name + " has running services, force stop it");
+                        forceStopPackage(name);
                     }
                 }
-                Log.d(TAG, packageName + " has no running services");
-
             }
         }, second, TimeUnit.SECONDS);
+        return true;
     }
 
     private static void forceStopPackageForce(final String packageName, int second) {
