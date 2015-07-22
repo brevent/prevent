@@ -6,10 +6,12 @@ import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
 import android.database.Cursor;
 import android.net.Uri;
@@ -48,6 +50,7 @@ import me.piebridge.forcestopgb.common.Packages;
 import me.piebridge.forcestopgb.ui.Provider;
 import me.piebridge.util.BroadcastFilterUtils;
 import me.piebridge.util.HiddenAPI;
+import me.piebridge.util.PackageUtils;
 import me.piebridge.util.TaskRecordUtils;
 
 public final class SystemHook {
@@ -474,13 +477,30 @@ public final class SystemHook {
         String packageName = TaskRecordUtils.getPackageName(args[0]);
         Log.d(CommonIntent.TAG, "cleanUpRemovedTaskLocked: " + args[0] + ", package: " + packageName);
         if (packageName != null) {
-            packageCounters.remove(packageName);
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
+            autoPrevents(packageName);
+        }
+    }
+
+    private static void autoPrevents(final String packageName) {
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                packageCounters.remove(packageName);
                 logForceStop("removeTask", packageName, "force in " + TIME_IMMEDIATE + "s");
                 forceStopPackageForce(packageName, TIME_IMMEDIATE);
+                if (preventPackages.containsKey(packageName)) {
+                    preventPackages.put(packageName, Boolean.TRUE);
+                } else if (PackageUtils.cannotPrevents(application, packageName)) {
+                    Log.d(TAG, "cannot prevents " + packageName);
+                } else {
+                    Log.d(TAG, "auto prevents " + packageName);
+                    preventPackages.put(packageName, Boolean.TRUE);
+                    ContentValues values = new ContentValues();
+                    values.put(Provider.COLUMN_PACKAGE, packageName);
+                    application.getContentResolver().insert(Provider.CONTENT_URI, values);
+                }
             }
-        }
+        });
     }
 
     private static boolean isSystemHook() {

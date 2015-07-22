@@ -80,7 +80,7 @@ public final class Packages {
         return packages;
     }
 
-    public static Collection<String> load() {
+    public static Set<String> load() {
         File fileDeprecated = new File(FORCESTOP_DEPRECATED);
         Set<String> packages = load(new File(FORCESTOP));
         if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
