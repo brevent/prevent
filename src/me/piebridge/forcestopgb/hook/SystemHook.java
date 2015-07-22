@@ -587,11 +587,25 @@ public final class SystemHook {
             @Override
             public void run() {
                 List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+                Map<String, Boolean> serviceStatus = new HashMap<String, Boolean>();
                 for (int i = services.size() - 1; i >= 0; --i) {
                     ActivityManager.RunningServiceInfo service = services.get(i);
                     String name = service.service.getPackageName();
                     boolean prevents = Boolean.TRUE.equals(preventPackages.get(name));
+                    if (BuildConfig.DEBUG) {
+                        Log.d(CommonIntent.TAG, "prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount);
+                    }
                     if (prevents && (name.equals(packageName) || service.uid >= FIRST_APPLICATION_UID)) {
+                        boolean canStop = service.clientCount == 0;
+                        Boolean result = serviceStatus.get(name);
+                        if (result == null || result) {
+                            serviceStatus.put(name, canStop);
+                        }
+                    }
+                }
+                for (Map.Entry<String, Boolean> entry : serviceStatus.entrySet()) {
+                    if (entry.getValue()) {
+                        String name = entry.getKey();
                         Log.d(TAG, name + " has running services, force stop it");
                         forceStopPackage(name);
                     }
