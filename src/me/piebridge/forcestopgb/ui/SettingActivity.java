@@ -115,11 +115,11 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     protected void onResume() {
         super.onResume();
-        showFragmentsIfNeeded();
+        showFragmentsIfNeeded(true);
     }
 
-    private void showFragmentsIfNeeded() {
-        if (hookEnabled == null || preventPackages.isEmpty()) {
+    private void showFragmentsIfNeeded(boolean checkingPrevents) {
+        if (hookEnabled == null || (checkingPrevents && preventPackages.isEmpty())) {
             showAlertDialog(R.string.checking);
             Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES);
             intent.setFlags(CommonIntent.INTENT_FLAG);
@@ -416,7 +416,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 @Override
                 public void run() {
                     dialog.dismiss();
-                    showFragmentsIfNeeded();
+                    showFragmentsIfNeeded(false);
                 }
             });
         }
