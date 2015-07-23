@@ -66,6 +66,8 @@ public final class SystemHook {
     private static final int TIME_IMMEDIATE = 1;
 
     private static long lastChecking;
+    private static long lastKilling;
+    private static final int TIME_KILL = 1;
     private static final long MILLISECONDS = 1000;
 
     private static ActivityManager activityManager;
@@ -647,37 +649,49 @@ public final class SystemHook {
     }
 
     private static boolean killNoFather(final String packageName) {
-        final Integer uid = packageUids.get(packageName);
-        if (uid == null || uid < FIRST_APPLICATION_UID) {
+        long now = System.currentTimeMillis();
+        if (now - lastKilling <= TIME_KILL * MILLISECONDS) {
             return false;
         }
-        executor.submit(new Runnable() {
+        lastKilling = now;
+        executor.schedule(new Runnable() {
             @Override
             public void run() {
                 try {
-                    killNoFather(uid, packageName);
+                    dokillNoFather(packageName);
                 } catch (Throwable t) { // NOSONAR
-                    Log.d(TAG, "cannot killNoFather for " + uid, t);
+                    Log.d(TAG, "cannot killNoFather", t);
                 }
             }
-        });
+        }, TIME_KILL, TimeUnit.SECONDS);
         return true;
     }
 
-    private static void killNoFather(int uid, String packageName) {
+    private static void dokillNoFather(String packageName) {
         File proc = new File("/proc");
         for (File file : proc.listFiles()) {
             if (file.isDirectory() && TextUtils.isDigitsOnly(file.getName())) {
                 int pid = Integer.parseInt(file.getName());
-                if (HiddenAPI.getUidForPid(pid) != uid) {
-                    continue;
-                }
-                if (HiddenAPI.getParentPid(pid) == 1) {
+                int uid = HiddenAPI.getUidForPid(pid);
+                if (HiddenAPI.getParentPid(pid) == 1 && uid >= FIRST_APPLICATION_UID) {
                     Process.killProcess(pid);
-                    logKill(pid, "without parent", packageName);
+                    logKill(pid, "without parent", getPackageName(uid, packageName));
                 }
             }
         }
+    }
+
+    private static String getPackageName(int uid, String packageName) {
+        Integer currentUid = packageUids.get(packageName);
+        if (currentUid != null && currentUid == uid) {
+            return packageName;
+        }
+        for (Map.Entry<String, Integer> entry : packageUids.entrySet()) {
+            if (entry.getValue().equals(uid)) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     private static class CheckingRunningService implements Runnable {
