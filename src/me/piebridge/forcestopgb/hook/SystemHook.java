@@ -441,7 +441,6 @@ public final class SystemHook {
         registerReceiversIfNeeded();
 
         ApplicationInfo info = (ApplicationInfo) args[0x1];
-        Integer intentFlags = (Integer) args[0x3];
         String hostingType = (String) args[0x4];
         ComponentName hostingName = (ComponentName) args[0x5];
         String packageName = info.packageName;
@@ -453,25 +452,38 @@ public final class SystemHook {
         if (BuildConfig.DEBUG) {
             Log.v(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", info: " + info);
         }
-        boolean disallow = "broadcast".equals(hostingType);
-        if (disallow && Boolean.TRUE.equals(preventPackages.get(packageName)) && !PackageUtils.isSystemPackage(application, packageName)) {
+
+        Boolean prevents = preventPackages.get(packageName);
+        // never block activity
+        if ("activity".equals(hostingType) && Boolean.TRUE.equals(prevents)) {
+            preventPackages.put(packageName, Boolean.FALSE);
+            prevents = false;
+        }
+
+        if (!Boolean.TRUE.equals(prevents)) {
+            return true;
+        }
+
+        // didn't handle for system package
+        if (PackageUtils.isSystemPackage(application, packageName)) {
+            return true;
+        }
+
+        // always block broadcast
+        if ("broadcast".equals(hostingType)) {
+            // for alarm
             forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
             logStartProcess("disallow", packageName, hostingType, hostingName);
             return false;
-        } else {
-            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                if ("activity".equals(hostingType)) {
-                    preventPackages.put(packageName, Boolean.FALSE);
-                } else if ("service".equals(hostingType)) {
-                    Log.d(TAG, "startProcessLocked, type: " + hostingType + ", name: " + hostingName + ", info: " + info + ", flags: " + String.format("%08x", intentFlags));
-                    logStartProcess("wont disallow", packageName, hostingType, hostingName);
-                }
-            }
-            if (BuildConfig.DEBUG) {
-                logStartProcess("allow", packageName, hostingType, hostingName);
-            }
-            return true;
         }
+
+        // auto turn off service
+        if ("service".equals(hostingType)) {
+            checkRunningServices(packageName, TIME_PREVENT);
+            logStartProcess("wont disallow", packageName, hostingType, hostingName);
+        }
+
+        return true;
     }
 
     public static void afterActivityManagerService$cleanUpRemovedTaskLocked(Object[] args) {
