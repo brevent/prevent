@@ -3,8 +3,11 @@ package me.piebridge.forcestopgb.ui;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -14,7 +17,8 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.FragmentUtils;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.TypedValue;
@@ -26,7 +30,6 @@ import android.widget.Button;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,12 +46,15 @@ import me.piebridge.util.RecreateUtil;
 public class SettingActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
     private ViewPager mPager;
+    private PagerAdapter mPagerAdapter;
     private String[] mPageTitles;
-    private List<AbstractSet<String>> mPageSelections;
+    private List<Set<String>> mPageSelections;
 
     private final Object runningLock = new Object();
     private Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
     private Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
+    private Map<String, Set<Integer>> backup = new HashMap<String, Set<Integer>>();
+    private View main;
     private Button remove;
     private Button cancel;
     private Button prevent;
@@ -60,13 +66,15 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private static final String THEME_LIGHT = "light";
     private static final String THEME_DARK = "dark";
 
-    private Integer dangerousColor = null;
+    private AlertDialog dialog;
 
-    private Integer transparentColor = null;
+    private static Boolean hookEnabled = null;
 
     private BroadcastReceiver mBroadcastReceiver;
 
-    private static Boolean hookEnabled;
+    private Integer dangerousColor = null;
+
+    private Integer transparentColor = null;
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -88,14 +96,9 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         setTheme(THEME_LIGHT.equals(sp.getString(THEME, THEME_LIGHT)) ? R.style.light : R.style.dark);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
         mPager = (ViewPager) findViewById(R.id.pager);
-        mPageTitles = new String[]{getString(R.string.applications), getString(R.string.preventlist)};
-        mPageSelections = new ArrayList<AbstractSet<String>>();
-        mPageSelections.add(new HashSet<String>());
-        mPageSelections.add(new HashSet<String>());
-        PagerAdapter mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
-        mPager.setAdapter(mPagerAdapter);
-        mPager.addOnPageChangeListener(this);
+        main = findViewById(R.id.main);
         remove = (Button) findViewById(R.id.remove);
         cancel = (Button) findViewById(R.id.cancel);
         prevent = (Button) findViewById(R.id.prevent);
@@ -106,75 +109,76 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         prevent.setEnabled(false);
         remove.setEnabled(false);
         mBroadcastReceiver = new HookReceiver();
+        mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        initPackages();
+        showFragmentsIfNeeded();
     }
 
-    private void initPackages() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (runningLock) {
+    private void showFragmentsIfNeeded() {
+        if (hookEnabled == null || preventPackages.isEmpty()) {
+            showAlertDialog(R.string.checking);
+            Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES);
+            intent.setFlags(CommonIntent.INTENT_FLAG);
+            intent.setData(Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
+            sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
+        } else if (!hookEnabled) {
+            showDisableDialog();
+        } else {
+            if (running.isEmpty()) {
+                showAlertDialog(R.string.retrieving);
+            }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
                     retrieveRunningProcesses();
                 }
-                Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES, Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
-                intent.setFlags(CommonIntent.INTENT_FLAG);
-                sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
-            }
-        }).start();
-    }
-
-    public Boolean getHookEnabled() {
-        return hookEnabled;
-    }
-
-    private class ScreenSlidePagerAdapter extends FragmentPagerAdapter {
-
-        public ScreenSlidePagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            switch (position) {
-                case APPLICATIONS:
-                    return new SettingFragmentApplications();
-                case PREVENTLIST:
-                    return new SettingFragmentPreventList();
-                default:
-                    return null;
-            }
-        }
-
-        @Override
-        public int getCount() {
-            return mPageTitles.length;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return mPageTitles[position];
+            }).start();
         }
     }
 
     private void retrieveRunningProcesses() {
-        running.clear();
+        backup.clear();
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         List<RunningAppProcessInfo> processes = manager.getRunningAppProcesses();
         for (RunningAppProcessInfo process : processes) {
             for (String pkg : process.pkgList) {
-                if (running.containsKey(pkg)) {
-                    running.get(pkg).add(process.importance);
+                if (backup.containsKey(pkg)) {
+                    backup.get(pkg).add(process.importance);
                 } else {
                     Set<Integer> importance = new HashSet<Integer>();
                     importance.add(process.importance);
-                    running.put(pkg, importance);
+                    backup.put(pkg, importance);
                 }
             }
+        }
+        synchronized (runningLock) {
+            running.clear();
+            running.putAll(backup);
+        }
+        backup.clear();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                initFragmentIfNeeded();
+                dialog.dismiss();
+                refresh();
+            }
+        });
+    }
+
+    private void initFragmentIfNeeded() {
+        if (mPager.getAdapter() == null) {
+            mPageTitles = new String[]{getString(R.string.applications), getString(R.string.preventlist)};
+            mPageSelections = new ArrayList<Set<String>>();
+            mPageSelections.add(new HashSet<String>());
+            mPageSelections.add(new HashSet<String>());
+            mPager.addOnPageChangeListener(this);
+            mPager.setAdapter(mPagerAdapter);
+            main.setVisibility(View.VISIBLE);
         }
     }
 
@@ -287,33 +291,11 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             preventPackages.remove(packageName);
         }
         savePackages();
-        refreshIfNeeded(false);
     }
 
     private void savePackages() {
         Packages.save(preventPackages.keySet());
-    }
-
-    private void refresh(int position, boolean force) {
-        SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, position);
-        fragment.refresh(force || fragment.canUseCache());
-    }
-
-    private void refreshIfNeeded(boolean force) {
-        int position = mPager.getCurrentItem();
-        for (int item = 0; item < mPageTitles.length; ++item) {
-            if (item != position) {
-                refresh(item, force);
-            } else if (force) {
-                refresh(item, false);
-            }
-        }
-    }
-
-    private void refresh() {
-        for (int item = 0; item < mPageTitles.length; ++item) {
-            refresh(item, true);
-        }
+        refreshIfNeeded(true);
     }
 
     @Override
@@ -335,7 +317,6 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             savePackages();
         }
         selections.clear();
-        refreshIfNeeded(true);
         checkSelection();
     }
 
@@ -353,13 +334,72 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         return getColor(getThemed(resId));
     }
 
-    @Override
-    protected void onPause() {
-        for (int item = 0; item < mPageTitles.length; ++item) {
-            SettingFragment fragment = (SettingFragment) mPager.getAdapter().instantiateItem(mPager, item);
-            fragment.saveListPosition();
+    private void showAlertDialog(int resId) {
+        if (dialog == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.app_name);
+            builder.setMessage(resId);
+            builder.setIcon(R.drawable.ic_launcher);
+            builder.setCancelable(false);
+            dialog = builder.create();
+        } else {
+            dialog.setMessage(getString(resId));
         }
-        super.onPause();
+        dialog.show();
+    }
+
+    private void showDisableDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.app_name);
+        builder.setMessage(R.string.app_notenabled);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                finish();
+            }
+        });
+        builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
+                intent.setPackage("de.robv.android.xposed.installer");
+                intent.putExtra("section", "modules");
+                intent.putExtra("module", getPackageName());
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                try {
+                    startActivity(intent);
+                } catch (ActivityNotFoundException e) { // NOSONAR
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.saurik.substrate")));
+                }
+            }
+        });
+        builder.create().show();
+    }
+
+    private void refresh(int position, boolean force) {
+        String tag = mPageTitles[position];
+        SettingFragment fragment = (SettingFragment) getSupportFragmentManager().findFragmentByTag(tag);
+        if (fragment != null) {
+            fragment.refresh(force || fragment.canUseCache());
+        }
+    }
+
+    private void refreshIfNeeded(boolean force) {
+        int position = mPager.getCurrentItem();
+        for (int item = 0; item < mPageTitles.length; ++item) {
+            if (item != position) {
+                refresh(item, force);
+            } else if (force) {
+                refresh(item, false);
+            }
+        }
+    }
+
+    private void refresh() {
+        for (int item = 0; item < mPageTitles.length; ++item) {
+            refresh(item, true);
+        }
     }
 
     private class HookReceiver extends BroadcastReceiver {
@@ -372,7 +412,13 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             } else {
                 hookEnabled = false;
             }
-            refresh();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    dialog.dismiss();
+                    showFragmentsIfNeeded();
+                }
+            });
         }
 
         private void handlePackages(String result) {
@@ -390,5 +436,40 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             }
         }
     }
+
+    private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
+
+        public ScreenSlidePagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            Fragment fragment;
+            switch (position) {
+                case APPLICATIONS:
+                    fragment = new SettingFragmentApplications();
+                    break;
+                case PREVENTLIST:
+                    fragment = new SettingFragmentPreventList();
+                    break;
+                default:
+                    return null;
+            }
+            FragmentUtils.setTag(fragment, getPageTitle(position).toString());
+            return fragment;
+        }
+
+        @Override
+        public int getCount() {
+            return mPageTitles.length;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mPageTitles[position];
+        }
+    }
+
 
 }

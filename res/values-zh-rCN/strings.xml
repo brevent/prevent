@@ -24,5 +24,6 @@
     <string name="query_hint">\"-3\"表示用户应用</string>
     <string name="query_hint_system">\"-s\"表示系统应用</string>
     <string name="checking">正在检查状态，请稍候...</string>
+    <string name="retrieving">正在加载应用列表，请稍候...</string>
 
 </resources>

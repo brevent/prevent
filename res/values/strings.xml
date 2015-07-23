@@ -24,5 +24,6 @@
     <string name="query_hint">\"-3\" for user\'s apps</string>
     <string name="query_hint_system">\"-s\" for system apps</string>
     <string name="checking">Checking status, please wait...</string>
+    <string name="retrieving">Retrieving packages, please wait...</string>
 
 </resources>

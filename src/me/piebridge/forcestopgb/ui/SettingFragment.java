@@ -1,11 +1,7 @@
 package me.piebridge.forcestopgb.ui;
 
 import android.app.ActivityManager.RunningAppProcessInfo;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.ActivityNotFoundException;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -62,7 +58,6 @@ public abstract class SettingFragment extends ListFragment {
     private CheckBox check;
     private int headerIconWidth;
     private static final int HEADER_ICON_WIDTH = 48;
-    private AlertDialog noHookDialog;
     private static Map<String, String> labels = new HashMap<String, String>();
     private static Map<String, Position> positions = new HashMap<String, Position>();
 
@@ -133,6 +128,12 @@ public abstract class SettingFragment extends ListFragment {
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         l.showContextMenuForChild(v);
+    }
+
+    @Override
+    public void onPause() {
+        saveListPosition();
+        super.onPause();
     }
 
     private int getHeaderIconWidth() {
@@ -253,7 +254,7 @@ public abstract class SettingFragment extends ListFragment {
 
     protected abstract int getQueryHint();
 
-    public void saveListPosition() {
+    private void saveListPosition() {
         if (mAdapter != null) {
             ListView l = getListView();
             int position = l.getFirstVisiblePosition();
@@ -271,64 +272,7 @@ public abstract class SettingFragment extends ListFragment {
         return positions.get(getClass().getName());
     }
 
-    private void showDialog() {
-        final Context context = mActivity;
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(R.string.app_name);
-        builder.setMessage(R.string.app_notenabled);
-        builder.setIcon(R.drawable.ic_launcher);
-        builder.setCancelable(false);
-        builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
-                intent.setPackage("de.robv.android.xposed.installer");
-                intent.putExtra("section", "modules");
-                intent.putExtra("module", context.getPackageName());
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                try {
-                    startActivity(intent);
-                } catch (ActivityNotFoundException e) { // NOSONAR
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.saurik.substrate")));
-                }
-            }
-        });
-        noHookDialog = builder.create();
-        noHookDialog.show();
-    }
-
-    private void dismissDialogIfNeeded() {
-        if (noHookDialog != null) {
-            noHookDialog.dismiss();
-            noHookDialog = null;
-        }
-    }
-
     private void setNewAdapterIfNeeded(SettingActivity activity, boolean force) {
-        Boolean hookEnabled = activity.getHookEnabled();
-        if (Boolean.TRUE.equals(hookEnabled)) {
-            dismissDialogIfNeeded();
-            doSetNewAdapterIfNeeded(activity, force);
-        } else if (Boolean.FALSE.equals(hookEnabled)) {
-            dismissDialogIfNeeded();
-            showDialog();
-        } else {
-            showCheckDialog();
-        }
-    }
-
-    private void showCheckDialog() {
-        final Context context = mActivity;
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(R.string.app_name);
-        builder.setMessage(R.string.checking);
-        builder.setIcon(R.drawable.ic_launcher);
-        builder.setCancelable(false);
-        noHookDialog = builder.create();
-        noHookDialog.show();
-    }
-
-    private void doSetNewAdapterIfNeeded(SettingActivity activity, boolean force) {
         Set<String> names;
         if (force || prevNames == null) {
             names = getPackageNames(activity);
@@ -504,7 +448,7 @@ public abstract class SettingFragment extends ListFragment {
                 holder.preventView.setVisibility(View.VISIBLE);
                 holder.preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
             }
-            new RetriveIconTask().execute(holder, appInfo);
+            new RetrieveIconTask().execute(holder, appInfo);
             return view;
         }
 
@@ -652,7 +596,7 @@ public abstract class SettingFragment extends ListFragment {
 
     }
 
-    private class RetriveIconTask extends AsyncTask<Object, Void, ViewHolder> {
+    private class RetrieveIconTask extends AsyncTask<Object, Void, ViewHolder> {
         final PackageManager pm = mActivity.getPackageManager();
 
         @Override
