@@ -7,10 +7,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import me.piebridge.forcestopgb.R;
+import me.piebridge.util.PackageUtils;
 
 public class SettingFragmentPreventList extends SettingFragment {
-
-    private static final int FLAG_SYSTEM_APP = ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
 
     @Override
     protected Set<String> getPackageNames(SettingActivity activity) {
@@ -24,7 +23,7 @@ public class SettingFragmentPreventList extends SettingFragment {
             } catch (PackageManager.NameNotFoundException e) { // NOSONAR
                 appInfo = null;
             }
-            if (appInfo == null || !appInfo.enabled || ((appInfo.flags & FLAG_SYSTEM_APP) != 0 && pm.getLaunchIntentForPackage(packageName) == null)) {
+            if (appInfo == null || !appInfo.enabled || (PackageUtils.isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(packageName) == null)) {
                 removes.add(packageName);
             } else {
                 names.add(packageName);

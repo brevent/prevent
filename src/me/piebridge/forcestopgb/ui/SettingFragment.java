@@ -50,6 +50,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.R;
+import me.piebridge.util.PackageUtils;
 
 public abstract class SettingFragment extends ListFragment {
 
@@ -386,7 +387,7 @@ public abstract class SettingFragment extends ListFragment {
         }
 
         public boolean isSystem() {
-            return (flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+            return PackageUtils.isSystemPackage(this.flags);
         }
 
         @Override

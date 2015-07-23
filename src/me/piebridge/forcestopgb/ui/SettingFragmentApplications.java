@@ -8,10 +8,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
 import me.piebridge.forcestopgb.R;
+import me.piebridge.util.PackageUtils;
 
 public class SettingFragmentApplications extends SettingFragment {
-
-    private static final int FLAG_SYSTEM_APP = ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
 
     @Override
     protected Set<String> getPackageNames(SettingActivity activity) {
@@ -37,7 +36,7 @@ public class SettingFragmentApplications extends SettingFragment {
     }
 
     private boolean isSystemNoLauncherApp(ApplicationInfo appInfo, PackageManager pm) {
-        return (appInfo.flags & FLAG_SYSTEM_APP) != 0 && pm.getLaunchIntentForPackage(appInfo.packageName) == null;
+        return PackageUtils.isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(appInfo.packageName) == null;
     }
 
 }
