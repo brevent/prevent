@@ -17,7 +17,6 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -51,7 +50,12 @@ import me.piebridge.util.HiddenAPI;
 import me.piebridge.util.PackageUtils;
 import me.piebridge.util.TaskRecordUtils;
 
-import static me.piebridge.util.LogUtils.*;
+import static me.piebridge.util.LogUtils.logForceStop;
+import static me.piebridge.util.LogUtils.logIgnore;
+import static me.piebridge.util.LogUtils.logIntentFilter;
+import static me.piebridge.util.LogUtils.logKill;
+import static me.piebridge.util.LogUtils.logRequest;
+import static me.piebridge.util.LogUtils.logStartProcess;
 
 public final class SystemHook {
 
@@ -282,9 +286,6 @@ public final class SystemHook {
                 return HookResult.NO_MATCH;
             }
         } else if (filter instanceof PackageParser.ServiceIntentInfo) {
-            if (shouldIgnore(action)) {
-                return HookResult.NO_MATCH;
-            }
             // for service, we try to find calling package
             @SuppressWarnings("unchecked")
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
@@ -316,18 +317,6 @@ public final class SystemHook {
         }
 
         return HookResult.NONE;
-    }
-
-    private static boolean shouldIgnore(String action) {
-        return shouldIgnoreLocation(action);
-    }
-
-    private static boolean shouldIgnoreLocation(String action) {
-        if (application == null || action == null) {
-            return false;
-        }
-        boolean enabled = Settings.Secure.getInt(application.getContentResolver(), Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF) != Settings.Secure.LOCATION_MODE_OFF;
-        return !enabled && action.startsWith("com.android.location.service");
     }
 
     private static boolean registerReceiversIfNeeded() {
