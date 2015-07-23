@@ -3,6 +3,9 @@ package me.piebridge.util;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
+
+import me.piebridge.forcestopgb.common.CommonIntent;
 
 /**
  * Created by thom on 15/7/23.
@@ -18,6 +21,7 @@ public class PackageUtils {
             ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
             return isSystemPackage(ai.flags);
         } catch (PackageManager.NameNotFoundException e) {
+            Log.e(CommonIntent.TAG, "cannot find package", e);
             return false;
         }
     }

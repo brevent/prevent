@@ -7,8 +7,6 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.provider.Settings;
 
-import java.util.Set;
-
 import me.piebridge.forcestopgb.common.Packages;
 
 /**
@@ -41,10 +39,6 @@ public class Provider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        String packageName = values.getAsString(COLUMN_PACKAGE);
-        Set<String> packages = Packages.load();
-        packages.add(packageName);
-        Packages.save(packages);
         return null;
     }
 

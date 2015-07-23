@@ -6,12 +6,10 @@ import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
 import android.database.Cursor;
 import android.net.Uri;
@@ -47,12 +45,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.common.CommonIntent;
 import me.piebridge.forcestopgb.common.Packages;
-import me.piebridge.forcestopgb.ui.PreventUtils;
 import me.piebridge.forcestopgb.ui.Provider;
 import me.piebridge.util.BroadcastFilterUtils;
 import me.piebridge.util.HiddenAPI;
 import me.piebridge.util.PackageUtils;
 import me.piebridge.util.TaskRecordUtils;
+
+import static me.piebridge.util.LogUtils.*;
 
 public final class SystemHook {
 
@@ -68,10 +67,6 @@ public final class SystemHook {
 
     private static long lastChecking;
     private static final long MILLISECONDS = 1000;
-
-    private static final String ACTION = "action: ";
-    private static final String FILTER = "filter: ";
-    private static final String PACKAGE = "package: ";
 
     private static ActivityManager activityManager;
 
@@ -266,17 +261,7 @@ public final class SystemHook {
         String action = (String) args[0x0];
 
         if (BuildConfig.DEBUG) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(ACTION);
-            sb.append(action);
-            sb.append(", ");
-            sb.append(FILTER);
-            sb.append(filter);
-            sb.append(", callingUid: ");
-            sb.append(Binder.getCallingUid());
-            sb.append(", callingPid: ");
-            sb.append(Binder.getCallingPid());
-            Log.v(TAG, sb.toString());
+            logIntentFilter(action, filter, null);
         }
 
         if (filter instanceof PackageParser.ActivityIntentInfo) {
@@ -324,7 +309,7 @@ public final class SystemHook {
                 return HookResult.NO_MATCH;
             }
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, ACTION + action + ", filter:  " + filter + ", package: " + packageName);
+                logIntentFilter(action, filter, packageName);
             }
         }
 
@@ -362,7 +347,7 @@ public final class SystemHook {
         application.registerReceiver(receiver, filter, null, handler);
 
         registered = true;
-        Log.d(TAG, "registered receiver");
+        Log.i(TAG, "registered receiver");
 
         activityManager = (ActivityManager) application.getSystemService(Context.ACTIVITY_SERVICE);
         return false;
@@ -396,7 +381,7 @@ public final class SystemHook {
                         preventPackages.put(name, Boolean.TRUE);
                     }
                 }
-                Log.d(TAG, "prevents: " + preventPackages.keySet().toString());
+                Log.i(TAG, "prevents: " + preventPackages.keySet().toString());
             }
         });
     }
@@ -486,9 +471,8 @@ public final class SystemHook {
         return true;
     }
 
-    public static void afterActivityManagerService$cleanUpRemovedTaskLocked(Object[] args) {
+    public static void afterActivityManagerService$cleanUpRemovedTaskLocked(Object[] args) { // NOSONAR
         String packageName = TaskRecordUtils.getPackageName(args[0]);
-        Log.d(CommonIntent.TAG, "cleanUpRemovedTaskLocked: " + args[0] + ", package: " + packageName);
         if (packageName != null) {
             autoPrevents(packageName);
         }
@@ -503,12 +487,6 @@ public final class SystemHook {
                 forceStopPackageForce(packageName, TIME_IMMEDIATE);
                 if (preventPackages.containsKey(packageName)) {
                     preventPackages.put(packageName, Boolean.TRUE);
-                } else if (BuildConfig.DEBUG && !PackageUtils.isSystemPackage(application, packageName)) {
-                    Log.d(TAG, "auto prevents " + packageName);
-                    preventPackages.put(packageName, Boolean.TRUE);
-                    ContentValues values = new ContentValues();
-                    values.put(Provider.COLUMN_PACKAGE, packageName);
-                    application.getContentResolver().insert(Provider.CONTENT_URI, values);
                 }
             }
         });
@@ -614,35 +592,7 @@ public final class SystemHook {
             return false;
         }
         lastChecking = now;
-        executor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
-                Map<String, Boolean> serviceStatus = new HashMap<String, Boolean>();
-                for (int i = services.size() - 1; i >= 0; --i) {
-                    ActivityManager.RunningServiceInfo service = services.get(i);
-                    String name = service.service.getPackageName();
-                    boolean prevents = Boolean.TRUE.equals(preventPackages.get(name));
-                    if (BuildConfig.DEBUG) {
-                        Log.d(CommonIntent.TAG, "prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount);
-                    }
-                    if (prevents && (name.equals(packageName) || service.uid >= FIRST_APPLICATION_UID)) {
-                        boolean canStop = service.clientCount == 0;
-                        Boolean result = serviceStatus.get(name);
-                        if (result == null || result) {
-                            serviceStatus.put(name, canStop);
-                        }
-                    }
-                }
-                for (Map.Entry<String, Boolean> entry : serviceStatus.entrySet()) {
-                    if (entry.getValue()) {
-                        String name = entry.getKey();
-                        Log.d(TAG, name + " has running services, force stop it");
-                        forceStopPackage(name);
-                    }
-                }
-            }
-        }, second, TimeUnit.SECONDS);
+        executor.schedule(new CheckingRunningService(packageName), second, TimeUnit.SECONDS);
         return true;
     }
 
@@ -730,90 +680,47 @@ public final class SystemHook {
         }
     }
 
-    private static void logKill(int pid, String reason, String packageName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("kill ");
-        sb.append(pid);
-        sb.append("(");
-        sb.append(reason);
-        sb.append("), ");
-        sb.append(PACKAGE);
-        sb.append(packageName);
-        Log.d(TAG, sb.toString());
-    }
+    private static class CheckingRunningService implements Runnable {
 
-    private static void logForceStop(String action, String packageName, String message) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ACTION);
-        sb.append(action);
-        sb.append(", force stop ");
-        sb.append(packageName);
-        sb.append(" ");
-        sb.append(message);
-        Log.d(TAG, sb.toString());
-    }
+        private final String packageName;
 
-    private static void logIgnore(int key, String packageName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("pid ");
-        sb.append(key);
-        sb.append(" is not for ");
-        sb.append(packageName);
-        Log.d(TAG, sb.toString());
-    }
+        private final Map<String, Boolean> serviceStatus;
 
-    private static void logRequest(String action, String packageName, int count) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ACTION);
-        sb.append(action);
-        sb.append(", ");
-        sb.append(PACKAGE);
-        sb.append(packageName);
-        if (count >= 0) {
-            sb.append(", count: ");
-            sb.append(count);
+        private CheckingRunningService(String packageName) {
+            this.packageName = packageName;
+            this.serviceStatus = new HashMap<String, Boolean>();
         }
-        Log.i(TAG, sb.toString());
-    }
 
-    private static void logIntentFilter(boolean disallow, final Object filter, final String action, final String packageName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(disallow ? "disallow" : "allow");
-        sb.append(" ");
-        sb.append(ACTION);
-        sb.append(action);
-        sb.append(", ");
-        sb.append(FILTER);
-        sb.append(filter);
-        sb.append(", ");
-        sb.append(PACKAGE);
-        sb.append(packageName);
-        sb.append(", callingUid: ");
-        sb.append(Binder.getCallingUid());
-        sb.append(", callingPid: ");
-        sb.append(Binder.getCallingPid());
-        if (disallow) {
-            Log.v(TAG, sb.toString());
-        } else {
-            Log.d(TAG, sb.toString());
+        @Override
+        public void run() {
+            List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+            for (int i = services.size() - 1; i >= 0; --i) {
+                ActivityManager.RunningServiceInfo service = services.get(i);
+                String name = service.service.getPackageName();
+                boolean prevents = Boolean.TRUE.equals(preventPackages.get(name));
+                if (BuildConfig.DEBUG) {
+                    Log.d(CommonIntent.TAG, "prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount);
+                }
+                if (prevents && (name.equals(this.packageName) || service.uid >= FIRST_APPLICATION_UID)) {
+                    boolean canStop = service.clientCount == 0;
+                    Boolean result = serviceStatus.get(name);
+                    if (result == null || result) {
+                        serviceStatus.put(name, canStop);
+                    }
+                }
+            }
+            stopServiceIfNeeded();
         }
-    }
 
-    private static void logStartProcess(final String allow, final String packageName, final String hostingType, final Object hostingName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(allow);
-        sb.append(" start ");
-        sb.append(packageName);
-        sb.append(" for");
-        if (hostingType != null) {
-            sb.append(" ");
-            sb.append(hostingType);
+        private void stopServiceIfNeeded() {
+            for (Map.Entry<String, Boolean> entry : serviceStatus.entrySet()) {
+                if (entry.getValue()) {
+                    String name = entry.getKey();
+                    Log.d(TAG, name + " has running services, force stop it");
+                    forceStopPackage(name);
+                }
+            }
         }
-        if (hostingName != null) {
-            sb.append(" ");
-            sb.append(hostingName);
-        }
-        Log.d(TAG, sb.toString());
     }
 
 }

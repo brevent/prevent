@@ -13,13 +13,13 @@ import me.piebridge.forcestopgb.common.CommonIntent;
  */
 public class TaskRecordUtils {
 
-    private TaskRecordUtils() {
-
-    }
-
     private static Field taskRecord$intent;
 
     private static Field taskRecord$affinityIntent;
+
+    private TaskRecordUtils() {
+
+    }
 
     public static String getPackageName(Object object) {
         try {
@@ -62,11 +62,12 @@ public class TaskRecordUtils {
 
     private static class ActivityRecordUtils {
 
+        private static Field task;
+
         private ActivityRecordUtils() {
 
         }
 
-        private static Field task;
 
         private static boolean isActivityRecord(Object object) {
             return object != null && "ActivityRecord".equals(object.getClass().getSimpleName());
