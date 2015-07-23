@@ -503,9 +503,7 @@ public final class SystemHook {
                 forceStopPackageForce(packageName, TIME_IMMEDIATE);
                 if (preventPackages.containsKey(packageName)) {
                     preventPackages.put(packageName, Boolean.TRUE);
-                } else if (PackageUtils.cannotPrevents(application, packageName)) {
-                    Log.d(TAG, "cannot prevents " + packageName);
-                } else {
+                } else if (BuildConfig.DEBUG && !PackageUtils.isSystemPackage(application, packageName)) {
                     Log.d(TAG, "auto prevents " + packageName);
                     preventPackages.put(packageName, Boolean.TRUE);
                     ContentValues values = new ContentValues();
