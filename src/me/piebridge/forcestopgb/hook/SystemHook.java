@@ -61,8 +61,8 @@ public final class SystemHook {
     private static boolean gotprevent = false;
 
     private static final int TIME_SUICIDE = 6;
-    private static final int TIME_DESTROY = 12;
-    private static final int TIME_PREVENT = 60;
+    private static final int TIME_DESTROY = 6;
+    private static final int TIME_PREVENT = 6;
     private static final int TIME_IMMEDIATE = 1;
 
     private static long lastChecking;
@@ -712,11 +712,11 @@ public final class SystemHook {
                 ActivityManager.RunningServiceInfo service = services.get(i);
                 String name = service.service.getPackageName();
                 boolean prevents = Boolean.TRUE.equals(preventPackages.get(name));
-                if (BuildConfig.DEBUG) {
-                    Log.d(CommonIntent.TAG, "prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount);
+                if (prevents || BuildConfig.DEBUG) {
+                    Log.d(CommonIntent.TAG, "prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount + ", started: " + service.started + ", flags: " + service.flags + ", foreground: " + service.foreground);
                 }
                 if (prevents && (name.equals(this.packageName) || service.uid >= FIRST_APPLICATION_UID)) {
-                    boolean canStop = service.clientCount == 0;
+                    boolean canStop = service.started;
                     Boolean result = serviceStatus.get(name);
                     if (result == null || result) {
                         serviceStatus.put(name, canStop);
