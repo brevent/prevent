@@ -71,8 +71,6 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 
     private static Boolean hookEnabled = null;
 
-    private BroadcastReceiver mBroadcastReceiver;
-
     private Integer dangerousColor = null;
 
     private Integer transparentColor = null;
@@ -109,24 +107,25 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         cancel.setEnabled(false);
         prevent.setEnabled(false);
         remove.setEnabled(false);
-        mBroadcastReceiver = new HookReceiver();
         mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        showFragmentsIfNeeded(true);
+        showFragmentsIfNeeded();
     }
 
-    private void showFragmentsIfNeeded(boolean checkingPrevents) {
-        if (hookEnabled == null || (checkingPrevents && preventPackages.isEmpty())) {
+
+    private void showFragmentsIfNeeded() {
+        if (hookEnabled == null || (Boolean.TRUE.equals(hookEnabled) && preventPackages.isEmpty())) {
             showAlertDialog(R.string.checking);
-            Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES);
-            intent.setFlags(CommonIntent.INTENT_FLAG);
+            Intent intent = new Intent();
+            intent.setFlags(CommonIntent.INTENT_FLAG | Intent.FLAG_RECEIVER_FOREGROUND);
+            intent.setAction(CommonIntent.ACTION_GET_PACKAGES);
             intent.setData(Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
             Log.d(CommonIntent.TAG, "sending hook checking broadcast");
-            sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
+            sendOrderedBroadcast(intent, null, new HookReceiver(), null, 0, null, null);
         } else if (!hookEnabled) {
             showDisableDialog();
         } else {
@@ -405,6 +404,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private class HookReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(CommonIntent.TAG, "received hook checking broadcast");
             String result = getResultData();
             if (result != null) {
                 hookEnabled = true;
@@ -413,9 +413,8 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 hookEnabled = false;
             }
             // we are on main thread
-            Log.d(CommonIntent.TAG, "received hook checking broadcast");
             dialog.dismiss();
-            showFragmentsIfNeeded(false);
+            showFragmentsIfNeeded();
         }
 
         private void handlePackages(String result) {

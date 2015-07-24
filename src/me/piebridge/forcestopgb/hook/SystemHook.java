@@ -140,6 +140,7 @@ public final class SystemHook {
             if (CommonIntent.ACTION_GET_PACKAGES.equals(action)) {
                 logRequest(action, packageName, -1);
                 setResultData(new JSONObject(preventPackages).toString());
+                abortBroadcast();
             } else if (CommonIntent.ACTION_UPDATE_PREVENT.equals(action)) {
                 handleUpdatePrevent(action, packageName, intent);
             } else if (CommonIntent.ACTION_INCREASE_COUNTER.equals(action)) {
