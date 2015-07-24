@@ -19,7 +19,7 @@
     <string name="app_info">App Info</string>
     <string name="uninstall">Uninstall</string>
     <string name="switch_theme">Switch theme</string>
-    <string name="app_notenabled">Please enable \"Prevent Running\" in \"Xposed Installer\", or install \"Cydia Substrate\".</string>
+    <string name="app_notenabled">Please enable \"Prevent Running\" in \"Xposed Installer\".</string>
     <string name="open">Open</string>
     <string name="query_hint">\"-3\" for user\'s apps</string>
     <string name="query_hint_system">\"-s\" for system apps</string>

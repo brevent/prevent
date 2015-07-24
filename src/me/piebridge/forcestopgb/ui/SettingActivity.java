@@ -371,7 +371,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 try {
                     startActivity(intent);
                 } catch (ActivityNotFoundException e) { // NOSONAR
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.saurik.substrate")));
+                    finish();
                 }
             }
         });
