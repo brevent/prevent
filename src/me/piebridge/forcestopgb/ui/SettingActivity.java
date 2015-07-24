@@ -21,6 +21,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentUtils;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -124,6 +125,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             Intent intent = new Intent(CommonIntent.ACTION_GET_PACKAGES);
             intent.setFlags(CommonIntent.INTENT_FLAG);
             intent.setData(Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
+            Log.d(CommonIntent.TAG, "sending hook checking broadcast");
             sendOrderedBroadcast(intent, null, mBroadcastReceiver, null, 0, null, null);
         } else if (!hookEnabled) {
             showDisableDialog();
@@ -295,7 +297,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 
     private void savePackages() {
         Packages.save(preventPackages.keySet());
-        refreshIfNeeded(true);
+        refreshIfNeeded();
     }
 
     @Override
@@ -385,12 +387,10 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
-    private void refreshIfNeeded(boolean force) {
+    private void refreshIfNeeded() {
         int position = mPager.getCurrentItem();
         for (int item = 0; item < mPageTitles.length; ++item) {
             if (item != position) {
-                refresh(item, force);
-            } else if (force) {
                 refresh(item, false);
             }
         }
@@ -412,13 +412,10 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             } else {
                 hookEnabled = false;
             }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    dialog.dismiss();
-                    showFragmentsIfNeeded(false);
-                }
-            });
+            // we are on main thread
+            Log.d(CommonIntent.TAG, "received hook checking broadcast");
+            dialog.dismiss();
+            showFragmentsIfNeeded(false);
         }
 
         private void handlePackages(String result) {

@@ -14,6 +14,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.ContextMenu;
@@ -56,6 +57,7 @@ public abstract class SettingFragment extends ListFragment {
     private Set<String> prevNames = null;
     private View filter;
     private CheckBox check;
+    private EditText search;
     private int headerIconWidth;
     private static final int HEADER_ICON_WIDTH = 48;
     private static Map<String, String> labels = new HashMap<String, String>();
@@ -102,8 +104,8 @@ public abstract class SettingFragment extends ListFragment {
                 selectAll(check.isChecked());
             }
         });
-        EditText query = (EditText) filter.findViewById(R.id.filter_query);
-        query.addTextChangedListener(new TextWatcher() {
+        search = (EditText) filter.findViewById(R.id.filter_query);
+        search.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int before, int after) {
                 // do nothing
@@ -121,7 +123,7 @@ public abstract class SettingFragment extends ListFragment {
                 // do nothing
             }
         });
-        query.setHint(getQueryHint());
+        search.setHint(getQueryHint());
         return view;
     }
 
@@ -590,6 +592,10 @@ public abstract class SettingFragment extends ListFragment {
                 }
                 if (mView != null) {
                     mView.setVisibility(View.VISIBLE);
+                }
+                String query = search.getText().toString();
+                if (!TextUtils.isEmpty(query)) {
+                    getFilter().filter(query);
                 }
             }
         }
