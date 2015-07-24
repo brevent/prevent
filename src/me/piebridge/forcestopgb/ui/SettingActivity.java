@@ -84,7 +84,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 
     public int getTransparentColor() {
         if (transparentColor == null) {
-            transparentColor = getColor(android.R.color.transparent);
+            transparentColor = getResourceColor(android.R.color.transparent);
         }
         return transparentColor;
     }
@@ -321,7 +321,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         checkSelection();
     }
 
-    public int getColor(int colorId) {
+    public int getResourceColor(int colorId) {
         return getResources().getColor(colorId);
     }
 
@@ -332,7 +332,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     public int getThemedColor(int resId) {
-        return getColor(getThemed(resId));
+        return getResourceColor(getThemed(resId));
     }
 
     private void showAlertDialog(int resId) {
