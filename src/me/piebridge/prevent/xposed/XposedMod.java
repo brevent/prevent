@@ -17,6 +17,7 @@ import de.robv.android.xposed.XposedHelpers;
 
 import me.piebridge.prevent.framework.Hook;
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
+import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.framework.SystemHook;
 
 public class XposedMod implements IXposedHookZygoteInit {
@@ -27,6 +28,7 @@ public class XposedMod implements IXposedHookZygoteInit {
     }
 
     private static void initZygote() throws Throwable { // NOSONAR
+        PreventLog.d("start prevent hook");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Class<?> ActivityThread = Class.forName("android.app.ActivityThread"); // NOSONAR
             XposedBridge.hookAllMethods(ActivityThread, "systemMain", new XC_MethodHook() {
@@ -42,6 +44,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         hookActivity();
         hookSuicide();
         hookDestroy();
+        PreventLog.d("finish prevent hook");
     }
 
     private static void hookSystem(ClassLoader classLoader) throws ClassNotFoundException, NoSuchMethodException {
