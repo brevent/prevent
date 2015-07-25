@@ -125,7 +125,7 @@ public final class SystemHook {
             } else if (PreventIntent.ACTION_ACTIVITY_DESTROY.equals(action)) {
                 handleDestroy(action, packageName);
             } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
-                handlePackageRestarted(action, packageName);
+                handlePackageRestarted("PACKAGE_RESTARTED", packageName);
             } else if (PreventIntent.ACTION_FORCE_STOP.equals(action)) {
                 handleForceStop(action, packageName, intent);
             }
