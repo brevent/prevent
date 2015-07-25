@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
-import me.piebridge.prevent.ui.UILog;
-
 public final class PreventListUtils {
 
     public static final String PREVENT = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/prevent.list";
