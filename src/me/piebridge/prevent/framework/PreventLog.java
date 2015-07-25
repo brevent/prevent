@@ -21,27 +21,27 @@ public class PreventLog {
 
     public static void d(String msg) {
         Log.d(TAG, msg);
-        XposedBridge.log("[" + TAG + "]" + "[DEBUG]" + msg);
+        XposedBridge.log("[D/" + TAG + "] " + msg);
     }
 
     public static void i(String msg) {
         Log.i(TAG, msg);
-        XposedBridge.log("[" + TAG + "]" + "[ INFO]" + msg);
+        XposedBridge.log("[I/" + TAG + "] " + msg);
     }
 
     public static void w(String msg) {
         Log.w(TAG, msg);
-        XposedBridge.log("[" + TAG + "]" + "[ WARN]" + msg);
+        XposedBridge.log("[W/" + TAG + "] " + msg);
     }
 
     public static void e(String msg) {
         Log.e(TAG, msg);
-        XposedBridge.log("[" + TAG + "]" + "[ERROR]" + msg);
+        XposedBridge.log("[E/" + TAG + "] " + msg);
     }
 
     public static void e(String msg, Throwable t) {
         Log.e(TAG, msg, t);
-        XposedBridge.log("[" + TAG + "]" + "[ERROR]" + msg);
+        XposedBridge.log("[E/" + TAG + "] " + msg);
         XposedBridge.log(t);
     }
 
