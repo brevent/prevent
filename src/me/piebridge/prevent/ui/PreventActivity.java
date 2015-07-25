@@ -118,7 +118,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
 
     private void showFragmentsIfNeeded() {
-        if (hookEnabled == null || (Boolean.TRUE.equals(hookEnabled) && preventPackages.isEmpty())) {
+        if (hookEnabled == null || (hookEnabled && preventPackages == null)) {
             showAlertDialog(R.string.checking);
             Intent intent = new Intent();
             intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
@@ -129,6 +129,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         } else if (!hookEnabled) {
             showDisableDialog();
         } else {
+            initFragmentIfNeeded();
             if (running.isEmpty()) {
                 showAlertDialog(R.string.retrieving);
             }
@@ -164,7 +165,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                initFragmentIfNeeded();
                 dialog.dismiss();
                 refresh();
             }
@@ -387,11 +387,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void refreshIfNeeded() {
-        int position = mPager.getCurrentItem();
         for (int item = 0; item < mPageTitles.length; ++item) {
-            if (item != position) {
-                refresh(item, false);
-            }
+            refresh(item, false);
         }
     }
 
@@ -420,7 +417,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         private void handlePackages(String result) {
             try {
                 JSONObject json = new JSONObject(result);
-                preventPackages.clear();
+                if (preventPackages == null) {
+                    preventPackages = new HashMap<String, Boolean>();
+                } else {
+                    preventPackages.clear();
+                }
                 Iterator<String> it = json.keys();
                 while (it.hasNext()) {
                     String key = it.next();
