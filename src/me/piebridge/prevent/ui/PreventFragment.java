@@ -664,7 +664,7 @@ public abstract class PreventFragment extends ListFragment {
             }
             StringBuilder buffer = new StringBuilder();
             Iterator<?> it = sets.iterator();
-            while (true) {
+            while (it.hasNext()) {
                 buffer.append(it.next());
                 if (it.hasNext()) {
                     buffer.append(", ");

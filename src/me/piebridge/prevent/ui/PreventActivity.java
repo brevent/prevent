@@ -19,6 +19,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentUtils;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -400,8 +401,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 Iterator<String> it = json.keys();
                 while (it.hasNext()) {
                     String key = it.next();
-                    Set<Integer> value = convertImportance(json.optJSONArray(key));
-                    processes.put(key, value);
+                    String value = json.optString(key);
+                    if (value != null) {
+                        processes.put(key,  convertImportance(value));
+                    }
                 }
                 synchronized (runningLock) {
                     running.clear();
@@ -412,11 +415,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             }
         }
 
-        private Set<Integer> convertImportance(JSONArray value) {
+        private Set<Integer> convertImportance(String value) {
             Set<Integer> importance = new HashSet<Integer>();
-            int length = value.length();
-            for (int i = 0; i < length; ++i) {
-                importance.add(value.optInt(i));
+            for (String s : value.split(",")) {
+                if (!TextUtils.isEmpty(s) && TextUtils.isDigitsOnly(s)) {
+                    importance.add(Integer.parseInt(s));
+                }
             }
             return importance;
         }

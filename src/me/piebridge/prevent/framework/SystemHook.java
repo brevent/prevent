@@ -107,7 +107,7 @@ public final class SystemHook {
             } else if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
                 Map<String, Set<Integer>> running = getRunningAppProcesses();
                 LogUtils.logRequest(action, null, running.size());
-                setResultData(new JSONObject(running).toString());
+                setResultData(toJSON(running));
                 abortBroadcast();
             } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
                 handleUpdatePrevent(action, packageName, intent);
@@ -705,6 +705,29 @@ public final class SystemHook {
             }
         }
         return running;
+    }
+
+    private static String toJSON(Map<String, Set<Integer>> processes) {
+        Map<String, String> results = new HashMap<String, String>();
+        for (Map.Entry<String, Set<Integer>> entry : processes.entrySet()) {
+            results.put(entry.getKey(), convertSet(entry.getValue()));
+        }
+        return new JSONObject(results).toString();
+    }
+
+    private static String convertSet(Set<Integer> value) {
+        StringBuilder sb = new StringBuilder();
+        Iterator<Integer> it = value.iterator();
+        while (it.hasNext()) {
+            Integer v = it.next();
+            if (v != null) {
+                sb.append(v);
+                if (it.hasNext()) {
+                    sb.append(",");
+                }
+            }
+        }
+        return sb.toString();
     }
 
     private static class CheckingRunningService implements Runnable {
