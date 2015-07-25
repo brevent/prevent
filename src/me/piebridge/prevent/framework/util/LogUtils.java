@@ -59,9 +59,11 @@ public class LogUtils {
             sb.append(PACKAGE);
             sb.append(packageName);
         }
-        if (count >= 0 && packageName != null) {
+        if (count >= 0) {
             sb.append(", count: ");
             sb.append(count);
+        }
+        if (packageName != null && count >= 0) {
             PreventLog.v(sb.toString());
         } else {
             PreventLog.d(sb.toString());
