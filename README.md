@@ -21,9 +21,7 @@ How to use:
 2. open "Prevent Running",  then add/remove application to/from prevent list.
 3. If you don't "auto prevent" news added packages, please prevent "Prevent Running".
 
-Project: https://github.com/liudongmiao/ForceStopGB
-Any donations are welcome.
-
+Project: https://github.com/liudongmiao/ForceStopGB , Any donations are welcome.
 
 # 中文
 安卓3.1对强行停止的程序引入了启动控制( http://developer.android.com/about/versions/android-3.1.html#launchcontrols )。但是，在2.3没有这个功能，而有些安卓4.X的设备根本没有实现。再者，很多流氓，总是有办法不断启动。
@@ -48,5 +46,4 @@ Any donations are welcome.
 2. 重启后，打开“阻止运行”，配置“阻止列表”(这个只需要一次)后，重启（可选）。
 3. “阻止运行”自动把新装应用添加到“阻止列表”，如果不想这样，请把阻止运行添加到阻止列表（不建议）。
 
-“阻止运行”开源，项目地址：https://github.com/liudongmiao/ForceStopGB。
-同时，欢迎各式捐赠，以身相许除外。
+“阻止运行”开源，项目地址：https://github.com/liudongmiao/ForceStopGB ，欢迎各式捐赠，以身相许除外。
