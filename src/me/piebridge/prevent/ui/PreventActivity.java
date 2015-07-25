@@ -381,19 +381,25 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         String tag = mPageTitles[position];
         PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
         if (fragment != null) {
-            fragment.refresh(force || fragment.canUseCache());
+            fragment.saveListPosition();
+            fragment.refresh(force);
         }
     }
 
     private void refreshIfNeeded() {
-        for (int item = 0; item < mPageTitles.length; ++item) {
-            refresh(item, false);
+        int position = mPager.getCurrentItem();
+        for (int item = mPageTitles.length - 1; item >= 0; --item) {
+            if (item == position) {
+                refresh(item, false);
+            } else {
+                refresh(item, true);
+            }
         }
     }
 
-    private void refresh() {
-        for (int item = 0; item < mPageTitles.length; ++item) {
-            refresh(item, true);
+    private void refresh(boolean force) {
+        for (int item = mPageTitles.length - 1; item >= 0; --item) {
+            refresh(item, force);
         }
     }
 
@@ -404,7 +410,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
                 handleGetProcesses();
                 dialog.dismiss();
-                refresh();
+                refresh(true);
             } else if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
                 handleGetPackages();
                 dialog.dismiss();
@@ -519,7 +525,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     public void onPause() {
         preventPackages = null;
-        running.clear();
         super.onPause();
     }
 

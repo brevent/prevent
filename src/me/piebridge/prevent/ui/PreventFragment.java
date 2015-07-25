@@ -54,7 +54,6 @@ import me.piebridge.prevent.ui.util.PreventUtils;
 public abstract class PreventFragment extends ListFragment {
 
     private Adapter mAdapter;
-    private Locale prevLocale;
     private PreventActivity mActivity;
     private Set<String> prevNames = null;
     private View filter;
@@ -62,7 +61,6 @@ public abstract class PreventFragment extends ListFragment {
     private EditText search;
     private int headerIconWidth;
     private static final int HEADER_ICON_WIDTH = 48;
-    private static Map<String, String> labels = new HashMap<String, String>();
     private static Map<String, Position> positions = new HashMap<String, Position>();
 
     @Override
@@ -254,11 +252,9 @@ public abstract class PreventFragment extends ListFragment {
 
     protected abstract Set<String> getPackageNames(PreventActivity activity);
 
-    protected abstract boolean canUseCache();
-
     protected abstract int getQueryHint();
 
-    private void saveListPosition() {
+    public void saveListPosition() {
         if (mAdapter != null) {
             ListView l = getListView();
             int position = l.getFirstVisiblePosition();
@@ -283,18 +279,17 @@ public abstract class PreventFragment extends ListFragment {
         } else {
             names = prevNames;
         }
-        if (force || mAdapter == null || !Locale.getDefault().equals(prevLocale) || !names.equals(prevNames)) {
+        if (mAdapter == null || !names.equals(prevNames)) {
             if (mAdapter != null) {
                 setListAdapter(null);
             }
-            mAdapter = new Adapter(activity, names, canUseCache(), filter);
+            mAdapter = new Adapter(activity, names, filter);
             setListAdapter(mAdapter);
             if (prevNames == null) {
                 prevNames = new HashSet<String>();
             }
             prevNames.clear();
             prevNames.addAll(names);
-            prevLocale = Locale.getDefault();
         } else {
             mAdapter.notifyDataSetChanged();
             Position position = getListPosition();
@@ -385,7 +380,6 @@ public abstract class PreventFragment extends ListFragment {
         private Set<String> mFiltered;
         private Filter mFilter;
         private View mView;
-        private boolean mCache;
 
         public Adapter(PreventActivity activity) {
             super(activity, R.layout.item);
@@ -407,10 +401,9 @@ public abstract class PreventFragment extends ListFragment {
             };
         }
 
-        public Adapter(final PreventActivity activity, Set<String> names, boolean cache, View view) {
+        public Adapter(final PreventActivity activity, Set<String> names, View view) {
             this(activity);
             mView = view;
-            mCache = cache;
             mNames.addAll(names);
             new RetrieveInfoTask().execute();
         }
@@ -518,7 +511,8 @@ public abstract class PreventFragment extends ListFragment {
             }
 
             private boolean match(String query, AppInfo appInfo) {
-                return contains(query, appInfo) || queryForThirdParty(query, appInfo) || queryForSystem(query, appInfo);
+                return contains(query, appInfo) || queryForThirdParty(query, appInfo) || queryForSystem(query, appInfo)
+                        || queryForRunning(query, appInfo) || queryForEnabled(query, appInfo);
             }
 
             private boolean contains(String query, AppInfo appInfo) {
@@ -532,6 +526,14 @@ public abstract class PreventFragment extends ListFragment {
             private boolean queryForSystem(String query, AppInfo appInfo) {
                 return "-s".equals(query) && appInfo.isSystem();
             }
+
+            private boolean queryForRunning(String query, AppInfo appInfo) {
+                return "-r".equals(query) && mActivity.getRunningProcesses().containsKey(appInfo.packageName);
+            }
+
+            private boolean queryForEnabled(String query, AppInfo appInfo) {
+                return "-e".equals(query) && !mActivity.getPreventPackages().containsKey(appInfo.packageName);
+            }
         }
 
         private class RetrieveInfoTask extends AsyncTask<Void, Integer, Set<AppInfo>> {
@@ -539,15 +541,12 @@ public abstract class PreventFragment extends ListFragment {
 
             @Override
             protected void onPreExecute() {
-                if (!mCache) {
-                    labels.clear();
-                    dialog = new ProgressDialog(mActivity);
-                    dialog.setMessage(mActivity.getString(R.string.loading));
-                    dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                    dialog.setCancelable(false);
-                    dialog.setMax(mNames.size());
-                    dialog.show();
-                }
+                dialog = new ProgressDialog(mActivity);
+                dialog.setMessage(mActivity.getString(R.string.loading));
+                dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                dialog.setCancelable(false);
+                dialog.setMax(mNames.size());
+                dialog.show();
             }
 
             @Override
@@ -566,16 +565,7 @@ public abstract class PreventFragment extends ListFragment {
                     if (info == null || !info.enabled) {
                         continue;
                     }
-                    String label;
-                    if (!mCache) {
-                        label = info.loadLabel(pm).toString();
-                        labels.put(name, label);
-                    } else {
-                        label = labels.get(name);
-                        if (label == null) {
-                            label = info.loadLabel(pm).toString();
-                        }
-                    }
+                    String label = info.loadLabel(pm).toString();
                     applications.add(new AppInfo(name, label, running.get(name)).setFlags(info.flags));
                 }
                 return applications;
@@ -697,11 +687,6 @@ public abstract class PreventFragment extends ListFragment {
         }
 
         @Override
-        protected boolean canUseCache() {
-            return false;
-        }
-
-        @Override
         protected int getQueryHint() {
             return R.string.query_hint;
         }
@@ -732,11 +717,6 @@ public abstract class PreventFragment extends ListFragment {
                 PreventUtils.update(getActivity(), removes.toArray(new String[removes.size()]), false);
             }
             return names;
-        }
-
-        @Override
-        protected boolean canUseCache() {
-            return true;
         }
 
         @Override
