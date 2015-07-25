@@ -370,6 +370,7 @@ public abstract class PreventFragment extends ListFragment {
         ImageView preventView;
         Drawable icon;
         Set<Integer> running;
+        RetrieveIconTask task;
         boolean canUninstall;
     }
 
@@ -452,7 +453,11 @@ public abstract class PreventFragment extends ListFragment {
                 holder.preventView.setVisibility(View.VISIBLE);
                 holder.preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
             }
-            new RetrieveIconTask().execute(holder, appInfo);
+            if (holder.task != null) {
+                holder.task.cancel(true);
+            }
+            holder.task = new RetrieveIconTask();
+            holder.task.execute(holder, appInfo);
             return view;
         }
 
