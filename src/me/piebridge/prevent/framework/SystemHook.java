@@ -288,7 +288,7 @@ public final class SystemHook {
         } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             // for dynamic broadcast, we only disable ACTION_CLOSE_SYSTEM_DIALOGS
             String packageName = BroadcastFilterUtils.getPackageName(filter);
-            if (preventPackages.containsKey(packageName)) {
+            if (packageName != null && preventPackages.containsKey(packageName)) {
                 LogUtils.logIntentFilter(true, filter, action, packageName);
                 return IntentFilterMatchResult.NO_MATCH;
             }
