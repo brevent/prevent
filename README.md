@@ -22,6 +22,13 @@ How to use:
 2. open "Prevent Running",  then add/remove application to/from prevent list.
 3. If you don't "auto prevent" added packages, please prevent "Prevent Running".
 
+Special Search:
+
+- `-3` for third party apps
+- `-s` for system apps
+- `-e` for non-prevent apps
+- `-r` for running apps
+
 Project: https://github.com/liudongmiao/ForceStopGB , any donations are welcome.
 
 # 中文
@@ -47,5 +54,12 @@ Project: https://github.com/liudongmiao/ForceStopGB , any donations are welcome.
 1. 安装“阻止运行”，在Xposed Installer中激活它，重启（必须）。
 2. 重启后，打开“阻止运行”，配置“阻止列表”(这个只需要一次)后，重启（可选）。
 3. “阻止运行”自动把新装应用添加到“阻止列表”，如果不想这样，请把阻止运行添加到阻止列表（不建议）。
+
+特别搜索：
+
+- `-3` 用户安装的第三方程序
+- `-s` 系统预装的程序
+- `-e` 没有阻止的程序
+- `-r` 正在运行的程序
 
 “阻止运行”开源，项目地址：https://github.com/liudongmiao/ForceStopGB ，欢迎各式捐赠，以身相许除外。
