@@ -684,7 +684,7 @@ public abstract class PreventFragment extends ListFragment {
             PackageManager pm = activity.getPackageManager();
             for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
                 ApplicationInfo appInfo = pkgInfo.applicationInfo;
-                if (appInfo != null && appInfo.enabled && !isSystemNoLauncherApp(appInfo, pm)) {
+                if (PackageUtils.canPrevent(pm, appInfo)) {
                     names.add(appInfo.packageName);
                 }
             }
@@ -699,10 +699,6 @@ public abstract class PreventFragment extends ListFragment {
         @Override
         protected int getQueryHint() {
             return R.string.query_hint;
-        }
-
-        private boolean isSystemNoLauncherApp(ApplicationInfo appInfo, PackageManager pm) {
-            return PackageUtils.isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(appInfo.packageName) == null;
         }
 
     }
@@ -721,7 +717,7 @@ public abstract class PreventFragment extends ListFragment {
                 } catch (PackageManager.NameNotFoundException e) { // NOSONAR
                     appInfo = null;
                 }
-                if (appInfo == null || !appInfo.enabled || (PackageUtils.isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(packageName) == null)) {
+                if (!PackageUtils.canPrevent(pm, appInfo)) {
                     removes.add(packageName);
                 } else {
                     names.add(packageName);

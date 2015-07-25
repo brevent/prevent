@@ -12,9 +12,12 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
+import me.piebridge.prevent.ui.UILog;
+
 public final class PreventListUtils {
 
     public static final String PREVENT = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/prevent.list";
+    public static final String PREVENT_DEPRECATED = Environment.getDataDirectory() + "/system/forcestop.list";
 
     private static final int MAX_WAIT = 3000;
     private static final int SINGLE_WAIT = 1000;
@@ -78,7 +81,14 @@ public final class PreventListUtils {
     }
 
     public static Set<String> load() {
-        return load(new File(PREVENT));
+        File fileDeprecated = new File(PREVENT_DEPRECATED);
+        Set<String> packages = load(new File(PREVENT));
+        if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
+            UILog.d("migrate packages");
+            packages.addAll(load(fileDeprecated));
+            fileDeprecated.delete();
+        }
+        return packages;
     }
 
 }
