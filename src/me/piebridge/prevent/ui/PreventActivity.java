@@ -76,6 +76,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private BroadcastReceiver receiver;
 
+    private static long lastProcessCheck;
+
+    private static long lastPreventsCheck;
+
     public int getDangerousColor() {
         if (dangerousColor == null) {
             dangerousColor = getThemedColor(R.attr.color_dangerous);
@@ -119,12 +123,31 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void retrievePrevents() {
+        long now = System.currentTimeMillis();
+        if (now - lastPreventsCheck < 0x1000) {
+            return;
+        }
+        lastPreventsCheck = now;
         showAlertDialog(R.string.checking);
         Intent intent = new Intent();
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
         intent.setAction(PreventIntent.ACTION_GET_PACKAGES);
         intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
         UILog.i("sending hook checking broadcast");
+        sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
+    }
+
+    private void retrieveRunning() {
+        long now = System.currentTimeMillis();
+        if (now - lastProcessCheck < 0x1000) {
+            return;
+        }
+        lastProcessCheck = now;
+        Intent intent = new Intent();
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+        intent.setAction(PreventIntent.ACTION_GET_PROCESSES);
+        intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+        UILog.i("sending get processes broadcast");
         sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
     }
 
@@ -138,12 +161,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             if (running.isEmpty()) {
                 showAlertDialog(R.string.retrieving);
             }
-            Intent intent = new Intent();
-            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
-            intent.setAction(PreventIntent.ACTION_GET_PROCESSES);
-            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-            UILog.i("sending get processes broadcast");
-            sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
+            retrieveRunning();
         }
     }
 
@@ -411,7 +429,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     String key = it.next();
                     String value = json.optString(key);
                     if (value != null) {
-                        processes.put(key,  convertImportance(value));
+                        processes.put(key, convertImportance(value));
                     }
                 }
                 synchronized (RUNNING_LOCK) {

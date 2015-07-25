@@ -283,7 +283,7 @@ public abstract class PreventFragment extends ListFragment {
         } else {
             names = prevNames;
         }
-        if (mAdapter == null || !Locale.getDefault().equals(prevLocale) || !names.equals(prevNames)) {
+        if (force || mAdapter == null || !Locale.getDefault().equals(prevLocale) || !names.equals(prevNames)) {
             if (mAdapter != null) {
                 setListAdapter(null);
             }
