@@ -47,7 +47,6 @@ import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
 import me.piebridge.prevent.ui.PreventProvider;
-import me.piebridge.prevent.ui.util.PreventListUtils;
 
 public final class SystemHook {
 
@@ -95,9 +94,6 @@ public final class SystemHook {
 
     public static void setClassLoader(ClassLoader classLoader) {
         SystemHook.classLoader = classLoader;
-        for (String name : PreventListUtils.load()) {
-            preventPackages.put(name, Boolean.TRUE);
-        }
     }
 
     public static ClassLoader getClassLoader() {
