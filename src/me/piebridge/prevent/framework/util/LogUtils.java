@@ -26,7 +26,7 @@ public class LogUtils {
         sb.append("), ");
         sb.append(PACKAGE);
         sb.append(packageName);
-        PreventLog.d(sb.toString());
+        PreventLog.i(sb.toString());
     }
 
     public static void logForceStop(String action, String packageName, String message) {
@@ -79,11 +79,7 @@ public class LogUtils {
         sb.append(Binder.getCallingUid());
         sb.append(", callingPid: ");
         sb.append(Binder.getCallingPid());
-        if (disallow) {
-            PreventLog.v(sb.toString());
-        } else {
-            PreventLog.d(sb.toString());
-        }
+        PreventLog.v(sb.toString());
     }
 
     public static void logStartProcess(final String allow, final String packageName, final String hostingType, final Object hostingName) {
