@@ -355,7 +355,7 @@ public final class SystemHook {
                         preventPackages.put(name, Boolean.TRUE);
                     }
                 }
-                PreventLog.d("prevents: " + preventPackages.keySet().toString());
+                PreventLog.d("prevents: " + preventPackages.size());
             }
         });
     }

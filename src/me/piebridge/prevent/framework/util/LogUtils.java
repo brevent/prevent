@@ -59,8 +59,10 @@ public class LogUtils {
         if (count >= 0) {
             sb.append(", count: ");
             sb.append(count);
+            PreventLog.v(sb.toString());
+        } else {
+            PreventLog.d(sb.toString());
         }
-        PreventLog.d(sb.toString());
     }
 
     public static void logIntentFilter(boolean disallow, final Object filter, final String action, final String packageName) {
