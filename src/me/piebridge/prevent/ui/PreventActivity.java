@@ -50,9 +50,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private String[] mPageTitles;
     private List<Set<String>> mPageSelections;
 
-    private final Object runningLock = new Object();
-    private Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
-    private Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
+    private static final Object runningLock = new Object();
+    private static Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
+    private static Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
     private View main;
     private Button remove;
     private Button cancel;
