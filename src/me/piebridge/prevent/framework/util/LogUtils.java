@@ -54,9 +54,11 @@ public class LogUtils {
         StringBuilder sb = new StringBuilder();
         sb.append(ACTION);
         sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
-        sb.append(", ");
-        sb.append(PACKAGE);
-        sb.append(packageName);
+        if (packageName != null) {
+            sb.append(", ");
+            sb.append(PACKAGE);
+            sb.append(packageName);
+        }
         if (count >= 0) {
             sb.append(", count: ");
             sb.append(count);

@@ -106,12 +106,13 @@ public final class SystemHook {
             String action = intent.getAction();
             String packageName = getPackageName(intent);
             if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
-                LogUtils.logRequest(action, packageName, -1);
                 setResultData(new JSONObject(preventPackages).toString());
+                LogUtils.logRequest(action, null, preventPackages.size());
                 abortBroadcast();
             } else if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
-                LogUtils.logRequest(action, packageName, -1);
-                setResultData(new JSONObject(getRunningAppProcesses()).toString());
+                Map<String, Set<Integer>> running = getRunningAppProcesses();
+                LogUtils.logRequest(action, null, running.size());
+                setResultData(new JSONObject(running).toString());
                 abortBroadcast();
             } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
                 handleUpdatePrevent(action, packageName, intent);
