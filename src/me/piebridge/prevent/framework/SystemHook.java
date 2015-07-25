@@ -55,7 +55,7 @@ public final class SystemHook {
 
     private static final int TIME_SUICIDE = 6;
     private static final int TIME_DESTROY = 6;
-    private static final int TIME_PREVENT = 6;
+    private static final int TIME_PREVENT = 12;
     private static final int TIME_IMMEDIATE = 1;
 
     private static long lastChecking;
