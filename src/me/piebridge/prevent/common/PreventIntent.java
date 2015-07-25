@@ -5,7 +5,7 @@ package me.piebridge.prevent.common;
  */
 public final class PreventIntent {
 
-    private static final String NAMESPACE = "me.piebridge.prevent.";
+    public static final String NAMESPACE = "me.piebridge.prevent.";
 
     // for hook
     public static final String ACTION_INCREASE_COUNTER = NAMESPACE + "INCREASE_COUNTER";

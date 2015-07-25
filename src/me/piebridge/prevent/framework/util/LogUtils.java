@@ -2,6 +2,7 @@ package me.piebridge.prevent.framework.util;
 
 import android.os.Binder;
 
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**
@@ -32,7 +33,7 @@ public class LogUtils {
     public static void logForceStop(String action, String packageName, String message) {
         StringBuilder sb = new StringBuilder();
         sb.append(ACTION);
-        sb.append(action);
+        sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
         sb.append(", force stop ");
         sb.append(packageName);
         sb.append(" ");
@@ -52,7 +53,7 @@ public class LogUtils {
     public static void logRequest(String action, String packageName, int count) {
         StringBuilder sb = new StringBuilder();
         sb.append(ACTION);
-        sb.append(action);
+        sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
         sb.append(", ");
         sb.append(PACKAGE);
         sb.append(packageName);
@@ -70,7 +71,7 @@ public class LogUtils {
         sb.append(disallow ? "disallow" : "allow");
         sb.append(" ");
         sb.append(ACTION);
-        sb.append(action);
+        sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
         sb.append(", ");
         sb.append(FILTER);
         sb.append(filter);
@@ -104,7 +105,7 @@ public class LogUtils {
     public static void logIntentFilter(String action, Object filter, String packageName) {
         StringBuilder sb = new StringBuilder();
         sb.append(ACTION);
-        sb.append(action);
+        sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
         sb.append(", ");
         sb.append(FILTER);
         sb.append(filter);
