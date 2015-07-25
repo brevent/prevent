@@ -689,7 +689,6 @@ public final class SystemHook {
                 importance.add(process.importance);
             }
         }
-        PreventLog.i("running processes: " + running.size());
         return running;
     }
 
