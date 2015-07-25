@@ -26,7 +26,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -52,7 +51,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private List<Set<String>> mPageSelections;
 
     private static Boolean hookEnabled = null;
-    private static final Object runningLock = new Object();
+    private static final Object RUNNING_LOCK = new Object();
     private static Map<String, Boolean> preventPackages = null;
     private static Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
 
@@ -161,7 +160,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     public Map<String, Set<Integer>> getRunningProcesses() {
-        synchronized (runningLock) {
+        synchronized (RUNNING_LOCK) {
             return running;
         }
     }
@@ -415,7 +414,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                         processes.put(key,  convertImportance(value));
                     }
                 }
-                synchronized (runningLock) {
+                synchronized (RUNNING_LOCK) {
                     running.clear();
                     running.putAll(processes);
                 }
