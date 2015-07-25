@@ -119,15 +119,19 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         showFragmentsIfNeeded();
     }
 
+    private void retrievePrevents() {
+        showAlertDialog(R.string.checking);
+        Intent intent = new Intent();
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+        intent.setAction(PreventIntent.ACTION_GET_PACKAGES);
+        intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+        UILog.i("sending hook checking broadcast");
+        sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
+    }
+
     private void showFragmentsIfNeeded() {
         if (hookEnabled == null || (hookEnabled && preventPackages == null)) {
-            showAlertDialog(R.string.checking);
-            Intent intent = new Intent();
-            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
-            intent.setAction(PreventIntent.ACTION_GET_PACKAGES);
-            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-            UILog.i("sending hook checking broadcast");
-            sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
+            retrievePrevents();
         } else if (!hookEnabled) {
             showDisableDialog();
         } else {
@@ -163,7 +167,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     public Map<String, Boolean> getPreventPackages() {
-        return preventPackages;
+        if (preventPackages == null) {
+            retrievePrevents();
+            return new HashMap<String, Boolean>();
+        } else {
+            return preventPackages;
+        }
     }
 
     @Override
