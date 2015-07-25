@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageParser;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Binder;
@@ -28,7 +29,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -75,18 +75,13 @@ public final class SystemHook {
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
 
-    private static Set<String> SAFE_RECEIVER_ACTIONS = new HashSet<String>(Arrays.asList(
-            // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
-            // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
-            AppWidgetManager.ACTION_APPWIDGET_UPDATE
-    ));
-
     private static ClassLoader classLoader;
 
     private static final int FIRST_APPLICATION_UID = 10000;
 
     private static Application application;
-    private static BroadcastReceiver receiver;
+
+    private static Map<ComponentName, Boolean> widgets = new HashMap<ComponentName, Boolean>();
 
     private SystemHook() {
 
@@ -261,7 +256,9 @@ public final class SystemHook {
             PackageParser.Package owner = activity.owner;
             String packageName = owner.applicationInfo.packageName;
             if (Boolean.TRUE.equals(preventPackages.get(packageName)) && owner.receivers.contains(activity)) {
-                if (SAFE_RECEIVER_ACTIONS.contains(action)) {
+                // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
+                // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
+                if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.contains(action)) {
                     return IntentFilterMatchResult.NONE;
                 }
                 if (BuildConfig.DEBUG) {
@@ -312,7 +309,7 @@ public final class SystemHook {
         thread.start();
         Handler handler = new Handler(thread.getLooper());
 
-        receiver = new HookBroadcastReceiver();
+        BroadcastReceiver receiver = new HookBroadcastReceiver();
 
         application = ActivityThread.currentApplication();
 
@@ -437,10 +434,15 @@ public final class SystemHook {
 
         // always block broadcast
         if ("broadcast".equals(hostingType)) {
-            // for alarm
-            forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
-            LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
-            return false;
+            if (isWidget(hostingName)) {
+                checkRunningServices(packageName, TIME_PREVENT);
+                LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
+                return true;
+            } else {
+                forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
+                LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
+                return false;
+            }
         }
 
         // auto turn off service
@@ -450,6 +452,19 @@ public final class SystemHook {
         }
 
         return true;
+    }
+
+    private static boolean isWidget(ComponentName cn) {
+        Boolean result = widgets.get(cn);
+        if (result != null) {
+            return result;
+        }
+        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        intent.setComponent(cn);
+        List<ResolveInfo> list = application.getPackageManager().queryBroadcastReceivers(intent, 0);
+        result = !list.isEmpty();
+        widgets.put(cn, result);
+        return result;
     }
 
     public static void afterActivityManagerService$cleanUpRemovedTaskLocked(Object[] args) { // NOSONAR
