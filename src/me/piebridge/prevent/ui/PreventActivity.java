@@ -117,7 +117,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         showFragmentsIfNeeded();
     }
 
-
     private void showFragmentsIfNeeded() {
         if (hookEnabled == null || (hookEnabled && preventPackages == null)) {
             showAlertDialog(R.string.checking);
@@ -485,5 +484,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
+
+    @Override
+    public void onPause() {
+        preventPackages = null;
+        running.clear();
+        super.onPause();
+    }
 
 }
