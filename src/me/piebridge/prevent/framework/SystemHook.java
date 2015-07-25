@@ -484,7 +484,7 @@ public final class SystemHook {
         return count;
     }
 
-    private static String getPackage(int pid) {
+    private static String getProcessName(int pid) {
         File file = new File(new File("/proc", String.valueOf(pid)), "cmdline");
         return getContent(file);
     }
@@ -529,7 +529,7 @@ public final class SystemHook {
         } catch (Throwable t) { // NOSONAR
             PreventLog.e("cannot get uid for " + pid, t);
         }
-        String processName = getPackage(pid);
+        String processName = getProcessName(pid);
         if (isNormalProcessName(processName, packageName)) {
             return true;
         }
@@ -538,7 +538,7 @@ public final class SystemHook {
     }
 
     private static void setPid(int pid, String packageName) {
-        String processName = getPackage(pid);
+        String processName = getProcessName(pid);
         if (processName != null && !isNormalProcessName(processName, packageName)) {
             Set<String> abnormalProcess = abnormalProcesses.get(processName);
             if (abnormalProcess == null) {
@@ -642,13 +642,13 @@ public final class SystemHook {
                 int uid = HideApiUtils.getUidForPid(pid);
                 if (HideApiUtils.getParentPid(pid) == 1 && uid >= FIRST_APPLICATION_UID) {
                     Process.killProcess(pid);
-                    LogUtils.logKill(pid, "without parent", getPackageName(uid, packageName));
+                    LogUtils.logKill(pid, "without parent", getPackageName(uid, pid, packageName));
                 }
             }
         }
     }
 
-    private static String getPackageName(int uid, String packageName) {
+    private static String getPackageName(int uid, int pid, String packageName) {
         Integer currentUid = packageUids.get(packageName);
         if (currentUid != null && currentUid == uid) {
             return packageName;
@@ -658,7 +658,7 @@ public final class SystemHook {
                 return entry.getKey();
             }
         }
-        return null;
+        return "(uid: " + uid + ", process: + " + getProcessName(pid) + ")";
     }
 
     private static class CheckingRunningService implements Runnable {
