@@ -17,7 +17,7 @@ import me.piebridge.prevent.ui.UILog;
 public final class PreventListUtils {
 
     public static final String PREVENT = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/prevent.list";
-    public static final String PREVENT_DEPRECATED = Environment.getDataDirectory() + "/system/forcestop.list";
+    public static final String PREVENT_DEPRECATED = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
 
     private static final int MAX_WAIT = 3000;
     private static final int SINGLE_WAIT = 1000;
@@ -52,8 +52,8 @@ public final class PreventListUtils {
             writer.close();
             lock.renameTo(new File(PREVENT));
             FileUtils.setPermissions(PREVENT, 0644, -1, -1); // NOSONAR
-        } catch (IOException e) { // NOSONAR
-            // do nothing
+        } catch (IOException e) {
+            UILog.e("cannot save " + PREVENT, e);
         }
     }
 
@@ -74,8 +74,8 @@ public final class PreventListUtils {
                 packages.add(line);
             }
             reader.close();
-        } catch (IOException e) { // NOSONAR
-            // do nothing
+        } catch (IOException e) {
+            UILog.e("cannot load " + file.getAbsolutePath(), e);
         }
         return packages;
     }

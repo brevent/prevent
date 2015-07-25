@@ -23,14 +23,4 @@ public class PreventUtils {
         context.sendBroadcast(intent);
     }
 
-    public static void add(Context context, String[] packages) {
-        update(context, packages, true);
-
-    }
-
-    public static void remove(Context context, String[] packages) {
-        update(context, packages, false);
-    }
-
-
 }

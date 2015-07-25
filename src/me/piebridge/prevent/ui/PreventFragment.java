@@ -724,7 +724,7 @@ public abstract class PreventFragment extends ListFragment {
                 }
             }
             if (!removes.isEmpty()) {
-                PreventUtils.remove(getActivity(), removes.toArray(new String[removes.size()]));
+                PreventUtils.update(getActivity(), removes.toArray(new String[removes.size()]), false);
             }
             return names;
         }

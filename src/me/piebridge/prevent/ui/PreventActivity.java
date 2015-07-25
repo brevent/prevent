@@ -277,13 +277,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         int position = mPager.getCurrentItem();
         Set<String> selections = mPageSelections.get(position);
         if (id == R.id.prevent) {
-            PreventUtils.add(this, selections.toArray(new String[selections.size()]));
+            PreventUtils.update(this, selections.toArray(new String[selections.size()]), true);
             for (String packageName : selections) {
                 preventPackages.put(packageName, !running.containsKey(packageName));
             }
             savePackages();
         } else if (id == R.id.remove) {
-            PreventUtils.remove(this, selections.toArray(new String[selections.size()]));
+            PreventUtils.update(this, selections.toArray(new String[selections.size()]), false);
             for (String packageName : selections) {
                 preventPackages.remove(packageName);
             }
