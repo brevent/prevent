@@ -34,7 +34,7 @@ public class LogUtils {
         StringBuilder sb = new StringBuilder();
         sb.append(ACTION);
         sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
-        sb.append(", force stop ");
+        sb.append(", will force stop ");
         sb.append(packageName);
         sb.append(" ");
         sb.append(message);
@@ -85,9 +85,9 @@ public class LogUtils {
         PreventLog.v(sb.toString());
     }
 
-    public static void logStartProcess(final String allow, final String packageName, final String hostingType, final Object hostingName) {
+    public static void logStartProcess(boolean disallow, final String packageName, final String hostingType, final Object hostingName) {
         StringBuilder sb = new StringBuilder();
-        sb.append(allow);
+        sb.append(disallow ? "disallow" : "wont disallow");
         sb.append(" start ");
         sb.append(packageName);
         sb.append(" for");
@@ -99,7 +99,11 @@ public class LogUtils {
             sb.append(" ");
             sb.append(hostingName);
         }
-        PreventLog.d(sb.toString());
+        if (disallow) {
+            PreventLog.v(sb.toString());
+        } else {
+            PreventLog.d(sb.toString());
+        }
     }
 
     public static void logIntentFilter(String action, Object filter, String packageName) {

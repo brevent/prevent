@@ -185,7 +185,7 @@ public final class SystemHook {
             }
             if (preventPackages.containsKey(packageName)) {
                 preventPackages.put(packageName, Boolean.TRUE);
-                LogUtils.logForceStop(action, packageName, "destroy if needed in " + TIME_DESTROY + "s");
+                LogUtils.logForceStop(action, packageName, "if needed in " + TIME_DESTROY + "s");
                 checkRunningServices(packageName, TIME_DESTROY);
             }
             killNoFather(packageName);
@@ -206,7 +206,8 @@ public final class SystemHook {
             if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
                 preventPackages.put(packageName, Boolean.FALSE);
             }
-            LogUtils.logRequest(action, packageName, -1);
+            int count = countCounter(packageName);
+            LogUtils.logRequest(action, packageName, count);
         }
 
         private void handlePackageRestarted(String action, String packageName) {
@@ -427,14 +428,14 @@ public final class SystemHook {
         if ("broadcast".equals(hostingType)) {
             // for alarm
             forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
-            LogUtils.logStartProcess("disallow", packageName, hostingType, hostingName);
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
             return false;
         }
 
         // auto turn off service
         if ("service".equals(hostingType)) {
             checkRunningServices(packageName, TIME_PREVENT);
-            LogUtils.logStartProcess("wont disallow", packageName, hostingType, hostingName);
+            LogUtils.logStartProcess(false, packageName, hostingType, hostingName);
         }
 
         return true;
@@ -608,7 +609,6 @@ public final class SystemHook {
         }
         try {
             HideApiUtils.forceStopPackage(activityManager, packageName);
-            PreventLog.d("finish force stop package " + packageName);
             packageCounters.remove(packageName);
         } catch (Throwable t) { // NOSONAR
             PreventLog.e("cannot force stop package" + packageName, t);
@@ -680,7 +680,7 @@ public final class SystemHook {
                 String name = service.service.getPackageName();
                 boolean prevents = Boolean.TRUE.equals(preventPackages.get(name));
                 if (prevents || BuildConfig.DEBUG) {
-                    PreventLog.d("prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount + ", started: " + service.started + ", flags: " + service.flags + ", foreground: " + service.foreground);
+                    PreventLog.v("prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount + ", started: " + service.started + ", flags: " + service.flags + ", foreground: " + service.foreground);
                 }
                 if (prevents && (name.equals(this.packageName) || service.uid >= FIRST_APPLICATION_UID)) {
                     boolean canStop = service.started;
