@@ -13,14 +13,11 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageParser;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.text.TextUtils;
-
-import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,11 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -53,35 +47,33 @@ public final class SystemHook {
     private static boolean registered = false;
     private static boolean gotprevent = false;
 
-    private static final int TIME_SUICIDE = 6;
-    private static final int TIME_DESTROY = 6;
-    private static final int TIME_PREVENT = 12;
-    private static final int TIME_IMMEDIATE = 1;
+    static final int TIME_SUICIDE = 6;
+    static final int TIME_DESTROY = 6;
+    static final int TIME_PREVENT = 12;
+    static final int TIME_IMMEDIATE = 1;
 
     private static long lastChecking;
     private static long lastKilling;
-    private static final int TIME_KILL = 1;
-    private static final long MILLISECONDS = 1000;
+    static final int TIME_KILL = 1;
+    static final long MILLISECONDS = 1000;
 
-    private static ActivityManager activityManager;
+    static final int FIRST_APPLICATION_UID = 10000;
 
-    private static Map<String, Boolean> preventPackages = new ConcurrentHashMap<String, Boolean>();
+    static ActivityManager activityManager;
 
-    private static Map<String, Integer> packageUids = new HashMap<String, Integer>();
+    static Application application;
 
-    private static Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
+    static Map<String, Boolean> preventPackages = new ConcurrentHashMap<String, Boolean>();
 
-    private static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
+    static Map<String, Integer> packageUids = new HashMap<String, Integer>();
+
+    static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
 
-    private static ClassLoader classLoader;
-
-    private static final int FIRST_APPLICATION_UID = 10000;
-
-    private static Application application;
-
     private static Map<ComponentName, Boolean> widgets = new HashMap<ComponentName, Boolean>();
+
+    private static ClassLoader classLoader;
 
     private SystemHook() {
 
@@ -95,147 +87,20 @@ public final class SystemHook {
         return SystemHook.classLoader;
     }
 
-    private static class HookBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            String packageName = getPackageName(intent);
-            if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
-                setResultData(new JSONObject(preventPackages).toString());
-                LogUtils.logRequest(action, null, preventPackages.size());
-                abortBroadcast();
-            } else if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
-                Map<String, Set<Integer>> running = getRunningAppProcesses();
-                LogUtils.logRequest(action, null, running.size());
-                setResultData(toJSON(running));
-                abortBroadcast();
-            } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
-                handleUpdatePrevent(action, packageName, intent);
-            } else if (PreventIntent.ACTION_INCREASE_COUNTER.equals(action)) {
-                handleIncreaseCounter(action, packageName, intent);
-            } else if (PreventIntent.ACTION_DECREASE_COUNTER.equals(action)) {
-                handleDecreaseCounter(action, packageName, intent);
-            } else if (PreventIntent.ACTION_RESTART.equals(action)) {
-                handleRestart(action, packageName);
-            } else if (PreventIntent.ACTION_ACTIVITY_DESTROY.equals(action)) {
-                handleDestroy(action, packageName);
-            } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
-                handlePackageRestarted("PACKAGE_RESTARTED", packageName);
-            } else if (PreventIntent.ACTION_FORCE_STOP.equals(action)) {
-                handleForceStop(action, packageName, intent);
-            }
-        }
+    public static ActivityManager getActivityManager() {
+        return activityManager;
+    }
 
-        private String getPackageName(Intent intent) {
-            Uri data = intent.getData();
-            if (data != null) {
-                return data.getSchemeSpecificPart();
-            } else {
-                return null;
-            }
-        }
+    public static Map<String, Boolean> getPreventPackages() {
+        return preventPackages;
+    }
 
-        private void handleUpdatePrevent(String action, String packageName, Intent intent) {
-            LogUtils.logRequest(action, packageName, -1);
-            String[] packages = intent.getStringArrayExtra(PreventIntent.EXTRA_PACKAGES);
-            boolean prevent = intent.getBooleanExtra(PreventIntent.EXTRA_PREVENT, true);
-            for (String name : packages) {
-                if (prevent) {
-                    int count = countCounter(name);
-                    preventPackages.put(name, count == 0);
-                } else {
-                    preventPackages.remove(name);
-                }
-            }
-        }
+    public static Map<String, Map<Integer, AtomicInteger>> getPackageCounters() {
+        return packageCounters;
+    }
 
-        private void handleIncreaseCounter(String action, String packageName, Intent intent) {
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.FALSE);
-            }
-            int uid = intent.getIntExtra(PreventIntent.EXTRA_UID, 0);
-            int pid = intent.getIntExtra(PreventIntent.EXTRA_PID, 0);
-            setPid(pid, packageName);
-            if (uid > 0) {
-                packageUids.put(packageName, uid);
-            }
-            Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
-            if (packageCounter == null) {
-                packageCounter = new HashMap<Integer, AtomicInteger>();
-                packageCounters.put(packageName, packageCounter);
-            }
-            AtomicInteger pidCounter = packageCounter.get(pid);
-            if (pidCounter == null) {
-                pidCounter = new AtomicInteger();
-                packageCounter.put(pid, pidCounter);
-            }
-            pidCounter.incrementAndGet();
-            int count = countCounter(packageName);
-            LogUtils.logRequest(action, packageName, count);
-        }
-
-        private void handleDecreaseCounter(String action, String packageName, Intent intent) {
-            Map<Integer, AtomicInteger> packageCounter = packageCounters.get(packageName);
-            if (packageCounter != null) {
-                int pid = intent.getIntExtra(PreventIntent.EXTRA_PID, 0);
-                AtomicInteger pidCounter = packageCounter.get(pid);
-                if (pidCounter != null) {
-                    pidCounter.decrementAndGet();
-                }
-            }
-            int count = countCounter(packageName);
-            LogUtils.logRequest(action, packageName, count);
-            if (count > 0) {
-                return;
-            }
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
-                LogUtils.logForceStop(action, packageName, "if needed in " + TIME_DESTROY + "s");
-                checkRunningServices(packageName, TIME_DESTROY);
-            }
-            killNoFather(packageName);
-        }
-
-        private void handleDestroy(String action, String packageName) {
-            LogUtils.logRequest(action, packageName, -1);
-            packageCounters.remove(packageName);
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
-                LogUtils.logForceStop(action, packageName, "destroy in " + TIME_SUICIDE + "s");
-                forceStopPackageLater(packageName, TIME_SUICIDE);
-            }
-            killNoFather(packageName);
-        }
-
-        private void handleRestart(String action, String packageName) {
-            if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
-                preventPackages.put(packageName, Boolean.FALSE);
-            }
-            int count = countCounter(packageName);
-            LogUtils.logRequest(action, packageName, count);
-        }
-
-        private void handlePackageRestarted(String action, String packageName) {
-            LogUtils.logRequest(action, packageName, -1);
-            packageCounters.remove(packageName);
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
-            }
-            killNoFather(packageName);
-        }
-
-        private void handleForceStop(String action, String packageName, Intent intent) {
-            LogUtils.logRequest(action, packageName, -1);
-            int uid = intent.getIntExtra(PreventIntent.EXTRA_UID, 0);
-            packageCounters.remove(packageName);
-            if (preventPackages.containsKey(packageName)) {
-                preventPackages.put(packageName, Boolean.TRUE);
-            }
-            if (uid >= FIRST_APPLICATION_UID) {
-                LogUtils.logForceStop(action, packageName, "force in " + TIME_IMMEDIATE + "s" + ", uid: " + uid);
-                forceStopPackageForce(packageName, TIME_IMMEDIATE);
-            }
-        }
+    public static Map<String, Integer> getPackageUids() {
+        return packageUids;
     }
 
     public static IntentFilterMatchResult hookIntentFilter$match(Object filter, Object[] args) { // NOSONAR
@@ -312,7 +177,7 @@ public final class SystemHook {
         thread.start();
         Handler handler = new Handler(thread.getLooper());
 
-        BroadcastReceiver receiver = new HookBroadcastReceiver();
+        BroadcastReceiver receiver = new SystemReceiver();
 
         application = ActivityThread.currentApplication();
 
@@ -495,26 +360,7 @@ public final class SystemHook {
         return Process.myUid() == Process.SYSTEM_UID;
     }
 
-    private static int countCounter(String packageName) {
-        int count = 0;
-        Map<Integer, AtomicInteger> values = packageCounters.get(packageName);
-        if (values == null) {
-            return count;
-        }
-        Iterator<Map.Entry<Integer, AtomicInteger>> iterator = values.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Integer, AtomicInteger> entry = iterator.next();
-            if (checkPid(entry.getKey(), packageName)) {
-                count += entry.getValue().get();
-            } else {
-                LogUtils.logIgnore(entry.getKey(), packageName);
-                iterator.remove();
-            }
-        }
-        return count;
-    }
-
-    private static String getProcessName(int pid) {
+    static String getProcessName(int pid) {
         File file = new File(new File("/proc", String.valueOf(pid)), "cmdline");
         return getContent(file);
     }
@@ -543,45 +389,8 @@ public final class SystemHook {
         }
     }
 
-    private static boolean isNormalProcessName(String processName, String packageName) {
-        return (processName != null) && (processName.equals(packageName) || processName.startsWith(packageName + ":"));
-    }
 
-    private static boolean checkPid(int pid, String packageName) {
-        Integer uid = packageUids.get(packageName);
-        if (uid == null) {
-            return false;
-        }
-        try {
-            if (HideApiUtils.getUidForPid(pid) != uid) {
-                return false;
-            }
-        } catch (Throwable t) { // NOSONAR
-            PreventLog.e("cannot get uid for " + pid, t);
-        }
-        String processName = getProcessName(pid);
-        if (isNormalProcessName(processName, packageName)) {
-            return true;
-        }
-        Set<String> abnormalPackages = abnormalProcesses.get(processName);
-        return abnormalPackages != null && abnormalPackages.contains(packageName);
-    }
-
-    private static void setPid(int pid, String packageName) {
-        String processName = getProcessName(pid);
-        if (processName != null && !isNormalProcessName(processName, packageName)) {
-            Set<String> abnormalProcess = abnormalProcesses.get(processName);
-            if (abnormalProcess == null) {
-                abnormalProcess = new HashSet<String>();
-                abnormalProcesses.put(processName, abnormalProcess);
-            }
-            if (abnormalProcess.add(packageName)) {
-                PreventLog.i("package " + packageName + " has abnormal process: " + processName);
-            }
-        }
-    }
-
-    private static boolean checkRunningServices(final String packageName, int second) {
+    static boolean checkRunningServices(final String packageName, int second) {
         if (activityManager == null) {
             PreventLog.e("activityManager is null, cannot check running services for " + packageName);
             return false;
@@ -595,7 +404,7 @@ public final class SystemHook {
         return true;
     }
 
-    private static void forceStopPackageForce(final String packageName, int second) {
+    static void forceStopPackageForce(final String packageName, int second) {
         executor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -606,7 +415,7 @@ public final class SystemHook {
         }, second, TimeUnit.SECONDS);
     }
 
-    private static void forceStopPackageLater(final String packageName, int second) {
+    static void forceStopPackageLater(final String packageName, int second) {
         executor.schedule(new Runnable() {
             @Override
             public void run() {
@@ -628,7 +437,7 @@ public final class SystemHook {
         }, second, TimeUnit.SECONDS);
     }
 
-    private static void forceStopPackage(final String packageName) {
+    static void forceStopPackage(final String packageName) {
         if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
             return;
         }
@@ -644,7 +453,7 @@ public final class SystemHook {
         }
     }
 
-    private static boolean killNoFather(final String packageName) {
+    static boolean killNoFather(final String packageName) {
         long now = System.currentTimeMillis();
         if (now - lastKilling <= TIME_KILL * MILLISECONDS) {
             return false;
@@ -688,92 +497,6 @@ public final class SystemHook {
             }
         }
         return "(uid: " + uid + ", process: + " + getProcessName(pid) + ")";
-    }
-
-    private static Map<String, Set<Integer>> getRunningAppProcesses() {
-        Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
-        List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
-        if (processes == null) {
-            PreventLog.w("cannot get running processes");
-            return running;
-        }
-        for (ActivityManager.RunningAppProcessInfo process : processes) {
-            for (String pkg : process.pkgList) {
-                Set<Integer> importance = running.get(pkg);
-                if (importance == null) {
-                    importance = new HashSet<Integer>();
-                    running.put(pkg, importance);
-                }
-                importance.add(process.importance);
-            }
-        }
-        return running;
-    }
-
-    private static String toJSON(Map<String, Set<Integer>> processes) {
-        Map<String, String> results = new HashMap<String, String>();
-        for (Map.Entry<String, Set<Integer>> entry : processes.entrySet()) {
-            results.put(entry.getKey(), convertSet(entry.getValue()));
-        }
-        return new JSONObject(results).toString();
-    }
-
-    private static String convertSet(Set<Integer> value) {
-        StringBuilder sb = new StringBuilder();
-        Iterator<Integer> it = value.iterator();
-        while (it.hasNext()) {
-            Integer v = it.next();
-            if (v != null) {
-                sb.append(v);
-                if (it.hasNext()) {
-                    sb.append(",");
-                }
-            }
-        }
-        return sb.toString();
-    }
-
-    private static class CheckingRunningService implements Runnable {
-
-        private final String packageName;
-
-        private final Map<String, Boolean> serviceStatus;
-
-        private CheckingRunningService(String packageName) {
-            this.packageName = packageName;
-            this.serviceStatus = new HashMap<String, Boolean>();
-        }
-
-        @Override
-        public void run() {
-            List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
-            for (int i = services.size() - 1; i >= 0; --i) {
-                ActivityManager.RunningServiceInfo service = services.get(i);
-                String name = service.service.getPackageName();
-                boolean prevents = Boolean.TRUE.equals(preventPackages.get(name));
-                if (prevents || BuildConfig.DEBUG) {
-                    PreventLog.v("prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount + ", started: " + service.started + ", flags: " + service.flags + ", foreground: " + service.foreground);
-                }
-                if (prevents && (name.equals(this.packageName) || service.uid >= FIRST_APPLICATION_UID)) {
-                    boolean canStop = service.started;
-                    Boolean result = serviceStatus.get(name);
-                    if (result == null || result) {
-                        serviceStatus.put(name, canStop);
-                    }
-                }
-            }
-            stopServiceIfNeeded();
-        }
-
-        private void stopServiceIfNeeded() {
-            for (Map.Entry<String, Boolean> entry : serviceStatus.entrySet()) {
-                if (entry.getValue()) {
-                    String name = entry.getKey();
-                    PreventLog.i(name + " has running services, force stop it");
-                    forceStopPackage(name);
-                }
-            }
-        }
     }
 
 }
