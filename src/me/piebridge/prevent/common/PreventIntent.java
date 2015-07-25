@@ -16,6 +16,7 @@ public final class PreventIntent {
 
     // for ui
     public static final String ACTION_GET_PACKAGES = NAMESPACE + "GET_PACKAGES";
+    public static final String ACTION_GET_PROCESSES = NAMESPACE + "GET_PROCESSES";
     public static final String ACTION_UPDATE_PREVENT = NAMESPACE + "UPDATE_PREVENT";
 
     public static final String EXTRA_UID = NAMESPACE + "UID";

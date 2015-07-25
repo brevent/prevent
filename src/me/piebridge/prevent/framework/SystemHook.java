@@ -104,14 +104,14 @@ public final class SystemHook {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            String packageName = null;
-            Uri data = intent.getData();
-            if (data != null) {
-                packageName = data.getSchemeSpecificPart();
-            }
+            String packageName = getPackageName(intent);
             if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
                 LogUtils.logRequest(action, packageName, -1);
                 setResultData(new JSONObject(preventPackages).toString());
+                abortBroadcast();
+            } else if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
+                LogUtils.logRequest(action, packageName, -1);
+                setResultData(new JSONObject(getRunningAppProcesses()).toString());
                 abortBroadcast();
             } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
                 handleUpdatePrevent(action, packageName, intent);
@@ -127,6 +127,15 @@ public final class SystemHook {
                 handlePackageRestarted(action, packageName);
             } else if (PreventIntent.ACTION_FORCE_STOP.equals(action)) {
                 handleForceStop(action, packageName, intent);
+            }
+        }
+
+        private String getPackageName(Intent intent) {
+            Uri data = intent.getData();
+            if (data != null) {
+                return data.getSchemeSpecificPart();
+            } else {
+                return null;
             }
         }
 
@@ -308,6 +317,7 @@ public final class SystemHook {
 
         IntentFilter hook = new IntentFilter();
         hook.addAction(PreventIntent.ACTION_GET_PACKAGES);
+        hook.addAction(PreventIntent.ACTION_GET_PROCESSES);
         hook.addAction(PreventIntent.ACTION_UPDATE_PREVENT);
         hook.addAction(PreventIntent.ACTION_INCREASE_COUNTER);
         hook.addAction(PreventIntent.ACTION_DECREASE_COUNTER);
@@ -659,6 +669,27 @@ public final class SystemHook {
             }
         }
         return "(uid: " + uid + ", process: + " + getProcessName(pid) + ")";
+    }
+
+    private static Map<String, Set<Integer>> getRunningAppProcesses() {
+        Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
+        List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
+        if (processes == null) {
+            PreventLog.w("cannot get running processes");
+            return running;
+        }
+        for (ActivityManager.RunningAppProcessInfo process : processes) {
+            for (String pkg : process.pkgList) {
+                Set<Integer> importance = running.get(pkg);
+                if (importance == null) {
+                    importance = new HashSet<Integer>();
+                    running.put(pkg, importance);
+                }
+                importance.add(process.importance);
+            }
+        }
+        PreventLog.i("running processes: " + running.size());
+        return running;
     }
 
     private static class CheckingRunningService implements Runnable {

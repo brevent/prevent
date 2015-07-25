@@ -1,8 +1,6 @@
 package me.piebridge.prevent.ui;
 
 import android.annotation.TargetApi;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -27,6 +25,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -54,7 +53,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private final Object runningLock = new Object();
     private Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
     private Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
-    private Map<String, Set<Integer>> backup = new HashMap<String, Set<Integer>>();
     private View main;
     private Button remove;
     private Button cancel;
@@ -74,6 +72,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private Integer dangerousColor = null;
 
     private Integer transparentColor = null;
+
+    private BroadcastReceiver receiver;
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -108,6 +108,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         prevent.setEnabled(false);
         remove.setEnabled(false);
         mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
+        receiver = new HookReceiver();
     }
 
     @Override
@@ -125,7 +126,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             intent.setAction(PreventIntent.ACTION_GET_PACKAGES);
             intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
             UILog.i("sending hook checking broadcast");
-            sendOrderedBroadcast(intent, null, new HookReceiver(), null, 0, null, null);
+            sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
         } else if (!hookEnabled) {
             showDisableDialog();
         } else {
@@ -133,42 +134,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             if (running.isEmpty()) {
                 showAlertDialog(R.string.retrieving);
             }
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    retrieveRunningProcesses();
-                }
-            }).start();
+            Intent intent = new Intent();
+            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+            intent.setAction(PreventIntent.ACTION_GET_PROCESSES);
+            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+            UILog.i("sending get processes broadcast");
+            sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
         }
-    }
-
-    private void retrieveRunningProcesses() {
-        backup.clear();
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        List<RunningAppProcessInfo> processes = manager.getRunningAppProcesses();
-        for (RunningAppProcessInfo process : processes) {
-            for (String pkg : process.pkgList) {
-                if (backup.containsKey(pkg)) {
-                    backup.get(pkg).add(process.importance);
-                } else {
-                    Set<Integer> importance = new HashSet<Integer>();
-                    importance.add(process.importance);
-                    backup.put(pkg, importance);
-                }
-            }
-        }
-        synchronized (runningLock) {
-            running.clear();
-            running.putAll(backup);
-        }
-        backup.clear();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                dialog.dismiss();
-                refresh();
-            }
-        });
     }
 
     private void initFragmentIfNeeded() {
@@ -401,6 +373,55 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private class HookReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
+                handleGetProcesses();
+                dialog.dismiss();
+                refresh();
+            } else if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
+                handleGetPackages();
+                dialog.dismiss();
+                showFragmentsIfNeeded();
+            }
+        }
+
+        private void handleGetProcesses() {
+            UILog.i("received get processes broadcast");
+            String result = getResultData();
+            if (result != null) {
+                handleProcesses(result);
+            }
+        }
+
+        private void handleProcesses(String result) {
+            try {
+                JSONObject json = new JSONObject(result);
+                Map<String, Set<Integer>> processes = new HashMap<String, Set<Integer>>();
+                Iterator<String> it = json.keys();
+                while (it.hasNext()) {
+                    String key = it.next();
+                    Set<Integer> value = convertImportance(json.optJSONArray(key));
+                    processes.put(key, value);
+                }
+                synchronized (runningLock) {
+                    running.clear();
+                    running.putAll(processes);
+                }
+            } catch (JSONException e) {
+                UILog.e("cannot convert to json", e);
+            }
+        }
+
+        private Set<Integer> convertImportance(JSONArray value) {
+            Set<Integer> importance = new HashSet<Integer>();
+            int length = value.length();
+            for (int i = 0; i < length; ++i) {
+                importance.add(value.optInt(i));
+            }
+            return importance;
+        }
+
+        private void handleGetPackages() {
             UILog.i("received hook checking broadcast");
             String result = getResultData();
             if (result != null) {
@@ -409,9 +430,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             } else {
                 hookEnabled = false;
             }
-            // we are on main thread
-            dialog.dismiss();
-            showFragmentsIfNeeded();
         }
 
         private void handlePackages(String result) {
@@ -427,8 +445,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     String key = it.next();
                     preventPackages.put(key, json.optBoolean(key));
                 }
-            } catch (JSONException e) { // NOSONAR
-                // do nothing
+            } catch (JSONException e) {
                 UILog.e("cannot convert to json", e);
             }
         }
