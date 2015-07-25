@@ -50,12 +50,15 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private String[] mPageTitles;
     private List<Set<String>> mPageSelections;
 
+    private static Boolean hookEnabled = null;
     private static final Object runningLock = new Object();
-    private static Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
+    private static Map<String, Boolean> preventPackages = null;
     private static Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
+
     private View main;
     private Button remove;
     private Button cancel;
+
     private Button prevent;
 
     private static final int APPLICATIONS = 0;
@@ -66,8 +69,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private static final String THEME_DARK = "dark";
 
     private AlertDialog dialog;
-
-    private static Boolean hookEnabled = null;
 
     private Integer dangerousColor = null;
 
