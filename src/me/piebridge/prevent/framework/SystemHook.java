@@ -288,7 +288,10 @@ public final class SystemHook {
         } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             // for dynamic broadcast, we only disable ACTION_CLOSE_SYSTEM_DIALOGS
             String packageName = BroadcastFilterUtils.getPackageName(filter);
-            if (packageName != null && preventPackages.containsKey(packageName)) {
+            if (packageName == null) {
+                return IntentFilterMatchResult.NONE;
+            }
+            if (preventPackages.containsKey(packageName)) {
                 LogUtils.logIntentFilter(true, filter, action, packageName);
                 return IntentFilterMatchResult.NO_MATCH;
             }
@@ -360,7 +363,7 @@ public final class SystemHook {
                 int index = cursor.getColumnIndex(PreventProvider.COLUMN_PACKAGE);
                 while (cursor.moveToNext()) {
                     String name = cursor.getString(index);
-                    if (!preventPackages.containsKey(name)) {
+                    if (name != null && !preventPackages.containsKey(name)) {
                         preventPackages.put(name, Boolean.TRUE);
                     }
                 }
