@@ -1,10 +1,12 @@
-package me.piebridge.forcestopgb.ui;
+package me.piebridge.prevent.ui;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-public class PackageReceiver extends BroadcastReceiver {
+import me.piebridge.prevent.ui.util.PreventUtils;
+
+public class PreventReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {

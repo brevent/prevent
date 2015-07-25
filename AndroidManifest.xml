@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.piebridge.forcestopgb"
     android:versionCode="175"
-    android:versionName="0.21" >
+    android:versionName="0.21">
 
     <uses-sdk
         android:minSdkVersion="10"
@@ -12,7 +12,7 @@
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/light" >
+        android:theme="@style/light">
         <meta-data
             android:name="xposedmodule"
             android:value="true" />
@@ -23,7 +23,7 @@
             android:name="xposedminversion"
             android:value="2.1+" />
 
-        <receiver android:name=".ui.PackageReceiver" >
+        <receiver android:name="me.piebridge.prevent.ui.PreventReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_ADDED" />
                 <action android:name="android.intent.action.PACKAGE_REMOVED" />
@@ -33,10 +33,10 @@
         </receiver>
 
         <activity
-            android:name=".ui.SettingActivity"
+            android:name="me.piebridge.prevent.ui.PreventActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:windowSoftInputMode="stateHidden"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -45,7 +45,7 @@
         </activity>
 
         <provider
-            android:name=".ui.Provider"
+            android:name="me.piebridge.prevent.ui.PreventProvider"
             android:authorities="me.piebridge.forcestopgb.provider" />
 
     </application>

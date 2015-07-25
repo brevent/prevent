@@ -1,9 +1,10 @@
-package me.piebridge.forcestopgb.ui;
+package me.piebridge.prevent.ui;
 
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Bitmap;
@@ -47,13 +48,14 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.R;
-import me.piebridge.util.PackageUtils;
+import me.piebridge.prevent.ui.util.PackageUtils;
+import me.piebridge.prevent.ui.util.PreventUtils;
 
-public abstract class SettingFragment extends ListFragment {
+public abstract class PreventFragment extends ListFragment {
 
     private Adapter mAdapter;
     private Locale prevLocale;
-    private SettingActivity mActivity;
+    private PreventActivity mActivity;
     private Set<String> prevNames = null;
     private View filter;
     private CheckBox check;
@@ -67,7 +69,7 @@ public abstract class SettingFragment extends ListFragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         registerForContextMenu(getListView());
-        mActivity = (SettingActivity) getActivity();
+        mActivity = (PreventActivity) getActivity();
         if (mActivity != null) {
             setNewAdapterIfNeeded(mActivity, true);
         }
@@ -250,7 +252,7 @@ public abstract class SettingFragment extends ListFragment {
         }
     }
 
-    protected abstract Set<String> getPackageNames(SettingActivity activity);
+    protected abstract Set<String> getPackageNames(PreventActivity activity);
 
     protected abstract boolean canUseCache();
 
@@ -274,7 +276,7 @@ public abstract class SettingFragment extends ListFragment {
         return positions.get(getClass().getName());
     }
 
-    private void setNewAdapterIfNeeded(SettingActivity activity, boolean force) {
+    private void setNewAdapterIfNeeded(PreventActivity activity, boolean force) {
         Set<String> names;
         if (force || prevNames == null) {
             names = getPackageNames(activity);
@@ -374,7 +376,7 @@ public abstract class SettingFragment extends ListFragment {
     private class Adapter extends ArrayAdapter<AppInfo> {
         private PackageManager pm;
         private LayoutInflater inflater;
-        private SettingActivity mActivity;
+        private PreventActivity mActivity;
         private final CompoundButton.OnCheckedChangeListener mListener;
 
         private List<AppInfo> mAppInfos = new ArrayList<AppInfo>();
@@ -384,7 +386,7 @@ public abstract class SettingFragment extends ListFragment {
         private View mView;
         private boolean mCache;
 
-        public Adapter(SettingActivity activity) {
+        public Adapter(PreventActivity activity) {
             super(activity, R.layout.item);
             mActivity = activity;
             pm = mActivity.getPackageManager();
@@ -404,7 +406,7 @@ public abstract class SettingFragment extends ListFragment {
             };
         }
 
-        public Adapter(final SettingActivity activity, Set<String> names, boolean cache, View view) {
+        public Adapter(final PreventActivity activity, Set<String> names, boolean cache, View view) {
             this(activity);
             mView = view;
             mCache = cache;
@@ -673,4 +675,74 @@ public abstract class SettingFragment extends ListFragment {
             return buffer.toString();
         }
     }
+
+    public static class Applications extends PreventFragment {
+
+        @Override
+        protected Set<String> getPackageNames(PreventActivity activity) {
+            Set<String> names = new HashSet<String>();
+            PackageManager pm = activity.getPackageManager();
+            for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
+                ApplicationInfo appInfo = pkgInfo.applicationInfo;
+                if (appInfo != null && appInfo.enabled && !isSystemNoLauncherApp(appInfo, pm)) {
+                    names.add(appInfo.packageName);
+                }
+            }
+            return names;
+        }
+
+        @Override
+        protected boolean canUseCache() {
+            return false;
+        }
+
+        @Override
+        protected int getQueryHint() {
+            return R.string.query_hint;
+        }
+
+        private boolean isSystemNoLauncherApp(ApplicationInfo appInfo, PackageManager pm) {
+            return PackageUtils.isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(appInfo.packageName) == null;
+        }
+
+    }
+
+    public static class PreventList extends PreventFragment {
+
+        @Override
+        protected Set<String> getPackageNames(PreventActivity activity) {
+            Set<String> names = new HashSet<String>();
+            PackageManager pm = activity.getPackageManager();
+            Set<String> removes = new HashSet<String>();
+            for (String packageName : activity.getPreventPackages().keySet()) {
+                ApplicationInfo appInfo;
+                try {
+                    appInfo = pm.getApplicationInfo(packageName, 0);
+                } catch (PackageManager.NameNotFoundException e) { // NOSONAR
+                    appInfo = null;
+                }
+                if (appInfo == null || !appInfo.enabled || (PackageUtils.isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(packageName) == null)) {
+                    removes.add(packageName);
+                } else {
+                    names.add(packageName);
+                }
+            }
+            if (!removes.isEmpty()) {
+                PreventUtils.remove(getActivity(), removes.toArray(new String[removes.size()]));
+            }
+            return names;
+        }
+
+        @Override
+        protected boolean canUseCache() {
+            return true;
+        }
+
+        @Override
+        protected int getQueryHint() {
+            return R.string.query_hint_system;
+        }
+
+    }
+
 }

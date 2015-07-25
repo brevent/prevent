@@ -1,8 +1,7 @@
-package me.piebridge.forcestopgb.common;
+package me.piebridge.prevent.ui.util;
 
 import android.os.Environment;
 import android.os.FileUtils;
-import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -13,20 +12,21 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
-public final class Packages {
+import me.piebridge.prevent.ui.UILog;
 
-    public static final String FORCESTOP = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
-    public static final String FORCESTOP_DEPRECATED = Environment.getDataDirectory() + "/system/forcestop.list";
+public final class PreventListUtils {
+
+    public static final String PREVENT = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/prevent.list";
 
     private static final int MAX_WAIT = 3000;
     private static final int SINGLE_WAIT = 1000;
 
-    private Packages() {
+    private PreventListUtils() {
 
     }
 
     public static void save(Set<String> packages) {
-        File lock = new File(FORCESTOP + ".lock");
+        File lock = new File(PREVENT + ".lock");
         File conf = lock.getParentFile();
         if (conf.isFile()) {
             conf.delete();
@@ -44,13 +44,13 @@ public final class Packages {
         }
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(lock));
-            for (String key : packages) {
+            for (String key : new TreeSet<String>(packages)) {
                 writer.write(key);
                 writer.write("\n");
             }
             writer.close();
-            lock.renameTo(new File(FORCESTOP));
-            FileUtils.setPermissions(FORCESTOP, 0644, -1, -1); // NOSONAR
+            lock.renameTo(new File(PREVENT));
+            FileUtils.setPermissions(PREVENT, 0644, -1, -1); // NOSONAR
         } catch (IOException e) { // NOSONAR
             // do nothing
         }
@@ -80,14 +80,7 @@ public final class Packages {
     }
 
     public static Set<String> load() {
-        File fileDeprecated = new File(FORCESTOP_DEPRECATED);
-        Set<String> packages = load(new File(FORCESTOP));
-        if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
-            Log.d(CommonIntent.TAG, "migrate packages");
-            packages.addAll(load(fileDeprecated));
-            fileDeprecated.delete();
-        }
-        return packages;
+        return load(new File(PREVENT));
     }
 
 }

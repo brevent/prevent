@@ -1,12 +1,11 @@
-package me.piebridge.util;
+package me.piebridge.prevent.framework.util;
 
 import android.content.pm.ApplicationInfo;
-import android.util.Log;
 
 import java.lang.reflect.Field;
 
-import me.piebridge.forcestopgb.common.CommonIntent;
-import me.piebridge.forcestopgb.hook.SystemHook;
+import me.piebridge.prevent.framework.PreventLog;
+import me.piebridge.prevent.framework.SystemHook;
 
 /**
  * Created by thom on 15/7/14.
@@ -27,7 +26,7 @@ public class BroadcastFilterUtils {
     }
 
     private static void initReflections() {
-        Log.d(CommonIntent.TAG, "init BroadcastFilterUtils");
+        PreventLog.i("init BroadcastFilterUtils");
         ClassLoader classLoader = SystemHook.getClassLoader();
         try {
             BroadcastFilter = Class.forName("com.android.server.am.BroadcastFilter", false, classLoader);
@@ -38,9 +37,9 @@ public class BroadcastFilterUtils {
             ReceiverList$app = ReceiverList.getDeclaredField("app");
             ReceiverList$app.setAccessible(true);
         } catch (ClassNotFoundException e) {
-            Log.e(CommonIntent.TAG, "cannot find classes for BroadcastFilterUtils", e);
+            PreventLog.e("cannot find classes for BroadcastFilterUtils", e);
         } catch (NoSuchFieldException e) {
-            Log.e(CommonIntent.TAG, "cannot find fields for BroadcastFilterUtils", e);
+            PreventLog.e("cannot find fields for BroadcastFilterUtils", e);
         }
     }
 
@@ -56,7 +55,7 @@ public class BroadcastFilterUtils {
                 return info.packageName;
             }
         } catch (IllegalAccessException e) {
-            Log.e(CommonIntent.TAG, "cannot get packageName from " + filter, e);
+            PreventLog.e("cannot get packageName from " + filter, e);
         }
         return null;
     }

@@ -1,4 +1,4 @@
-package me.piebridge.util;
+package me.piebridge.prevent.framework.util;
 
 import android.app.ActivityManager;
 import android.os.Process;
@@ -6,9 +6,9 @@ import android.os.Process;
 /**
  * Created by thom on 15/7/12.
  */
-public class HiddenAPI {
+public class HideApiUtils {
 
-    private HiddenAPI() {
+    private HideApiUtils() {
 
     }
 

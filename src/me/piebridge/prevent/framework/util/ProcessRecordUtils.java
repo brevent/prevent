@@ -1,12 +1,11 @@
-package me.piebridge.util;
+package me.piebridge.prevent.framework.util;
 
 import android.content.pm.ApplicationInfo;
-import android.util.Log;
 
 import java.lang.reflect.Field;
 
-import me.piebridge.forcestopgb.common.CommonIntent;
-import me.piebridge.forcestopgb.hook.SystemHook;
+import me.piebridge.prevent.framework.PreventLog;
+import me.piebridge.prevent.framework.SystemHook;
 
 /**
  * Created by thom on 15/7/14.
@@ -26,16 +25,16 @@ public class ProcessRecordUtils {
     }
 
     public static void initReflection() {
-        Log.d(CommonIntent.TAG, "init ProcessRecordUtils");
+        PreventLog.i("init ProcessRecordUtils");
         ClassLoader classLoader = SystemHook.getClassLoader();
         try {
             ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
             ProcessRecord$info = ProcessRecord.getDeclaredField("info");
             ProcessRecord$info.setAccessible(true);
         } catch (ClassNotFoundException e) {
-            Log.e(CommonIntent.TAG, "cannot find class for ProcessRecordUtils", e);
+            PreventLog.e("cannot find class for ProcessRecordUtils", e);
         } catch (NoSuchFieldException e) {
-            Log.e(CommonIntent.TAG, "cannot find fields for ProcessRecordUtils", e);
+            PreventLog.e("cannot find fields for ProcessRecordUtils", e);
         }
     }
 
@@ -46,7 +45,7 @@ public class ProcessRecordUtils {
         try {
             return (ApplicationInfo) ProcessRecord$info.get(pr);
         } catch (IllegalAccessException e) {
-            Log.e(CommonIntent.TAG, "cannot get info", e);
+            PreventLog.e("cannot get info", e);
             return null;
         }
     }

@@ -1,16 +1,14 @@
-package me.piebridge.util;
+package me.piebridge.prevent.framework.util;
 
 import android.os.Binder;
-import android.util.Log;
 
-import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.prevent.framework.PreventLog;
 
 /**
  * Created by thom on 15/7/23.
  */
 public class LogUtils {
 
-    private static final String TAG = CommonIntent.TAG;
     private static final String ACTION = "action: ";
     private static final String FILTER = "filter: ";
     private static final String PACKAGE = "package: ";
@@ -28,7 +26,7 @@ public class LogUtils {
         sb.append("), ");
         sb.append(PACKAGE);
         sb.append(packageName);
-        Log.d(TAG, sb.toString());
+        PreventLog.d(sb.toString());
     }
 
     public static void logForceStop(String action, String packageName, String message) {
@@ -39,7 +37,7 @@ public class LogUtils {
         sb.append(packageName);
         sb.append(" ");
         sb.append(message);
-        Log.d(TAG, sb.toString());
+        PreventLog.d(sb.toString());
     }
 
     public static void logIgnore(int key, String packageName) {
@@ -48,7 +46,7 @@ public class LogUtils {
         sb.append(key);
         sb.append(" is not for ");
         sb.append(packageName);
-        Log.d(TAG, sb.toString());
+        PreventLog.d(sb.toString());
     }
 
     public static void logRequest(String action, String packageName, int count) {
@@ -62,7 +60,7 @@ public class LogUtils {
             sb.append(", count: ");
             sb.append(count);
         }
-        Log.i(TAG, sb.toString());
+        PreventLog.d(sb.toString());
     }
 
     public static void logIntentFilter(boolean disallow, final Object filter, final String action, final String packageName) {
@@ -82,9 +80,9 @@ public class LogUtils {
         sb.append(", callingPid: ");
         sb.append(Binder.getCallingPid());
         if (disallow) {
-            Log.v(TAG, sb.toString());
+            PreventLog.v(sb.toString());
         } else {
-            Log.d(TAG, sb.toString());
+            PreventLog.d(sb.toString());
         }
     }
 
@@ -102,9 +100,8 @@ public class LogUtils {
             sb.append(" ");
             sb.append(hostingName);
         }
-        Log.d(TAG, sb.toString());
+        PreventLog.d(sb.toString());
     }
-
 
     public static void logIntentFilter(String action, Object filter, String packageName) {
         StringBuilder sb = new StringBuilder();
@@ -121,7 +118,7 @@ public class LogUtils {
         sb.append(Binder.getCallingUid());
         sb.append(", callingPid: ");
         sb.append(Binder.getCallingPid());
-        Log.v(TAG, sb.toString());
+        PreventLog.v(sb.toString());
     }
 
 }

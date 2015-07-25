@@ -1,12 +1,11 @@
-package me.piebridge.forcestopgb.hook;
+package me.piebridge.prevent.framework;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Process;
-import android.util.Log;
 
-import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.prevent.common.PreventIntent;
 
 public class Hook {
 
@@ -18,23 +17,23 @@ public class Hook {
 
     public static void beforeActivity$onCreate(Activity activity) { // NOSONAR
         String packageName = activity.getPackageName();
-        Intent intent = new Intent(CommonIntent.ACTION_INCREASE_COUNTER, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
-        intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
-        intent.putExtra(CommonIntent.EXTRA_UID, activity.getApplicationInfo().uid);
+        Intent intent = new Intent(PreventIntent.ACTION_INCREASE_COUNTER, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
+        intent.putExtra(PreventIntent.EXTRA_PID, Process.myPid());
+        intent.putExtra(PreventIntent.EXTRA_UID, activity.getApplicationInfo().uid);
         sendBroadcast(activity, intent);
         context.set(activity);
     }
 
     public static void afterActivity$onDestroy(Activity activity) { // NOSONAR
         String packageName = activity.getPackageName();
-        Intent intent = new Intent(CommonIntent.ACTION_DECREASE_COUNTER, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
-        intent.putExtra(CommonIntent.EXTRA_PID, Process.myPid());
+        Intent intent = new Intent(PreventIntent.ACTION_DECREASE_COUNTER, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
+        intent.putExtra(PreventIntent.EXTRA_PID, Process.myPid());
         sendBroadcast(activity, intent);
     }
 
     public static void beforeActivity$onRestart(Activity activity) { // NOSONAR
         String packageName = activity.getPackageName();
-        Intent intent = new Intent(CommonIntent.ACTION_RESTART, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
+        Intent intent = new Intent(PreventIntent.ACTION_RESTART, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
         sendBroadcast(activity, intent);
     }
 
@@ -43,13 +42,13 @@ public class Hook {
         if (activity != null) {
             int uid = activity.getApplicationInfo().uid;
             if (pid != -1) {
-                Log.w(CommonIntent.TAG, "Process.killProcess(self) is called in activity, uid: " + uid);
+                PreventLog.i("Process.killProcess(self) is called in activity, uid: " + uid);
             } else {
-                Log.w(CommonIntent.TAG, "System.exit is called in activity, uid: " + uid);
+                PreventLog.i("System.exit is called in activity, uid: " + uid);
             }
             String packageName = activity.getPackageName();
-            Intent intent = new Intent(CommonIntent.ACTION_FORCE_STOP, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
-            intent.putExtra(CommonIntent.EXTRA_UID, uid);
+            Intent intent = new Intent(PreventIntent.ACTION_FORCE_STOP, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
+            intent.putExtra(PreventIntent.EXTRA_UID, uid);
             sendBroadcast(activity, intent);
         }
         context.remove();
@@ -58,22 +57,22 @@ public class Hook {
 
     public static void afterActivity$moveTaskToBack(Activity activity, Boolean result) { // NOSONAR
         if (Boolean.TRUE.equals(result)) {
-            Log.d(CommonIntent.TAG, "moveTaskToBack: " + activity.getClass());
+            PreventLog.i("moveTaskToBack: " + activity.getClass());
             String packageName = activity.getPackageName();
-            Intent intent = new Intent(CommonIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
+            Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
             sendBroadcast(activity, intent);
         }
     }
 
     public static void beforeActivity$startHomeActivityForResult(Activity activity) { // NOSONAR
-        Log.w(CommonIntent.TAG, "start home activity: " + activity.getClass());
+        PreventLog.i("start home activity: " + activity.getClass());
         String packageName = activity.getPackageName();
-        Intent intent = new Intent(CommonIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(CommonIntent.SCHEME, packageName, null));
+        Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
         sendBroadcast(activity, intent);
     }
 
     private static void sendBroadcast(Activity activity, Intent intent) {
-        intent.addFlags(CommonIntent.INTENT_FLAG);
+        intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
         activity.sendBroadcast(intent);
     }
 

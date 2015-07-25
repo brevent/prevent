@@ -1,11 +1,10 @@
-package me.piebridge.util;
+package me.piebridge.prevent.ui.util;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.util.Log;
 
-import me.piebridge.forcestopgb.common.CommonIntent;
+import me.piebridge.prevent.ui.UILog;
 
 /**
  * Created by thom on 15/7/23.
@@ -21,7 +20,7 @@ public class PackageUtils {
             ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
             return isSystemPackage(ai.flags);
         } catch (PackageManager.NameNotFoundException e) {
-            Log.e(CommonIntent.TAG, "cannot find package", e);
+            UILog.d("cannot find package " + e, e);
             return false;
         }
     }

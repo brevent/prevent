@@ -1,4 +1,4 @@
-package me.piebridge.forcestopgb;
+package me.piebridge.prevent.xposed;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -15,14 +15,18 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
-import me.piebridge.forcestopgb.hook.Hook;
-import me.piebridge.forcestopgb.hook.HookResult;
-import me.piebridge.forcestopgb.hook.SystemHook;
+import me.piebridge.prevent.framework.Hook;
+import me.piebridge.prevent.framework.IntentFilterMatchResult;
+import me.piebridge.prevent.framework.SystemHook;
 
 public class XposedMod implements IXposedHookZygoteInit {
 
     @Override
     public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
+        initZygote();
+    }
+
+    private static void initZygote() throws Throwable { // NOSONAR
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Class<?> ActivityThread = Class.forName("android.app.ActivityThread"); // NOSONAR
             XposedBridge.hookAllMethods(ActivityThread, "systemMain", new XC_MethodHook() {
@@ -69,7 +73,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedBridge.hookMethod(match, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                HookResult result = SystemHook.hookIntentFilter$match(param.thisObject, param.args);
+                IntentFilterMatchResult result = SystemHook.hookIntentFilter$match(param.thisObject, param.args);
                 if (!result.isNone()) {
                     param.setResult(result.getResult());
                 }

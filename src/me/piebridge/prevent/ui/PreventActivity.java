@@ -1,4 +1,4 @@
-package me.piebridge.forcestopgb.ui;
+package me.piebridge.prevent.ui;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
@@ -21,7 +21,6 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentUtils;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,11 +39,12 @@ import java.util.Map;
 import java.util.Set;
 
 import me.piebridge.forcestopgb.R;
-import me.piebridge.forcestopgb.common.CommonIntent;
-import me.piebridge.forcestopgb.common.Packages;
-import me.piebridge.util.RecreateUtil;
+import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.PreventListUtils;
+import me.piebridge.prevent.ui.util.PreventUtils;
+import me.piebridge.prevent.ui.util.RecreateUtils;
 
-public class SettingActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
+public class PreventActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
     private ViewPager mPager;
     private PagerAdapter mPagerAdapter;
@@ -61,7 +61,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private Button prevent;
 
     private static final int APPLICATIONS = 0;
-    private static final int PREVENTLIST = 1;
+    private static final int PREVENT_LIST = 1;
 
     private static final String THEME = "theme";
     private static final String THEME_LIGHT = "light";
@@ -121,10 +121,10 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
         if (hookEnabled == null || (Boolean.TRUE.equals(hookEnabled) && preventPackages.isEmpty())) {
             showAlertDialog(R.string.checking);
             Intent intent = new Intent();
-            intent.setFlags(CommonIntent.INTENT_FLAG | Intent.FLAG_RECEIVER_FOREGROUND);
-            intent.setAction(CommonIntent.ACTION_GET_PACKAGES);
-            intent.setData(Uri.fromParts(CommonIntent.SCHEME, getPackageName(), null));
-            Log.d(CommonIntent.TAG, "sending hook checking broadcast");
+            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+            intent.setAction(PreventIntent.ACTION_GET_PACKAGES);
+            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+            UILog.i("sending hook checking broadcast");
             sendOrderedBroadcast(intent, null, new HookReceiver(), null, 0, null, null);
         } else if (!hookEnabled) {
             showDisableDialog();
@@ -216,7 +216,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             }
             dangerousColor = null;
             transparentColor = null;
-            RecreateUtil.recreate(this);
+            RecreateUtils.recreate(this);
             return true;
         } else {
             return false;
@@ -295,7 +295,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void savePackages() {
-        Packages.save(preventPackages.keySet());
+        PreventListUtils.save(preventPackages.keySet());
         refreshIfNeeded();
     }
 
@@ -380,7 +380,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
 
     private void refresh(int position, boolean force) {
         String tag = mPageTitles[position];
-        SettingFragment fragment = (SettingFragment) getSupportFragmentManager().findFragmentByTag(tag);
+        PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
         if (fragment != null) {
             fragment.refresh(force || fragment.canUseCache());
         }
@@ -404,7 +404,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
     private class HookReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(CommonIntent.TAG, "received hook checking broadcast");
+            UILog.i("received hook checking broadcast");
             String result = getResultData();
             if (result != null) {
                 hookEnabled = true;
@@ -428,7 +428,7 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
                 }
             } catch (JSONException e) { // NOSONAR
                 // do nothing
-                android.util.Log.d(CommonIntent.TAG, "cannot convert to json", e);
+                UILog.e("cannot convert to json", e);
             }
         }
     }
@@ -444,10 +444,10 @@ public class SettingActivity extends FragmentActivity implements ViewPager.OnPag
             Fragment fragment;
             switch (position) {
                 case APPLICATIONS:
-                    fragment = new SettingFragmentApplications();
+                    fragment = new PreventFragment.Applications();
                     break;
-                case PREVENTLIST:
-                    fragment = new SettingFragmentPreventList();
+                case PREVENT_LIST:
+                    fragment = new PreventFragment.PreventList();
                     break;
                 default:
                     return null;

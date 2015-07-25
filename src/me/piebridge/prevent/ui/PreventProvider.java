@@ -1,4 +1,4 @@
-package me.piebridge.forcestopgb.ui;
+package me.piebridge.prevent.ui;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -7,12 +7,12 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.provider.Settings;
 
-import me.piebridge.forcestopgb.common.Packages;
+import me.piebridge.prevent.ui.util.PreventListUtils;
 
 /**
  * Created by thom on 15/7/18.
  */
-public class Provider extends ContentProvider {
+public class PreventProvider extends ContentProvider {
 
     public static final Uri CONTENT_URI = Uri.parse("content://me.piebridge.forcestopgb.provider");
     public static final String COLUMN_PACKAGE = Settings.NameValueTable.VALUE;
@@ -26,7 +26,7 @@ public class Provider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         String[] columns = {COLUMN_PACKAGE};
         MatrixCursor cursor = new MatrixCursor(columns);
-        for (String packageName : Packages.load()) {
+        for (String packageName : PreventListUtils.load()) {
             cursor.addRow(new String[] {packageName});
         }
         return cursor;
