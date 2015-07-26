@@ -2,6 +2,7 @@ package me.piebridge.prevent.ui;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,13 +12,14 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentUtils;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -46,12 +48,9 @@ import me.piebridge.prevent.ui.util.RecreateUtils;
 public class PreventActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
     private ViewPager mPager;
-    private PagerAdapter mPagerAdapter;
     private String[] mPageTitles;
     private List<Set<String>> mPageSelections;
 
-    private static Boolean hookEnabled = null;
-    private static final Object RUNNING_LOCK = new Object();
     private static Map<String, Boolean> preventPackages = null;
     private static Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
 
@@ -68,7 +67,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private static final String THEME_LIGHT = "light";
     private static final String THEME_DARK = "dark";
 
-    private AlertDialog dialog;
+    private ProgressDialog dialog;
 
     private Integer dangerousColor = null;
 
@@ -76,9 +75,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private BroadcastReceiver receiver;
 
-    private static long lastProcessCheck;
-
-    private static long lastPreventsCheck;
+    private Handler mHandler;
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -112,80 +109,58 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         cancel.setEnabled(false);
         prevent.setEnabled(false);
         remove.setEnabled(false);
-        mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
         receiver = new HookReceiver();
+
+        mPageTitles = new String[]{getString(R.string.applications), getString(R.string.preventlist)};
+        mPageSelections = new ArrayList<Set<String>>();
+        mPageSelections.add(new HashSet<String>());
+        mPageSelections.add(new HashSet<String>());
+        mPager.addOnPageChangeListener(this);
+        mPager.setAdapter(new ScreenSlidePagerAdapter(getSupportFragmentManager()));
+
+        HandlerThread thread = new HandlerThread("PreventUI");
+        thread.start();
+        mHandler = new Handler(thread.getLooper());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        showFragmentsIfNeeded();
+        if (preventPackages == null) {
+            showProcessDialog(R.string.retrieving);
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    retrievePrevents();
+                }
+            }, 250);
+        }
     }
 
     private void retrievePrevents() {
-        long now = System.currentTimeMillis();
-        if (now - lastPreventsCheck < 0x1000) {
-            return;
-        }
-        lastPreventsCheck = now;
-        showAlertDialog(R.string.checking);
         Intent intent = new Intent();
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
         intent.setAction(PreventIntent.ACTION_GET_PACKAGES);
         intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-        UILog.i("sending hook checking broadcast");
-        sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
+        UILog.i("sending get prevent packages broadcast");
+        sendOrderedBroadcast(intent, null, receiver, mHandler, 0, null, null);
     }
 
     private void retrieveRunning() {
-        long now = System.currentTimeMillis();
-        if (now - lastProcessCheck < 0x1000) {
-            return;
-        }
-        lastProcessCheck = now;
         Intent intent = new Intent();
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
         intent.setAction(PreventIntent.ACTION_GET_PROCESSES);
         intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
         UILog.i("sending get processes broadcast");
-        sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
-    }
-
-    private void showFragmentsIfNeeded() {
-        if (hookEnabled == null || (hookEnabled && preventPackages == null)) {
-            retrievePrevents();
-        } else if (!hookEnabled) {
-            showDisableDialog();
-        } else {
-            initFragmentIfNeeded();
-            if (running.isEmpty()) {
-                showAlertDialog(R.string.retrieving);
-            }
-            retrieveRunning();
-        }
-    }
-
-    private void initFragmentIfNeeded() {
-        if (mPager.getAdapter() == null) {
-            mPageTitles = new String[]{getString(R.string.applications), getString(R.string.preventlist)};
-            mPageSelections = new ArrayList<Set<String>>();
-            mPageSelections.add(new HashSet<String>());
-            mPageSelections.add(new HashSet<String>());
-            mPager.addOnPageChangeListener(this);
-            mPager.setAdapter(mPagerAdapter);
-            main.setVisibility(View.VISIBLE);
-        }
+        sendOrderedBroadcast(intent, null, receiver, mHandler, 0, null, null);
     }
 
     public Map<String, Set<Integer>> getRunningProcesses() {
-        synchronized (RUNNING_LOCK) {
-            return running;
-        }
+        return running;
     }
 
     public Map<String, Boolean> getPreventPackages() {
         if (preventPackages == null) {
-            retrievePrevents();
             return new HashMap<String, Boolean>();
         } else {
             return preventPackages;
@@ -237,6 +212,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     public void onPageSelected(int position) {
         checkSelection(position);
+        refresh(position, false);
     }
 
     public Set<String> getSelection() {
@@ -334,17 +310,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return getResourceColor(getThemed(resId));
     }
 
-    private void showAlertDialog(int resId) {
+    private void showProcessDialog(int resId) {
         if (dialog == null) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.app_name);
-            builder.setMessage(resId);
-            builder.setIcon(R.drawable.ic_launcher);
-            builder.setCancelable(false);
-            dialog = builder.create();
-        } else {
-            dialog.setMessage(getString(resId));
+            dialog = new ProgressDialog(this);
         }
+        dialog.setTitle(R.string.app_name);
+        dialog.setIcon(R.drawable.ic_launcher);
+        dialog.setCancelable(false);
+        dialog.setMessage(getString(resId));
         dialog.show();
     }
 
@@ -379,10 +352,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private void refresh(int position, boolean force) {
         String tag = mPageTitles[position];
+        int currentItem = mPager.getCurrentItem();
         PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
         if (fragment != null) {
             fragment.saveListPosition();
             fragment.refresh(force);
+            if (position == currentItem) {
+                fragment.startTaskIfNeeded();
+            }
         }
     }
 
@@ -409,12 +386,15 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             String action = intent.getAction();
             if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
                 handleGetProcesses();
-                dialog.dismiss();
-                refresh(true);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dialog.dismiss();
+                        refresh(true);
+                    }
+                });
             } else if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
                 handleGetPackages();
-                dialog.dismiss();
-                showFragmentsIfNeeded();
             }
         }
 
@@ -438,10 +418,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                         processes.put(key, convertImportance(value));
                     }
                 }
-                synchronized (RUNNING_LOCK) {
-                    running.clear();
-                    running.putAll(processes);
-                }
+                running.clear();
+                running.putAll(processes);
             } catch (JSONException e) {
                 UILog.e("cannot convert to json", e);
             }
@@ -458,29 +436,43 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
 
         private void handleGetPackages() {
-            UILog.i("received hook checking broadcast");
+            UILog.i("received get prevent packages broadcast");
             String result = getResultData();
             if (result != null) {
-                hookEnabled = true;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mPager.setAdapter(new ScreenSlidePagerAdapter(getSupportFragmentManager()));
+                        main.setVisibility(View.VISIBLE);
+                    }
+                });
                 handlePackages(result);
+                retrieveRunning();
             } else {
-                hookEnabled = false;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showDisableDialog();
+                    }
+                });
             }
         }
 
         private void handlePackages(String result) {
             try {
                 JSONObject json = new JSONObject(result);
+                Map<String, Boolean> prevents = new HashMap<String, Boolean>();
+                Iterator<String> it = json.keys();
+                while (it.hasNext()) {
+                    String key = it.next();
+                    prevents.put(key, json.optBoolean(key));
+                }
                 if (preventPackages == null) {
                     preventPackages = new HashMap<String, Boolean>();
                 } else {
                     preventPackages.clear();
                 }
-                Iterator<String> it = json.keys();
-                while (it.hasNext()) {
-                    String key = it.next();
-                    preventPackages.put(key, json.optBoolean(key));
-                }
+                preventPackages.putAll(prevents);
             } catch (JSONException e) {
                 UILog.e("cannot convert to json", e);
             }

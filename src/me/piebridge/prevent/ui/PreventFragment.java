@@ -299,6 +299,10 @@ public abstract class PreventFragment extends ListFragment {
         }
     }
 
+    public void startTaskIfNeeded() {
+        mAdapter.startTaskIfNeeded();
+    }
+
     private static class Position {
         int pos;
         int top;
@@ -380,6 +384,7 @@ public abstract class PreventFragment extends ListFragment {
         private Set<String> mFiltered;
         private Filter mFilter;
         private View mView;
+        private RetrieveInfoTask mTask;
 
         public Adapter(PreventActivity activity) {
             super(activity, R.layout.item);
@@ -405,7 +410,7 @@ public abstract class PreventFragment extends ListFragment {
             this(activity);
             mView = view;
             mNames.addAll(names);
-            new RetrieveInfoTask().execute();
+            mTask = new RetrieveInfoTask();
         }
 
         @Override
@@ -467,6 +472,15 @@ public abstract class PreventFragment extends ListFragment {
                 return mNames;
             } else {
                 return mFiltered;
+            }
+        }
+
+        public void startTaskIfNeeded() {
+            AsyncTask.Status status = mTask.getStatus();
+            if (status == AsyncTask.Status.PENDING) {
+                mTask.execute();
+            } else if (mTask.dialog != null) {
+                mTask.dialog.show();
             }
         }
 
@@ -542,7 +556,8 @@ public abstract class PreventFragment extends ListFragment {
             @Override
             protected void onPreExecute() {
                 dialog = new ProgressDialog(mActivity);
-                dialog.setMessage(mActivity.getString(R.string.loading));
+                dialog.setTitle(R.string.app_name);
+                dialog.setIcon(R.drawable.ic_launcher);
                 dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                 dialog.setCancelable(false);
                 dialog.setMax(mNames.size());
@@ -586,6 +601,7 @@ public abstract class PreventFragment extends ListFragment {
                 }
                 if (dialog != null) {
                     dialog.dismiss();
+                    dialog = null;
                 }
                 if (mView != null) {
                     mView.setVisibility(View.VISIBLE);
