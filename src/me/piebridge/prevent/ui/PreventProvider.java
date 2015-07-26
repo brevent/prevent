@@ -27,7 +27,7 @@ import me.piebridge.forcestopgb.R;
  */
 public class PreventProvider extends ContentProvider {
 
-    public static final Uri CONTENT_URI = Uri.parse("content://me.piebridge.forcestopgb.provider");
+    public static final Uri CONTENT_URI = Uri.parse("content://me.piebridge.prevent.provider");
     public static final String COLUMN_PACKAGE = Settings.NameValueTable.VALUE;
 
     @Override

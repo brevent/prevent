@@ -53,7 +53,7 @@
 
         <provider
             android:name="me.piebridge.prevent.ui.PreventProvider"
-            android:authorities="me.piebridge.forcestopgb.provider"
+            android:authorities="me.piebridge.prevent.provider"
             android:permission="android.permission.SHUTDOWN" />
 
     </application>
