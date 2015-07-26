@@ -10,7 +10,7 @@ Please note, this application prevents following actions:
 - receive event which may change default home action
 - (when prevents) move task to background
 - (when prevents) start home activity
-- process with parent to init
+- (when prevents) process with parent to init
 
 **WARNING**: please don't prevents system pacakges nor daily packages. Otherwise, you may miss important information.
 
@@ -43,7 +43,7 @@ Project: https://github.com/liudongmiao/ForceStopGB , any donations are welcome.
 - 接收系统按键，主要是HOME键，如支付宝。
 - (当程序被阻止时) 程序自己移到后台，如微信。
 - (当程序被阻止时) 程序启动HOME，如微博。
-- 产生一些游离系统外的进程，如应用宝。
+- (当程序被阻止时) 产生一些游离系统外的进程，如应用宝。
 
 **警告**：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。
 
