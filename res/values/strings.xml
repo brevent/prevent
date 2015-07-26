@@ -23,6 +23,7 @@
     <string name="open">Open</string>
     <string name="query_hint">\"-3\" for user\'s apps</string>
     <string name="query_hint_system">\"-s\" for system apps</string>
-    <string name="retrieving">Retrieving status, please wait...</string>
+    <string name="retrieving">Retrieving status, please wait. . .</string>
+    <string name="no_prevents">Please configure prevent list.</string>
 
 </resources>
