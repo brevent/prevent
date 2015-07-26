@@ -133,7 +133,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 public void run() {
                     retrievePrevents();
                 }
-            }, 250);
+            }, 0x100);
         }
     }
 
@@ -350,7 +350,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         builder.create().show();
     }
 
-    private void refresh(int position, boolean force) {
+    private boolean refresh(int position, boolean force) {
         String tag = mPageTitles[position];
         int currentItem = mPager.getCurrentItem();
         PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
@@ -360,6 +360,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             if (position == currentItem) {
                 fragment.startTaskIfNeeded();
             }
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -374,10 +377,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
-    private void refresh(boolean force) {
+    private boolean refresh(boolean force) {
         for (int item = mPageTitles.length - 1; item >= 0; --item) {
-            refresh(item, force);
+            if (!refresh(item, force)) {
+                return false;
+            }
         }
+        return true;
     }
 
     private class HookReceiver extends BroadcastReceiver {
@@ -386,16 +392,22 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             String action = intent.getAction();
             if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
                 handleGetProcesses();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        dialog.dismiss();
-                        refresh(true);
-                    }
-                });
+                showFragments();
             } else if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
                 handleGetPackages();
             }
+        }
+
+        private void showFragments() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    dialog.dismiss();
+                    while (!refresh(true)) {
+                        retrieveRunning();
+                    }
+                }
+            });
         }
 
         private void handleGetProcesses() {
@@ -439,13 +451,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             UILog.i("received get prevent packages broadcast");
             String result = getResultData();
             if (result != null) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mPager.setAdapter(new ScreenSlidePagerAdapter(getSupportFragmentManager()));
-                        main.setVisibility(View.VISIBLE);
-                    }
-                });
+                showViewPager();
                 handlePackages(result);
                 retrieveRunning();
             } else {
@@ -456,6 +462,15 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     }
                 });
             }
+        }
+
+        private void showViewPager() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    main.setVisibility(View.VISIBLE);
+                }
+            });
         }
 
         private void handlePackages(String result) {
