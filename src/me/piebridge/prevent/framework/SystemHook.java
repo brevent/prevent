@@ -286,7 +286,7 @@ public final class SystemHook {
     }
 
     private static boolean isAllowed(int uid) {
-        return uid > 0 && application.getPackageManager().checkSignatures(Binder.getCallingUid(), uid) >= 0;
+        return uid > 0 && application != null && application.getPackageManager().checkSignatures(Binder.getCallingUid(), uid) >= 0;
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
