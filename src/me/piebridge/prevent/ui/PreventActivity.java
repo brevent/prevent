@@ -362,6 +362,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             }
             return true;
         } else {
+            UILog.e("fragment is null in " + position);
             return false;
         }
     }
@@ -402,9 +403,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    dialog.dismiss();
-                    while (!refresh(true)) {
+                    if (!refresh(true)) {
+                        showViewPager();
                         retrieveRunning();
+                    } else {
+                        dialog.dismiss();
                     }
                 }
             });
@@ -447,21 +450,24 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             return importance;
         }
 
-        private void handleGetPackages() {
+        private boolean handleGetPackages() {
             UILog.i("received get prevent packages broadcast");
             String result = getResultData();
             if (result != null) {
-                showViewPager();
                 handlePackages(result);
-                retrieveRunning();
-            } else {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        showDisableDialog();
-                    }
-                });
+                if (preventPackages != null) {
+                    showViewPager();
+                    retrieveRunning();
+                    return true;
+                }
             }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showDisableDialog();
+                }
+            });
+            return false;
         }
 
         private void showViewPager() {
