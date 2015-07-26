@@ -47,8 +47,9 @@ public class PreventProvider extends ContentProvider {
                 if (PackageUtils.canPrevent(pm, appInfo)) {
                     cursor.addRow(new String[]{packageName});
                 }
-            } catch (PackageManager.NameNotFoundException e) {
-                UILog.d("cannot find package " + packageName, e);
+            } catch (PackageManager.NameNotFoundException e) {  // NOSONAR
+                cursor.addRow(new String[]{packageName});
+                UILog.d("cannot find package " + packageName + ", is it on sdcard?");
             }
         }
         if (packages.isEmpty()) {
