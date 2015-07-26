@@ -1,6 +1,8 @@
 package me.piebridge.prevent.framework;
 
 import android.app.ActivityManager;
+import android.content.Context;
+import android.content.Intent;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,10 +33,15 @@ class CheckingRunningService implements Runnable {
             String name = service.service.getPackageName();
             boolean prevents = Boolean.TRUE.equals(SystemHook.getPreventPackages().get(name));
             if (prevents || BuildConfig.DEBUG) {
-                PreventLog.v("prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount + ", started: " + service.started + ", flags: " + service.flags + ", foreground: " + service.foreground);
+                PreventLog.v("prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount
+                        + ", started: " + service.started +" , pid: " + service.pid + ", process: " + service.process);
             }
+            Context context = SystemHook.getApplication().getApplicationContext();
             if (prevents && (name.equals(this.packageName) || service.uid >= SystemHook.FIRST_APPLICATION_UID)) {
                 boolean canStop = service.started;
+                if (canStop) {
+                    context.stopService(new Intent().setComponent(service.service));
+                }
                 Boolean result = serviceStatus.get(name);
                 if (result == null || result) {
                     serviceStatus.put(name, canStop);
@@ -53,4 +60,5 @@ class CheckingRunningService implements Runnable {
             }
         }
     }
+
 }
