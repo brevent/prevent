@@ -119,7 +119,11 @@ public final class SystemHook {
             @SuppressWarnings("unchecked")
             PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) filter).activity;
             PackageParser.Package owner = activity.owner;
-            String packageName = owner.applicationInfo.packageName;
+            ApplicationInfo ai = owner.applicationInfo;
+            if (isAllowed(ai.uid)) {
+                return IntentFilterMatchResult.NONE;
+            }
+            String packageName = ai.packageName;
             if (Boolean.TRUE.equals(preventPackages.get(packageName)) && owner.receivers.contains(activity)) {
                 // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
                 // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
@@ -137,6 +141,9 @@ public final class SystemHook {
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
             PackageParser.Package owner = service.owner;
             ApplicationInfo ai = owner.applicationInfo;
+            if (isAllowed(ai.uid)) {
+                return IntentFilterMatchResult.NONE;
+            }
             String packageName = ai.packageName;
             boolean prevents = Boolean.TRUE.equals(preventPackages.get(packageName));
             if (!prevents) {
@@ -272,6 +279,10 @@ public final class SystemHook {
             }
         }
         return null;
+    }
+
+    private static boolean isAllowed(int uid) {
+        return uid > 0 && application.getPackageManager().checkSignatures(Binder.getCallingUid(), uid) >= 0;
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
