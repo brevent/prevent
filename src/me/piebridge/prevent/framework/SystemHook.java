@@ -507,7 +507,7 @@ public final class SystemHook {
 
     private static void killIfNeed(int uid, int pid, String packageName) {
         String name = getPackageName(uid, packageName);
-        if (preventPackages.containsKey(name) || name == null) {
+        if (name == null || preventPackages.containsKey(name)) {
             Process.killProcess(pid);
             if (name == null) {
                 name = "(uid: " + uid + ", process: + " + getProcessName(pid) + ")";
