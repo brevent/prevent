@@ -2,6 +2,7 @@ package me.piebridge.prevent.ui;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -143,7 +144,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         intent.setAction(PreventIntent.ACTION_GET_PACKAGES);
         intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
         UILog.i("sending get prevent packages broadcast");
-        sendOrderedBroadcast(intent, null, receiver, mHandler, 0, null, null);
+        sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
     }
 
     private void retrieveRunning() {
@@ -152,7 +153,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         intent.setAction(PreventIntent.ACTION_GET_PROCESSES);
         intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
         UILog.i("sending get processes broadcast");
-        sendOrderedBroadcast(intent, null, receiver, mHandler, 0, null, null);
+        sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
     }
 
     public Map<String, Set<Integer>> getRunningProcesses() {
@@ -270,7 +271,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void savePackages() {
-        PreventListUtils.save(preventPackages.keySet());
         refreshIfNeeded();
     }
 
@@ -527,7 +527,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             return mPageTitles[position];
         }
     }
-
 
     @Override
     public void onPause() {

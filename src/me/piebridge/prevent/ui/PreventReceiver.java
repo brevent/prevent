@@ -16,13 +16,14 @@ public class PreventReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         String packageName = getPackageName(intent);
-        UILog.d("action: " + action + ", packageName: " + packageName);
         if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
             // replacing
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
-            updatePrevents(context, packageName, false);
+            UILog.d("action: " + action + ", packageName: " + packageName);
+            PreventUtils.update(context, new String[]{packageName}, false);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
-            updatePrevents(context, packageName, true);
+            UILog.d("action: " + action + ", packageName: " + packageName);
+            PreventUtils.update(context, new String[]{packageName}, true);
         }
     }
 
@@ -35,16 +36,6 @@ public class PreventReceiver extends BroadcastReceiver {
             return null;
         }
         return uri.getSchemeSpecificPart();
-    }
-
-    private static void updatePrevents(Context context, String packageName, boolean added) {
-        PreventUtils.update(context, new String[]{packageName}, added);
-        Set<String> packages = PreventListUtils.load();
-        if (added && packages.add(packageName)) {
-            PreventListUtils.save(packages);
-        } else if (!added && packages.remove(packageName)) {
-            PreventListUtils.save(packages);
-        }
     }
 
 }

@@ -33,8 +33,10 @@ class SystemReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         String packageName = getPackageName(intent);
         if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
-            setResultData(new JSONObject(SystemHook.getPreventPackages()).toString());
-            LogUtils.logRequest(action, null, SystemHook.getPreventPackages().size());
+            Map<String, Boolean> prevents = SystemHook.getPreventPackages();
+            setResultCode(prevents.size());
+            setResultData(new JSONObject(prevents).toString());
+            LogUtils.logRequest(action, null, prevents.size());
             abortBroadcast();
         } else if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
             Map<String, Set<Integer>> running = getRunningAppProcesses();
@@ -42,7 +44,7 @@ class SystemReceiver extends BroadcastReceiver {
             setResultData(toJSON(running));
             abortBroadcast();
         } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
-            handleUpdatePrevent(action, packageName, intent);
+            handleUpdatePrevent(action, intent);
         } else if (PreventIntent.ACTION_INCREASE_COUNTER.equals(action)) {
             handleIncreaseCounter(action, packageName, intent);
         } else if (PreventIntent.ACTION_DECREASE_COUNTER.equals(action)) {
@@ -67,18 +69,22 @@ class SystemReceiver extends BroadcastReceiver {
         }
     }
 
-    private void handleUpdatePrevent(String action, String packageName, Intent intent) {
-        LogUtils.logRequest(action, packageName, -1);
+    private void handleUpdatePrevent(String action, Intent intent) {
         String[] packages = intent.getStringArrayExtra(PreventIntent.EXTRA_PACKAGES);
         boolean prevent = intent.getBooleanExtra(PreventIntent.EXTRA_PREVENT, true);
+        Map<String, Boolean> prevents = SystemHook.getPreventPackages();
         for (String name : packages) {
             if (prevent) {
                 int count = countCounter(name);
-                SystemHook.getPreventPackages().put(name, count == 0);
+                prevents.put(name, count == 0);
             } else {
-                SystemHook.getPreventPackages().remove(name);
+                prevents.remove(name);
             }
         }
+        setResultCode(prevents.size());
+        setResultData(new JSONObject(prevents).toString());
+        LogUtils.logRequest(action, null, prevents.size());
+        abortBroadcast();
     }
 
     private void handleIncreaseCounter(String action, String packageName, Intent intent) {

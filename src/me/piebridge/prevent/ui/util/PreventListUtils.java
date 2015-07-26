@@ -25,7 +25,7 @@ public final class PreventListUtils {
 
     }
 
-    public static void save(Set<String> packages) {
+    public static synchronized void save(Set<String> packages) {
         File lock = new File(PREVENT + ".lock");
         File conf = lock.getParentFile();
         if (conf.isFile()) {
@@ -43,7 +43,7 @@ public final class PreventListUtils {
         }
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(lock));
-            for (String key : new TreeSet<String>(packages)) {
+            for (String key : packages) {
                 writer.write(key);
                 writer.write("\n");
             }
