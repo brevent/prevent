@@ -479,14 +479,24 @@ public final class SystemHook {
                 int pid = Integer.parseInt(file.getName());
                 int uid = HideApiUtils.getUidForPid(pid);
                 if (HideApiUtils.getParentPid(pid) == 1 && uid >= FIRST_APPLICATION_UID) {
-                    Process.killProcess(pid);
-                    LogUtils.logKill(pid, "without parent", getPackageName(uid, pid, packageName));
+                    killIfNeed(uid, pid, packageName);
                 }
             }
         }
     }
 
-    private static String getPackageName(int uid, int pid, String packageName) {
+    private static void killIfNeed(int uid, int pid, String packageName) {
+        String name = getPackageName(uid, packageName);
+        if (preventPackages.containsKey(name) || name == null) {
+            Process.killProcess(pid);
+            if (name == null) {
+                name = "(uid: " + uid + ", process: + " + getProcessName(pid) + ")";
+            }
+            LogUtils.logKill(pid, "without parent", name);
+        }
+    }
+
+    private static String getPackageName(int uid, String packageName) {
         Integer currentUid = packageUids.get(packageName);
         if (currentUid != null && currentUid == uid) {
             return packageName;
@@ -496,7 +506,7 @@ public final class SystemHook {
                 return entry.getKey();
             }
         }
-        return "(uid: " + uid + ", process: + " + getProcessName(pid) + ")";
+        return null;
     }
 
 }
