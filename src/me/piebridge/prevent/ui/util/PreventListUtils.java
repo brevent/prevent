@@ -1,7 +1,6 @@
 package me.piebridge.prevent.ui.util;
 
 import android.os.Environment;
-import android.os.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -35,7 +34,6 @@ public final class PreventListUtils {
         if (!conf.isDirectory()) {
             conf.mkdir();
         }
-        FileUtils.setPermissions(conf.getAbsolutePath(), 0755, -1, -1); // NOSONAR
         while (lock.exists() && System.currentTimeMillis() - lock.lastModified() < MAX_WAIT) {
             try {
                 Thread.sleep(SINGLE_WAIT);
@@ -51,7 +49,6 @@ public final class PreventListUtils {
             }
             writer.close();
             lock.renameTo(new File(PREVENT));
-            FileUtils.setPermissions(PREVENT, 0644, -1, -1); // NOSONAR
         } catch (IOException e) {
             UILog.e("cannot save " + PREVENT, e);
         }

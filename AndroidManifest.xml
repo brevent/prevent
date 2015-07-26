@@ -8,6 +8,13 @@
         android:minSdkVersion="10"
         android:targetSdkVersion="11" />
 
+    <permission
+        android:name="me.piebridge.prevent.permission.MANAGER"
+        android:permissionGroup="android.permission-group.APP_INFO"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="me.piebridge.prevent.permission.MANAGER" />
+
     <application
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
@@ -46,7 +53,8 @@
 
         <provider
             android:name="me.piebridge.prevent.ui.PreventProvider"
-            android:authorities="me.piebridge.forcestopgb.provider" />
+            android:authorities="me.piebridge.forcestopgb.provider"
+            android:permission="android.permission.SHUTDOWN" />
 
     </application>
 

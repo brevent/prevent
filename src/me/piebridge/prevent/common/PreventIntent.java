@@ -14,7 +14,7 @@ public final class PreventIntent {
     public static final String ACTION_FORCE_STOP = NAMESPACE + "FORCE_STOP";
     public static final String ACTION_RESTART = NAMESPACE + "RESTART";
 
-    // for ui
+    // for ui - manager
     public static final String ACTION_GET_PACKAGES = NAMESPACE + "GET_PACKAGES";
     public static final String ACTION_GET_PROCESSES = NAMESPACE + "GET_PROCESSES";
     public static final String ACTION_UPDATE_PREVENT = NAMESPACE + "UPDATE_PREVENT";
@@ -25,6 +25,7 @@ public final class PreventIntent {
     public static final String EXTRA_PREVENT = NAMESPACE + "PREVENT";
 
     public static final String SCHEME = "prevent";
+    public static final String PERMISSION_MANAGER = NAMESPACE + "permission.MANAGER";
 
     private PreventIntent() {
 

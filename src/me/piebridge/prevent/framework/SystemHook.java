@@ -181,16 +181,21 @@ public final class SystemHook {
 
         application = ActivityThread.currentApplication();
 
+        IntentFilter manager = new IntentFilter();
+        manager.addAction(PreventIntent.ACTION_GET_PACKAGES);
+        manager.addAction(PreventIntent.ACTION_GET_PROCESSES);
+        manager.addAction(PreventIntent.ACTION_UPDATE_PREVENT);
+        manager.addDataScheme(PreventIntent.SCHEME);
+        application.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
+
         IntentFilter hook = new IntentFilter();
-        hook.addAction(PreventIntent.ACTION_GET_PACKAGES);
-        hook.addAction(PreventIntent.ACTION_GET_PROCESSES);
-        hook.addAction(PreventIntent.ACTION_UPDATE_PREVENT);
         hook.addAction(PreventIntent.ACTION_INCREASE_COUNTER);
         hook.addAction(PreventIntent.ACTION_DECREASE_COUNTER);
         hook.addAction(PreventIntent.ACTION_RESTART);
         hook.addAction(PreventIntent.ACTION_ACTIVITY_DESTROY);
         hook.addAction(PreventIntent.ACTION_FORCE_STOP);
         hook.addDataScheme(PreventIntent.SCHEME);
+        // FIXME: check permission
         application.registerReceiver(receiver, hook, null, handler);
 
         IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
