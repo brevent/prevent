@@ -47,7 +47,7 @@ public class LogUtils {
         sb.append(key);
         sb.append(" is not for ");
         sb.append(packageName);
-        PreventLog.d(sb.toString());
+        PreventLog.v(sb.toString());
     }
 
     public static void logRequest(String action, String packageName, int count) {
