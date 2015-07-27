@@ -296,11 +296,8 @@ public final class SystemHook {
         return null;
     }
 
-    private static boolean canUseGms() {
+    private static boolean canUseGms(int uid) {
         int callingUid = Binder.getCallingUid();
-        if (callingUid < FIRST_APPLICATION_UID) {
-            return false;
-        }
         Boolean value = gmsUids.get(callingUid);
         if (value != null) {
             return value;
@@ -308,28 +305,42 @@ public final class SystemHook {
         PackageManager pm = application.getPackageManager();
         String[] packageNames = pm.getPackagesForUid(callingUid);
         for (String packageName : packageNames) {
-            if (packageName.startsWith("com.google.android.apps.")) {
-                PreventLog.d("allow " + packageName + " to use gms if needed");
+            if (isGapps(pm, packageName, uid)) {
                 gmsUids.put(callingUid, true);
                 return true;
-            }
-            try {
-                if (PackageUtils.isSystemPackage(pm.getApplicationInfo(packageName, 0).flags)) {
-                    PreventLog.d("allow system package " + packageName + " to use gms if needed");
-                    gmsUids.put(callingUid, true);
-                    return true;
-                }
-            } catch (PackageManager.NameNotFoundException e) { // NOSONAR
-                PreventLog.d("cannot find package: " + packageName);
             }
         }
         gmsUids.put(callingUid, false);
         return false;
     }
 
+    private static boolean isGapps(PackageManager pm, String packageName, int uid) {
+        if (packageName.startsWith("com.google.android.")) {
+            PreventLog.d("allow " + packageName + " to use gms if needed");
+            return true;
+        } else if (pm.checkSignatures(Binder.getCallingUid(), uid) == PackageManager.SIGNATURE_MATCH) {
+            PreventLog.d("allow " + packageName + "(same signature) to use gms if needed");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean isSystemApps(PackageManager pm, String packageName) {
+        try {
+            if (PackageUtils.isSystemPackage(pm.getApplicationInfo(packageName, 0).flags)) {
+                PreventLog.d("allow system package " + packageName + " to use gms if needed");
+                return true;
+            }
+        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
+            PreventLog.d("cannot find package: " + packageName);
+        }
+        return false;
+    }
+
     private static boolean canUseGms(ApplicationInfo info) {
         // only for system package, or only for gms?
-        return "com.google.android.gms".equals(info.packageName) && canUseGms();
+        return "com.google.android.gms".equals(info.packageName) && canUseGms(info.uid);
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
