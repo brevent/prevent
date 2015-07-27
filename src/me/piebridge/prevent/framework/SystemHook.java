@@ -197,7 +197,13 @@ public final class SystemHook {
         manager.addAction(PreventIntent.ACTION_GET_PROCESSES);
         manager.addAction(PreventIntent.ACTION_UPDATE_PREVENT);
         manager.addDataScheme(PreventIntent.SCHEME);
-        application.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
+
+        try {
+            application.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
+        } catch (SecurityException e) {
+            PreventLog.d("cannot register: " + e.getMessage());
+            return false;
+        }
 
         IntentFilter hook = new IntentFilter();
         hook.addAction(PreventIntent.ACTION_INCREASE_COUNTER);
