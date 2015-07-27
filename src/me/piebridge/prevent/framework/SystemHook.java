@@ -121,7 +121,7 @@ public final class SystemHook {
             PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) filter).activity;
             PackageParser.Package owner = activity.owner;
             ApplicationInfo ai = owner.applicationInfo;
-            if (isAllowed(ai.uid)) {
+            if (isAllowed(ai)) {
                 return IntentFilterMatchResult.NONE;
             }
             String packageName = ai.packageName;
@@ -145,7 +145,7 @@ public final class SystemHook {
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
             PackageParser.Package owner = service.owner;
             ApplicationInfo ai = owner.applicationInfo;
-            if (isAllowed(ai.uid)) {
+            if (isAllowed(ai)) {
                 return IntentFilterMatchResult.NONE;
             }
             String packageName = ai.packageName;
@@ -285,8 +285,12 @@ public final class SystemHook {
         return null;
     }
 
-    private static boolean isAllowed(int uid) {
-        return uid > 0 && application != null && application.getPackageManager().checkSignatures(Binder.getCallingUid(), uid) >= 0;
+    private static boolean isAllowed(ApplicationInfo info) {
+        // only for system package, or only for gms?
+        return (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
+                && info.uid >= FIRST_APPLICATION_UID
+                && application != null
+                && application.getPackageManager().checkSignatures(Binder.getCallingUid(), info.uid) >= 0;
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
