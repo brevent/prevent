@@ -298,8 +298,8 @@ public final class SystemHook {
 
     private static boolean canUseGms() {
         int callingUid = Binder.getCallingUid();
-        if (callingUid <= FIRST_APPLICATION_UID) {
-            return true;
+        if (callingUid < FIRST_APPLICATION_UID) {
+            return false;
         }
         Boolean value = gmsUids.get(callingUid);
         if (value != null) {
