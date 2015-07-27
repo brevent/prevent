@@ -298,6 +298,9 @@ public final class SystemHook {
 
     private static boolean canUseGms() {
         int callingUid = Binder.getCallingUid();
+        if (callingUid <= FIRST_APPLICATION_UID) {
+            return true;
+        }
         Boolean value = gmsUids.get(callingUid);
         if (value != null) {
             return value;
@@ -306,13 +309,13 @@ public final class SystemHook {
         String[] packageNames = pm.getPackagesForUid(callingUid);
         for (String packageName : packageNames) {
             if (packageName.startsWith("com.google.android.apps.")) {
-                PreventLog.d("allow " + callingUid + "(" + packageName + ") to use gms");
+                PreventLog.d("allow " + packageName + " to use gms if needed");
                 gmsUids.put(callingUid, true);
                 return true;
             }
             try {
                 if (PackageUtils.isSystemPackage(pm.getApplicationInfo(packageName, 0).flags)) {
-                    PreventLog.d("allow " + callingUid + "(" + packageName + ") to use gms");
+                    PreventLog.d("allow system package " + packageName + " to use gms if needed");
                     gmsUids.put(callingUid, true);
                     return true;
                 }
