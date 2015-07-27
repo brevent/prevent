@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
@@ -19,6 +20,7 @@ import android.os.HandlerThread;
 import android.os.Process;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.SparseArray;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -42,6 +44,7 @@ import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
 import me.piebridge.prevent.ui.PreventProvider;
+import me.piebridge.prevent.ui.util.PackageUtils;
 
 public final class SystemHook {
 
@@ -67,6 +70,8 @@ public final class SystemHook {
     static Map<String, Boolean> preventPackages = new ConcurrentHashMap<String, Boolean>();
 
     static Map<String, Integer> packageUids = new HashMap<String, Integer>();
+
+    static SparseArray<Boolean> gmsUids = new SparseArray<Boolean>();
 
     static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
 
@@ -121,7 +126,7 @@ public final class SystemHook {
             PackageParser.Activity activity = ((PackageParser.ActivityIntentInfo) filter).activity;
             PackageParser.Package owner = activity.owner;
             ApplicationInfo ai = owner.applicationInfo;
-            if (isAllowed(ai)) {
+            if (canUseGms(ai)) {
                 return IntentFilterMatchResult.NONE;
             }
             String packageName = ai.packageName;
@@ -145,7 +150,7 @@ public final class SystemHook {
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
             PackageParser.Package owner = service.owner;
             ApplicationInfo ai = owner.applicationInfo;
-            if (isAllowed(ai)) {
+            if (canUseGms(ai)) {
                 return IntentFilterMatchResult.NONE;
             }
             String packageName = ai.packageName;
@@ -200,7 +205,7 @@ public final class SystemHook {
 
         try {
             application.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
-        } catch (SecurityException e) {
+        } catch (SecurityException e) { // NOSONAR
             PreventLog.d("cannot register: " + e.getMessage());
             return false;
         }
@@ -291,12 +296,37 @@ public final class SystemHook {
         return null;
     }
 
-    private static boolean isAllowed(ApplicationInfo info) {
+    private static boolean canUseGms() {
+        int callingUid = Binder.getCallingUid();
+        Boolean value = gmsUids.get(callingUid);
+        if (value != null) {
+            return value;
+        }
+        PackageManager pm = application.getPackageManager();
+        String[] packageNames = pm.getPackagesForUid(callingUid);
+        for (String packageName : packageNames) {
+            if (packageName.startsWith("com.google.android.apps.")) {
+                PreventLog.d("allow " + callingUid + "(" + packageName + ") to use gms");
+                gmsUids.put(callingUid, true);
+                return true;
+            }
+            try {
+                if (PackageUtils.isSystemPackage(pm.getApplicationInfo(packageName, 0).flags)) {
+                    PreventLog.d("allow " + callingUid + "(" + packageName + ") to use gms");
+                    gmsUids.put(callingUid, true);
+                    return true;
+                }
+            } catch (PackageManager.NameNotFoundException e) { // NOSONAR
+                PreventLog.d("cannot find package: " + packageName);
+            }
+        }
+        gmsUids.put(callingUid, false);
+        return false;
+    }
+
+    private static boolean canUseGms(ApplicationInfo info) {
         // only for system package, or only for gms?
-        return (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
-                && info.uid >= FIRST_APPLICATION_UID
-                && application != null
-                && application.getPackageManager().checkSignatures(Binder.getCallingUid(), info.uid) >= 0;
+        return "com.google.android.gms".equals(info.packageName) && canUseGms();
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR

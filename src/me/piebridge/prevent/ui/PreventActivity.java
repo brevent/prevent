@@ -2,7 +2,6 @@ package me.piebridge.prevent.ui;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -42,7 +41,6 @@ import java.util.Set;
 
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
-import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 
