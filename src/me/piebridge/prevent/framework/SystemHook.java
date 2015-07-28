@@ -484,7 +484,7 @@ public final class SystemHook {
 
 
     static boolean checkRunningServices(final String packageName) {
-        if (activityManager == null) {
+        if (application == null || activityManager == null) {
             PreventLog.e("activityManager is null, cannot check running services for " + packageName);
             return false;
         }
@@ -493,7 +493,7 @@ public final class SystemHook {
             return false;
         }
         lastChecking = now;
-        executor.schedule(new CheckingRunningService(packageName), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        executor.schedule(new CheckingRunningService(application, activityManager, packageName), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         return true;
     }
 
