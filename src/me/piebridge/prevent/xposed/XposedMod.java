@@ -33,17 +33,13 @@ public class XposedMod implements IXposedHookZygoteInit {
 
     private static void initZygote() throws Throwable { // NOSONAR
         PreventLog.d("start prevent hook");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Class<?> ActivityThread = Class.forName("android.app.ActivityThread"); // NOSONAR
-            XposedBridge.hookAllMethods(ActivityThread, "systemMain", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    hookSystem(Thread.currentThread().getContextClassLoader());
-                }
-            });
-        } else {
-            hookSystem(null);
-        }
+        Class<?> ActivityThread = Class.forName("android.app.ActivityThread"); // NOSONAR
+        XposedBridge.hookAllMethods(ActivityThread, "systemMain", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                hookSystem(Thread.currentThread().getContextClassLoader());
+            }
+        });
 
         hookActivity();
         hookSuicide();
