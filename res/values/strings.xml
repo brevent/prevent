@@ -25,5 +25,7 @@
     <string name="query_hint_system">\"-s\" for system apps</string>
     <string name="retrieving">Retrieving status, please wait. . .</string>
     <string name="no_prevents">Please configure prevent list.</string>
+    <string name="donate_wechat">Donate via WeChat</string>
+    <string name="donate_alipay">Donate via Alipay</string>
 
 </resources>

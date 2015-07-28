@@ -5,10 +5,13 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.PreventUtils;
@@ -170,9 +174,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
-        MenuItem item = menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
-            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
+        if (BuildConfig.WECHAT_DONATE && getDonateAlipay() != null) {
+            menu.add(Menu.NONE, R.string.donate_alipay, Menu.NONE, R.string.donate_alipay);
+        }
+        if (BuildConfig.ALIPAY_DONATE && getDonateWeChat() != null) {
+            menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
         }
         return super.onCreateOptionsMenu(menu);
     }
@@ -180,20 +187,93 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.string.switch_theme) {
-            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-            String theme = sp.getString(THEME, THEME_LIGHT);
-            if (THEME_LIGHT.equals(theme)) {
-                sp.edit().putString(THEME, THEME_DARK).apply();
-            } else {
-                sp.edit().putString(THEME, THEME_LIGHT).apply();
-            }
-            dangerousColor = null;
-            transparentColor = null;
-            RecreateUtils.recreate(this);
-            return true;
+            return switchTheme();
+        } else if (BuildConfig.WECHAT_DONATE && item.getItemId() == R.string.donate_wechat) {
+            return donateViaWeChat();
+        } else if (BuildConfig.ALIPAY_DONATE && item.getItemId() == R.string.donate_alipay) {
+            return donateViaAlipay();
         } else {
             return false;
         }
+    }
+
+    private boolean switchTheme() {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        String theme = sp.getString(THEME, THEME_LIGHT);
+        if (THEME_LIGHT.equals(theme)) {
+            sp.edit().putString(THEME, THEME_DARK).apply();
+        } else {
+            sp.edit().putString(THEME, THEME_LIGHT).apply();
+        }
+        dangerousColor = null;
+        transparentColor = null;
+        RecreateUtils.recreate(this);
+        return true;
+    }
+
+    private ComponentName getDonateWeChat() {
+        return getDonateComponent("com.tencent.mm", "com.tencent.mm.plugin.remittance.ui.RemittanceAdapterUI");
+    }
+
+    private ComponentName getDonateAlipay() {
+        return getDonateComponent("com.eg.android.AlipayGphone", "com.alipay.mobile.mob.components.account.AccountCodeActivity_");
+    }
+
+    private ComponentName getDonateComponent(String packageName, String className) {
+        ComponentName cn = new ComponentName(packageName, className);
+        try {
+            PackageManager pm = getPackageManager();
+            ActivityInfo ai = pm.getActivityInfo(cn, 0);
+            if (ai == null || !ai.exported) {
+                return null;
+            }
+            int enabled = pm.getComponentEnabledSetting(cn);
+            if (ai.enabled && enabled == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
+                return cn;
+            }
+            if (enabled == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+                return cn;
+            }
+        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
+            // do nothing
+        }
+        return null;
+    }
+
+    private boolean donateViaWeChat() {
+        ComponentName cn = getDonateWeChat();
+        if (cn == null || BuildConfig.WECHAT_ACCOUNT == null) {
+            return false;
+        }
+        Intent intent = new Intent();
+        intent.setComponent(cn);
+        intent.putExtra("scene", 1);
+        intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT);
+        try {
+            startActivity(intent);
+        } catch (Throwable t) { // NOSONAR
+            // do nothing
+        }
+        return true;
+    }
+
+    private boolean donateViaAlipay() {
+        ComponentName cn = getDonateAlipay();
+        if (cn == null || BuildConfig.ALIPAY_ACCOUNT == null) {
+            return false;
+        }
+        Intent intent = new Intent();
+        intent.setComponent(cn);
+        intent.putExtra("app_id", "20000053");
+        Bundle mExtras = new Bundle();
+        mExtras.putString("bizData", BuildConfig.ALIPAY_ACCOUNT);
+        intent.putExtra("mExtras", mExtras);
+        try {
+            startActivity(intent);
+        } catch (Throwable t) { // NOSONAR
+            // do nothing
+        }
+        return true;
     }
 
     @Override

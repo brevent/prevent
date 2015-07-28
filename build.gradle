@@ -17,6 +17,10 @@ android {
     defaultConfig {
         versionCode Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())
         versionName 'git describe --tags'.execute().text.trim().substring(1)
+        buildConfigField "boolean", "WECHAT_DONATE", "false"
+        buildConfigField "boolean", "ALIPAY_DONATE", "false"
+        buildConfigField "String", "WECHAT_ACCOUNT", "null"
+        buildConfigField "String", "ALIPAY_ACCOUNT", "null"
     }
 
     buildTypes {
