@@ -11,7 +11,6 @@
 
     <permission
         android:name="me.piebridge.prevent.permission.MANAGER"
-        android:permissionGroup="android.permission-group.APP_INFO"
         android:protectionLevel="signature" />
 
     <uses-permission android:name="me.piebridge.prevent.permission.MANAGER" />
