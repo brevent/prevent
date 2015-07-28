@@ -307,12 +307,16 @@ public final class SystemHook {
             return value;
         }
         PackageManager pm = application.getPackageManager();
+        String[] packageNames = pm.getPackagesForUid(callingUid);
+        if (packageNames == null || packageNames.length == 0) {
+            gmsUids.put(callingUid, false);
+            return false;
+        }
         if (pm.checkSignatures(Binder.getCallingUid(), uid) == PackageManager.SIGNATURE_MATCH) {
-            PreventLog.d("allow same signature with gms to use gms if needed");
+            PreventLog.d("allow " + packageNames[0] + "(same signature) with gms to use gms if needed");
             gmsUids.put(callingUid, true);
             return true;
         }
-        String[] packageNames = pm.getPackagesForUid(callingUid);
         if (packageNames.length == 1 && canUseGms(pm, packageNames[0])) {
             gmsUids.put(callingUid, true);
             return true;
