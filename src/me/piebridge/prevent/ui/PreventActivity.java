@@ -242,7 +242,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private boolean donateViaWeChat() {
         ComponentName cn = getDonateWeChat();
-        if (cn == null || BuildConfig.WECHAT_ACCOUNT == null) {
+        if (cn == null) {
             return false;
         }
         Intent intent = new Intent();
@@ -259,7 +259,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private boolean donateViaAlipay() {
         ComponentName cn = getDonateAlipay();
-        if (cn == null || BuildConfig.ALIPAY_ACCOUNT == null) {
+        if (cn == null) {
             return false;
         }
         Intent intent = new Intent();
