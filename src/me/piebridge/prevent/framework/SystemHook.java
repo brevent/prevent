@@ -305,6 +305,9 @@ public final class SystemHook {
         PackageManager pm = application.getPackageManager();
         String[] packageNames = pm.getPackagesForUid(callingUid);
         for (String packageName : packageNames) {
+            if (pm.getLaunchIntentForPackage(packageName) == null) {
+                continue;
+            }
             if (isGapps(pm, packageName, uid)) {
                 gmsUids.put(callingUid, true);
                 return true;
