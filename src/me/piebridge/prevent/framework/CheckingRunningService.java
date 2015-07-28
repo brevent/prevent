@@ -41,30 +41,22 @@ class CheckingRunningService implements Runnable {
             return;
         }
         PreventLog.v("services size: " + services.size());
-        for (int i = services.size() - 1; i >= 0; --i) {
-            ActivityManager.RunningServiceInfo service = services.get(i);
+        for (ActivityManager.RunningServiceInfo service : services) {
             String name = service.service.getPackageName();
             boolean isSystem = isSystemPackage(pm, name);
             boolean prevents = Boolean.TRUE.equals(SystemHook.getPreventPackages().get(name));
-            if (BuildConfig.DEBUG || prevents || !isSystem) {
-                PreventLog.v("prevents: " + prevents + ", name: " + name + ", clientCount: " + service.clientCount
+            if (BuildConfig.DEBUG || prevents || service.uid >= SystemHook.FIRST_APPLICATION_UID) {
+                PreventLog.v("prevents: " + prevents + ", name: " + name + ", count: " + service.clientCount + ", label: " + service.clientLabel
                         + ", started: " + service.started + ", uid: " + service.uid + ", pid: " + service.pid + ", process: " + service.process);
             }
-            if (!isSystem && (name.equals(packageName) || (service.flags & ActivityManager.RunningServiceInfo.FLAG_PERSISTENT_PROCESS) != 0)) {
+            if (name.equals(packageName)) {
                 serviceStatus.put(name, true);
-            } else if (!prevents) {
-                continue;
-            } else if (service.uid >= SystemHook.FIRST_APPLICATION_UID) {
-                boolean canStop = service.started;
-                if (canStop) {
-                    context.stopService(new Intent().setComponent(service.service));
-                }
-                Boolean result = serviceStatus.get(name);
-                if (result == null || result) {
-                    serviceStatus.put(name, canStop);
-                }
+            } else if (!isSystem && (service.flags & ActivityManager.RunningServiceInfo.FLAG_PERSISTENT_PROCESS) != 0) {
+                PreventLog.i("package " + name + " hash persistent process, force stop it");
+                serviceStatus.put(name, true);
+            } else if (prevents && service.started) {
+                context.stopService(new Intent().setComponent(service.service));
             }
-            services.remove(i);
         }
         stopServiceIfNeeded();
         PreventLog.v("complete checking running service");
