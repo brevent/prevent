@@ -17,7 +17,7 @@ import android.support.v4.app.NotificationCompat;
 
 import java.util.Set;
 
-import me.piebridge.prevent.ui.util.PackageUtils;
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 
 import me.piebridge.forcestopgb.R;

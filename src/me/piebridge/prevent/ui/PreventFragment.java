@@ -48,7 +48,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.R;
-import me.piebridge.prevent.ui.util.PackageUtils;
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 
 public abstract class PreventFragment extends ListFragment {
@@ -723,14 +723,14 @@ public abstract class PreventFragment extends ListFragment {
                 ApplicationInfo appInfo;
                 try {
                     appInfo = pm.getApplicationInfo(packageName, 0);
+                    if (PackageUtils.canPrevent(pm, appInfo)) {
+                        names.add(packageName);
+                        continue;
+                    }
                 } catch (PackageManager.NameNotFoundException e) { // NOSONAR
-                    appInfo = null;
+                    // do nothing
                 }
-                if (!PackageUtils.canPrevent(pm, appInfo)) {
-                    removes.add(packageName);
-                } else {
-                    names.add(packageName);
-                }
+                removes.add(packageName);
             }
             if (!removes.isEmpty()) {
                 PreventUtils.update(getActivity(), removes.toArray(new String[removes.size()]), false);

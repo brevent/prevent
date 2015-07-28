@@ -30,8 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +46,7 @@ import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
 import me.piebridge.prevent.ui.PreventProvider;
-import me.piebridge.prevent.ui.util.PackageUtils;
+import me.piebridge.prevent.common.PackageUtils;
 
 public final class SystemHook {
 
@@ -56,7 +57,7 @@ public final class SystemHook {
     static final int TIME_DESTROY = 6;
     static final int TIME_PREVENT = 12;
     static final int TIME_IMMEDIATE = 1;
-    static final int TIME_CHECK_SERVICE = 12;
+    static final int TIME_CHECK_SERVICE = 30;
 
     private static long lastChecking;
     private static long lastKilling;
@@ -76,6 +77,9 @@ public final class SystemHook {
     static SparseArray<Boolean> gmsUids = new SparseArray<Boolean>();
 
     static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
+
+    static Set<String> checkingPackageNames = new TreeSet<String>();
+    static final Object CHECKING_LOCK = new Object();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
 
@@ -300,9 +304,6 @@ public final class SystemHook {
 
     private static boolean canUseGms(int uid) {
         int callingUid = Binder.getCallingUid();
-        if (application == null) {
-            return false;
-        }
         Boolean value = gmsUids.get(callingUid);
         if (value != null) {
             return value;
@@ -310,32 +311,23 @@ public final class SystemHook {
         PackageManager pm = application.getPackageManager();
         String[] packageNames = pm.getPackagesForUid(callingUid);
         if (packageNames == null || packageNames.length == 0) {
-            gmsUids.put(callingUid, false);
             return false;
         }
-        if (pm.checkSignatures(Binder.getCallingUid(), uid) == PackageManager.SIGNATURE_MATCH) {
+        if (pm.checkSignatures(callingUid, uid) == PackageManager.SIGNATURE_MATCH) {
             PreventLog.d("allow " + packageNames[0] + "(same signature) with gms to use gms if needed");
             gmsUids.put(callingUid, true);
-            return true;
-        }
-        if (packageNames.length == 1 && canUseGms(pm, packageNames[0])) {
-            gmsUids.put(callingUid, true);
-            return true;
         } else {
-            gmsUids.put(callingUid, false);
-            return false;
+            gmsUids.put(callingUid, packageNames.length == 1 && canUseGms(pm, packageNames[0]));
         }
+        return gmsUids.get(callingUid);
     }
 
     private static boolean canUseGms(PackageManager pm, String packageName) {
-        if (packageName == null || pm.getLaunchIntentForPackage(packageName) == null) {
+        if (pm.getLaunchIntentForPackage(packageName) == null || !packageName.startsWith(GmsUtils.GAPPS_PREFIX)) {
             return false;
-        }
-        if (packageName.startsWith(GmsUtils.GAPPS_PREFIX)) {
+        } else {
             PreventLog.d("allow " + packageName + " to use gms if needed");
             return true;
-        } else {
-            return false;
         }
     }
 
@@ -353,7 +345,7 @@ public final class SystemHook {
 
     private static boolean canUseGms(ApplicationInfo info) {
         // only for system package, or only for gms?
-        return GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
+        return application != null && GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
@@ -493,7 +485,10 @@ public final class SystemHook {
             return false;
         }
         lastChecking = now;
-        executor.schedule(new CheckingRunningService(application, activityManager, packageName), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        synchronized (CHECKING_LOCK) {
+            checkingPackageNames.add(packageName);
+        }
+        executor.schedule(new CheckingRunningService(application, activityManager, checkingPackageNames), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         return true;
     }
 

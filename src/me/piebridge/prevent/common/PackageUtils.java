@@ -1,4 +1,4 @@
-package me.piebridge.prevent.ui.util;
+package me.piebridge.prevent.common;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -23,8 +23,7 @@ public class PackageUtils {
     }
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
-        return pm != null && appInfo != null && appInfo.enabled
-                && (!isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName));
+        return !isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName);
     }
 
 }

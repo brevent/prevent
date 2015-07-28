@@ -2,8 +2,6 @@ package me.piebridge.prevent.common;
 
 import android.content.pm.PackageManager;
 
-import java.io.File;
-
 /**
  * Created by thom on 15/7/28.
  */
@@ -17,7 +15,7 @@ public class GmsUtils {
     }
 
     public static boolean isGapps(PackageManager pm, String packageName) {
-        return pm != null && packageName != null && (pm.checkSignatures(packageName, GMS) == PackageManager.SIGNATURE_MATCH ||
+        return (pm.checkSignatures(packageName, GMS) == PackageManager.SIGNATURE_MATCH ||
                 (packageName.startsWith(GAPPS_PREFIX) && pm.getLaunchIntentForPackage(GAPPS_PREFIX) != null));
     }
 
