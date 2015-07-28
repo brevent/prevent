@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
@@ -298,31 +299,35 @@ public final class SystemHook {
 
     private static boolean canUseGms(int uid) {
         int callingUid = Binder.getCallingUid();
+        if (application == null) {
+            return false;
+        }
         Boolean value = gmsUids.get(callingUid);
         if (value != null) {
             return value;
         }
         PackageManager pm = application.getPackageManager();
-        String[] packageNames = pm.getPackagesForUid(callingUid);
-        for (String packageName : packageNames) {
-            if (pm.getLaunchIntentForPackage(packageName) == null) {
-                continue;
-            }
-            if (isGapps(pm, packageName, uid)) {
-                gmsUids.put(callingUid, true);
-                return true;
-            }
+        if (pm.checkSignatures(Binder.getCallingUid(), uid) == PackageManager.SIGNATURE_MATCH) {
+            PreventLog.d("allow same signature with gms to use gms if needed");
+            gmsUids.put(callingUid, true);
+            return true;
         }
-        gmsUids.put(callingUid, false);
-        return false;
+        String[] packageNames = pm.getPackagesForUid(callingUid);
+        if (packageNames.length == 1 && canUseGms(pm, packageNames[0])) {
+            gmsUids.put(callingUid, true);
+            return true;
+        } else {
+            gmsUids.put(callingUid, false);
+            return false;
+        }
     }
 
-    private static boolean isGapps(PackageManager pm, String packageName, int uid) {
-        if (packageName.startsWith("com.google.android.")) {
+    private static boolean canUseGms(PackageManager pm, String packageName) {
+        if (packageName == null || pm.getLaunchIntentForPackage(packageName) == null) {
+            return false;
+        }
+        if (packageName.startsWith(GmsUtils.GAPPS_PREFIX)) {
             PreventLog.d("allow " + packageName + " to use gms if needed");
-            return true;
-        } else if (pm.checkSignatures(Binder.getCallingUid(), uid) == PackageManager.SIGNATURE_MATCH) {
-            PreventLog.d("allow " + packageName + "(same signature) to use gms if needed");
             return true;
         } else {
             return false;
@@ -343,7 +348,7 @@ public final class SystemHook {
 
     private static boolean canUseGms(ApplicationInfo info) {
         // only for system package, or only for gms?
-        return "com.google.android.gms".equals(info.packageName) && canUseGms(info.uid);
+        return GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
@@ -404,10 +409,16 @@ public final class SystemHook {
         if (result != null) {
             return result;
         }
-        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        result = false;
+        Intent intent = new Intent();
         intent.setComponent(cn);
-        List<ResolveInfo> list = application.getPackageManager().queryBroadcastReceivers(intent, 0);
-        result = !list.isEmpty();
+        for (ResolveInfo info : application.getPackageManager().queryBroadcastReceivers(intent, 0)) {
+            if (info != null && info.filter != null && info.filter.matchAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)) {
+                PreventLog.d("info " + info + " match action: " + AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                result = true;
+                break;
+            }
+        }
         widgets.put(cn, result);
         return result;
     }
