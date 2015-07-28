@@ -381,7 +381,7 @@ public final class SystemHook {
 
         // always block broadcast
         if ("broadcast".equals(hostingType)) {
-            checkRunningServices(packageName);
+            checkRunningServices(GmsUtils.GMS.equals(packageName) ? null : packageName);
             if (isWidget(hostingName)) {
                 LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
                 return true;
@@ -394,7 +394,7 @@ public final class SystemHook {
 
         // auto turn off service
         if ("service".equals(hostingType)) {
-            checkRunningServices(packageName);
+            checkRunningServices(GmsUtils.GMS.equals(packageName) ? null : packageName);
             LogUtils.logStartProcess(false, packageName, hostingType, hostingName);
         }
 
@@ -474,7 +474,6 @@ public final class SystemHook {
         }
     }
 
-
     static boolean checkRunningServices(final String packageName) {
         if (application == null || activityManager == null) {
             PreventLog.e("activityManager is null, cannot check running services for " + packageName);
@@ -485,8 +484,10 @@ public final class SystemHook {
             return false;
         }
         lastChecking = now;
-        synchronized (CHECKING_LOCK) {
-            checkingPackageNames.add(packageName);
+        if (packageName != null) {
+            synchronized (CHECKING_LOCK) {
+                checkingPackageNames.add(packageName);
+            }
         }
         executor.schedule(new CheckingRunningService(application, activityManager, checkingPackageNames), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         return true;

@@ -68,7 +68,6 @@ class CheckingRunningService implements Runnable {
             packageNames.addAll(checkingPackageNames);
             checkingPackageNames.clear();
         }
-        packageNames.remove(GmsUtils.GMS);
         return packageNames;
     }
 
