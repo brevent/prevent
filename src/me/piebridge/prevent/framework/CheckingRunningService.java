@@ -73,9 +73,12 @@ class CheckingRunningService implements Runnable {
     }
 
     private void logServiceIfNeeded(boolean prevents, String name, ActivityManager.RunningServiceInfo service) {
+        if (!service.started) {
+            return;
+        }
         if (BuildConfig.DEBUG || prevents || service.uid >= SystemHook.FIRST_APPLICATION_UID) {
             PreventLog.v("prevents: " + prevents + ", name: " + name + ", count: " + service.clientCount + ", label: " + service.clientLabel
-                    + ", started: " + service.started + ", uid: " + service.uid + ", pid: " + service.pid + ", process: " + service.process);
+                    + ", uid: " + service.uid + ", pid: " + service.pid + ", process: " + service.process);
         }
     }
 
