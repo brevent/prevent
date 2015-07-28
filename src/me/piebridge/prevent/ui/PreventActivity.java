@@ -212,11 +212,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private ComponentName getDonateWeChat() {
-        return getDonateComponent("com.tencent.mm", "com.tencent.mm.plugin.remittance.ui.RemittanceAdapterUI");
+        return getDonateComponent(PreventIntent.NAME_WECHAT, PreventIntent.CLASS_WECHAT);
     }
 
     private ComponentName getDonateAlipay() {
-        return getDonateComponent("com.eg.android.AlipayGphone", "com.alipay.mobile.mob.components.account.AccountCodeActivity_");
+        return getDonateComponent(PreventIntent.NAME_ALIPAY, PreventIntent.CLASS_ALIPAY);
     }
 
     private ComponentName getDonateComponent(String packageName, String className) {
@@ -224,10 +224,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         try {
             PackageManager pm = getPackageManager();
             ActivityInfo ai = pm.getActivityInfo(cn, 0);
-            if (ai == null || !ai.exported) {
+            int enabled = pm.getComponentEnabledSetting(cn);
+            if (BuildConfig.DEBUG) {
+                UILog.d("exported: " + ai.exported + ", enabled: " + ai.enabled + ", component enabled: " + enabled);
+            }
+            if (!ai.exported) {
                 return null;
             }
-            int enabled = pm.getComponentEnabledSetting(cn);
             if (ai.enabled && enabled == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
                 return cn;
             }
@@ -235,7 +238,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 return cn;
             }
         } catch (PackageManager.NameNotFoundException e) { // NOSONAR
-            // do nothing
+            UILog.d("cannot find " + packageName + "/" + className);
         }
         return null;
     }

@@ -23,6 +23,7 @@ public class PackageParser {
     }
 
     public static class Activity extends Component {
+        public ActivityInfo info;
     }
 
     public static class Service extends Component {

@@ -2,6 +2,8 @@ package me.piebridge.prevent.xposed;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageParser;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +17,8 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
+import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.Hook;
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
@@ -79,6 +83,29 @@ public class XposedMod implements IXposedHookZygoteInit {
                 IntentFilterMatchResult result = SystemHook.hookIntentFilter$match(param.thisObject, param.args);
                 if (!result.isNone()) {
                     param.setResult(result.getResult());
+                }
+            }
+        });
+
+        if (BuildConfig.ALIPAY_DONATE || BuildConfig.WECHAT_DONATE) {
+            exportActivityIfNeeded();
+        }
+    }
+
+    private static void exportActivityIfNeeded() {
+        XposedBridge.hookAllMethods(PackageParser.class, "parseActivity", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                PackageParser.Activity result = (PackageParser.Activity) param.getResult();
+                if (result == null) {
+                    return;
+                }
+                ActivityInfo info = result.info;
+                if (BuildConfig.ALIPAY_DONATE && PreventIntent.NAME_ALIPAY.equals(info.packageName) && PreventIntent.CLASS_ALIPAY.equals(info.name)) {
+                    info.exported = true;
+                }
+                if (BuildConfig.WECHAT_DONATE && PreventIntent.NAME_WECHAT.equals(info.packageName) && PreventIntent.CLASS_WECHAT.equals(info.name)) {
+                    info.exported = true;
                 }
             }
         });
