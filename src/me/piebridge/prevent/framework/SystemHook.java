@@ -56,6 +56,7 @@ public final class SystemHook {
     static final int TIME_DESTROY = 6;
     static final int TIME_PREVENT = 12;
     static final int TIME_IMMEDIATE = 1;
+    static final int TIME_CHECK_SERVICE = 12;
 
     private static long lastChecking;
     private static long lastKilling;
@@ -388,8 +389,8 @@ public final class SystemHook {
 
         // always block broadcast
         if ("broadcast".equals(hostingType)) {
+            checkRunningServices(packageName);
             if (isWidget(hostingName)) {
-                checkRunningServices(packageName, TIME_PREVENT);
                 LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
                 return true;
             } else {
@@ -401,7 +402,7 @@ public final class SystemHook {
 
         // auto turn off service
         if ("service".equals(hostingType)) {
-            checkRunningServices(packageName, TIME_PREVENT);
+            checkRunningServices(packageName);
             LogUtils.logStartProcess(false, packageName, hostingType, hostingName);
         }
 
@@ -482,17 +483,17 @@ public final class SystemHook {
     }
 
 
-    static boolean checkRunningServices(final String packageName, int second) {
+    static boolean checkRunningServices(final String packageName) {
         if (activityManager == null) {
             PreventLog.e("activityManager is null, cannot check running services for " + packageName);
             return false;
         }
         long now = System.currentTimeMillis();
-        if (now - lastChecking <= second * MILLISECONDS) {
+        if (now - lastChecking <= TIME_CHECK_SERVICE * MILLISECONDS) {
             return false;
         }
         lastChecking = now;
-        executor.schedule(new CheckingRunningService(packageName), second, TimeUnit.SECONDS);
+        executor.schedule(new CheckingRunningService(packageName), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         return true;
     }
 
