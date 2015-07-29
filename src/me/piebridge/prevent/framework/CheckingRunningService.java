@@ -47,7 +47,7 @@ class CheckingRunningService implements Runnable {
                 if (packageNames.contains(name)) {
                     shouldStopPackageNames.add(name);
                 } else if (service.process.endsWith(".persistent") || (service.flags & ActivityManager.RunningServiceInfo.FLAG_PERSISTENT_PROCESS) != 0) {
-                    PreventLog.i("package " + name + " hash persistent process, will force stop it");
+                    PreventLog.i("package " + name + " has persistent process, will force stop it");
                     shouldStopPackageNames.add(name);
                 } else {
                     mContext.stopService(new Intent().setComponent(service.service));
