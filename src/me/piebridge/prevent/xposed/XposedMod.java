@@ -62,7 +62,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedBridge.hookMethod(startProcessLocked, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (!SystemHook.beforeActivityManagerService$startProcessLocked(param.thisObject, param.args)) {
+                if (!SystemHook.beforeActivityManagerService$startProcessLocked(param.args)) {
                     param.setResult(null);
                 }
             }

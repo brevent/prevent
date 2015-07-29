@@ -1,6 +1,7 @@
 package me.piebridge.prevent.framework;
 
 import android.app.ActivityManager;
+import android.app.ActivityThread;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -26,7 +27,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -189,39 +189,14 @@ public final class SystemHook {
         return IntentFilterMatchResult.NONE;
     }
 
-    private static Context getContext(Object activityManagerService) {
-        try {
-            Field field = null;
-            Class<?> clazz = activityManagerService.getClass();
-            while (clazz != null && field == null) {
-                try {
-                    field = clazz.getDeclaredField("mContext");
-                } catch (NoSuchFieldException e) {
-                    PreventLog.d("cannot find mContext in " + clazz.getName(), e);
-                    clazz = clazz.getSuperclass();
-                }
-            }
-            if (field == null) {
-                PreventLog.e("cannot find mContext from " + activityManagerService.getClass());
-                return null;
-            } else {
-                field.setAccessible(true);
-                return (Context) field.get(activityManagerService);
-            }
-        } catch (IllegalAccessException e) {
-            PreventLog.e("cannot access mContext from " + activityManagerService.getClass(), e);
-            return null;
-        }
-    }
-
-    public static boolean registerReceiversIfNeeded(Object activityManagerService) {
+    public static boolean registerReceiversIfNeeded() {
         if (registered) {
             return true;
         }
 
-        mContext = getContext(activityManagerService);
+        mContext = ActivityThread.currentApplication();
         if (mContext == null) {
-            PreventLog.d("cannot get context from " + activityManagerService);
+            PreventLog.d("cannot get context from ActivityThread.currentApplication");
             return false;
         }
 
@@ -377,12 +352,12 @@ public final class SystemHook {
         return mContext != null && GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
     }
 
-    public static boolean beforeActivityManagerService$startProcessLocked(Object activityManagerService, Object[] args) { // NOSONAR
+    public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
         if (!isSystemHook()) {
             return true;
         }
 
-        registerReceiversIfNeeded(activityManagerService);
+        registerReceiversIfNeeded();
 
         ApplicationInfo info = (ApplicationInfo) args[0x1];
         String hostingType = (String) args[0x4];

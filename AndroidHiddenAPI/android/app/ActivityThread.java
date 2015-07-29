@@ -9,6 +9,10 @@ import android.os.RemoteException;
   */
 public class ActivityThread {
 
+    public static Application currentApplication() {
+        return null;
+    }
+
     public ApplicationThread getApplicationThread() {
         return null;
     }
