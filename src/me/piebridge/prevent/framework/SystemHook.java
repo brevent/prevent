@@ -189,23 +189,26 @@ public final class SystemHook {
         return IntentFilterMatchResult.NONE;
     }
 
+    private static Context getContext(Object activityManagerService) {
+        try {
+            Field field = activityManagerService.getClass().getDeclaredField("mContext");
+            field.setAccessible(true);
+            return (Context) field.get(activityManagerService);
+        } catch (NoSuchFieldException e) {
+            PreventLog.e("cannot find mContext from " + activityManagerService.getClass(), e);
+            return null;
+        } catch (IllegalAccessException e) {
+            PreventLog.e("cannot access mContext from " + activityManagerService.getClass(), e);
+            return null;
+        }
+    }
+
     public static boolean registerReceiversIfNeeded(Object activityManagerService) {
         if (registered) {
             return true;
         }
 
-        try {
-            Field field = activityManagerService.getClass().getDeclaredField("mContext");
-            field.setAccessible(true);
-            mContext = (Context) field.get(activityManagerService);
-        } catch (NoSuchFieldException e) {
-            PreventLog.e("cannot find mContext from " + activityManagerService.getClass(), e);
-            return false;
-        } catch (IllegalAccessException e) {
-            PreventLog.e("cannot access mContext from " + activityManagerService.getClass(), e);
-            return false;
-        }
-
+        mContext = getContext(activityManagerService);
         if (mContext == null) {
             PreventLog.d("cannot get context from " + activityManagerService);
             return false;
@@ -249,7 +252,7 @@ public final class SystemHook {
         registered = true;
         PreventLog.i("registered receiver");
 
-        return false;
+        return true;
     }
 
     private static boolean retrievePreventsIfNeeded() {
