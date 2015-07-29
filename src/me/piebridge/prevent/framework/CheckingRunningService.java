@@ -38,22 +38,20 @@ class CheckingRunningService implements Runnable {
             return;
         }
         PreventLog.v("services size: " + services.size());
-        PackageManager pm = mContext.getPackageManager();
         Set<String> shouldStopPackageNames = new TreeSet<String>();
         for (ActivityManager.RunningServiceInfo service : services) {
             String name = service.service.getPackageName();
-            boolean isSystem = isSystemPackage(pm, name);
             boolean prevent = Boolean.TRUE.equals(SystemHook.getPreventPackages().get(name));
             logServiceIfNeeded(prevent, name, service);
-            if (!isSystem && (service.flags & ActivityManager.RunningServiceInfo.FLAG_PERSISTENT_PROCESS) != 0) {
-                PreventLog.i("package " + name + " hash persistent process, force stop it");
-                shouldStopPackageNames.add(name);
-            } else if (!prevent || !service.started) {
-                // do nothing
-            } else if (packageNames.contains(name)) {
-                shouldStopPackageNames.add(name);
-            } else {
-                mContext.stopService(new Intent().setComponent(service.service));
+            if (prevent && service.started) {
+                if (packageNames.contains(name)) {
+                    shouldStopPackageNames.add(name);
+                } else if ((service.flags & ActivityManager.RunningServiceInfo.FLAG_PERSISTENT_PROCESS) != 0) {
+                    PreventLog.i("package " + name + " hash persistent process, force stop it");
+                    shouldStopPackageNames.add(name);
+                } else {
+                    mContext.stopService(new Intent().setComponent(service.service));
+                }
             }
         }
         stopServiceIfNeeded(shouldStopPackageNames);
@@ -75,7 +73,7 @@ class CheckingRunningService implements Runnable {
         }
         if (BuildConfig.DEBUG || prevents || service.uid >= SystemHook.FIRST_APPLICATION_UID) {
             PreventLog.v("prevents: " + prevents + ", name: " + name + ", count: " + service.clientCount + ", label: " + service.clientLabel
-                    + ", uid: " + service.uid + ", pid: " + service.pid + ", process: " + service.process);
+                    + ", uid: " + service.uid + ", pid: " + service.pid + ", process: " + service.process + ", flags: " + service.flags);
         }
     }
 
