@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 
 /**
@@ -21,26 +20,25 @@ class CheckingRunningService implements Runnable {
 
     private static final int MAX_SERVICES = 100;
 
-    private final Context context;
-    private final ActivityManager am;
+    private final Context mContext;
     private final Set<String> checkingPackageNames;
 
 
-    CheckingRunningService(Context context, ActivityManager am, Set<String> checkingPackageNames) {
-        this.am = am;
-        this.context = context;
+    CheckingRunningService(Context context, Set<String> checkingPackageNames) {
+        this.mContext = context;
         this.checkingPackageNames = checkingPackageNames;
     }
 
     @Override
     public void run() {
         Set<String> packageNames = preparePackageNames();
-        List<ActivityManager.RunningServiceInfo> services = SystemHook.getActivityManager().getRunningServices(MAX_SERVICES);
+        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(MAX_SERVICES);
         if (services == null) {
             return;
         }
         PreventLog.v("services size: " + services.size());
-        PackageManager pm = context.getPackageManager();
+        PackageManager pm = mContext.getPackageManager();
         Set<String> shouldStopPackageNames = new TreeSet<String>();
         for (ActivityManager.RunningServiceInfo service : services) {
             String name = service.service.getPackageName();
@@ -55,7 +53,7 @@ class CheckingRunningService implements Runnable {
             } else if (packageNames.contains(name)) {
                 shouldStopPackageNames.add(name);
             } else {
-                context.stopService(new Intent().setComponent(service.service));
+                mContext.stopService(new Intent().setComponent(service.service));
             }
         }
         stopServiceIfNeeded(shouldStopPackageNames);

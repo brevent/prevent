@@ -2,7 +2,6 @@ package me.piebridge.prevent.framework;
 
 import android.app.ActivityManager;
 import android.app.ActivityThread;
-import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -66,9 +65,7 @@ public final class SystemHook {
 
     static final int FIRST_APPLICATION_UID = 10000;
 
-    static ActivityManager activityManager;
-
-    static Application application;
+    private static Context mContext;
 
     static Map<String, Boolean> preventPackages = new ConcurrentHashMap<String, Boolean>();
 
@@ -99,10 +96,6 @@ public final class SystemHook {
         return SystemHook.classLoader;
     }
 
-    public static ActivityManager getActivityManager() {
-        return activityManager;
-    }
-
     public static Map<String, Boolean> getPreventPackages() {
         return preventPackages;
     }
@@ -116,6 +109,10 @@ public final class SystemHook {
     }
 
     public static IntentFilterMatchResult hookIntentFilter$match(Object filter, Object[] args) { // NOSONAR
+        if (mContext == null) {
+            return IntentFilterMatchResult.NONE;
+        }
+
         if (!isSystemHook()) {
             return IntentFilterMatchResult.NONE;
         }
@@ -190,18 +187,22 @@ public final class SystemHook {
         return IntentFilterMatchResult.NONE;
     }
 
-    private static boolean registerReceiversIfNeeded() {
+    public static boolean registerReceiversIfNeeded(Context context) {
         if (registered) {
             return true;
+        }
+
+        if (context == null) {
+            mContext = ActivityThread.currentApplication();
+        } else {
+            mContext = context;
         }
 
         HandlerThread thread = new HandlerThread("PreventService");
         thread.start();
         Handler handler = new Handler(thread.getLooper());
 
-        BroadcastReceiver receiver = new SystemReceiver();
-
-        application = ActivityThread.currentApplication();
+        BroadcastReceiver receiver = new SystemReceiver(mContext);
 
         IntentFilter manager = new IntentFilter();
         manager.addAction(PreventIntent.ACTION_GET_PACKAGES);
@@ -210,7 +211,7 @@ public final class SystemHook {
         manager.addDataScheme(PreventIntent.SCHEME);
 
         try {
-            application.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
+            mContext.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
         } catch (SecurityException e) { // NOSONAR
             PreventLog.d("cannot register: " + e.getMessage());
             return false;
@@ -224,16 +225,15 @@ public final class SystemHook {
         hook.addAction(PreventIntent.ACTION_FORCE_STOP);
         hook.addDataScheme(PreventIntent.SCHEME);
         // FIXME: check permission
-        application.registerReceiver(receiver, hook, null, handler);
+        mContext.registerReceiver(receiver, hook, null, handler);
 
         IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
         filter.addDataScheme("package");
-        application.registerReceiver(receiver, filter, null, handler);
+        mContext.registerReceiver(receiver, filter, null, handler);
 
         registered = true;
         PreventLog.i("registered receiver");
 
-        activityManager = (ActivityManager) application.getSystemService(Context.ACTIVITY_SERVICE);
         return false;
     }
 
@@ -242,7 +242,7 @@ public final class SystemHook {
         if (!preventPackages.isEmpty()) {
             return true;
         }
-        if (application == null) {
+        if (mContext == null) {
             return false;
         }
         if (gotprevent) {
@@ -257,7 +257,7 @@ public final class SystemHook {
         executor.submit(new Runnable() {
             @Override
             public void run() {
-                Cursor cursor = application.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
+                Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
                 int index = cursor.getColumnIndex(PreventProvider.COLUMN_PACKAGE);
                 while (cursor.moveToNext()) {
                     String name = cursor.getString(index);
@@ -308,7 +308,7 @@ public final class SystemHook {
         if (value != null) {
             return value;
         }
-        PackageManager pm = application.getPackageManager();
+        PackageManager pm = mContext.getPackageManager();
         String[] packageNames = pm.getPackagesForUid(callingUid);
         if (packageNames == null || packageNames.length == 0) {
             return false;
@@ -345,7 +345,7 @@ public final class SystemHook {
 
     private static boolean canUseGms(ApplicationInfo info) {
         // only for system package, or only for gms?
-        return application != null && GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
+        return mContext != null && GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
@@ -353,7 +353,7 @@ public final class SystemHook {
             return true;
         }
 
-        registerReceiversIfNeeded();
+        registerReceiversIfNeeded(null);
 
         ApplicationInfo info = (ApplicationInfo) args[0x1];
         String hostingType = (String) args[0x4];
@@ -409,7 +409,7 @@ public final class SystemHook {
         result = false;
         Intent intent = new Intent();
         intent.setComponent(cn);
-        for (ResolveInfo info : application.getPackageManager().queryBroadcastReceivers(intent, 0)) {
+        for (ResolveInfo info : mContext.getPackageManager().queryBroadcastReceivers(intent, 0)) {
             if (info != null && info.filter != null && info.filter.matchAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)) {
                 PreventLog.d("info " + info + " match action: " + AppWidgetManager.ACTION_APPWIDGET_UPDATE);
                 result = true;
@@ -475,8 +475,8 @@ public final class SystemHook {
     }
 
     static boolean checkRunningServices(final String packageName) {
-        if (application == null || activityManager == null) {
-            PreventLog.e("activityManager is null, cannot check running services for " + packageName);
+        if (mContext == null) {
+            PreventLog.e("context is null, cannot check running services for " + packageName);
             return false;
         }
         long now = System.currentTimeMillis();
@@ -489,7 +489,7 @@ public final class SystemHook {
                 checkingPackageNames.add(packageName);
             }
         }
-        executor.schedule(new CheckingRunningService(application, activityManager, checkingPackageNames), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        executor.schedule(new CheckingRunningService(mContext, checkingPackageNames), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         return true;
     }
 
@@ -530,11 +530,12 @@ public final class SystemHook {
         if (!Boolean.TRUE.equals(preventPackages.get(packageName))) {
             return;
         }
-        if (activityManager == null) {
-            PreventLog.e("activityManager is null, cannot force stop package" + packageName);
+        if (mContext == null) {
+            PreventLog.e("context is null, cannot force stop package" + packageName);
             return;
         }
         try {
+            ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
             HideApiUtils.forceStopPackage(activityManager, packageName);
             packageCounters.remove(packageName);
         } catch (Throwable t) { // NOSONAR
@@ -599,14 +600,11 @@ public final class SystemHook {
     }
 
     private static boolean shouldIgnoreLocation(String action) {
-        if (application == null || action == null) {
+        if (mContext == null || action == null) {
             return false;
         }
-        boolean disabled = Settings.Secure.getInt(application.getContentResolver(), Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF) == Settings.Secure.LOCATION_MODE_OFF;
+        boolean disabled = Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF) == Settings.Secure.LOCATION_MODE_OFF;
         return disabled && (action.startsWith("com.android.location.service") || action.startsWith("com.google.android.location"));
     }
 
-    public static Application getApplication() {
-        return application;
-    }
 }

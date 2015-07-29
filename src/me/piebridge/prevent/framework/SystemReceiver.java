@@ -28,6 +28,12 @@ class SystemReceiver extends BroadcastReceiver {
 
     private static Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
 
+    private static Context mContext;
+
+    public SystemReceiver(Context context) {
+        mContext = context;
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -261,7 +267,8 @@ class SystemReceiver extends BroadcastReceiver {
 
     private static Map<String, Set<Integer>> getRunningAppProcesses() {
         Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
-        List<ActivityManager.RunningAppProcessInfo> processes = SystemHook.getActivityManager().getRunningAppProcesses();
+        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
         if (processes == null) {
             PreventLog.w("cannot get running processes");
             return running;
