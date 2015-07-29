@@ -1,7 +1,6 @@
 package me.piebridge.prevent.framework;
 
 import android.app.ActivityManager;
-import android.app.ActivityThread;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -27,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,13 +39,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
 import me.piebridge.prevent.ui.PreventProvider;
-import me.piebridge.prevent.common.PackageUtils;
 
 public final class SystemHook {
 
@@ -189,15 +189,26 @@ public final class SystemHook {
         return IntentFilterMatchResult.NONE;
     }
 
-    public static boolean registerReceiversIfNeeded(Context context) {
+    public static boolean registerReceiversIfNeeded(Object activityManagerService) {
         if (registered) {
             return true;
         }
 
-        if (context == null) {
-            mContext = ActivityThread.currentApplication();
-        } else {
-            mContext = context;
+        try {
+            Field field = activityManagerService.getClass().getDeclaredField("mContext");
+            field.setAccessible(true);
+            mContext = (Context) field.get(activityManagerService);
+        } catch (NoSuchFieldException e) {
+            PreventLog.e("cannot find mContext from " + activityManagerService.getClass(), e);
+            return false;
+        } catch (IllegalAccessException e) {
+            PreventLog.e("cannot access mContext from " + activityManagerService.getClass(), e);
+            return false;
+        }
+
+        if (mContext == null) {
+            PreventLog.d("cannot get context from " + activityManagerService);
+            return false;
         }
 
         if (mHandler == null) {
@@ -352,12 +363,12 @@ public final class SystemHook {
         return mContext != null && GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
     }
 
-    public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
+    public static boolean beforeActivityManagerService$startProcessLocked(Object activityManagerService, Object[] args) { // NOSONAR
         if (!isSystemHook()) {
             return true;
         }
 
-        registerReceiversIfNeeded(null);
+        registerReceiversIfNeeded(activityManagerService);
 
         ApplicationInfo info = (ApplicationInfo) args[0x1];
         String hostingType = (String) args[0x4];

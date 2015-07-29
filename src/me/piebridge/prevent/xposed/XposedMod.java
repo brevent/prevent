@@ -1,6 +1,7 @@
 package me.piebridge.prevent.xposed;
 
 import android.app.Activity;
+import android.app.ActivityThread;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageParser;
@@ -26,19 +27,23 @@ import me.piebridge.prevent.framework.SystemHook;
 
 public class XposedMod implements IXposedHookZygoteInit {
 
+    private static boolean systemHooked;
+
     @Override
     public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
         initZygote();
     }
 
     private static void initZygote() throws Throwable { // NOSONAR
-        Class<?> ActivityThread = Class.forName("android.app.ActivityThread"); // NOSONAR
-        XposedBridge.hookAllMethods(ActivityThread, "systemMain", new XC_MethodHook() {
+        XposedBridge.hookAllMethods(ActivityThread.class, "systemMain", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                PreventLog.d("start prevent hook (system)");
-                hookSystem(Thread.currentThread().getContextClassLoader());
-                PreventLog.d("finish prevent hook (system)");
+                if (!systemHooked) {
+                    PreventLog.d("start prevent hook (system)");
+                    hookSystem(Thread.currentThread().getContextClassLoader());
+                    PreventLog.d("finish prevent hook (system)");
+                    systemHooked = true;
+                }
             }
         });
 
@@ -57,7 +62,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedBridge.hookMethod(startProcessLocked, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (!SystemHook.beforeActivityManagerService$startProcessLocked(param.args)) {
+                if (!SystemHook.beforeActivityManagerService$startProcessLocked(param.thisObject, param.args)) {
                     param.setResult(null);
                 }
             }
