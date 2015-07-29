@@ -217,16 +217,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.string.switch_theme) {
-            return switchTheme();
-        } else if (BuildConfig.WECHAT_DONATE && item.getItemId() == R.string.donate_wechat) {
-            return donateViaWeChat(R.string.donate_wechat);
-        } else if (BuildConfig.WECHAT_DONATE && item.getItemId() == R.string.donate_wechat_lucky) {
-            return donateViaWeChat(R.string.donate_wechat_lucky);
-        } else if (BuildConfig.ALIPAY_DONATE && item.getItemId() == R.string.donate_alipay) {
+        int id = item.getItemId();
+        if (BuildConfig.WECHAT_DONATE && (id == R.string.donate_wechat || id == R.string.donate_wechat_lucky)) {
+            return donateViaWeChat(id);
+        } else if (BuildConfig.ALIPAY_DONATE && id == R.string.donate_alipay) {
             return donateViaAlipay();
         } else {
-            return false;
+            return id == R.string.switch_theme && switchTheme();
         }
     }
 
