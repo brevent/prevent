@@ -27,5 +27,6 @@
     <string name="no_prevents">Please configure prevent list.</string>
     <string name="donate_wechat">Donate via WeChat</string>
     <string name="donate_alipay">Donate via Alipay</string>
+    <string name="donate_wechat_lucky">Donate via WeChat(Lucky)</string>
 
 </resources>

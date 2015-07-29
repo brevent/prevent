@@ -180,6 +180,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
         if (BuildConfig.ALIPAY_DONATE && getDonateWeChat() != null) {
             menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
+            menu.add(Menu.NONE, R.string.donate_wechat_lucky, Menu.NONE, R.string.donate_wechat_lucky);
         }
         return super.onCreateOptionsMenu(menu);
     }
@@ -189,7 +190,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         if (item.getItemId() == R.string.switch_theme) {
             return switchTheme();
         } else if (BuildConfig.WECHAT_DONATE && item.getItemId() == R.string.donate_wechat) {
-            return donateViaWeChat();
+            return donateViaWeChat(R.string.donate_wechat);
+        } else if (BuildConfig.WECHAT_DONATE && item.getItemId() == R.string.donate_wechat_lucky) {
+            return donateViaWeChat(R.string.donate_wechat_lucky);
         } else if (BuildConfig.ALIPAY_DONATE && item.getItemId() == R.string.donate_alipay) {
             return donateViaAlipay();
         } else {
@@ -243,7 +246,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return null;
     }
 
-    private boolean donateViaWeChat() {
+    private boolean donateViaWeChat(int id) {
         ComponentName cn = getDonateWeChat();
         if (cn == null) {
             return false;
@@ -251,7 +254,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         Intent intent = new Intent();
         intent.setComponent(cn);
         intent.putExtra("scene", 1);
-        intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT);
+        if (id == R.string.donate_wechat_lucky) {
+            intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT + "&s=37");
+        } else {
+            intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT);
+        }
         try {
             startActivity(intent);
         } catch (Throwable t) { // NOSONAR
