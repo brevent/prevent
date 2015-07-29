@@ -191,12 +191,23 @@ public final class SystemHook {
 
     private static Context getContext(Object activityManagerService) {
         try {
-            Field field = activityManagerService.getClass().getDeclaredField("mContext");
-            field.setAccessible(true);
-            return (Context) field.get(activityManagerService);
-        } catch (NoSuchFieldException e) {
-            PreventLog.e("cannot find mContext from " + activityManagerService.getClass(), e);
-            return null;
+            Field field = null;
+            Class<?> clazz = activityManagerService.getClass();
+            while (clazz != null && field == null) {
+                try {
+                    field = clazz.getDeclaredField("mContext");
+                } catch (NoSuchFieldException e) {
+                    PreventLog.d("cannot find mContext in " + clazz.getName(), e);
+                    clazz = clazz.getSuperclass();
+                }
+            }
+            if (field == null) {
+                PreventLog.e("cannot find mContext from " + activityManagerService.getClass());
+                return null;
+            } else {
+                field.setAccessible(true);
+                return (Context) field.get(activityManagerService);
+            }
         } catch (IllegalAccessException e) {
             PreventLog.e("cannot access mContext from " + activityManagerService.getClass(), e);
             return null;
