@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import me.piebridge.forcestopgb.BuildConfig;
@@ -79,6 +80,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private BroadcastReceiver receiver;
 
     private Handler mHandler;
+
+    private final Object preventLock = new Object();
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -124,20 +127,47 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         HandlerThread thread = new HandlerThread("PreventUI");
         thread.start();
         mHandler = new Handler(thread.getLooper());
+        showProcessDialog(R.string.retrieving);
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                retrievePrevents();
+            }
+        }, 0x100);
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onRestart() {
+        super.onRestart();
         if (preventPackages == null) {
-            showProcessDialog(R.string.retrieving);
-            mHandler.postDelayed(new Runnable() {
+            mHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     retrievePrevents();
                 }
+            });
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (preventPackages == null) {
+                        showRetrieving();
+                    }
+                }
             }, 0x100);
         }
+    }
+
+    private void showRetrieving() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (preventLock) {
+                    if (preventPackages == null) {
+                        showProcessDialog(R.string.retrieving);
+                    }
+                }
+            }
+        });
     }
 
     private void retrievePrevents() {
@@ -576,12 +606,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     String key = it.next();
                     prevents.put(key, json.optBoolean(key));
                 }
-                if (preventPackages == null) {
-                    preventPackages = new HashMap<String, Boolean>();
-                } else {
-                    preventPackages.clear();
+                synchronized (preventLock) {
+                    if (preventPackages == null) {
+                        preventPackages = new HashMap<String, Boolean>();
+                    } else {
+                        preventPackages.clear();
+                    }
+                    preventPackages.putAll(prevents);
                 }
-                preventPackages.putAll(prevents);
             } catch (JSONException e) {
                 UILog.e("cannot convert to json", e);
             }
@@ -623,9 +655,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     @Override
-    public void onPause() {
+    public void onStop() {
         preventPackages = null;
-        super.onPause();
+        super.onStop();
     }
 
 }
