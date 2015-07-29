@@ -84,6 +84,8 @@ public final class SystemHook {
 
     private static ClassLoader classLoader;
 
+    private static Handler mHandler;
+
     private SystemHook() {
 
     }
@@ -198,9 +200,11 @@ public final class SystemHook {
             mContext = context;
         }
 
-        HandlerThread thread = new HandlerThread("PreventService");
-        thread.start();
-        Handler handler = new Handler(thread.getLooper());
+        if (mHandler == null) {
+            HandlerThread thread = new HandlerThread("PreventService");
+            thread.start();
+            mHandler = new Handler(thread.getLooper());
+        }
 
         BroadcastReceiver receiver = new SystemReceiver(mContext);
 
@@ -211,7 +215,7 @@ public final class SystemHook {
         manager.addDataScheme(PreventIntent.SCHEME);
 
         try {
-            mContext.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
+            mContext.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, mHandler);
         } catch (SecurityException e) { // NOSONAR
             PreventLog.d("cannot register: " + e.getMessage());
             return false;
@@ -225,11 +229,11 @@ public final class SystemHook {
         hook.addAction(PreventIntent.ACTION_FORCE_STOP);
         hook.addDataScheme(PreventIntent.SCHEME);
         // FIXME: check permission
-        mContext.registerReceiver(receiver, hook, null, handler);
+        mContext.registerReceiver(receiver, hook, null, mHandler);
 
         IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
         filter.addDataScheme("package");
-        mContext.registerReceiver(receiver, filter, null, handler);
+        mContext.registerReceiver(receiver, filter, null, mHandler);
 
         registered = true;
         PreventLog.i("registered receiver");
