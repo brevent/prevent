@@ -18,7 +18,7 @@ import android.os.HandlerThread;
 import android.os.Process;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.SparseArray;
+import android.util.SparseBooleanArray;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,11 +28,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,10 +62,7 @@ public final class SystemHook {
     static final int TIME_IMMEDIATE = 1;
     static final int TIME_CHECK_SERVICE = 30;
 
-    private static long lastChecking;
-    private static long lastKilling;
     static final int TIME_KILL = 1;
-    static final long MILLISECONDS = 1000;
 
     static final int FIRST_APPLICATION_UID = 10000;
 
@@ -71,11 +72,12 @@ public final class SystemHook {
 
     static Map<String, Integer> packageUids = new HashMap<String, Integer>();
 
-    static SparseArray<Boolean> gmsUids = new SparseArray<Boolean>();
+    static SparseBooleanArray gmsUids = new SparseBooleanArray();
 
     static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
 
     static Set<String> checkingPackageNames = new TreeSet<String>();
+    static Set<String> checkingWhiteList = new TreeSet<String>();
     static final Object CHECKING_LOCK = new Object();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
@@ -83,6 +85,9 @@ public final class SystemHook {
     private static ClassLoader classLoader;
 
     private static Handler mHandler;
+
+    private static ScheduledFuture<?> checkingFuture;
+    private static ScheduledFuture<?> killingFuture;
 
     private SystemHook() {
 
@@ -412,7 +417,7 @@ public final class SystemHook {
 
         // always block broadcast
         if ("broadcast".equals(hostingType)) {
-            checkRunningServices(GmsUtils.GMS.equals(packageName) ? null : packageName);
+            checkRunningServices(packageName);
             // FIXME: use better way to check for widget
             if (isWidget(hostingName)) {
                 LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
@@ -426,7 +431,7 @@ public final class SystemHook {
 
         // auto turn off service
         if ("service".equals(hostingType)) {
-            checkRunningServices(GmsUtils.GMS.equals(packageName) ? null : packageName);
+            checkRunningServices(packageName);
             LogUtils.logStartProcess(false, packageName, hostingType, hostingName);
         }
 
@@ -493,23 +498,70 @@ public final class SystemHook {
         }
     }
 
-    static boolean checkRunningServices(final String packageName) {
+    private static void checkRunningServices(final String packageName) {
+        if (packageName != null) {
+            synchronized (CHECKING_LOCK) {
+                checkingWhiteList.add(packageName);
+            }
+        }
+        executor.schedule(new CheckingRunningService(mContext) {
+            @Override
+            protected Collection<String> preparePackageNames() {
+                return Arrays.asList(packageName);
+            }
+
+            @Override
+            protected Collection<String> prepareWhiteList() {
+                synchronized (CHECKING_LOCK) {
+                    checkingWhiteList.remove(packageName);
+                }
+                return Collections.emptyList();
+            }
+        }, TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+    }
+
+    static boolean checkRunningServices(final String packageName, int seconds) {
         if (mContext == null) {
             PreventLog.e("context is null, cannot check running services for " + packageName);
             return false;
         }
-        long now = System.currentTimeMillis();
-        if (now - lastChecking <= TIME_CHECK_SERVICE * MILLISECONDS) {
-            return false;
-        }
-        lastChecking = now;
         if (packageName != null) {
             synchronized (CHECKING_LOCK) {
                 checkingPackageNames.add(packageName);
             }
         }
-        executor.schedule(new CheckingRunningService(mContext, checkingPackageNames), TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        if (checkingFuture != null && checkingFuture.getDelay(TimeUnit.SECONDS) > 0) {
+            return false;
+        }
+        checkingFuture = executor.schedule(new CheckingRunningService(mContext) {
+            @Override
+            protected Collection<String> preparePackageNames() {
+                return prepareCheckingPackageNames();
+            }
+
+            @Override
+            protected Collection<String> prepareWhiteList() {
+                return prepareCheckingWhiteList();
+            }
+        }, seconds, TimeUnit.SECONDS);
         return true;
+    }
+
+    private static Collection<String> prepareCheckingPackageNames() {
+        Set<String> packageNames = new TreeSet<String>();
+        synchronized (SystemHook.CHECKING_LOCK) {
+            packageNames.addAll(checkingPackageNames);
+            checkingPackageNames.clear();
+        }
+        return packageNames;
+    }
+
+    private static Collection<String> prepareCheckingWhiteList() {
+        Set<String> whiteList = new TreeSet<String>();
+        synchronized (CHECKING_LOCK) {
+            whiteList.addAll(checkingWhiteList);
+        }
+        return whiteList;
     }
 
     static void forceStopPackageForce(final String packageName, int second) {
@@ -562,17 +614,15 @@ public final class SystemHook {
         }
     }
 
-    static boolean killNoFather(final String packageName) {
-        long now = System.currentTimeMillis();
-        if (now - lastKilling <= TIME_KILL * MILLISECONDS) {
+    static boolean killNoFather() {
+        if (killingFuture != null && killingFuture.getDelay(TimeUnit.SECONDS) > 0) {
             return false;
         }
-        lastKilling = now;
-        executor.schedule(new Runnable() {
+        killingFuture = executor.schedule(new Runnable() {
             @Override
             public void run() {
                 try {
-                    dokillNoFather(packageName);
+                    dokillNoFather();
                 } catch (Throwable t) { // NOSONAR
                     PreventLog.e("cannot killNoFather", t);
                 }
@@ -581,41 +631,42 @@ public final class SystemHook {
         return true;
     }
 
-    private static void dokillNoFather(String packageName) {
+    private static void dokillNoFather() {
         File proc = new File("/proc");
         for (File file : proc.listFiles()) {
             if (file.isDirectory() && TextUtils.isDigitsOnly(file.getName())) {
                 int pid = Integer.parseInt(file.getName());
                 int uid = HideApiUtils.getUidForPid(pid);
                 if (HideApiUtils.getParentPid(pid) == 1 && uid >= FIRST_APPLICATION_UID) {
-                    killIfNeed(uid, pid, packageName);
+                    killIfNeed(uid, pid);
                 }
             }
         }
     }
 
-    private static void killIfNeed(int uid, int pid, String packageName) {
-        String name = getPackageName(uid, packageName);
-        if (name == null || preventPackages.containsKey(name)) {
+    private static void killIfNeed(int uid, int pid) {
+        String[] names = mContext.getPackageManager().getPackagesForUid(uid);
+        if (names == null || isPrevent(names)) {
             Process.killProcess(pid);
-            if (name == null) {
+            String name;
+            if (names == null) {
                 name = "(uid: " + uid + ", process: + " + getProcessName(pid) + ")";
+            } else if (names.length == 1) {
+                name = names[0];
+            } else {
+                name = Arrays.asList(names).toString();
             }
             LogUtils.logKill(pid, "without parent", name);
         }
     }
 
-    private static String getPackageName(int uid, String packageName) {
-        Integer currentUid = packageUids.get(packageName);
-        if (currentUid != null && currentUid == uid) {
-            return packageName;
-        }
-        for (Map.Entry<String, Integer> entry : packageUids.entrySet()) {
-            if (entry.getValue().equals(uid)) {
-                return entry.getKey();
+    private static boolean isPrevent(String[] names) {
+        for (String name : names) {
+            if (preventPackages.containsKey(name)) {
+                return true;
             }
         }
-        return null;
+        return false;
     }
 
     private static boolean shouldIgnoreLocation(String action) {

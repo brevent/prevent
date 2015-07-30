@@ -135,9 +135,11 @@ class SystemReceiver extends BroadcastReceiver {
         if (SystemHook.getPreventPackages().containsKey(packageName)) {
             SystemHook.getPreventPackages().put(packageName, Boolean.TRUE);
             LogUtils.logForceStop(action, packageName, "if needed in " + SystemHook.TIME_DESTROY + "s");
-            SystemHook.checkRunningServices(packageName);
+            SystemHook.checkRunningServices(packageName, SystemHook.TIME_DESTROY);
+        } else {
+            SystemHook.checkRunningServices(null, SystemHook.TIME_DESTROY);
         }
-        SystemHook.killNoFather(packageName);
+        SystemHook.killNoFather();
     }
 
     private void handleDestroy(String action, String packageName) {
@@ -147,9 +149,9 @@ class SystemReceiver extends BroadcastReceiver {
             SystemHook.getPreventPackages().put(packageName, Boolean.TRUE);
             LogUtils.logForceStop(action, packageName, "destroy in " + SystemHook.TIME_SUICIDE + "s");
             SystemHook.forceStopPackageLater(packageName, SystemHook.TIME_SUICIDE);
-            SystemHook.checkRunningServices(packageName);
         }
-        SystemHook.killNoFather(packageName);
+        SystemHook.checkRunningServices(null, SystemHook.TIME_SUICIDE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY :  SystemHook.TIME_SUICIDE);
+        SystemHook.killNoFather();
     }
 
     private void handleRestart(String action, String packageName) {
@@ -166,7 +168,7 @@ class SystemReceiver extends BroadcastReceiver {
         if (SystemHook.getPreventPackages().containsKey(packageName)) {
             SystemHook.getPreventPackages().put(packageName, Boolean.TRUE);
         }
-        SystemHook.killNoFather(packageName);
+        SystemHook.killNoFather();
     }
 
     private void handleForceStop(String action, String packageName, Intent intent) {
@@ -179,7 +181,7 @@ class SystemReceiver extends BroadcastReceiver {
         if (uid >= SystemHook.FIRST_APPLICATION_UID) {
             LogUtils.logForceStop(action, packageName, "force in " + SystemHook.TIME_IMMEDIATE + "s" + ", uid: " + uid);
             SystemHook.forceStopPackageForce(packageName, SystemHook.TIME_IMMEDIATE);
-            SystemHook.checkRunningServices(packageName);
+            SystemHook.checkRunningServices(null, SystemHook.TIME_IMMEDIATE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_IMMEDIATE);
         }
     }
 
