@@ -20,6 +20,9 @@ public class BroadcastFilterUtils {
     private static Field ReceiverList$receiver;
     private static Object NotificationManagerService;
 
+    private static final String NMS = "com.android.server.NotificationManagerService$";
+    private static final String NMS_21 = "com.android.server.notification.NotificationManagerService$";
+
     private BroadcastFilterUtils() {
 
     }
@@ -83,10 +86,12 @@ public class BroadcastFilterUtils {
             field = rd.getClass().getDeclaredField("mReceiver");
             field.setAccessible(true);
             receiver = field.get(rd);
-            if (receiver.getClass().getName().startsWith("com.android.server.NotificationManagerService")) {
+            String name = receiver.getClass().getName();
+            if (name.startsWith(NMS) || name.startsWith(NMS_21)) {
                 NotificationManagerService = filter;
                 return true;
             }
+            PreventLog.v("receiver: " + receiver);
         } catch (NoSuchFieldException e) {
             PreventLog.v("cannot find field for filter: " + filter, e);
         } catch (IllegalAccessException e) {
