@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -186,15 +187,32 @@ public final class SystemHook {
         return IntentFilterMatchResult.NONE;
     }
 
-    public static boolean registerReceiversIfNeeded() {
-        if (registered) {
-            return true;
+    private static Context getContext(Object activityManagerService) {
+        Field field = null;
+        Class<?> clazz = activityManagerService.getClass();
+        while (clazz != null && field == null) {
+            try {
+                field = clazz.getDeclaredField("mContext");
+            } catch (NoSuchFieldException e) { // NOSONAR
+                PreventLog.d("cannot find mContext in " + clazz.getName());
+                clazz = clazz.getSuperclass();
+            }
         }
 
-        mContext = ActivityThread.currentApplication();
-        if (mContext == null) {
-            PreventLog.d("cannot get context from ActivityThread.currentApplication");
-            return false;
+        if (field != null) {
+            field.setAccessible(true);
+            try {
+                return (Context) field.get(activityManagerService);
+            } catch (IllegalAccessException e) {
+                PreventLog.d("cannot visit mContext in " + activityManagerService.getClass().getName(), e);
+            }
+        }
+        return null;
+    }
+
+    public static boolean registerReceiversIfNeeded(Object activityManagerService) {
+        if (registered) {
+            return true;
         }
 
         if (mHandler == null) {
@@ -203,7 +221,18 @@ public final class SystemHook {
             mHandler = new Handler(thread.getLooper());
         }
 
-        BroadcastReceiver receiver = new SystemReceiver(mContext);
+        Context context = ActivityThread.currentApplication();
+        if (context != null && doRegisterReceivers(context)) {
+            return true;
+        } else {
+            // fallback
+            context = getContext(activityManagerService);
+            return context != null && doRegisterReceivers(context);
+        }
+    }
+
+    private static boolean doRegisterReceivers(Context context) {
+        BroadcastReceiver receiver = new SystemReceiver(context);
 
         IntentFilter manager = new IntentFilter();
         manager.addAction(PreventIntent.ACTION_GET_PACKAGES);
@@ -212,7 +241,7 @@ public final class SystemHook {
         manager.addDataScheme(PreventIntent.SCHEME);
 
         try {
-            mContext.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, mHandler);
+            context.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, mHandler);
         } catch (SecurityException e) { // NOSONAR
             PreventLog.d("cannot register: " + e.getMessage());
             return false;
@@ -226,15 +255,16 @@ public final class SystemHook {
         hook.addAction(PreventIntent.ACTION_FORCE_STOP);
         hook.addDataScheme(PreventIntent.SCHEME);
         // FIXME: check permission
-        mContext.registerReceiver(receiver, hook, null, mHandler);
+        context.registerReceiver(receiver, hook, null, mHandler);
 
         IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
         filter.addDataScheme("package");
-        mContext.registerReceiver(receiver, filter, null, mHandler);
+        context.registerReceiver(receiver, filter, null, mHandler);
 
         registered = true;
         PreventLog.i("registered receiver");
 
+        mContext = context;
         return true;
     }
 
@@ -349,12 +379,12 @@ public final class SystemHook {
         return mContext != null && GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
     }
 
-    public static boolean beforeActivityManagerService$startProcessLocked(Object[] args) { // NOSONAR
+    public static boolean beforeActivityManagerService$startProcessLocked(Object thiz, Object[] args) { // NOSONAR
         if (!isSystemHook()) {
             return true;
         }
 
-        registerReceiversIfNeeded();
+        registerReceiversIfNeeded(thiz);
 
         ApplicationInfo info = (ApplicationInfo) args[0x1];
         String hostingType = (String) args[0x4];
