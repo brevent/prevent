@@ -150,7 +150,7 @@ class SystemReceiver extends BroadcastReceiver {
             LogUtils.logForceStop(action, packageName, "destroy in " + SystemHook.TIME_SUICIDE + "s");
             SystemHook.forceStopPackageLater(packageName, SystemHook.TIME_SUICIDE);
         }
-        SystemHook.checkRunningServices(null, SystemHook.TIME_SUICIDE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY :  SystemHook.TIME_SUICIDE);
+        SystemHook.checkRunningServices(null, SystemHook.TIME_SUICIDE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_SUICIDE);
         SystemHook.killNoFather();
     }
 
