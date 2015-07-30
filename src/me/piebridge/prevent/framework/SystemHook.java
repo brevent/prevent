@@ -16,7 +16,6 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.SparseBooleanArray;
 
@@ -124,12 +123,9 @@ public final class SystemHook {
 
         String action = (String) args[0x0];
 
-        if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
-            LogUtils.logIntentFilter(action, filter, null);
-            if (BroadcastFilterUtils.isNotificationManagerServiceReceiver(filter)) {
-                PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " to NotificationManagerService");
-                return IntentFilterMatchResult.NO_MATCH;
-            }
+        if (Intent.ACTION_PACKAGE_RESTARTED.equals(action) && BroadcastFilterUtils.isNotificationManagerServiceReceiver(filter)) {
+            PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " to NotificationManagerService");
+            return IntentFilterMatchResult.NO_MATCH;
         }
 
         if (BuildConfig.DEBUG) {
@@ -158,10 +154,6 @@ public final class SystemHook {
                 return IntentFilterMatchResult.NO_MATCH;
             }
         } else if (filter instanceof PackageParser.ServiceIntentInfo) {
-            // for service, we try to find calling package
-            if (shouldIgnoreLocation(action)) {
-                return IntentFilterMatchResult.NO_MATCH;
-            }
             @SuppressWarnings("unchecked")
             PackageParser.Service service = ((PackageParser.ServiceIntentInfo) filter).service;
             PackageParser.Package owner = service.owner;
@@ -454,7 +446,7 @@ public final class SystemHook {
 
     public static void afterActivityManagerService$cleanUpRemovedTaskLocked(Object[] args) { // NOSONAR
         String packageName = TaskRecordUtils.getPackageName(args[0]);
-        if (packageName != null) {
+        if (packageName != null && preventPackages.containsKey(packageName)) {
             autoPrevents(packageName);
         }
     }
@@ -675,14 +667,6 @@ public final class SystemHook {
             }
         }
         return false;
-    }
-
-    private static boolean shouldIgnoreLocation(String action) {
-        if (mContext == null || action == null) {
-            return false;
-        }
-        boolean disabled = Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF) == Settings.Secure.LOCATION_MODE_OFF;
-        return disabled && (action.startsWith("com.android.location.service") || action.startsWith("com.google.android.location"));
     }
 
 }

@@ -177,12 +177,10 @@ class SystemReceiver extends BroadcastReceiver {
         SystemHook.getPackageCounters().remove(packageName);
         if (SystemHook.getPreventPackages().containsKey(packageName)) {
             SystemHook.getPreventPackages().put(packageName, Boolean.TRUE);
-        }
-        if (uid >= SystemHook.FIRST_APPLICATION_UID) {
             LogUtils.logForceStop(action, packageName, "force in " + SystemHook.TIME_IMMEDIATE + "s" + ", uid: " + uid);
             SystemHook.forceStopPackageForce(packageName, SystemHook.TIME_IMMEDIATE);
-            SystemHook.checkRunningServices(null, SystemHook.TIME_IMMEDIATE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_IMMEDIATE);
         }
+        SystemHook.checkRunningServices(null, SystemHook.TIME_IMMEDIATE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_IMMEDIATE);
     }
 
     private static String toJSON(Map<String, Set<Integer>> processes) {
