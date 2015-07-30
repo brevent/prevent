@@ -23,6 +23,10 @@ public class PreventLog {
         Log.v(TAG, msg);
     }
 
+    public static void v(String msg, Throwable t) {
+        Log.v(TAG, msg, t);
+    }
+
     public static void d(String msg) {
         Log.d(TAG, msg);
         logToXposed("[D/" + TAG + "] " + msg);

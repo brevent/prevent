@@ -124,6 +124,14 @@ public final class SystemHook {
 
         String action = (String) args[0x0];
 
+        if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
+            LogUtils.logIntentFilter(action, filter, null);
+            if (BroadcastFilterUtils.isNotificationManagerServiceReceiver(filter)) {
+                PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " to NotificationManagerService");
+                return IntentFilterMatchResult.NO_MATCH;
+            }
+        }
+
         if (BuildConfig.DEBUG) {
             LogUtils.logIntentFilter(action, filter, null);
         }
