@@ -76,6 +76,16 @@ public class BroadcastFilterUtils {
         if (ReceiverList$receiver == null || !BroadcastFilter.isAssignableFrom(filter.getClass())) {
             return false;
         }
+        if (isNotification(filter)) {
+            NotificationManagerService = filter;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    private static boolean isNotification(Object filter) {
         try {
             Object receiverList = BroadcastFilter$receiverList.get(filter);
             Object receiver = ReceiverList$receiver.get(receiverList);
@@ -85,13 +95,8 @@ public class BroadcastFilterUtils {
             Object rd = mDispatcher.get();
             field = rd.getClass().getDeclaredField("mReceiver");
             field.setAccessible(true);
-            receiver = field.get(rd);
-            String name = receiver.getClass().getName();
-            if (name.startsWith(NMS) || name.startsWith(NMS_21)) {
-                NotificationManagerService = filter;
-                return true;
-            }
-            PreventLog.v("receiver: " + receiver);
+            String name = field.get(rd).getClass().getName();
+            return name != null && (name.startsWith(NMS) || name.startsWith(NMS_21));
         } catch (NoSuchFieldException e) {
             PreventLog.v("cannot find field for filter: " + filter, e);
         } catch (IllegalAccessException e) {
