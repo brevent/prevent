@@ -80,7 +80,7 @@ public final class SystemHook {
     static Set<String> checkingWhiteList = new TreeSet<String>();
     static final Object CHECKING_LOCK = new Object();
 
-    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
+    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x5);
 
     private static ClassLoader classLoader;
 
