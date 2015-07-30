@@ -12,6 +12,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -124,8 +125,14 @@ public final class SystemHook {
         String action = (String) args[0x0];
 
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action) && BroadcastFilterUtils.isNotificationManagerServiceReceiver(filter)) {
-            PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " to NotificationManagerService");
-            return IntentFilterMatchResult.NO_MATCH;
+            String packageName = ((Uri) args[0x3]).getSchemeSpecificPart();
+            if (packageName != null && preventPackages.containsKey(packageName)) {
+                PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " from " + packageName + " to NotificationManagerService");
+                HideApiUtils.cancelAllNotificationsInt(packageName);
+                return IntentFilterMatchResult.NO_MATCH;
+            } else {
+                return IntentFilterMatchResult.NONE;
+            }
         }
 
         if (BuildConfig.DEBUG) {
