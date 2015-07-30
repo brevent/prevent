@@ -11,7 +11,6 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
-import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.os.Binder;
 import android.os.Handler;
@@ -79,8 +78,6 @@ public final class SystemHook {
     static final Object CHECKING_LOCK = new Object();
 
     private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
-
-    private static Map<ComponentName, Boolean> widgets = new HashMap<ComponentName, Boolean>();
 
     private static ClassLoader classLoader;
 
@@ -386,6 +383,7 @@ public final class SystemHook {
         // always block broadcast
         if ("broadcast".equals(hostingType)) {
             checkRunningServices(GmsUtils.GMS.equals(packageName) ? null : packageName);
+            // FIXME: use better way to check for widget
             if (isWidget(hostingName)) {
                 LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
                 return true;
@@ -406,22 +404,9 @@ public final class SystemHook {
     }
 
     private static boolean isWidget(ComponentName cn) {
-        Boolean result = widgets.get(cn);
-        if (result != null) {
-            return result;
-        }
-        result = false;
-        Intent intent = new Intent();
+        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
         intent.setComponent(cn);
-        for (ResolveInfo info : mContext.getPackageManager().queryBroadcastReceivers(intent, 0)) {
-            if (info != null && info.filter != null && info.filter.matchAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)) {
-                PreventLog.d("info " + info + " match action: " + AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-                result = true;
-                break;
-            }
-        }
-        widgets.put(cn, result);
-        return result;
+        return !mContext.getPackageManager().queryBroadcastReceivers(intent, 0).isEmpty();
     }
 
     public static void afterActivityManagerService$cleanUpRemovedTaskLocked(Object[] args) { // NOSONAR
