@@ -46,6 +46,7 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
+import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
 import me.piebridge.prevent.ui.PreventProvider;
 
@@ -122,9 +123,8 @@ public final class SystemHook {
 
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action) && BroadcastFilterUtils.isNotificationManagerServiceReceiver(filter)) {
             String packageName = ((Uri) args[0x3]).getSchemeSpecificPart();
-            if (packageName != null && preventPackages.containsKey(packageName)) {
+            if (packageName != null && preventPackages.containsKey(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
                 PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " from " + packageName + " to NotificationManagerService");
-                HideApiUtils.cancelAllNotificationsInt(packageName);
                 return IntentFilterMatchResult.NO_MATCH;
             } else {
                 return IntentFilterMatchResult.NONE;
