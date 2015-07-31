@@ -348,7 +348,7 @@ public final class SystemHook {
             return false;
         }
         if (pm.checkSignatures(callingUid, uid) == PackageManager.SIGNATURE_MATCH) {
-            PreventLog.d("allow " + packageNames[0] + "(same signature) with gms to use gms if needed");
+            PreventLog.v("allow " + packageNames[0] + "(same signature) with gms to use gms if needed");
             return true;
         } else {
             return packageNames.length == 1 && canUseGms(pm, packageNames[0]);
@@ -359,7 +359,7 @@ public final class SystemHook {
         if (pm.getLaunchIntentForPackage(packageName) == null || !packageName.startsWith(GmsUtils.GAPPS_PREFIX)) {
             return false;
         } else {
-            PreventLog.d("allow " + packageName + " to use gms if needed");
+            PreventLog.v("allow " + packageName + " to use gms if needed");
             return true;
         }
     }
@@ -504,7 +504,7 @@ public final class SystemHook {
             protected Collection<String> prepareWhiteList() {
                 return prepareServiceWhiteList(packageName);
             }
-        }, TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        }, GmsUtils.GMS.equals(packageName) ? TIME_CHECK_SERVICE * 0x2 : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
     }
 
     private static Collection<String> prepareServiceWhiteList(String packageName) {
