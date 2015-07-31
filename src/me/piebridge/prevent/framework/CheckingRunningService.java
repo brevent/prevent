@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -29,14 +30,11 @@ abstract class CheckingRunningService implements Runnable {
     public void run() {
         Collection<String> packageNames = preparePackageNames();
         Collection<String> whiteList = prepareWhiteList();
-        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(MAX_SERVICES);
-        if (services == null) {
+        if (!packageNames.isEmpty() && packageNames.equals(whiteList)) {
             return;
         }
-        PreventLog.v("services size: " + services.size());
         Set<String> shouldStopPackageNames = new TreeSet<String>();
-        for (ActivityManager.RunningServiceInfo service : services) {
+        for (ActivityManager.RunningServiceInfo service : getServices()) {
             String name = service.service.getPackageName();
             boolean prevent = Boolean.TRUE.equals(SystemHook.getPreventPackages().get(name));
             logServiceIfNeeded(prevent, name, service);
@@ -53,6 +51,17 @@ abstract class CheckingRunningService implements Runnable {
         }
         stopServiceIfNeeded(shouldStopPackageNames);
         PreventLog.v("complete checking running service");
+    }
+
+    private List<ActivityManager.RunningServiceInfo> getServices() {
+        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(MAX_SERVICES);
+        if (services != null) {
+            PreventLog.v("services size: " + services.size());
+            return services;
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     protected abstract Collection<String> preparePackageNames();

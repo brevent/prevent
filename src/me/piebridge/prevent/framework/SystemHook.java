@@ -18,7 +18,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.text.TextUtils;
-import android.util.SparseBooleanArray;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,7 +42,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
-import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
@@ -71,8 +69,6 @@ public final class SystemHook {
     static Map<String, Boolean> preventPackages = new ConcurrentHashMap<String, Boolean>();
 
     static Map<String, Integer> packageUids = new HashMap<String, Integer>();
-
-    static SparseBooleanArray gmsUids = new SparseBooleanArray();
 
     static Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
 
@@ -345,12 +341,7 @@ public final class SystemHook {
         return null;
     }
 
-    private static boolean canUseGms(int uid) {
-        int callingUid = Binder.getCallingUid();
-        Boolean value = gmsUids.get(callingUid);
-        if (value != null) {
-            return value;
-        }
+    private static boolean canUseGms(int callingUid, int uid) {
         PackageManager pm = mContext.getPackageManager();
         String[] packageNames = pm.getPackagesForUid(callingUid);
         if (packageNames == null || packageNames.length == 0) {
@@ -358,11 +349,10 @@ public final class SystemHook {
         }
         if (pm.checkSignatures(callingUid, uid) == PackageManager.SIGNATURE_MATCH) {
             PreventLog.d("allow " + packageNames[0] + "(same signature) with gms to use gms if needed");
-            gmsUids.put(callingUid, true);
+            return true;
         } else {
-            gmsUids.put(callingUid, packageNames.length == 1 && canUseGms(pm, packageNames[0]));
+            return packageNames.length == 1 && canUseGms(pm, packageNames[0]);
         }
-        return gmsUids.get(callingUid);
     }
 
     private static boolean canUseGms(PackageManager pm, String packageName) {
@@ -374,21 +364,13 @@ public final class SystemHook {
         }
     }
 
-    private static boolean isSystemApps(PackageManager pm, String packageName) {
-        try {
-            if (PackageUtils.isSystemPackage(pm.getApplicationInfo(packageName, 0).flags)) {
-                PreventLog.d("allow system package " + packageName + " to use gms if needed");
-                return true;
-            }
-        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
-            PreventLog.d("cannot find package: " + packageName);
-        }
-        return false;
-    }
-
     private static boolean canUseGms(ApplicationInfo info) {
-        // only for system package, or only for gms?
-        return mContext != null && GmsUtils.GMS.equals(info.packageName) && canUseGms(info.uid);
+        if (!preventPackages.containsKey(GmsUtils.GMS)) {
+            return true;
+        }
+        int uid = info.uid;
+        int callingUid = Binder.getCallingUid();
+        return callingUid == uid || (GmsUtils.GMS.equals(info.packageName) && canUseGms(callingUid, info.uid));
     }
 
     public static boolean beforeActivityManagerService$startProcessLocked(Object thiz, Object[] args) { // NOSONAR
@@ -511,20 +493,32 @@ public final class SystemHook {
                 checkingWhiteList.add(packageName);
             }
         }
+        GmsUtils.increaseGmsCount(mContext, packageName);
         executor.schedule(new CheckingRunningService(mContext) {
             @Override
             protected Collection<String> preparePackageNames() {
-                return Arrays.asList(packageName);
+                return Collections.singletonList(packageName);
             }
 
             @Override
             protected Collection<String> prepareWhiteList() {
-                synchronized (CHECKING_LOCK) {
-                    checkingWhiteList.remove(packageName);
-                }
-                return Collections.emptyList();
+                return prepareServiceWhiteList(packageName);
             }
         }, TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+    }
+
+    private static Collection<String> prepareServiceWhiteList(String packageName) {
+        int gmsCount = GmsUtils.decreaseGmsCount(mContext, packageName);
+        if (!GmsUtils.GMS.equals(packageName) || gmsCount == 0) {
+            synchronized (CHECKING_LOCK) {
+                checkingWhiteList.remove(packageName);
+            }
+        }
+        if (gmsCount > 0) {
+            return Collections.singletonList(GmsUtils.GMS);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     static boolean checkRunningServices(final String packageName, int seconds) {
