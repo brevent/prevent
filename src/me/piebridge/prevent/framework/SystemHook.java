@@ -48,6 +48,7 @@ import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
+import me.piebridge.prevent.framework.util.WidgetUtils;
 import me.piebridge.prevent.ui.PreventProvider;
 
 public final class SystemHook {
@@ -406,12 +407,12 @@ public final class SystemHook {
 
         // always block broadcast
         if ("broadcast".equals(hostingType)) {
-            checkRunningServices(packageName);
-            // FIXME: use better way to check for widget
-            if (isWidget(hostingName)) {
+            if (WidgetUtils.isWidget(mContext, hostingName)) {
+                checkRunningServices(packageName);
                 LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
                 return true;
             } else {
+                checkRunningServices(packageName, TIME_PREVENT < TIME_DESTROY ? TIME_DESTROY : TIME_PREVENT);
                 forceStopPackageLaterIfPrevent(packageName, TIME_PREVENT);
                 LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
                 return false;
@@ -425,12 +426,6 @@ public final class SystemHook {
         }
 
         return true;
-    }
-
-    private static boolean isWidget(ComponentName cn) {
-        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-        intent.setComponent(cn);
-        return !mContext.getPackageManager().queryBroadcastReceivers(intent, 0).isEmpty();
     }
 
     public static void afterActivityManagerService$cleanUpRemovedTaskLocked(Object[] args) { // NOSONAR
