@@ -76,7 +76,7 @@ public class HideApiUtils {
                 } else if (length == 0x5) {
                     cancelAllNotificationsInt.invoke(notificationManagerService, pkgName, flag, 0, true, UserHandle.USER_ALL);
                 } else if (length == 0x9) {
-                    cancelAllNotificationsInt.invoke(notificationManagerService, android.os.Process.myUid(), Process.myPid(), pkgName, flag, 0, true,
+                    cancelAllNotificationsInt.invoke(notificationManagerService, Process.myUid(), Process.myPid(), pkgName, flag, 0, true,
                             UserHandle.USER_ALL, REASON_PACKAGE_CHANGED, null);
                 }
             }
