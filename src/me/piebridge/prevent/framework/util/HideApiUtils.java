@@ -71,7 +71,9 @@ public class HideApiUtils {
         int length = cancelAllNotificationsInt.getParameterTypes().length;
         try {
             for (int flag : REMOVE_FLAGS) {
-                if (length == 0x5) {
+                if (length == 0x4) {
+                    cancelAllNotificationsInt.invoke(notificationManagerService, pkgName, flag, 0, true);
+                } else if (length == 0x5) {
                     cancelAllNotificationsInt.invoke(notificationManagerService, pkgName, flag, 0, true, UserHandle.USER_ALL);
                 } else if (length == 0x9) {
                     cancelAllNotificationsInt.invoke(notificationManagerService, android.os.Process.myUid(), Process.myPid(), pkgName, flag, 0, true,
