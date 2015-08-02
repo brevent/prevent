@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 
 /**
  * Created by thom on 15/7/25.
@@ -33,24 +35,42 @@ abstract class CheckingRunningService implements Runnable {
         if (!packageNames.isEmpty() && packageNames.equals(whiteList)) {
             return;
         }
+        Set<String> releaseAlarmPackageNames = new TreeSet<String>();
         Set<String> shouldStopPackageNames = new TreeSet<String>();
         for (ActivityManager.RunningServiceInfo service : getServices()) {
-            String name = service.service.getPackageName();
-            boolean prevent = Boolean.TRUE.equals(SystemHook.getPreventPackages().get(name));
-            logServiceIfNeeded(prevent, name, service);
-            if (prevent && service.started && !whiteList.contains(name)) {
-                if (packageNames.contains(name)) {
-                    shouldStopPackageNames.add(name);
-                } else if (isPersistentService(service)) {
-                    PreventLog.i("package " + name + " has persistent process, will force stop it");
-                    shouldStopPackageNames.add(name);
-                } else {
-                    mContext.stopService(new Intent().setComponent(service.service));
-                }
-            }
+            checkService(service, packageNames, whiteList, shouldStopPackageNames, releaseAlarmPackageNames);
         }
         stopServiceIfNeeded(shouldStopPackageNames);
+        releaseAlarmIfNeeded(releaseAlarmPackageNames, shouldStopPackageNames);
         PreventLog.v("complete checking running service");
+    }
+
+    private boolean checkService(ActivityManager.RunningServiceInfo service, Collection<String> packageNames, Collection<String> whiteList, Set<String> shouldStopPackageNames, Set<String> releaseAlarmPackageNames) {
+        String name = service.service.getPackageName();
+        boolean prevent = Boolean.TRUE.equals(SystemHook.getPreventPackages().get(name));
+        logServiceIfNeeded(prevent, name, service);
+        if (!prevent || whiteList.contains(name)) {
+            return false;
+        }
+        if (packageNames.contains(name)) {
+            if (service.started) {
+                shouldStopPackageNames.add(name);
+            } else {
+                releaseAlarmPackageNames.add(name);
+            }
+            return true;
+        }
+        if (!service.started) {
+            return true;
+        }
+        if (isPersistentService(service)) {
+            PreventLog.i("package " + name + " has persistent process, will force stop it");
+            shouldStopPackageNames.add(name);
+        } else {
+            mContext.stopService(new Intent().setComponent(service.service));
+            releaseAlarmPackageNames.add(name);
+        }
+        return true;
     }
 
     private List<ActivityManager.RunningServiceInfo> getServices() {
@@ -86,6 +106,14 @@ abstract class CheckingRunningService implements Runnable {
         for (String name : shouldStopPackageNames) {
             PreventLog.i(name + " has running services, force stop it");
             SystemHook.forceStopPackage(name);
+        }
+    }
+
+    private void releaseAlarmIfNeeded(Set<String> releaseAlarmPackageNames, Set<String> shouldStopPackageNames) {
+        for (String name : releaseAlarmPackageNames) {
+            if (!shouldStopPackageNames.contains(name)) {
+                AlarmManagerServiceUtils.releaseAlarm(name);
+            }
         }
     }
 
