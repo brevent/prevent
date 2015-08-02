@@ -493,7 +493,7 @@ public final class SystemHook {
             protected Collection<String> prepareWhiteList() {
                 return prepareServiceWhiteList(packageName);
             }
-        }, GmsUtils.GMS.equals(packageName) ? TIME_CHECK_SERVICE * 0x2 : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        }, GmsUtils.GMS.equals(packageName) ? TIME_CHECK_SERVICE + TIME_DESTROY : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
     }
 
     private static Collection<String> prepareServiceWhiteList(String packageName) {
