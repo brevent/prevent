@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="custom_rules">
+    <taskdef uri="antlib:org.sonar.ant" resource="org/sonar/ant/antlib.xml">
+        <classpath path="${ant.library.dir}"/>
+    </taskdef>
+
+    <target name="sonar" depends="-setup">
+        <pathconvert pathsep="," property="sonar.sources">
+            <fileset dir="${basedir}" includes="src/**/*.java"/>
+        </pathconvert>
+        <pathconvert pathsep="," property="sonar.libraries">
+            <fileset dir="${basedir}" includes="bin/classes" />
+        </pathconvert>
+        <property name="sonar.projectName" value="${ant.project.name}"/>
+        <property name="sonar.projectKey" value="${project.app.package}"/>
+        <property name="sonar.projectVersion" value="0.1"/>
+        <sonar:sonar xmlns:sonar="antlib:org.sonar.ant"/>
+    </target>
+
+    <target name="-pre-compile">
+        <!-- add *.jar to compilier library -->
+        <pathconvert property="bootstrap.class.path">
+            <fileset dir="lib" includes="*.jar" />
+            <path refid="project.target.class.path" />
+        </pathconvert>
+        <path id="project.target.class.path">
+            <pathelement path="${bootstrap.class.path}" />
+        </path>
+        <replaceregexp file="${gen.absolute.dir}/me/piebridge/forcestopgb/BuildConfig.java"
+                       match="(public final class BuildConfig \{)"
+                       replace="\1
+    public static final String VERSION_NAME = null;
+    public static final String ALIPAY_ACCOUNT = null;
+    public static final boolean ALIPAY_DONATE = false;
+    public static final String WECHAT_ACCOUNT = null;
+    public static final boolean WECHAT_DONATE = false;" />
+    </target>
+
+    <property name="java.compilerargs" value="-Xlint:unchecked -Xlint:deprecation"/>
+
+</project>
