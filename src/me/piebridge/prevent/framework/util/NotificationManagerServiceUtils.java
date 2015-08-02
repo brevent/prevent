@@ -53,7 +53,7 @@ public class NotificationManagerServiceUtils {
         if (!object.getClass().getName().contains("$")) {
             return initMethod(object);
         }
-        return initMethod(getThis$0(object));
+        return initMethod(HideApiUtils.getThis$0(object));
     }
 
     private static boolean initMethod(Object nms) {
@@ -73,20 +73,6 @@ public class NotificationManagerServiceUtils {
         }
         PreventLog.d("cannot find cancelAllNotificationsInt in " + nms);
         return false;
-    }
-
-    private static Object getThis$0(Object object) { // NOSONAR
-        Class<?> clazz = object.getClass();
-        try {
-            Field field = clazz.getDeclaredField("this$0");
-            field.setAccessible(true);
-            return field.get(object);
-        } catch (NoSuchFieldException e) {
-            PreventLog.d("cannot find this$0 in class: " + clazz, e);
-        } catch (IllegalAccessException e) {
-            PreventLog.d("cannot visit this$0 in class: " + clazz, e);
-        }
-        return null;
     }
 
     public static boolean cancelStickyNotification(String pkgName) {

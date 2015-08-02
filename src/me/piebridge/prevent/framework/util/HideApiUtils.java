@@ -3,6 +3,10 @@ package me.piebridge.prevent.framework.util;
 import android.app.ActivityManager;
 import android.os.Process;
 
+import java.lang.reflect.Field;
+
+import me.piebridge.prevent.framework.PreventLog;
+
 /**
  * Created by thom on 15/7/12.
  */
@@ -26,6 +30,20 @@ public class HideApiUtils {
 
     public static void forceStopPackage(ActivityManager activityManager, String packageName) {
         activityManager.forceStopPackage(packageName);
+    }
+
+    public static Object getThis$0(Object object) { // NOSONAR
+        Class<?> clazz = object.getClass();
+        try {
+            Field field = clazz.getDeclaredField("this$0");
+            field.setAccessible(true);
+            return field.get(object);
+        } catch (NoSuchFieldException e) {
+            PreventLog.d("cannot find this$0 in class: " + clazz, e);
+        } catch (IllegalAccessException e) {
+            PreventLog.d("cannot visit this$0 in class: " + clazz, e);
+        }
+        return null;
     }
 
 }
