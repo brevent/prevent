@@ -122,14 +122,8 @@ public final class SystemHook {
 
         String action = (String) args[0x0];
 
-        if (Intent.ACTION_PACKAGE_RESTARTED.equals(action) && BroadcastFilterUtils.isNotificationManagerServiceReceiver(filter)) {
-            String packageName = ((Uri) args[0x3]).getSchemeSpecificPart();
-            if (packageName != null && preventPackages.containsKey(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
-                PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " from " + packageName + " to NotificationManagerService");
-                return IntentFilterMatchResult.NO_MATCH;
-            } else {
-                return IntentFilterMatchResult.NONE;
-            }
+        if (Intent.ACTION_PACKAGE_RESTARTED.equals(action) && NotificationManagerServiceUtils.canHook(filter)) {
+            return NotificationManagerServiceUtils.hook((Uri) args[0x3], preventPackages);
         }
 
         if (BuildConfig.DEBUG) {

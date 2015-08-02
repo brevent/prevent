@@ -2,19 +2,27 @@ package me.piebridge.prevent.framework.util;
 
 import android.app.Notification;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.*;
 import android.os.Process;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
 
+import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**
  * Created by thom on 15/7/31.
  */
 public class NotificationManagerServiceUtils {
+
+    private static Object nmsFilter;
+    private static final String NMS = "com.android.server.NotificationManagerService$";
+    private static final String NMS_21 = "com.android.server.notification.NotificationManagerService$";
 
     private static Object notificationManagerService;
 
@@ -106,6 +114,30 @@ public class NotificationManagerServiceUtils {
             PreventLog.d("cannot invoke cancelAllNotificationsInt", e);
         }
         return false;
+    }
+
+    public static boolean canHook(Object filter) {
+        if (nmsFilter != null) {
+            return nmsFilter.equals(filter);
+        }
+        String name = BroadcastFilterUtils.getReceiverName(filter);
+
+        if (name != null && (name.startsWith(NMS) || name.startsWith(NMS_21))) {
+            nmsFilter = filter;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static IntentFilterMatchResult hook(Uri data, Map<String, Boolean> preventPackages) {
+        String packageName = data.getSchemeSpecificPart();
+        if (packageName != null && preventPackages.containsKey(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
+            PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " from " + packageName + " to NotificationManagerService");
+            return IntentFilterMatchResult.NO_MATCH;
+        } else {
+            return IntentFilterMatchResult.NONE;
+        }
     }
 
 }

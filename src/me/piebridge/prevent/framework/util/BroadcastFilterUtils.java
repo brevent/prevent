@@ -18,10 +18,6 @@ public class BroadcastFilterUtils {
     private static Field BroadcastFilter$receiverList;
     private static Field ReceiverList$app;
     private static Field ReceiverList$receiver;
-    private static Object NotificationManagerService;
-
-    private static final String NMS = "com.android.server.NotificationManagerService$";
-    private static final String NMS_21 = "com.android.server.notification.NotificationManagerService$";
 
     private BroadcastFilterUtils() {
 
@@ -69,23 +65,10 @@ public class BroadcastFilterUtils {
         return null;
     }
 
-    public static boolean isNotificationManagerServiceReceiver(Object filter) {
-        if (NotificationManagerService != null) {
-            return NotificationManagerService.equals(filter);
-        }
+    static String getReceiverName(Object filter) {
         if (ReceiverList$receiver == null || !BroadcastFilter.isAssignableFrom(filter.getClass())) {
-            return false;
+            return null;
         }
-        if (isNotification(filter)) {
-            NotificationManagerService = filter;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-
-    private static boolean isNotification(Object filter) {
         try {
             Object receiverList = BroadcastFilter$receiverList.get(filter);
             Object receiver = ReceiverList$receiver.get(receiverList);
@@ -95,8 +78,7 @@ public class BroadcastFilterUtils {
             Object rd = mDispatcher.get();
             field = rd.getClass().getDeclaredField("mReceiver");
             field.setAccessible(true);
-            String name = field.get(rd).getClass().getName();
-            return name != null && (name.startsWith(NMS) || name.startsWith(NMS_21));
+            return field.get(rd).getClass().getName();
         } catch (NoSuchFieldException e) {
             PreventLog.v("cannot find field for filter: " + filter, e);
         } catch (IllegalAccessException e) {
@@ -104,7 +86,7 @@ public class BroadcastFilterUtils {
         } catch (NullPointerException e) {
             PreventLog.v("cannot get field for filter: " + filter, e);
         }
-        return false;
+        return null;
     }
 
 }
