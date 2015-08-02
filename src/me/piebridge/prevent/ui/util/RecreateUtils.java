@@ -35,8 +35,10 @@ public class RecreateUtils {
         } else {
             try {
                 recreateGB(activity);
-            } catch (IllegalAccessException | RemoteException e) {
-                UILog.e("cannot call recreate", e);
+            } catch (IllegalAccessException e) {
+                UILog.e("cannot call recreate (illegal access)", e);
+            } catch (RemoteException e) {
+                UILog.e("cannot call recreate (remote exception)", e);
             }
         }
     }
