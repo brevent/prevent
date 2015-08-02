@@ -30,6 +30,7 @@ public class HideApiUtils {
 
     public static void forceStopPackage(ActivityManager activityManager, String packageName) {
         activityManager.forceStopPackage(packageName);
+        AlarmManagerServiceUtils.releaseAlarm(packageName);
     }
 
     public static Object getThis$0(Object object) { // NOSONAR
