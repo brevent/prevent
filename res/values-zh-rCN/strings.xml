@@ -28,5 +28,6 @@
     <string name="donate_wechat">捐赠 - 微信</string>
     <string name="donate_alipay">捐赠 - 支付宝</string>
     <string name="donate_wechat_lucky">捐赠 - 微信(手气)</string>
+    <string name="notstarted">没有开始</string>
 
 </resources>

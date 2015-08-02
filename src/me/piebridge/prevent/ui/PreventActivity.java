@@ -542,6 +542,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         private void handleProcesses(String result) {
             try {
+                UILog.d("result: " + result);
                 JSONObject json = new JSONObject(result);
                 Map<String, Set<Integer>> processes = new HashMap<String, Set<Integer>>();
                 Iterator<String> it = json.keys();
@@ -562,8 +563,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         private Set<Integer> convertImportance(String value) {
             Set<Integer> importance = new HashSet<Integer>();
             for (String s : value.split(",")) {
-                if (!TextUtils.isEmpty(s) && TextUtils.isDigitsOnly(s)) {
-                    importance.add(Integer.parseInt(s));
+                if (!TextUtils.isEmpty(s)) {
+                    try {
+                        importance.add(Integer.parseInt(s));
+                    } catch (NumberFormatException e) {
+                        UILog.d("cannot format " + s, e);
+                    }
                 }
             }
             return importance;

@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.HideApiUtils;
+import me.piebridge.prevent.framework.util.HookUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 
 /**
@@ -267,6 +268,7 @@ class SystemReceiver extends BroadcastReceiver {
 
     private static Map<String, Set<Integer>> getRunningAppProcesses() {
         Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
+        Set<String> services = getRunningServices();
         ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
         if (processes == null) {
@@ -280,10 +282,26 @@ class SystemReceiver extends BroadcastReceiver {
                     importance = new HashSet<Integer>();
                     running.put(pkg, importance);
                 }
-                importance.add(process.importance);
+                if (process.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {
+                    importance.add(process.importance);
+                } else if (services.contains(pkg)){
+                    importance.add(process.importance);
+                } else {
+                    importance.add(-process.importance);
+                }
             }
         }
         return running;
+    }
+
+    private static Set<String> getRunningServices() {
+        Set<String> services = new HashSet<String>();
+        for (ActivityManager.RunningServiceInfo service : HookUtils.getServices(mContext)) {
+            if (service.started) {
+                services.add(service.service.getPackageName());
+            }
+        }
+        return services;
     }
 
 }

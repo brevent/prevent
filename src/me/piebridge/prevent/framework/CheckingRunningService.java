@@ -13,14 +13,13 @@ import java.util.TreeSet;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
+import me.piebridge.prevent.framework.util.HookUtils;
 
 /**
  * Created by thom on 15/7/25.
  */
 
 abstract class CheckingRunningService implements Runnable {
-
-    private static final int MAX_SERVICES = 100;
 
     private final Context mContext;
 
@@ -37,7 +36,7 @@ abstract class CheckingRunningService implements Runnable {
         }
         Set<String> releaseAlarmPackageNames = new TreeSet<String>();
         Set<String> shouldStopPackageNames = new TreeSet<String>();
-        for (ActivityManager.RunningServiceInfo service : getServices()) {
+        for (ActivityManager.RunningServiceInfo service : HookUtils.getServices(mContext)) {
             checkService(service, packageNames, whiteList, shouldStopPackageNames, releaseAlarmPackageNames);
         }
         stopServiceIfNeeded(shouldStopPackageNames);
@@ -71,17 +70,6 @@ abstract class CheckingRunningService implements Runnable {
             releaseAlarmPackageNames.add(name);
         }
         return true;
-    }
-
-    private List<ActivityManager.RunningServiceInfo> getServices() {
-        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(MAX_SERVICES);
-        if (services != null) {
-            PreventLog.v("services size: " + services.size());
-            return services;
-        } else {
-            return Collections.emptyList();
-        }
     }
 
     protected abstract Collection<String> preparePackageNames();

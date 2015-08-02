@@ -646,6 +646,9 @@ public abstract class PreventFragment extends ListFragment {
             if (running == null) {
                 return mActivity.getString(R.string.notrunning);
             } else {
+                if (running.contains(RunningAppProcessInfo.IMPORTANCE_SERVICE) && running.contains(-RunningAppProcessInfo.IMPORTANCE_SERVICE)) {
+                    running.remove(-RunningAppProcessInfo.IMPORTANCE_SERVICE);
+                }
                 return doFormatRunning(running);
             }
         }
@@ -672,10 +675,17 @@ public abstract class PreventFragment extends ListFragment {
                     case RunningAppProcessInfo.IMPORTANCE_VISIBLE:
                         sets.add(mActivity.getString(R.string.visible));
                         break;
+                    case -RunningAppProcessInfo.IMPORTANCE_SERVICE:
+                        sets.add(mActivity.getString(R.string.service) + "(" + mActivity.getString(R.string.notstarted) + ")");
+                        break;
                     default:
                         break;
                 }
             }
+            return toString(sets);
+        }
+
+        private CharSequence toString(Set<String> sets) {
             StringBuilder buffer = new StringBuilder();
             Iterator<?> it = sets.iterator();
             while (it.hasNext()) {
