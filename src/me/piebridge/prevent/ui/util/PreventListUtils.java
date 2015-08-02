@@ -1,5 +1,7 @@
 package me.piebridge.prevent.ui.util;
 
+import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 
 import java.io.BufferedReader;
@@ -25,8 +27,30 @@ public final class PreventListUtils {
 
     }
 
-    public static synchronized void save(Set<String> packages) {
-        File lock = new File(PREVENT + ".lock");
+    private static File[] getExtailFilesDir(Context context) {
+        File[] files;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            files = context.getExternalFilesDirs(null);
+            if (files == null) {
+                files = new File[0];
+            }
+        } else {
+            files = new File[]{context.getExternalFilesDir(null)};
+        }
+        return files;
+    }
+
+    public static synchronized void save(Context context, Set<String> packages) {
+        save(PREVENT, packages);
+        for (File file : getExtailFilesDir(context)) {
+            if (file != null) {
+                save(new File(file, "prevent.list").getAbsolutePath(), packages);
+            }
+        }
+    }
+
+    private static synchronized void save(String path, Set<String> packages) {
+        File lock = new File(path + ".lock");
         File conf = lock.getParentFile();
         if (conf.isFile()) {
             conf.delete();
@@ -48,9 +72,9 @@ public final class PreventListUtils {
                 writer.write("\n");
             }
             writer.close();
-            lock.renameTo(new File(PREVENT));
+            lock.renameTo(new File(path));
         } catch (IOException e) {
-            UILog.e("cannot save " + PREVENT, e);
+            UILog.e("cannot save " + path, e);
         }
     }
 
@@ -77,9 +101,14 @@ public final class PreventListUtils {
         return packages;
     }
 
-    public static Set<String> load() {
+    public static Set<String> load(Context context) {
         File fileDeprecated = new File(PREVENT_DEPRECATED);
         Set<String> packages = load(new File(PREVENT));
+        for (File file : getExtailFilesDir(context)) {
+            if (file != null) {
+                packages.addAll(load(new File(file, "prevent.list")));
+            }
+        }
         if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
             UILog.d("migrate packages");
             packages.addAll(load(fileDeprecated));

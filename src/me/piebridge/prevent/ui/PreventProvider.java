@@ -40,7 +40,7 @@ public class PreventProvider extends ContentProvider {
         String[] columns = {COLUMN_PACKAGE};
         MatrixCursor cursor = new MatrixCursor(columns);
         PackageManager pm = getContext().getPackageManager();
-        Set<String> packages = PreventListUtils.load();
+        Set<String> packages = PreventListUtils.load(getContext());
         for (String packageName : packages) {
             try {
                 ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);

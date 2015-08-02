@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,6 +12,8 @@ import org.json.JSONObject;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
+
+import me.piebridge.forcestopgb.R;
 
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
@@ -38,11 +41,11 @@ public class PreventUtils {
             String action = intent.getAction();
             String result = getResultData();
             if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action) && result != null) {
-                handlePackages(result);
+                handlePackages(context, result);
             }
         }
 
-        private void handlePackages(String result) {
+        private void handlePackages(Context context, String result) {
             try {
                 JSONObject json = new JSONObject(result);
                 Set<String> prevents = new TreeSet<String>();
@@ -54,7 +57,9 @@ public class PreventUtils {
                 int size = getResultCode();
                 if (prevents.size() == size) {
                     UILog.i("update prevents: " + prevents.size());
-                    PreventListUtils.save(prevents);
+                    PreventListUtils.save(context, prevents);
+                    String message = context.getString(R.string.updated_prevents, prevents.size());
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
                 } else {
                     UILog.e("update prevents: " + prevents.size() + " != " + size);
                 }

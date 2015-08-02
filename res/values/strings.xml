@@ -29,5 +29,6 @@
     <string name="donate_alipay">Donate via Alipay</string>
     <string name="donate_wechat_lucky">Donate via WeChat(Lucky)</string>
     <string name="notstarted">Not started</string>
+    <string name="updated_prevents">Updated prevent list to %1$d</string>
 
 </resources>
