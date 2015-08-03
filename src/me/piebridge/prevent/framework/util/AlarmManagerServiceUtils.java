@@ -1,16 +1,11 @@
 package me.piebridge.prevent.framework.util;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.ServiceManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
 
-import me.piebridge.prevent.common.PreventIntent;
-import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**

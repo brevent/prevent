@@ -5,13 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 
