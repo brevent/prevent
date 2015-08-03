@@ -61,7 +61,7 @@ public class Hook {
 
     public static void afterActivity$moveTaskToBack(Activity activity, Boolean result) { // NOSONAR
         if (Boolean.TRUE.equals(result)) {
-            PreventLog.i("moveTaskToBack: " + activity.getClass());
+            PreventLog.i("move task to back: " + activity.getClass().getName());
             String packageName = getPackageName(activity);
             Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
             sendBroadcast(activity, intent);
@@ -69,7 +69,7 @@ public class Hook {
     }
 
     public static void beforeActivity$startHomeActivityForResult(Activity activity) { // NOSONAR
-        PreventLog.i("start home activity: " + activity.getClass());
+        PreventLog.i("start home activity: " + activity.getClass().getName());
         String packageName = getPackageName(activity);
         Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
         sendBroadcast(activity, intent);
