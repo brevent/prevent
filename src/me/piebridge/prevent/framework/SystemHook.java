@@ -1,5 +1,6 @@
 package me.piebridge.prevent.framework;
 
+import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.app.ActivityThread;
 import android.appwidget.AppWidgetManager;
@@ -161,7 +162,7 @@ public final class SystemHook {
             }
             String packageName = ai.packageName;
             boolean prevents = Boolean.TRUE.equals(preventPackages.get(packageName));
-            if (!prevents) {
+            if (!prevents || AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action)) {
                 return IntentFilterMatchResult.NONE;
             }
             if (Binder.getCallingUid() != Process.SYSTEM_UID) {
