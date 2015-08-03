@@ -1,6 +1,8 @@
 package me.piebridge.prevent.common;
 
+import android.app.Application;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,6 +42,19 @@ public class GmsUtils {
         } else {
             return gmsCounter.get();
         }
+    }
+
+    public static boolean isDependency(Context context, String packageName) {
+        return GmsUtils.GMS.equals(packageName) || isSystemPackageWithoutLauncher(context.getPackageManager(), packageName);
+    }
+
+    private static boolean isSystemPackageWithoutLauncher(PackageManager pm, String packageName) {
+        try {
+            return PackageUtils.isSystemPackageWithoutLauncher(pm, pm.getApplicationInfo(packageName, 0));
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package " + packageName, e);
+        }
+        return false;
     }
 
 }

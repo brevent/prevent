@@ -18,7 +18,7 @@ public class PackageUtils {
         return (flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
     }
 
-    private static boolean isSystemPackageWithoutLauncher(PackageManager pm, ApplicationInfo appInfo) {
+    public static boolean isSystemPackageWithoutLauncher(PackageManager pm, ApplicationInfo appInfo) {
         return isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(appInfo.packageName) == null;
     }
 

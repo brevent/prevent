@@ -59,7 +59,7 @@ public final class SystemHook {
 
     static final int TIME_SUICIDE = 6;
     static final int TIME_DESTROY = 6;
-    static final int TIME_PREVENT = 12;
+    static final int TIME_PREVENT = 30;
     static final int TIME_IMMEDIATE = 1;
     static final int TIME_CHECK_SERVICE = 30;
 
@@ -494,7 +494,7 @@ public final class SystemHook {
             protected Collection<String> prepareWhiteList() {
                 return prepareServiceWhiteList(packageName);
             }
-        }, GmsUtils.GMS.equals(packageName) ? TIME_CHECK_SERVICE + TIME_DESTROY : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        }, GmsUtils.isDependency(mContext, packageName) ? TIME_CHECK_SERVICE + TIME_PREVENT : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
     }
 
     private static Collection<String> prepareServiceWhiteList(String packageName) {
