@@ -438,11 +438,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private void showDisableDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        String title = getString(R.string.app_name);
-        if (BuildConfig.VERSION_NAME != null) {
-            title += "(" + BuildConfig.VERSION_NAME + ")";
-        }
-        builder.setTitle(title);
+        builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
         builder.setMessage(R.string.app_notenabled);
         builder.setIcon(R.drawable.ic_launcher);
         builder.setOnCancelListener(new DialogInterface.OnCancelListener() {

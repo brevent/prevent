@@ -13,7 +13,8 @@
         </pathconvert>
         <property name="sonar.projectName" value="${ant.project.name}"/>
         <property name="sonar.projectKey" value="${project.app.package}"/>
-        <property name="sonar.projectVersion" value="0.1"/>
+        <xpath input="${manifest.abs.file}" expression="/manifest/@android:versionName" output="project.app.versionName" />
+        <property name="sonar.projectVersion" value="${project.app.versionName}"/>
         <sonar:sonar xmlns:sonar="antlib:org.sonar.ant"/>
     </target>
 
@@ -26,14 +27,10 @@
         <path id="project.target.class.path">
             <pathelement path="${bootstrap.class.path}" />
         </path>
+        <xpath input="${manifest.abs.file}" expression="/manifest/@android:versionName" output="project.app.versionName" />
         <replaceregexp file="${gen.absolute.dir}/me/piebridge/forcestopgb/BuildConfig.java"
-                       match="(public final class BuildConfig \{)"
-                       replace="\1
-    public static final String VERSION_NAME = null;
-    public static final String ALIPAY_ACCOUNT = null;
-    public static final boolean ALIPAY_DONATE = false;
-    public static final String WECHAT_ACCOUNT = null;
-    public static final boolean WECHAT_DONATE = false;" />
+                       match="(.*boolean\s+DEBUG\s*=.*)"
+                       replace='\1${line.separator}    public static final String VERSION_NAME = "${project.app.versionName}";${line.separator}    public static final String ALIPAY_ACCOUNT = null;${line.separator}    public static final boolean ALIPAY_DONATE = false;${line.separator}    public static final String WECHAT_ACCOUNT = null;${line.separator}    public static final boolean WECHAT_DONATE = false;' />
     </target>
 
     <property name="java.compilerargs" value="-Xlint:unchecked -Xlint:deprecation"/>

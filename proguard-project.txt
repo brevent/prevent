@@ -17,8 +17,8 @@
 # class:
 
 -keepattributes SourceFile,LineNumberTable
- 
+
 -keepnames class android.support.** { *; }
 # -keepnames class me.piebridge.** { *; }
- 
--keep class me.piebridge.prevent.xposed.XposedMod { public *; }  
+
+-keep class me.piebridge.prevent.xposed.XposedMod { public *; }
