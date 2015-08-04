@@ -131,6 +131,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         try {
             ActionBar actionBar = getActionBar();
+            findViewById(R.id.actions).setVisibility(View.GONE);
             if (actionBar != null) {
                 actionBar.setActionBarViewCollapsable(true);
             }
@@ -215,6 +216,17 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+            menu.add(Menu.NONE, R.string.cancel, Menu.NONE, R.string.cancel)
+                    .setIcon(android.R.drawable.ic_menu_rotate)
+                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent)
+                    .setIcon(R.drawable.ic_menu_block)
+                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove)
+                    .setIcon(android.R.drawable.ic_menu_delete)
+                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
         if (BuildConfig.WECHAT_DONATE && getDonateAlipay() != null) {
             menu.add(Menu.NONE, R.string.donate_alipay, Menu.NONE, R.string.donate_alipay);
@@ -227,14 +239,16 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) { // NOSONAR
         int id = item.getItemId();
         if (BuildConfig.WECHAT_DONATE && (id == R.string.donate_wechat || id == R.string.donate_wechat_lucky)) {
             return donateViaWeChat(id);
         } else if (BuildConfig.ALIPAY_DONATE && id == R.string.donate_alipay) {
             return donateViaAlipay();
+        } else if (id == R.string.switch_theme) {
+            return switchTheme();
         } else {
-            return id == R.string.switch_theme && switchTheme();
+            return onClick(id);
         }
     }
 
@@ -402,16 +416,19 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     @Override
     public void onClick(View v) {
-        int id = v.getId();
+        onClick(v.getId());
+    }
+
+    private boolean onClick(int id) {
         int position = mPager.getCurrentItem();
         Set<String> selections = mPageSelections.get(position);
-        if (id == R.id.prevent) {
+        if (id == R.id.prevent || id == R.string.prevent) {
             PreventUtils.update(this, selections.toArray(new String[selections.size()]), true);
             for (String packageName : selections) {
                 preventPackages.put(packageName, !running.containsKey(packageName));
             }
             savePackages();
-        } else if (id == R.id.remove) {
+        } else if (id == R.id.remove || id == R.string.remove) {
             PreventUtils.update(this, selections.toArray(new String[selections.size()]), false);
             for (String packageName : selections) {
                 preventPackages.remove(packageName);
@@ -420,6 +437,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
         selections.clear();
         checkSelection();
+        if (id == R.id.cancel || id == R.string.cancel) {
+            refreshIfNeeded();
+        }
+        return true;
     }
 
     public int getResourceColor(int colorId) {
