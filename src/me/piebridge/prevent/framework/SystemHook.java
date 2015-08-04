@@ -436,7 +436,6 @@ public final class SystemHook {
         executor.submit(new Runnable() {
             @Override
             public void run() {
-                packageCounters.remove(packageName);
                 LogUtils.logForceStop("removeTask", packageName, "force in " + TIME_IMMEDIATE + "s");
                 forceStopPackageForce(packageName, TIME_IMMEDIATE);
                 if (preventPackages.containsKey(packageName)) {
@@ -601,7 +600,6 @@ public final class SystemHook {
         try {
             ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
             HideApiUtils.forceStopPackage(activityManager, packageName);
-            packageCounters.remove(packageName);
         } catch (Throwable t) { // NOSONAR
             PreventLog.e("cannot force stop package" + packageName, t);
         }

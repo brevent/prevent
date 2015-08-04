@@ -134,7 +134,6 @@ class SystemReceiver extends BroadcastReceiver {
 
     private void handleDestroy(String action, String packageName) {
         LogUtils.logRequest(action, packageName, -1);
-        SystemHook.getPackageCounters().remove(packageName);
         if (SystemHook.getPreventPackages().containsKey(packageName)) {
             SystemHook.getPreventPackages().put(packageName, Boolean.TRUE);
             LogUtils.logForceStop(action, packageName, "destroy in " + SystemHook.TIME_SUICIDE + "s");
@@ -159,7 +158,6 @@ class SystemReceiver extends BroadcastReceiver {
         if (!shouldStop(packageName, pid)) {
             return;
         }
-        SystemHook.getPackageCounters().remove(packageName);
         if (SystemHook.getPreventPackages().containsKey(packageName)) {
             SystemHook.getPreventPackages().put(packageName, Boolean.TRUE);
             LogUtils.logForceStop(action, packageName, "force in " + SystemHook.TIME_IMMEDIATE + "s" + ", uid: " + uid);
