@@ -53,6 +53,7 @@ public class Hook {
             String packageName = getPackageName(activity);
             Intent intent = new Intent(PreventIntent.ACTION_FORCE_STOP, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
             intent.putExtra(PreventIntent.EXTRA_UID, uid);
+            intent.putExtra(PreventIntent.EXTRA_PID, Process.myPid());
             sendBroadcast(activity, intent);
         }
         context.remove();

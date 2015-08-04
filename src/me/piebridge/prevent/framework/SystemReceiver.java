@@ -155,6 +155,10 @@ class SystemReceiver extends BroadcastReceiver {
     private void handleForceStop(String action, String packageName, Intent intent) {
         LogUtils.logRequest(action, packageName, -1);
         int uid = intent.getIntExtra(PreventIntent.EXTRA_UID, 0);
+        int pid = intent.getIntExtra(PreventIntent.EXTRA_PID, 0);
+        if (!shouldStop(packageName, pid)) {
+            return;
+        }
         SystemHook.getPackageCounters().remove(packageName);
         if (SystemHook.getPreventPackages().containsKey(packageName)) {
             SystemHook.getPreventPackages().put(packageName, Boolean.TRUE);
@@ -162,6 +166,17 @@ class SystemReceiver extends BroadcastReceiver {
             SystemHook.forceStopPackageForce(packageName, SystemHook.TIME_IMMEDIATE);
         }
         SystemHook.checkRunningServices(null, SystemHook.TIME_IMMEDIATE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_IMMEDIATE);
+    }
+
+    private boolean shouldStop(String packageName, int pid) {
+        countCounter(packageName);
+        Map<Integer, AtomicInteger> values = SystemHook.getPackageCounters().get(packageName);
+        if (values == null) {
+            return true;
+        }
+        Set<Integer> pids = new HashSet<Integer>(values.keySet());
+        pids.remove(pid);
+        return pids.isEmpty();
     }
 
     private static String toJSON(Map<String, Set<Integer>> processes) {
