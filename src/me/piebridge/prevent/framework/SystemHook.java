@@ -261,9 +261,11 @@ public final class SystemHook {
         // FIXME: check permission
         context.registerReceiver(receiver, hook, null, mHandler);
 
-        IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_PACKAGE_RESTARTED);
+        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
         filter.addDataScheme("package");
-        context.registerReceiver(receiver, filter, null, mHandler);
+        context.registerReceiver(new PackageReceiver(), filter, null, mHandler);
 
         registered = true;
         PreventLog.i("registered receiver");

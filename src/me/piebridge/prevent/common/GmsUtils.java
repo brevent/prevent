@@ -1,8 +1,6 @@
 package me.piebridge.prevent.common;
 
-import android.app.Application;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
 import java.util.concurrent.atomic.AtomicInteger;

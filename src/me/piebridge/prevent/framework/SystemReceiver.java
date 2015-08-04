@@ -4,7 +4,6 @@ import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 
 import org.json.JSONObject;
 
@@ -17,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
@@ -38,7 +38,7 @@ class SystemReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        String packageName = getPackageName(intent);
+        String packageName = PackageUtils.getPackageName(intent);
         if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
             Map<String, Boolean> prevents = SystemHook.getPreventPackages();
             setResultCode(prevents.size());
@@ -60,19 +60,8 @@ class SystemReceiver extends BroadcastReceiver {
             handleRestart(action, packageName);
         } else if (PreventIntent.ACTION_ACTIVITY_DESTROY.equals(action)) {
             handleDestroy(action, packageName);
-        } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
-            handlePackageRestarted("PACKAGE_RESTARTED", packageName);
         } else if (PreventIntent.ACTION_FORCE_STOP.equals(action)) {
             handleForceStop(action, packageName, intent);
-        }
-    }
-
-    private String getPackageName(Intent intent) {
-        Uri data = intent.getData();
-        if (data != null) {
-            return data.getSchemeSpecificPart();
-        } else {
-            return null;
         }
     }
 
@@ -161,15 +150,6 @@ class SystemReceiver extends BroadcastReceiver {
         }
         int count = countCounter(packageName);
         LogUtils.logRequest(action, packageName, count);
-    }
-
-    private void handlePackageRestarted(String action, String packageName) {
-        LogUtils.logRequest(action, packageName, -1);
-        SystemHook.getPackageCounters().remove(packageName);
-        if (SystemHook.getPreventPackages().containsKey(packageName)) {
-            SystemHook.getPreventPackages().put(packageName, Boolean.TRUE);
-        }
-        SystemHook.killNoFather();
     }
 
     private void handleForceStop(String action, String packageName, Intent intent) {

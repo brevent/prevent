@@ -1,7 +1,9 @@
 package me.piebridge.prevent.common;
 
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 
 import me.piebridge.prevent.common.GmsUtils;
 
@@ -24,6 +26,15 @@ public class PackageUtils {
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
         return !isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName);
+    }
+
+    public static String getPackageName(Intent intent) {
+        Uri data = intent.getData();
+        if (data != null) {
+            return data.getSchemeSpecificPart();
+        } else {
+            return null;
+        }
     }
 
 }
