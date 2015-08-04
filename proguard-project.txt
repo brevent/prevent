@@ -23,4 +23,4 @@
 
 -keep class me.piebridge.prevent.xposed.XposedMod { public *; }
 
--keepclassmembers class me.piebridge.prevent.common.PackageUtils { boolean canPrevent(android.content.pm.PackageManager,android.content.pm.ApplicationInfo); }
+-keep class me.piebridge.prevent.common.PackageUtils { boolean canPrevent(android.content.pm.PackageManager,android.content.pm.ApplicationInfo); }
