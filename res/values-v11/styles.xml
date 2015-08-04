@@ -2,14 +2,10 @@
 <resources>
 
     <style name="dark" parent="@android:style/Theme.Holo">
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
         <item name="color_dangerous">@color/color_dangerous_dark</item>
     </style>
 
     <style name="light" parent="@android:style/Theme.Holo.Light">
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
         <item name="color_dangerous">@color/color_dangerous_light</item>
     </style>
 

@@ -1,6 +1,7 @@
 package me.piebridge.prevent.ui;
 
 import android.annotation.TargetApi;
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
@@ -127,6 +128,16 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         HandlerThread thread = new HandlerThread("PreventUI");
         thread.start();
         mHandler = new Handler(thread.getLooper());
+
+        try {
+            ActionBar actionBar = getActionBar();
+            if (actionBar != null) {
+                actionBar.setActionBarViewCollapsable(true);
+            }
+        } catch (NoSuchMethodError e) { // NOSONAR
+            // do nothing
+        }
+
         showProcessDialog(R.string.retrieving);
         mHandler.postDelayed(new Runnable() {
             @Override

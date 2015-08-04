@@ -7,7 +7,7 @@
 
     <uses-sdk
         android:minSdkVersion="10"
-        android:targetSdkVersion="11" />
+        android:targetSdkVersion="22" />
 
     <permission
         android:name="me.piebridge.prevent.permission.MANAGER"
