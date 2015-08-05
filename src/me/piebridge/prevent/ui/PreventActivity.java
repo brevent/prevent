@@ -35,6 +35,7 @@ import android.widget.Button;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,10 +99,23 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return transparentColor;
     }
 
+    private static boolean hasSmartBar() {
+        try {
+            Method method = Build.class.getMethod("hasSmartBar");
+            return (Boolean) method.invoke(null);
+        } catch (Exception e) { // NOSONAR
+            // do nothing
+        }
+        return false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         setTheme(THEME_LIGHT.equals(sp.getString(THEME, THEME_LIGHT)) ? R.style.light : R.style.dark);
+        if (hasSmartBar()) {
+            getWindow().setUiOptions(ActivityInfo.UIOPTION_SPLIT_ACTION_BAR_WHEN_NARROW);
+        }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
