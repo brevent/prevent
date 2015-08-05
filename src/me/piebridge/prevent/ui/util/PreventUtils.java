@@ -28,6 +28,9 @@ public class PreventUtils {
     }
 
     public static void update(Context context, String[] packages, boolean add) {
+        if (packages == null || packages.length == 0) {
+            return;
+        }
         Intent intent = new Intent(PreventIntent.ACTION_UPDATE_PREVENT, Uri.fromParts(PreventIntent.SCHEME, context.getPackageName(), null));
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
         intent.putExtra(PreventIntent.EXTRA_PACKAGES, packages);
