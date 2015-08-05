@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -88,6 +89,13 @@ public final class SystemHook {
     private static ScheduledFuture<?> checkingFuture;
     private static ScheduledFuture<?> killingFuture;
 
+    private static Set<String> SAFE_BROADCAST_ACTIONS = new HashSet<String>(Arrays.asList(
+            // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
+            // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
+            AppWidgetManager.ACTION_APPWIDGET_UPDATE,
+            Intent.ACTION_CONFIGURATION_CHANGED
+    ));
+
     private SystemHook() {
 
     }
@@ -142,9 +150,7 @@ public final class SystemHook {
             }
             String packageName = ai.packageName;
             if (Boolean.TRUE.equals(preventPackages.get(packageName)) && owner.receivers.contains(activity)) {
-                // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
-                // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
-                if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.contains(action)) {
+                if (SAFE_BROADCAST_ACTIONS.contains(action)) {
                     return IntentFilterMatchResult.NONE;
                 }
                 if (BuildConfig.DEBUG) {
