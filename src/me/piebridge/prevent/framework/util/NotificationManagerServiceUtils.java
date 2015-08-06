@@ -60,15 +60,15 @@ public class NotificationManagerServiceUtils {
         if (nms == null) {
             return false;
         }
-        PreventLog.d("notificationManagerService: " + nms);
         Class<?> clazz = nms.getClass();
+        PreventLog.d("notificationManagerService: " + clazz.getName());
         while (clazz != null) {
             for (Method method : clazz.getDeclaredMethods()) {
                 if ("cancelAllNotificationsInt".equals(method.getName())) {
                     method.setAccessible(true);
                     cancelAllNotificationsInt = method;
                     notificationManagerService = nms;
-                    PreventLog.d("find cancelAllNotificationsInt in " + nms + ": " + cancelAllNotificationsInt);
+                    PreventLog.d("find cancelAllNotificationsInt in " + clazz.getName() + ": " + cancelAllNotificationsInt);
                     return true;
                 }
             }

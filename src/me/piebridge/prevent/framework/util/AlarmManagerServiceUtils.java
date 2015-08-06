@@ -31,7 +31,6 @@ public class AlarmManagerServiceUtils {
             PreventLog.d("cannot find service: " + Context.ALARM_SERVICE);
             return false;
         }
-        PreventLog.d("AlarmManagerService: " + object.getClass().getName());
         if (!object.getClass().getName().contains("$")) {
             return initMethod(object);
         }
@@ -43,6 +42,7 @@ public class AlarmManagerServiceUtils {
             return false;
         }
         Class<?> clazz = ams.getClass();
+        PreventLog.d("AlarmManagerService: " + clazz.getName());
         while (clazz != null) {
             for (Method method : clazz.getDeclaredMethods()) {
                 Class<?>[] types = method.getParameterTypes();
@@ -50,7 +50,7 @@ public class AlarmManagerServiceUtils {
                     method.setAccessible(true);
                     removeLocked = method;
                     alarmManagerService = ams;
-                    PreventLog.d("find removeLocked in " + alarmManagerService.getClass().getName());
+                    PreventLog.d("find removeLocked in " + clazz.getName());
                     return true;
                 }
             }
