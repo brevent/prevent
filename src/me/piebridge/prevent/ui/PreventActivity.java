@@ -134,7 +134,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         mPageSelections = new ArrayList<Set<String>>();
         mPageSelections.add(new HashSet<String>());
         mPageSelections.add(new HashSet<String>());
-        mPager.addOnPageChangeListener(this);
+        mPager.setOnPageChangeListener(this);
         mPager.setAdapter(new ScreenSlidePagerAdapter(getSupportFragmentManager()));
 
         HandlerThread thread = new HandlerThread("PreventUI");
@@ -513,7 +513,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private boolean refresh(int position, boolean force) {
-        String tag = mPageTitles[position];
+        String tag = mPager.getAdapter().getPageTitle(position).toString();
         int currentItem = mPager.getCurrentItem();
         PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
         if (fragment != null) {
