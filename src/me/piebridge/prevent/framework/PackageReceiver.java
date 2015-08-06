@@ -20,6 +20,7 @@ public class PackageReceiver extends BroadcastReceiver {
             handlePackageRestarted("PACKAGE_RESTARTED", packageName);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
             WidgetUtils.cleanWidgets();
+            AccountWatcher.onPackageAdded();
         }
     }
 

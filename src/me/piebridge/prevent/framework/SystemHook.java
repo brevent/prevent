@@ -96,6 +96,8 @@ public final class SystemHook {
             Intent.ACTION_CONFIGURATION_CHANGED
     ));
 
+    private static AccountWatcher accountWatcher;
+
     private SystemHook() {
 
     }
@@ -168,7 +170,7 @@ public final class SystemHook {
             }
             String packageName = ai.packageName;
             boolean prevents = Boolean.TRUE.equals(preventPackages.get(packageName));
-            if (!prevents || AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action)) {
+            if (!prevents || (AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action) && accountWatcher.containsPackage(packageName))) {
                 return IntentFilterMatchResult.NONE;
             }
             if (Binder.getCallingUid() != Process.SYSTEM_UID) {
@@ -277,6 +279,8 @@ public final class SystemHook {
         PreventLog.i("registered receiver");
 
         mContext = context;
+
+        accountWatcher = AccountWatcher.get(mContext, mHandler);
         return true;
     }
 
