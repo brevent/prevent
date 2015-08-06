@@ -62,14 +62,17 @@ public class NotificationManagerServiceUtils {
         }
         PreventLog.d("notificationManagerService: " + nms);
         Class<?> clazz = nms.getClass();
-        for (Method method : clazz.getDeclaredMethods()) {
-            if ("cancelAllNotificationsInt".equals(method.getName())) {
-                method.setAccessible(true);
-                cancelAllNotificationsInt = method;
-                notificationManagerService = nms;
-                PreventLog.d("find cancelAllNotificationsInt in " + nms + ": " + cancelAllNotificationsInt);
-                return true;
+        while (clazz != null) {
+            for (Method method : clazz.getDeclaredMethods()) {
+                if ("cancelAllNotificationsInt".equals(method.getName())) {
+                    method.setAccessible(true);
+                    cancelAllNotificationsInt = method;
+                    notificationManagerService = nms;
+                    PreventLog.d("find cancelAllNotificationsInt in " + nms + ": " + cancelAllNotificationsInt);
+                    return true;
+                }
             }
+            clazz = clazz.getSuperclass();
         }
         PreventLog.d("cannot find cancelAllNotificationsInt in " + nms);
         return false;

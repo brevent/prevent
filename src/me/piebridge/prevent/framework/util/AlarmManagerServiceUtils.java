@@ -43,15 +43,18 @@ public class AlarmManagerServiceUtils {
             return false;
         }
         Class<?> clazz = ams.getClass();
-        for (Method method : clazz.getDeclaredMethods()) {
-            Class<?>[] types = method.getParameterTypes();
-            if ("removeLocked".equals(method.getName()) && types.length == 1 && types[0].equals(String.class)) {
-                method.setAccessible(true);
-                removeLocked = method;
-                alarmManagerService = ams;
-                PreventLog.d("find removeLocked in " + alarmManagerService.getClass().getName());
-                return true;
+        while (clazz != null) {
+            for (Method method : clazz.getDeclaredMethods()) {
+                Class<?>[] types = method.getParameterTypes();
+                if ("removeLocked".equals(method.getName()) && types.length == 1 && types[0].equals(String.class)) {
+                    method.setAccessible(true);
+                    removeLocked = method;
+                    alarmManagerService = ams;
+                    PreventLog.d("find removeLocked in " + alarmManagerService.getClass().getName());
+                    return true;
+                }
             }
+            clazz = clazz.getSuperclass();
         }
         PreventLog.d("cannot find removeLocked in " + ams);
         return false;
