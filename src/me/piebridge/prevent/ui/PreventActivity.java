@@ -42,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import me.piebridge.forcestopgb.BuildConfig;
@@ -61,10 +60,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private static Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
 
     private View main;
-    private Button remove;
-    private Button cancel;
-
-    private Button prevent;
+    private View actions;
+    private Button removeButton;
+    private Button preventButton;
+    private MenuItem removeMenu;
+    private MenuItem preventMenu;
 
     private static final int APPLICATIONS = 0;
     private static final int PREVENT_LIST = 1;
@@ -121,15 +121,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         mPager = (ViewPager) findViewById(R.id.pager);
         main = findViewById(R.id.main);
-        remove = (Button) findViewById(R.id.remove);
-        cancel = (Button) findViewById(R.id.cancel);
-        prevent = (Button) findViewById(R.id.prevent);
-        cancel.setOnClickListener(this);
-        remove.setOnClickListener(this);
-        prevent.setOnClickListener(this);
-        cancel.setEnabled(false);
-        prevent.setEnabled(false);
-        remove.setEnabled(false);
+        actions = findViewById(R.id.actions);
+        removeButton = (Button) findViewById(R.id.remove);
+        preventButton = (Button) findViewById(R.id.prevent);
+        removeButton.setOnClickListener(this);
+        preventButton.setOnClickListener(this);
+        preventButton.setEnabled(false);
+        removeButton.setEnabled(false);
         receiver = new HookReceiver();
 
         mPageTitles = new String[]{getString(R.string.applications), getString(R.string.preventlist)};
@@ -145,8 +143,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         try {
             ActionBar actionBar = getActionBar();
-            findViewById(R.id.actions).setVisibility(View.GONE);
             if (actionBar != null) {
+                actions.setVisibility(View.GONE);
                 actionBar.setActionBarViewCollapsable(true);
             }
         } catch (NoSuchMethodError e) { // NOSONAR
@@ -231,15 +229,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
-            menu.add(Menu.NONE, R.string.cancel, Menu.NONE, R.string.cancel)
-                    .setIcon(android.R.drawable.ic_menu_rotate)
-                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-            menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent)
-                    .setIcon(R.drawable.ic_menu_block)
-                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-            menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove)
-                    .setIcon(android.R.drawable.ic_menu_delete)
-                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            preventMenu = menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
+            preventMenu.setIcon(R.drawable.ic_menu_block);
+            preventMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            removeMenu = menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
+            removeMenu.setIcon(R.drawable.ic_menu_star);
+            removeMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
         if (BuildConfig.WECHAT_DONATE && getDonateAlipay() != null) {
@@ -378,27 +373,27 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         checkSelection(mPager.getCurrentItem());
     }
 
-    private void checkSelection(int position) {
-        if (position == APPLICATIONS) {
-            prevent.setVisibility(View.VISIBLE);
-            remove.setVisibility(View.GONE);
-        } else {
-            remove.setVisibility(View.VISIBLE);
-            prevent.setVisibility(View.GONE);
-        }
+    private boolean canPrevent(int position) {
         Set<String> selections = mPageSelections.get(position);
-        if (!selections.isEmpty()) {
-            cancel.setEnabled(true);
-            remove.setEnabled(true);
-            if (isSubSet(selections, getPreventPackages().keySet())) {
-                prevent.setEnabled(false);
-            } else {
-                prevent.setEnabled(true);
+        return !selections.isEmpty() && !isSubSet(selections, getPreventPackages().keySet());
+    }
+
+    private boolean canRemove(int position) {
+        Set<String> selections = mPageSelections.get(position);
+        return !selections.isEmpty() && contains(selections, getPreventPackages().keySet());
+    }
+
+    private void checkSelection(int position) {
+        if (actions.getVisibility() != View.VISIBLE) {
+            if (preventMenu != null) {
+                preventMenu.setVisible(canPrevent(position));
+            }
+            if (removeMenu != null) {
+                removeMenu.setVisible(canRemove(position));
             }
         } else {
-            cancel.setEnabled(false);
-            prevent.setEnabled(false);
-            remove.setEnabled(false);
+            preventButton.setEnabled(canPrevent(position));
+            removeButton.setEnabled(canRemove(position));
         }
     }
 
@@ -412,6 +407,15 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             }
         }
         return true;
+    }
+
+    private boolean contains(Set<String> a, Set<String> b) {
+        for (String s : a) {
+            if (b.contains(s)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void changePrevent(String packageName, boolean prevent) {
@@ -451,9 +455,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
         selections.clear();
         checkSelection();
-        if (id == R.id.cancel || id == R.string.cancel) {
-            refreshIfNeeded();
-        }
         return true;
     }
 

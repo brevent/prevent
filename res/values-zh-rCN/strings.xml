@@ -3,7 +3,6 @@
 
     <string name="app_name">阻止运行</string>
     <string name="xposed_summary">阻止程序自动运行</string>
-    <string name="cancel">取消</string>
     <string name="remove">不再阻止</string>
     <string name="prevent">自动阻止</string>
     <string name="applications">所有程序</string>

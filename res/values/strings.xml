@@ -3,7 +3,6 @@
 
     <string name="app_name">Prevent Running</string>
     <string name="xposed_summary">Prevent applicatons from running.</string>
-    <string name="cancel">Cancel</string>
     <string name="remove">Remove Prevent</string>
     <string name="prevent">Auto Prevent</string>
     <string name="applications">Applications</string>
