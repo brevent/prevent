@@ -232,9 +232,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             preventMenu = menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
             preventMenu.setIcon(R.drawable.ic_menu_block);
             preventMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            preventMenu.setVisible(false);
             removeMenu = menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
             removeMenu.setIcon(R.drawable.ic_menu_star);
             removeMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            removeMenu.setVisible(false);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
         if (BuildConfig.WECHAT_DONATE && getDonateAlipay() != null) {
