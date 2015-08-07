@@ -239,10 +239,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             removeMenu.setVisible(false);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-        if (BuildConfig.WECHAT_DONATE && getDonateAlipay() != null) {
+        if (BuildConfig.ALIPAY_DONATE && getDonateAlipay() != null) {
             menu.add(Menu.NONE, R.string.donate_alipay, Menu.NONE, R.string.donate_alipay);
         }
-        if (BuildConfig.ALIPAY_DONATE && getDonateWeChat() != null) {
+        if (BuildConfig.WECHAT_DONATE && getDonateWeChat() != null) {
             menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
             menu.add(Menu.NONE, R.string.donate_wechat_lucky, Menu.NONE, R.string.donate_wechat_lucky);
         }
