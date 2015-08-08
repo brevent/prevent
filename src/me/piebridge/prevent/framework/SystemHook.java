@@ -80,7 +80,11 @@ public final class SystemHook {
     static Set<String> checkingWhiteList = new TreeSet<String>();
     static final Object CHECKING_LOCK = new Object();
 
-    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x5);
+    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
+
+    private static ScheduledThreadPoolExecutor checkingExecutor = new ScheduledThreadPoolExecutor(0x2);
+
+    private static ScheduledThreadPoolExecutor forceStopExecutor = new ScheduledThreadPoolExecutor(0x1);
 
     private static ClassLoader classLoader;
 
@@ -301,7 +305,7 @@ public final class SystemHook {
     }
 
     private static void doRetrievePrevents() {
-        executor.submit(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
@@ -443,7 +447,7 @@ public final class SystemHook {
     }
 
     private static void autoPrevents(final String packageName) {
-        executor.submit(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 LogUtils.logForceStop("removeTask", packageName, "force in " + TIME_IMMEDIATE + "s");
@@ -495,7 +499,7 @@ public final class SystemHook {
             }
         }
         GmsUtils.increaseGmsCount(mContext, packageName);
-        executor.schedule(new CheckingRunningService(mContext) {
+        checkingExecutor.schedule(new CheckingRunningService(mContext) {
             @Override
             protected Collection<String> preparePackageNames() {
                 return Collections.singletonList(packageName);
@@ -608,8 +612,13 @@ public final class SystemHook {
             return;
         }
         try {
-            ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-            HideApiUtils.forceStopPackage(activityManager, packageName);
+            forceStopExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    HideApiUtils.forceStopPackage(activityManager, packageName);
+                }
+            });
         } catch (Throwable t) { // NOSONAR
             PreventLog.e("cannot force stop package" + packageName, t);
         }
