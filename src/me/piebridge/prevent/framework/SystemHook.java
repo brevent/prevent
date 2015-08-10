@@ -80,7 +80,7 @@ public final class SystemHook {
     static Set<String> checkingWhiteList = new TreeSet<String>();
     static final Object CHECKING_LOCK = new Object();
 
-    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x2);
+    private static ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
 
     private static ScheduledThreadPoolExecutor checkingExecutor = new ScheduledThreadPoolExecutor(0x2);
 
@@ -92,6 +92,7 @@ public final class SystemHook {
 
     private static ScheduledFuture<?> checkingFuture;
     private static ScheduledFuture<?> killingFuture;
+    private static Map<String, ScheduledFuture<?>> serviceFutures = new HashMap<String, ScheduledFuture<?>>();
 
     private static Set<String> SAFE_BROADCAST_ACTIONS = new HashSet<String>(Arrays.asList(
             // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
@@ -305,7 +306,7 @@ public final class SystemHook {
     }
 
     private static void doRetrievePrevents() {
-        executor.execute(new Runnable() {
+        singleExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
@@ -447,7 +448,7 @@ public final class SystemHook {
     }
 
     private static void autoPrevents(final String packageName) {
-        executor.execute(new Runnable() {
+        singleExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 LogUtils.logForceStop("removeTask", packageName, "force in " + TIME_IMMEDIATE + "s");
@@ -493,13 +494,19 @@ public final class SystemHook {
     }
 
     private static void checkRunningServices(final String packageName) {
-        if (packageName != null) {
-            synchronized (CHECKING_LOCK) {
-                checkingWhiteList.add(packageName);
+        if (packageName == null) {
+            return;
+        }
+        ScheduledFuture<?> serviceFuture;
+        synchronized (CHECKING_LOCK) {
+            serviceFuture = serviceFutures.get(packageName);
+            if (serviceFuture != null && checkingFuture.getDelay(TimeUnit.SECONDS) > 0) {
+                return;
             }
+            checkingWhiteList.add(packageName);
         }
         GmsUtils.increaseGmsCount(mContext, packageName);
-        checkingExecutor.schedule(new CheckingRunningService(mContext) {
+        serviceFuture = checkingExecutor.schedule(new CheckingRunningService(mContext) {
             @Override
             protected Collection<String> preparePackageNames() {
                 return Collections.singletonList(packageName);
@@ -510,6 +517,9 @@ public final class SystemHook {
                 return prepareServiceWhiteList(packageName);
             }
         }, GmsUtils.isDependency(mContext, packageName) ? TIME_CHECK_SERVICE + TIME_PREVENT : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        synchronized (CHECKING_LOCK) {
+            serviceFutures.put(packageName, serviceFuture);
+        }
     }
 
     private static Collection<String> prepareServiceWhiteList(String packageName) {
@@ -539,7 +549,7 @@ public final class SystemHook {
         if (checkingFuture != null && checkingFuture.getDelay(TimeUnit.SECONDS) > 0) {
             return false;
         }
-        checkingFuture = executor.schedule(new CheckingRunningService(mContext) {
+        checkingFuture = singleExecutor.schedule(new CheckingRunningService(mContext) {
             @Override
             protected Collection<String> preparePackageNames() {
                 return prepareCheckingPackageNames();
@@ -571,7 +581,7 @@ public final class SystemHook {
     }
 
     static void forceStopPackageForce(final String packageName, int second) {
-        executor.schedule(new Runnable() {
+        singleExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
@@ -582,7 +592,7 @@ public final class SystemHook {
     }
 
     static void forceStopPackageLater(final String packageName, int second) {
-        executor.schedule(new Runnable() {
+        singleExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
@@ -593,7 +603,7 @@ public final class SystemHook {
     }
 
     private static void forceStopPackageLaterIfPrevent(final String packageName, int second) {
-        executor.schedule(new Runnable() {
+        singleExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
@@ -628,7 +638,7 @@ public final class SystemHook {
         if (killingFuture != null && killingFuture.getDelay(TimeUnit.SECONDS) > 0) {
             return false;
         }
-        killingFuture = executor.schedule(new Runnable() {
+        killingFuture = singleExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 try {
