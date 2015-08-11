@@ -61,13 +61,13 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         }
         mEnabledPackages.clear();
         for (Account account : updatedAccounts) {
-            PreventLog.d("onAccountUpdated: " + account);
             String packageName = types.get(account.type);
+            PreventLog.v("onAccountUpdated, type: " + account.type + ", packageName: " + packageName);
             if (packageName != null && !mEnabledPackages.contains(packageName)) {
                 mEnabledPackages.add(packageName);
             }
         }
-        PreventLog.d("mEnabledPackages: " + mEnabledPackages);
+        PreventLog.d("enabled accounts: " + mEnabledPackages);
     }
 
     public boolean containsPackage(String packageName) {
