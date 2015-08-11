@@ -7,11 +7,11 @@ import android.os.Process;
 
 import me.piebridge.prevent.common.PreventIntent;
 
-public class Hook {
+public class ActivityHook {
 
     private static ThreadLocal<Activity> context = new ThreadLocal<Activity>();
 
-    private Hook() {
+    private ActivityHook() {
 
     }
 
@@ -19,7 +19,7 @@ public class Hook {
         return activity.getApplicationContext().getPackageName();
     }
 
-    public static void beforeActivity$onCreate(Activity activity) { // NOSONAR
+    public static void hookBeforeOnCreate(Activity activity) {
         String packageName = getPackageName(activity);
         Intent intent = new Intent(PreventIntent.ACTION_INCREASE_COUNTER, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
         intent.putExtra(PreventIntent.EXTRA_PID, Process.myPid());
@@ -28,16 +28,32 @@ public class Hook {
         context.set(activity);
     }
 
-    public static void afterActivity$onDestroy(Activity activity) { // NOSONAR
+    public static void hookAfterOnDestroy(Activity activity) {
         String packageName = getPackageName(activity);
         Intent intent = new Intent(PreventIntent.ACTION_DECREASE_COUNTER, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
         intent.putExtra(PreventIntent.EXTRA_PID, Process.myPid());
         sendBroadcast(activity, intent);
     }
 
-    public static void beforeActivity$onRestart(Activity activity) { // NOSONAR
+    public static void hookBeforeOnRestart(Activity activity) {
         String packageName = getPackageName(activity);
         Intent intent = new Intent(PreventIntent.ACTION_RESTART, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
+        sendBroadcast(activity, intent);
+    }
+
+    public static void hookAfterMoveTaskToBack(Activity activity, Boolean result) {
+        if (Boolean.TRUE.equals(result)) {
+            PreventLog.i("move task to back: " + activity.getClass().getName());
+            String packageName = getPackageName(activity);
+            Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
+            sendBroadcast(activity, intent);
+        }
+    }
+
+    public static void hookBeforeStartHomeActivityForResult(Activity activity) {
+        PreventLog.i("start home activity: " + activity.getClass().getName());
+        String packageName = getPackageName(activity);
+        Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
         sendBroadcast(activity, intent);
     }
 
@@ -58,22 +74,6 @@ public class Hook {
         }
         context.remove();
         return false;
-    }
-
-    public static void afterActivity$moveTaskToBack(Activity activity, Boolean result) { // NOSONAR
-        if (Boolean.TRUE.equals(result)) {
-            PreventLog.i("move task to back: " + activity.getClass().getName());
-            String packageName = getPackageName(activity);
-            Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
-            sendBroadcast(activity, intent);
-        }
-    }
-
-    public static void beforeActivity$startHomeActivityForResult(Activity activity) { // NOSONAR
-        PreventLog.i("start home activity: " + activity.getClass().getName());
-        String packageName = getPackageName(activity);
-        Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
-        sendBroadcast(activity, intent);
     }
 
     private static void sendBroadcast(Activity activity, Intent intent) {

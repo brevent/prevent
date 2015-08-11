@@ -29,11 +29,15 @@ public class HideApiUtils {
     }
 
     public static void forceStopPackage(ActivityManager activityManager, String packageName) {
-        activityManager.forceStopPackage(packageName);
+        try {
+            activityManager.forceStopPackage(packageName);
+        } catch (Throwable t) { // NOSONAR
+            PreventLog.e("cannot force stop package" + packageName, t);
+        }
         AlarmManagerServiceUtils.releaseAlarm(packageName);
     }
 
-    public static Object getThis$0(Object object) { // NOSONAR
+    public static Object getThis0(Object object) {
         Class<?> clazz = object.getClass();
         try {
             Field field = clazz.getDeclaredField("this$0");

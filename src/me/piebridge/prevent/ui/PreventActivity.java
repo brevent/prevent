@@ -250,17 +250,25 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) { // NOSONAR
+    public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (BuildConfig.WECHAT_DONATE && (id == R.string.donate_wechat || id == R.string.donate_wechat_lucky)) {
+        if (BuildConfig.WECHAT_DONATE && canDonateViaWeChat(id)) {
             return donateViaWeChat(id);
-        } else if (BuildConfig.ALIPAY_DONATE && id == R.string.donate_alipay) {
+        } else if (BuildConfig.ALIPAY_DONATE && canDonateViaAlipay(id)) {
             return donateViaAlipay();
         } else if (id == R.string.switch_theme) {
             return switchTheme();
         } else {
             return onClick(id);
         }
+    }
+
+    private boolean canDonateViaAlipay(int id) {
+        return id == R.string.donate_alipay;
+    }
+
+    private boolean canDonateViaWeChat(int id) {
+        return id == R.string.donate_wechat || id == R.string.donate_wechat_lucky;
     }
 
     private boolean switchTheme() {

@@ -48,8 +48,12 @@ public class BroadcastFilterUtils {
         }
     }
 
+    public static boolean isBroadcastFilter(Object filter) {
+        return ReceiverList$receiver != null && BroadcastFilter.isAssignableFrom(filter.getClass());
+    }
+
     public static String getPackageName(Object filter) {
-        if (ReceiverList$app == null || !BroadcastFilter.isAssignableFrom(filter.getClass())) {
+        if (!isBroadcastFilter(filter)) {
             return null;
         }
         try {
@@ -66,7 +70,7 @@ public class BroadcastFilterUtils {
     }
 
     static String getReceiverName(Object filter) {
-        if (ReceiverList$receiver == null || !BroadcastFilter.isAssignableFrom(filter.getClass())) {
+        if (!isBroadcastFilter(filter)) {
             return null;
         }
         try {

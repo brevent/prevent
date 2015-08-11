@@ -525,9 +525,13 @@ public abstract class PreventFragment extends ListFragment {
             }
 
             private boolean match(String query, AppInfo appInfo) {
-                return contains(query, appInfo) // NOSONAR
+                return contains(query, appInfo)
                         || queryForThirdParty(query, appInfo)
-                        || queryForSystem(query, appInfo)
+                        || containsExtra(query, appInfo);
+            }
+
+            private boolean containsExtra(String query, AppInfo appInfo) {
+                return queryForSystem(query, appInfo)
                         || queryForRunning(query, appInfo)
                         || queryForEnabled(query, appInfo);
             }

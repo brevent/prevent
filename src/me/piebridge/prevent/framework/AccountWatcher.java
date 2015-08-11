@@ -6,6 +6,7 @@ import android.accounts.AuthenticatorDescription;
 import android.accounts.OnAccountsUpdateListener;
 import android.content.Context;
 import android.os.Handler;
+import android.os.HandlerThread;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,30 +22,23 @@ public class AccountWatcher implements OnAccountsUpdateListener {
 
     private static Set<String> mEnabledPackages = new HashSet<String>();
 
-    private static AccountWatcher accountWatcher;
-
     private final AccountManager accountManager;
 
-    private AccountWatcher(Context context, Handler handler) {
+    public AccountWatcher(Context context) {
         accountManager = AccountManager.get(context);
+        accountManager.addOnAccountsUpdatedListener(this, initHandler(), true);
         updateAuthDescriptions();
-        accountManager.addOnAccountsUpdatedListener(this, handler, true);
     }
 
-    public static AccountWatcher get(Context context, Handler handler) {
-        accountWatcher = new AccountWatcher(context, handler);
-        return accountWatcher;
+    private Handler initHandler() {
+        HandlerThread thread = new HandlerThread("AccountWatcher");
+        thread.start();
+        return new Handler(thread.getLooper());
     }
 
-    public static void onPackageAdded() {
-        if (accountWatcher != null) {
-            accountWatcher.updateAuthDescriptions();
-        }
-    }
-
-    private void updateAuthDescriptions() {
+    public void updateAuthDescriptions() {
+        types.clear();
         for (AuthenticatorDescription ad : accountManager.getAuthenticatorTypes()) {
-            PreventLog.v("updateAuthDescriptions, type: " + ad.type + ", packageName: " + ad.packageName);
             if (ad.packageName != null) {
                 types.put(ad.type, ad.packageName);
             }
@@ -62,7 +56,7 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         mEnabledPackages.clear();
         for (Account account : updatedAccounts) {
             String packageName = types.get(account.type);
-            PreventLog.v("onAccountUpdated, type: " + account.type + ", packageName: " + packageName);
+            PreventLog.d("onAccountUpdated, type: " + account.type + ", packageName: " + packageName);
             if (packageName != null && !mEnabledPackages.contains(packageName)) {
                 mEnabledPackages.add(packageName);
             }
@@ -70,8 +64,8 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         PreventLog.d("enabled accounts: " + mEnabledPackages);
     }
 
-    public boolean containsPackage(String packageName) {
-        return mEnabledPackages.contains(packageName);
+    public boolean canHook(String action, String packageName) {
+        return AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action) && mEnabledPackages.contains(packageName);
     }
 
 }

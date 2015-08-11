@@ -20,7 +20,9 @@ import de.robv.android.xposed.XposedHelpers;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.PreventIntent;
-import me.piebridge.prevent.framework.Hook;
+import me.piebridge.prevent.framework.ActivityHook;
+import me.piebridge.prevent.framework.ActivityManagerServiceHook;
+import me.piebridge.prevent.framework.IntentFilterHook;
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.framework.SystemHook;
@@ -34,7 +36,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         initZygote();
     }
 
-    private static void initZygote() throws Throwable { // NOSONAR
+    private static void initZygote() {
         XposedBridge.hookAllMethods(ActivityThread.class, "systemMain", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -57,35 +59,37 @@ public class XposedMod implements IXposedHookZygoteInit {
     private static void hookSystem(ClassLoader classLoader) throws ClassNotFoundException, NoSuchMethodException {
         SystemHook.setClassLoader(classLoader);
 
-        Class<?> ActivityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader); // NOSONAR
-        Method startProcessLocked = SystemHook.getStartProcessLocked(ActivityManagerService);
+        Class<?> activityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader);
+        Method startProcessLocked = ActivityManagerServiceHook.getStartProcessLocked(activityManagerService);
         XposedBridge.hookMethod(startProcessLocked, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (!SystemHook.beforeActivityManagerService$startProcessLocked(param.thisObject, param.args)) {
+                if (!ActivityManagerServiceHook.hookBeforeStartProcessLocked(param.thisObject, param.args)) {
                     param.setResult(null);
                 }
             }
         });
 
-        Method cleanUpRemovedTaskLocked = SystemHook.getCleanUpRemovedTaskLocked(ActivityManagerService);
+        Method cleanUpRemovedTaskLocked = ActivityManagerServiceHook.getCleanUpRemovedTaskLocked(activityManagerService);
         if (cleanUpRemovedTaskLocked != null) {
             XposedBridge.hookMethod(cleanUpRemovedTaskLocked, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    SystemHook.afterActivityManagerService$cleanUpRemovedTaskLocked(param.args);
+                    ActivityManagerServiceHook.hookAfterCleanUpRemovedTaskLocked(param.args);
                 }
             });
         }
 
-        Class<?> IntentFilter = Class.forName("android.content.IntentFilter", false, classLoader); // NOSONAR
-        Method match = IntentFilter.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
+        final Class<?> intentFilter = Class.forName("android.content.IntentFilter", false, classLoader);
+        Method match = intentFilter.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
         XposedBridge.hookMethod(match, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                IntentFilterMatchResult result = SystemHook.hookIntentFilter$match(param.thisObject, param.args);
-                if (!result.isNone()) {
-                    param.setResult(result.getResult());
+                if (IntentFilterHook.canHook()) {
+                    IntentFilterMatchResult result = IntentFilterHook.hookBeforeMatch(param.thisObject, param.args);
+                    if (!result.isNone()) {
+                        param.setResult(result.getResult());
+                    }
                 }
             }
         });
@@ -118,21 +122,21 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Hook.beforeActivity$onCreate((Activity) param.thisObject);
+                ActivityHook.hookBeforeOnCreate((Activity) param.thisObject);
             }
         });
 
         XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Hook.afterActivity$onDestroy((Activity) param.thisObject);
+                ActivityHook.hookAfterOnDestroy((Activity) param.thisObject);
             }
         });
 
         XposedHelpers.findAndHookMethod(Activity.class, "onRestart", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Hook.beforeActivity$onRestart((Activity) param.thisObject);
+                ActivityHook.hookBeforeOnRestart((Activity) param.thisObject);
             }
         });
     }
@@ -143,7 +147,7 @@ public class XposedMod implements IXposedHookZygoteInit {
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 int pid = (Integer) param.args[0];
                 if (Process.myPid() == pid) {
-                    Hook.stopSelf(pid);
+                    ActivityHook.stopSelf(pid);
                 }
             }
         });
@@ -151,7 +155,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedHelpers.findAndHookMethod(System.class, "exit", int.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Hook.stopSelf(-1);
+                ActivityHook.stopSelf(-1);
             }
         });
     }
@@ -160,7 +164,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedHelpers.findAndHookMethod(Activity.class, "moveTaskToBack", boolean.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                Hook.afterActivity$moveTaskToBack((Activity) param.thisObject, (Boolean) param.getResult());
+                ActivityHook.hookAfterMoveTaskToBack((Activity) param.thisObject, (Boolean) param.getResult());
             }
         });
 
@@ -169,7 +173,7 @@ public class XposedMod implements IXposedHookZygoteInit {
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Intent intent = (Intent) param.args[0];
                 if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                    Hook.beforeActivity$startHomeActivityForResult((Activity) param.thisObject);
+                    ActivityHook.hookBeforeStartHomeActivityForResult((Activity) param.thisObject);
                 }
             }
         };

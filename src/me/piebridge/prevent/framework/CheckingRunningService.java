@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -19,9 +20,11 @@ import me.piebridge.prevent.framework.util.HookUtils;
 abstract class CheckingRunningService implements Runnable {
 
     private final Context mContext;
+    private Map<String, Boolean> mPreventPackages;
 
-    CheckingRunningService(Context context) {
-        this.mContext = context;
+    CheckingRunningService(Context context, Map<String, Boolean> preventPackages) {
+        mContext = context;
+        mPreventPackages = preventPackages;
     }
 
     @Override
@@ -43,7 +46,7 @@ abstract class CheckingRunningService implements Runnable {
 
     private boolean checkService(ActivityManager.RunningServiceInfo service, Collection<String> packageNames, Collection<String> whiteList, Set<String> shouldStopPackageNames, Set<String> releaseAlarmPackageNames) {
         String name = service.service.getPackageName();
-        boolean prevent = Boolean.TRUE.equals(SystemHook.getPreventPackages().get(name));
+        boolean prevent = Boolean.TRUE.equals(mPreventPackages.get(name));
         logServiceIfNeeded(prevent, name, service);
         if (!prevent || whiteList.contains(name)) {
             return false;

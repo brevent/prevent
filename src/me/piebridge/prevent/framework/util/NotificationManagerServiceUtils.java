@@ -53,7 +53,7 @@ public class NotificationManagerServiceUtils {
         if (!object.getClass().getName().contains("$")) {
             return initMethod(object);
         }
-        return initMethod(HideApiUtils.getThis$0(object));
+        return initMethod(HideApiUtils.getThis0(object));
     }
 
     private static boolean initMethod(Object nms) {
@@ -105,7 +105,10 @@ public class NotificationManagerServiceUtils {
         return false;
     }
 
-    public static boolean canHook(Object filter) {
+    public static boolean canHook(Object filter, String action) {
+        if (!Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
+            return false;
+        }
         if (nmsFilter != null) {
             return nmsFilter.equals(filter);
         }
