@@ -71,7 +71,7 @@ public class PreventProvider extends ContentProvider {
         if (path == null) {
             path = "logcat.log";
         }
-        File dir = getContext().getExternalFilesDir(null);
+        File dir = getContext().getExternalCacheDir();
         if (dir == null) {
             UILog.d("cannot find external file");
             return;
