@@ -48,6 +48,7 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
+import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
 import me.piebridge.prevent.framework.util.WidgetUtils;
@@ -286,6 +287,12 @@ public final class SystemHook {
         mContext = context;
 
         accountWatcher = AccountWatcher.get(mContext, mHandler);
+        singleExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                LogcatUtils.logcat(mContext);
+            }
+        });
         return true;
     }
 
@@ -317,7 +324,9 @@ public final class SystemHook {
                         preventPackages.put(name, Boolean.TRUE);
                     }
                 }
+                cursor.close();
                 PreventLog.d("prevents: " + preventPackages.size());
+                LogcatUtils.sendLogcat(mContext);
             }
         });
     }
@@ -419,7 +428,7 @@ public final class SystemHook {
 
         // always block broadcast
         if ("broadcast".equals(hostingType)) {
-            if (WidgetUtils.isWidget(mContext, hostingName)) {
+            if (!BuildConfig.DEBUG || WidgetUtils.isWidget(mContext, hostingName)) {
                 checkRunningServices(packageName);
                 LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
                 return true;

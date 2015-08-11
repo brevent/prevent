@@ -15,6 +15,9 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Set;
 
 import me.piebridge.prevent.common.PackageUtils;
@@ -37,6 +40,11 @@ public class PreventProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        String log = uri.getQueryParameter("log");
+        if (log != null) {
+            saveLog(uri, log);
+            return null;
+        }
         String[] columns = {COLUMN_PACKAGE};
         MatrixCursor cursor = new MatrixCursor(columns);
         PackageManager pm = getContext().getPackageManager();
@@ -56,6 +64,26 @@ public class PreventProvider extends ContentProvider {
             notifyNoPrevents(getContext());
         }
         return cursor;
+    }
+
+    private void saveLog(Uri uri, String log) {
+        String path = uri.getQueryParameter("path");
+        if (path == null) {
+            path = "logcat.log";
+        }
+        File dir = getContext().getExternalFilesDir(null);
+        if (dir == null) {
+            UILog.d("cannot find external file");
+            return;
+        }
+        File file = new File(dir, path);
+        try {
+            FileOutputStream fos = new FileOutputStream(file, true);
+            fos.write(log.getBytes());
+            fos.close();
+        } catch (IOException e) {
+            UILog.d("cannot save log", e);
+        }
     }
 
     @Override
