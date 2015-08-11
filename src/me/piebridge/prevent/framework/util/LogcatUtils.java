@@ -3,7 +3,6 @@ package me.piebridge.prevent.framework.util;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
-import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.File;

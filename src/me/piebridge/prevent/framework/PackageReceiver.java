@@ -6,7 +6,6 @@ import android.content.Intent;
 
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
-import me.piebridge.prevent.framework.util.WidgetUtils;
 
 /**
  * Created by thom on 15/8/4.
@@ -19,7 +18,6 @@ public class PackageReceiver extends BroadcastReceiver {
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             handlePackageRestarted("PACKAGE_RESTARTED", packageName);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
-            WidgetUtils.cleanWidgets();
             AccountWatcher.onPackageAdded();
         }
     }

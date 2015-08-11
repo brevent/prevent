@@ -428,7 +428,7 @@ public final class SystemHook {
 
         // always block broadcast
         if ("broadcast".equals(hostingType)) {
-            if (!BuildConfig.DEBUG || WidgetUtils.isWidget(mContext, hostingName)) {
+            if (WidgetUtils.isWidget(mContext, hostingName)) {
                 checkRunningServices(packageName);
                 LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
                 return true;
@@ -574,7 +574,7 @@ public final class SystemHook {
 
     private static Collection<String> prepareCheckingPackageNames() {
         Set<String> packageNames = new TreeSet<String>();
-        synchronized (SystemHook.CHECKING_LOCK) {
+        synchronized (CHECKING_LOCK) {
             packageNames.addAll(checkingPackageNames);
             checkingPackageNames.clear();
         }
