@@ -515,7 +515,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private boolean refresh(int position, boolean force) {
-        String tag = mPager.getAdapter().getPageTitle(position).toString();
+        String tag = getTag(position);
         int currentItem = mPager.getCurrentItem();
         PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
         if (fragment != null) {
@@ -671,6 +671,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
+    private static String getTag(int position) {
+        return "fragment-" + position;
+    }
+
     private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
 
         public ScreenSlidePagerAdapter(FragmentManager fm) {
@@ -690,7 +694,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 default:
                     return null;
             }
-            FragmentUtils.setTag(fragment, getPageTitle(position).toString());
+            FragmentUtils.setTag(fragment, getTag(position));
             return fragment;
         }
 
