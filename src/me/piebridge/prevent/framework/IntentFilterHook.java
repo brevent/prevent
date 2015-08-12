@@ -13,6 +13,7 @@ import java.util.Map;
 
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
+import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
@@ -42,30 +43,32 @@ public class IntentFilterHook {
 
     public static IntentFilterMatchResult hookBeforeMatch(Object filter, Object[] args) {
         String action = (String) args[0];
-        Uri data = (Uri) args[0x3];
-        if (NotificationManagerServiceUtils.canHook(filter, action)) {
-            return NotificationManagerServiceUtils.hook(data, mPreventPackages);
-        } else if (filter instanceof PackageParser.ActivityIntentInfo) {
+        if (filter instanceof PackageParser.ActivityIntentInfo) {
             return hookActivityIntentInfo((PackageParser.ActivityIntentInfo) filter, action);
         } else if (filter instanceof PackageParser.ServiceIntentInfo) {
             return hookServiceIntentInfo((PackageParser.ServiceIntentInfo) filter, action);
         } else if (BroadcastFilterUtils.isBroadcastFilter(filter)) {
-            return hookBroadcastFilter(filter, action);
+            return hookBroadcastFilter(filter, args);
         }
 
         return IntentFilterMatchResult.NONE;
     }
 
-    private static IntentFilterMatchResult hookBroadcastFilter(Object filter, String action) {
-        // for dynamic broadcast, we only disable ACTION_CLOSE_SYSTEM_DIALOGS
-        if (!Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
-            return IntentFilterMatchResult.NONE;
+    private static IntentFilterMatchResult hookBroadcastFilter(Object filter, Object[] args) {
+        String action = (String) args[0];
+        if (NotificationManagerServiceUtils.canHook(filter, action)) {
+            return NotificationManagerServiceUtils.hook((Uri) args[0x3], mPreventPackages);
+        } else if (AlarmManagerServiceUtils.canHook(args)) {
+            return AlarmManagerServiceUtils.hook(filter);
+        } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
+            return hookCloseSystemDialogs(filter, action);
         }
+        return IntentFilterMatchResult.NONE;
+    }
+
+    private static IntentFilterMatchResult hookCloseSystemDialogs(Object filter, String action) {
         String packageName = BroadcastFilterUtils.getPackageName(filter);
-        if (packageName == null) {
-            return IntentFilterMatchResult.NONE;
-        }
-        if (mPreventPackages.containsKey(packageName)) {
+        if (packageName != null && mPreventPackages.containsKey(packageName)) {
             LogUtils.logIntentFilter(true, filter, action, packageName);
             return IntentFilterMatchResult.NO_MATCH;
         }

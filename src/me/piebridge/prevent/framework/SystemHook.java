@@ -1,6 +1,5 @@
 package me.piebridge.prevent.framework;
 
-import android.app.ActivityManager;
 import android.app.ActivityThread;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -331,8 +330,7 @@ public final class SystemHook {
             @Override
             public void run() {
                 if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
-                    ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-                    HideApiUtils.forceStopPackage(activityManager, packageName);
+                    HideApiUtils.forceStopPackage(mContext, packageName);
                 }
             }
         });

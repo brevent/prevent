@@ -5,13 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 
 /**
@@ -35,19 +33,15 @@ abstract class CheckingRunningService implements Runnable {
         if (!packageNames.isEmpty() && packageNames.equals(whiteList)) {
             return;
         }
-        Set<String> releaseAlarmPackageNames = new TreeSet<String>();
         Set<String> shouldStopPackageNames = new TreeSet<String>();
-        Map<String, Integer> packageServices = new HashMap<String, Integer>();
         for (ActivityManager.RunningServiceInfo service : HookUtils.getServices(mContext)) {
-            addService(packageServices, service);
-            checkService(service, packageNames, whiteList, shouldStopPackageNames, releaseAlarmPackageNames);
+            checkService(service, packageNames, whiteList, shouldStopPackageNames);
         }
         stopServiceIfNeeded(shouldStopPackageNames);
-        releaseAlarmIfNeeded(packageServices, releaseAlarmPackageNames, shouldStopPackageNames);
         PreventLog.v("complete checking running service");
     }
 
-    private boolean checkService(ActivityManager.RunningServiceInfo service, Collection<String> packageNames, Collection<String> whiteList, Set<String> shouldStopPackageNames, Set<String> releaseAlarmPackageNames) {
+    private boolean checkService(ActivityManager.RunningServiceInfo service, Collection<String> packageNames, Collection<String> whiteList, Set<String> shouldStopPackageNames) {
         String name = service.service.getPackageName();
         boolean prevent = Boolean.TRUE.equals(mPreventPackages.get(name));
         logServiceIfNeeded(prevent, name, service);
@@ -55,11 +49,7 @@ abstract class CheckingRunningService implements Runnable {
             return false;
         }
         if (packageNames.contains(name)) {
-            if (service.started) {
-                shouldStopPackageNames.add(name);
-            } else {
-                releaseAlarmPackageNames.add(name);
-            }
+            shouldStopPackageNames.add(name);
             return true;
         }
         if (!service.started) {
@@ -70,19 +60,8 @@ abstract class CheckingRunningService implements Runnable {
             shouldStopPackageNames.add(name);
         } else {
             mContext.stopService(new Intent().setComponent(service.service));
-            releaseAlarmPackageNames.add(name);
         }
         return true;
-    }
-
-    private void addService(Map<String, Integer> packageServices, ActivityManager.RunningServiceInfo service) {
-        String packageName = service.service.getPackageName();
-        Integer count = packageServices.get(packageName);
-        if (packageServices.get(packageName) == null) {
-            packageServices.put(packageName, 1);
-        } else {
-            packageServices.put(packageName, count + 1);
-        }
     }
 
     protected abstract Collection<String> preparePackageNames();
@@ -107,19 +86,6 @@ abstract class CheckingRunningService implements Runnable {
         for (String name : shouldStopPackageNames) {
             PreventLog.i(name + " has running services, force stop it");
             SystemHook.forceStopPackage(name);
-        }
-    }
-
-    private void releaseAlarmIfNeeded(Map<String, Integer> packageServices, Set<String> releaseAlarmPackageNames, Set<String> shouldStopPackageNames) {
-        for (String name : releaseAlarmPackageNames) {
-            int count = packageServices.get(name);
-            if (count > 1) {
-                PreventLog.d("use force stop instead release alarm for " + name);
-                shouldStopPackageNames.add(name);
-            } else if (!shouldStopPackageNames.contains(name)) {
-                PreventLog.w("release alarm without force stop " + name);
-                AlarmManagerServiceUtils.releaseAlarm(name);
-            }
         }
     }
 

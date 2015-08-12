@@ -69,7 +69,7 @@ public class BroadcastFilterUtils {
         return null;
     }
 
-    static String getReceiverName(Object filter) {
+    public static String getReceiverName(Object filter) {
         if (!isBroadcastFilter(filter)) {
             return null;
         }

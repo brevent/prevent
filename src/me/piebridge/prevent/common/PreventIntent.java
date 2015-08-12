@@ -24,6 +24,8 @@ public final class PreventIntent {
     public static final String EXTRA_PACKAGES = NAMESPACE + "PACKAGES";
     public static final String EXTRA_PREVENT = NAMESPACE + "PREVENT";
 
+    public static final String CATEGORY_ALARM = NAMESPACE + ".CATEGORY_ALARM";
+
     public static final String SCHEME = "prevent";
     public static final String PERMISSION_MANAGER = NAMESPACE + "permission.MANAGER";
     public static final String PERMISSION_SYSTEM = "android.permission.SHUTDOWN";
