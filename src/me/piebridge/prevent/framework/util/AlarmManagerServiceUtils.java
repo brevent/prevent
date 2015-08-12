@@ -17,7 +17,6 @@ public class AlarmManagerServiceUtils {
 
     private static Object alarmManagerService;
     private static Method removeLocked;
-    private static Field mBroadcastStats;
 
     private AlarmManagerServiceUtils() {
 
@@ -54,7 +53,6 @@ public class AlarmManagerServiceUtils {
                     removeLocked = method;
                     alarmManagerService = ams;
                     PreventLog.d("find removeLocked in " + clazz.getName());
-                    findBroadcastStats(clazz);
                     return true;
                 }
             }
@@ -64,23 +62,11 @@ public class AlarmManagerServiceUtils {
         return false;
     }
 
-    private static void findBroadcastStats(Class<?> clazz) {
-        try {
-            mBroadcastStats = clazz.getDeclaredField("mBroadcastStats");
-            mBroadcastStats.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            PreventLog.d("cannot find mBroadcastStats", e);
-        }
-    }
-
     public static void releaseAlarm(String packageName) {
         if (removeLocked != null && alarmManagerService != null) {
             try {
                 removeLocked.invoke(alarmManagerService, packageName);
                 PreventLog.d("remove alarm lock for " + packageName);
-                if (mBroadcastStats != null) {
-                    ((Map) mBroadcastStats.get(alarmManagerService)).remove(packageName);
-                }
             } catch (IllegalAccessException e) {
                 PreventLog.d("cannot access removeLocked", e);
             } catch (InvocationTargetException e) {
