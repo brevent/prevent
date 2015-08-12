@@ -12,6 +12,7 @@ import android.os.Binder;
 import java.util.Map;
 
 import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
@@ -129,6 +130,16 @@ public class IntentFilterHook {
         return callingUid == uid || (GmsUtils.GMS.equals(info.packageName) && canUseGms(callingUid, info.uid));
     }
 
+    public static boolean isSystemPackage(PackageManager pm, String packageName) {
+        try {
+            ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
+            return PackageUtils.isSystemPackage(ai.flags);
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package " + packageName, e);
+            return false;
+        }
+    }
+
     private static boolean canUseGms(int callingUid, int uid) {
         PackageManager pm = mContext.getPackageManager();
         String[] packageNames = pm.getPackagesForUid(callingUid);
@@ -136,7 +147,9 @@ public class IntentFilterHook {
             return false;
         }
         if (pm.checkSignatures(callingUid, uid) == PackageManager.SIGNATURE_MATCH) {
-            PreventLog.v("allow " + packageNames[0] + "(same signature) with gms to use gms if needed");
+            if (!isSystemPackage(pm, packageNames[0])) {
+                PreventLog.v("allow " + packageNames[0] + "(same signature) with gms to use gms if needed");
+            }
             return true;
         } else {
             return packageNames.length == 1 && canUseGms(pm, packageNames[0]);
@@ -147,7 +160,9 @@ public class IntentFilterHook {
         if (pm.getLaunchIntentForPackage(packageName) == null || !packageName.startsWith(GmsUtils.GAPPS_PREFIX)) {
             return false;
         } else {
-            PreventLog.v("allow " + packageName + " to use gms if needed");
+            if (!isSystemPackage(pm, packageName)) {
+                PreventLog.v("allow " + packageName + " to use gms if needed");
+            }
             return true;
         }
     }

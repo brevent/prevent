@@ -110,22 +110,4 @@ public class LogUtils {
         }
     }
 
-    public static void logIntentFilter(String action, Object filter, String packageName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ACTION);
-        sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
-        sb.append(", ");
-        sb.append(FILTER);
-        sb.append(filter);
-        if (packageName != null) {
-            sb.append(PACKAGE);
-            sb.append(packageName);
-        }
-        sb.append(", callingUid: ");
-        sb.append(Binder.getCallingUid());
-        sb.append(", callingPid: ");
-        sb.append(Binder.getCallingPid());
-        PreventLog.v(sb.toString());
-    }
-
 }

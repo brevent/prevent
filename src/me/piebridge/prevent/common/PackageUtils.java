@@ -5,8 +5,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 
-import me.piebridge.prevent.common.GmsUtils;
-
 /**
  * Created by thom on 15/7/23.
  */
