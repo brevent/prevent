@@ -23,7 +23,8 @@ public class PackageUtils {
     }
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
-        return !isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName);
+        return !isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName)
+                || appInfo.packageName.startsWith("com.motorola.ccc");
     }
 
     public static String getPackageName(Intent intent) {
