@@ -31,10 +31,10 @@ public class HideApiUtils {
     public static void forceStopPackage(ActivityManager activityManager, String packageName) {
         try {
             activityManager.forceStopPackage(packageName);
+            AlarmManagerServiceUtils.releaseAlarm(packageName);
         } catch (Throwable t) { // NOSONAR
             PreventLog.e("cannot force stop package" + packageName, t);
         }
-        AlarmManagerServiceUtils.releaseAlarm(packageName);
     }
 
     public static Object getThis0(Object object) {

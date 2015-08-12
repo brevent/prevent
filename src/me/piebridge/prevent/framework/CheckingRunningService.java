@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -36,11 +37,13 @@ abstract class CheckingRunningService implements Runnable {
         }
         Set<String> releaseAlarmPackageNames = new TreeSet<String>();
         Set<String> shouldStopPackageNames = new TreeSet<String>();
+        Map<String, Integer> packageServices = new HashMap<String, Integer>();
         for (ActivityManager.RunningServiceInfo service : HookUtils.getServices(mContext)) {
+            addService(packageServices, service);
             checkService(service, packageNames, whiteList, shouldStopPackageNames, releaseAlarmPackageNames);
         }
         stopServiceIfNeeded(shouldStopPackageNames);
-        releaseAlarmIfNeeded(releaseAlarmPackageNames, shouldStopPackageNames);
+        releaseAlarmIfNeeded(packageServices, releaseAlarmPackageNames, shouldStopPackageNames);
         PreventLog.v("complete checking running service");
     }
 
@@ -72,6 +75,16 @@ abstract class CheckingRunningService implements Runnable {
         return true;
     }
 
+    private void addService(Map<String, Integer> packageServices, ActivityManager.RunningServiceInfo service) {
+        String packageName = service.service.getPackageName();
+        Integer count = packageServices.get(packageName);
+        if (packageServices.get(packageName) == null) {
+            packageServices.put(packageName, 1);
+        } else {
+            packageServices.put(packageName, count + 1);
+        }
+    }
+
     protected abstract Collection<String> preparePackageNames();
 
     protected abstract Collection<String> prepareWhiteList();
@@ -97,9 +110,14 @@ abstract class CheckingRunningService implements Runnable {
         }
     }
 
-    private void releaseAlarmIfNeeded(Set<String> releaseAlarmPackageNames, Set<String> shouldStopPackageNames) {
+    private void releaseAlarmIfNeeded(Map<String, Integer> packageServices, Set<String> releaseAlarmPackageNames, Set<String> shouldStopPackageNames) {
         for (String name : releaseAlarmPackageNames) {
-            if (!shouldStopPackageNames.contains(name)) {
+            int count = packageServices.get(name);
+            if (count > 1) {
+                PreventLog.d("use force stop instead release alarm for " + name);
+                shouldStopPackageNames.add(name);
+            } else if (!shouldStopPackageNames.contains(name)) {
+                PreventLog.w("release alarm without force stop " + name);
                 AlarmManagerServiceUtils.releaseAlarm(name);
             }
         }
