@@ -6,6 +6,7 @@ import android.os.ServiceManager;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**
@@ -61,7 +62,7 @@ public class AlarmManagerServiceUtils {
     }
 
     public static void releaseAlarm(String packageName) {
-        if (removeLocked != null && alarmManagerService != null) {
+        if (BuildConfig.DEBUG && removeLocked != null && alarmManagerService != null) {
             try {
                 removeLocked.invoke(alarmManagerService, packageName);
                 PreventLog.d("remove alarm lock for " + packageName);
