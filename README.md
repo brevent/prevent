@@ -6,8 +6,8 @@ The module hajacks several system api to prevent the broadcast being sent to the
 
 Please note, this application prevents following actions:
 
-- suicide in activity, which will restart service
-- receive event which may change default home action
+- (when prevents) suicide in activity, which will restart service
+- (when prevents) receive event which may change default home action
 - (when prevents) move task to background
 - (when prevents) start home activity
 - (when prevents) process with parent to init
@@ -20,7 +20,7 @@ How to use:
 
 1. install "Prevent Running", activate it in "Xposed Installer", reboot.
 2. open "Prevent Running",  then add/remove application to/from prevent list.
-3. If you don't "auto prevent" added packages, please prevent "Prevent Running".
+If you don't like "auto prevent" added packages, please prevent "Prevent Running".
 
 Special Search:
 
@@ -39,8 +39,8 @@ Project: https://github.com/liudongmiao/ForceStopGB , any donations are welcome.
 
 “阻止运行”禁止以下行为：
 
-- 自杀，如搜狗地图。
-- 接收系统按键，主要是HOME键，如支付宝。
+- (当程序被阻止时) 自杀，如搜狗地图。
+- (当程序被阻止时) 接收系统按键，主要是HOME键，如支付宝。
 - (当程序被阻止时) 程序自己移到后台，如微信。
 - (当程序被阻止时) 程序启动HOME，如微博。
 - (当程序被阻止时) 产生一些游离系统外的进程，如应用宝。
@@ -52,8 +52,8 @@ Project: https://github.com/liudongmiao/ForceStopGB , any donations are welcome.
 使用说明：
 
 1. 安装“阻止运行”，在Xposed Installer中激活它，重启（必须）。
-2. 重启后，打开“阻止运行”，配置“阻止列表”(这个只需要一次)后，重启（可选）。
-3. “阻止运行”自动把新装应用添加到“阻止列表”，如果不想这样，请把阻止运行添加到阻止列表（不建议）。
+2. 重启后，打开“阻止运行”，配置“阻止列表”(这个只需要一次)。
+“阻止运行”自动把新装应用添加到“阻止列表”，如果不想这样，请把阻止运行添加到阻止列表（不建议）。
 
 特别搜索：
 
