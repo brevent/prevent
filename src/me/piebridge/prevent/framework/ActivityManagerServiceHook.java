@@ -76,7 +76,7 @@ public class ActivityManagerServiceHook {
         Boolean prevents = mPreventPackages.get(packageName);
         // never block activity
         if ("activity".equals(hostingType) && Boolean.TRUE.equals(prevents)) {
-            mPreventPackages.put(packageName, Boolean.FALSE);
+            mPreventPackages.put(packageName, false);
             prevents = false;
         }
 
@@ -110,6 +110,7 @@ public class ActivityManagerServiceHook {
     public static void hookAfterCleanUpRemovedTaskLocked(Object[] args) { // NOSONAR
         String packageName = TaskRecordUtils.getPackageName(args[0]);
         if (packageName != null && mPreventPackages != null && mPreventPackages.containsKey(packageName)) {
+            mPreventPackages.put(packageName, true);
             LogUtils.logForceStop("removeTask", packageName, "force in " + SystemHook.TIME_IMMEDIATE + "s");
             SystemHook.forceStopPackageForce(packageName, SystemHook.TIME_IMMEDIATE);
         }

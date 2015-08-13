@@ -401,7 +401,7 @@ public final class SystemHook {
             while (cursor.moveToNext()) {
                 String name = cursor.getString(index);
                 if (name != null && !preventPackages.containsKey(name)) {
-                    preventPackages.put(name, Boolean.TRUE);
+                    preventPackages.put(name, true);
                 }
             }
             cursor.close();

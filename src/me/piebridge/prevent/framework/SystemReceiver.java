@@ -141,7 +141,7 @@ public class SystemReceiver extends BroadcastReceiver {
 
     private void handleIncreaseCounter(String action, String packageName, Intent intent) {
         if (mPreventPackages.containsKey(packageName)) {
-            mPreventPackages.put(packageName, Boolean.FALSE);
+            mPreventPackages.put(packageName, false);
         }
         int uid = intent.getIntExtra(PreventIntent.EXTRA_UID, 0);
         int pid = intent.getIntExtra(PreventIntent.EXTRA_PID, 0);
@@ -179,7 +179,7 @@ public class SystemReceiver extends BroadcastReceiver {
             return;
         }
         if (mPreventPackages.containsKey(packageName)) {
-            mPreventPackages.put(packageName, Boolean.TRUE);
+            mPreventPackages.put(packageName, true);
             LogUtils.logForceStop(action, packageName, "if needed in " + SystemHook.TIME_DESTROY + "s");
             SystemHook.checkRunningServices(packageName, SystemHook.TIME_DESTROY);
         } else {
@@ -191,7 +191,7 @@ public class SystemReceiver extends BroadcastReceiver {
     private void handleDestroy(String action, String packageName) {
         LogUtils.logRequest(action, packageName, -1);
         if (mPreventPackages.containsKey(packageName)) {
-            mPreventPackages.put(packageName, Boolean.TRUE);
+            mPreventPackages.put(packageName, true);
             LogUtils.logForceStop(action, packageName, "destroy in " + SystemHook.TIME_SUICIDE + "s");
             SystemHook.forceStopPackageLater(packageName, SystemHook.TIME_SUICIDE);
         }
@@ -201,7 +201,7 @@ public class SystemReceiver extends BroadcastReceiver {
 
     private void handleRestart(String action, String packageName) {
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
-            mPreventPackages.put(packageName, Boolean.FALSE);
+            mPreventPackages.put(packageName, false);
         }
         int count = countCounter(packageName);
         LogUtils.logRequest(action, packageName, count);
@@ -215,7 +215,7 @@ public class SystemReceiver extends BroadcastReceiver {
             return;
         }
         if (mPreventPackages.containsKey(packageName)) {
-            mPreventPackages.put(packageName, Boolean.TRUE);
+            mPreventPackages.put(packageName, true);
             LogUtils.logForceStop(action, packageName, "force in " + SystemHook.TIME_IMMEDIATE + "s" + ", uid: " + uid);
             SystemHook.forceStopPackageForce(packageName, SystemHook.TIME_IMMEDIATE);
         }
@@ -358,7 +358,7 @@ public class SystemReceiver extends BroadcastReceiver {
         LogUtils.logRequest(action, packageName, -1);
         packageCounters.remove(packageName);
         if (mPreventPackages.containsKey(packageName)) {
-            mPreventPackages.put(packageName, Boolean.TRUE);
+            mPreventPackages.put(packageName, true);
         }
         SystemHook.killNoFather();
     }
