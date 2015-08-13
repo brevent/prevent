@@ -41,19 +41,19 @@ public class XposedMod implements IXposedHookZygoteInit {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 if (!systemHooked) {
-                    PreventLog.d("start prevent hook (system)");
+                    PreventLog.d("start prevent hook (system), version: " + BuildConfig.VERSION_NAME);
                     hookSystem(Thread.currentThread().getContextClassLoader());
-                    PreventLog.d("finish prevent hook (system)");
+                    PreventLog.d("finish prevent hook (system), version: " + BuildConfig.VERSION_NAME);
                     systemHooked = true;
                 }
             }
         });
 
-        PreventLog.d("start prevent hook (normal)");
+        PreventLog.d("start prevent hook (zygote), version: " + BuildConfig.VERSION_NAME);
         hookActivity();
         hookSuicide();
         hookDestroy();
-        PreventLog.d("finish prevent hook (normal)");
+        PreventLog.d("finish prevent hook (zygote), version: " + BuildConfig.VERSION_NAME);
     }
 
     private static void hookSystem(ClassLoader classLoader) throws ClassNotFoundException, NoSuchMethodException {

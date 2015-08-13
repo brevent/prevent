@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.piebridge.forcestopgb"
     android:installLocation="internalOnly"
-    android:versionCode="341"
-    android:versionName="0.26">
+    android:versionCode="342"
+    android:versionName="0.26.1">
 
     <uses-sdk
         android:minSdkVersion="10"
