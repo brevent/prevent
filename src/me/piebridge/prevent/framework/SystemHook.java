@@ -225,7 +225,7 @@ public final class SystemHook {
         ScheduledFuture<?> serviceFuture;
         synchronized (CHECKING_LOCK) {
             serviceFuture = serviceFutures.get(packageName);
-            if (serviceFuture != null && checkingFuture.getDelay(TimeUnit.SECONDS) > 0) {
+            if (serviceFuture != null && serviceFuture.getDelay(TimeUnit.SECONDS) > 0) {
                 GmsUtils.decreaseGmsCount(mContext, packageName);
                 serviceFuture.cancel(false);
             }
