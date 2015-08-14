@@ -140,6 +140,7 @@ public class SystemReceiver extends BroadcastReceiver {
     }
 
     private void handleIncreaseCounter(String action, String packageName, Intent intent) {
+        SystemHook.updateRunningGapps(packageName, true);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, false);
         }
@@ -200,6 +201,7 @@ public class SystemReceiver extends BroadcastReceiver {
     }
 
     private void handleRestart(String action, String packageName) {
+        SystemHook.updateRunningGapps(packageName, true);
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             mPreventPackages.put(packageName, false);
         }
@@ -257,7 +259,7 @@ public class SystemReceiver extends BroadcastReceiver {
     }
 
 
-    private int countCounter(String packageName) {
+    public int countCounter(String packageName) {
         int count = 0;
         Map<Integer, AtomicInteger> values = packageCounters.get(packageName);
         if (values == null) {
@@ -359,6 +361,7 @@ public class SystemReceiver extends BroadcastReceiver {
         packageCounters.remove(packageName);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
+            SystemHook.updateRunningGapps(packageName, false);
         }
         SystemHook.killNoFather();
     }

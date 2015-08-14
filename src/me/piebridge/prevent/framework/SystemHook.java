@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -30,6 +31,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.HideApiUtils;
@@ -45,7 +47,7 @@ public final class SystemHook {
     public static final int TIME_IMMEDIATE = 1;
     public static final int TIME_CHECK_SERVICE = 30;
     public static final int TIME_KILL = 1;
-    public static final int TIME_CHECK_DEPENDENCY = 120;
+    public static final int TIME_CHECK_GMS = 60;
     public static final int FIRST_APPLICATION_UID = 10000;
 
     private static Context mContext;
@@ -54,6 +56,7 @@ public final class SystemHook {
 
     private static Set<String> checkingPackageNames = new TreeSet<String>();
     private static Set<String> checkingWhiteList = new TreeSet<String>();
+    private static Set<String> runningGapps = new TreeSet<String>();
     private static final Object CHECKING_LOCK = new Object();
 
     private static ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
@@ -67,6 +70,8 @@ public final class SystemHook {
     private static Map<String, ScheduledFuture<?>> serviceFutures = new HashMap<String, ScheduledFuture<?>>();
 
     private static RetrievingTask retrievingTask;
+
+    private static SystemReceiver systemReceiver;
 
     private SystemHook() {
 
@@ -140,14 +145,14 @@ public final class SystemHook {
         thread.start();
         Handler handler = new Handler(thread.getLooper());
 
-        BroadcastReceiver receiver = new SystemReceiver(mPreventPackages);
+        systemReceiver = new SystemReceiver(mPreventPackages);
 
         IntentFilter manager = new IntentFilter();
         manager.addAction(PreventIntent.ACTION_GET_PACKAGES);
         manager.addAction(PreventIntent.ACTION_GET_PROCESSES);
         manager.addAction(PreventIntent.ACTION_UPDATE_PREVENT);
         manager.addDataScheme(PreventIntent.SCHEME);
-        mContext.registerReceiver(receiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
+        mContext.registerReceiver(systemReceiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
 
         IntentFilter hook = new IntentFilter();
         hook.addAction(PreventIntent.ACTION_INCREASE_COUNTER);
@@ -157,13 +162,13 @@ public final class SystemHook {
         hook.addAction(PreventIntent.ACTION_FORCE_STOP);
         hook.addDataScheme(PreventIntent.SCHEME);
         // FIXME: check permission
-        mContext.registerReceiver(receiver, hook, null, handler);
+        mContext.registerReceiver(systemReceiver, hook, null, handler);
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_PACKAGE_RESTARTED);
         filter.addAction(Intent.ACTION_PACKAGE_ADDED);
         filter.addDataScheme("package");
-        mContext.registerReceiver(receiver, filter, null, handler);
+        mContext.registerReceiver(systemReceiver, filter, null, handler);
 
         PreventLog.i("registered receiver");
         return true;
@@ -221,7 +226,8 @@ public final class SystemHook {
         synchronized (CHECKING_LOCK) {
             serviceFuture = serviceFutures.get(packageName);
             if (serviceFuture != null && checkingFuture.getDelay(TimeUnit.SECONDS) > 0) {
-                return;
+                GmsUtils.decreaseGmsCount(mContext, packageName);
+                serviceFuture.cancel(false);
             }
             checkingWhiteList.add(packageName);
         }
@@ -236,7 +242,7 @@ public final class SystemHook {
             protected Collection<String> prepareWhiteList() {
                 return prepareServiceWhiteList(packageName);
             }
-        }, GmsUtils.GMS.equals(packageName) ? TIME_CHECK_DEPENDENCY : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        }, GmsUtils.GMS.equals(packageName) ? TIME_CHECK_GMS : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         synchronized (CHECKING_LOCK) {
             serviceFutures.put(packageName, serviceFuture);
         }
@@ -249,7 +255,7 @@ public final class SystemHook {
                 checkingWhiteList.remove(packageName);
             }
         }
-        if (gmsCount > 0) {
+        if (gmsCount > 0 || hasRunningGapps()) {
             return Collections.singletonList(GmsUtils.GMS);
         } else {
             return Collections.emptyList();
@@ -292,6 +298,9 @@ public final class SystemHook {
         Set<String> whiteList = new TreeSet<String>();
         synchronized (CHECKING_LOCK) {
             whiteList.addAll(checkingWhiteList);
+        }
+        if (hasRunningGapps()) {
+            whiteList.add(GmsUtils.GMS);
         }
         return whiteList;
     }
@@ -417,6 +426,31 @@ public final class SystemHook {
 
             LogcatUtils.logcat(mContext);
         }
+    }
+
+    public static void updateRunningGapps(String packageName, boolean added) {
+        if (mContext != null && GmsUtils.isGapps(mContext.getPackageManager(), packageName)) {
+            if (added) {
+                runningGapps.add(packageName);
+            } else {
+                runningGapps.remove(packageName);
+            }
+        }
+    }
+
+    public static boolean hasRunningGapps() {
+        Iterator<String> it = runningGapps.iterator();
+        while (it.hasNext()) {
+            String packageName = it.next();
+            int count = systemReceiver.countCounter(packageName);
+            if (count == 0) {
+                it.remove();
+            }
+        }
+        if (BuildConfig.DEBUG && !runningGapps.isEmpty()) {
+            PreventLog.v("running gapps: " + runningGapps);
+        }
+        return !runningGapps.isEmpty();
     }
 
 }
