@@ -101,7 +101,7 @@ public class IntentFilterHook {
 
     private static boolean canNotHook(ApplicationInfo ai) {
         boolean prevents = Boolean.TRUE.equals(mPreventPackages.get(ai.packageName));
-        return !prevents || canUseGms(ai);
+        return !prevents || (GmsUtils.GMS.equals(ai.packageName) && canUseGmsForDependency());
     }
 
     private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String action) {
@@ -124,49 +124,31 @@ public class IntentFilterHook {
         return IntentFilterMatchResult.NONE;
     }
 
-    private static boolean canUseGms(ApplicationInfo info) {
-        if (!mPreventPackages.containsKey(GmsUtils.GMS)) {
+    private static boolean canUseGmsForDependency() {
+        int callingUid = Binder.getCallingUid();
+        PackageManager pm = mContext.getPackageManager();
+        String[] callingPackageNames = pm.getPackagesForUid(callingUid);
+        if (callingPackageNames == null || callingPackageNames.length == 0) {
+            // shouldn't happen
+            return false;
+        }
+        String callingPackageName = callingPackageNames[0];
+        if (GmsUtils.isGapps(pm, callingPackageName)) {
+            if (!isSystemPackage(pm, callingPackageName)) {
+                PreventLog.v("allow " + callingPackageName + " to use gms if needed");
+            }
             return true;
         }
-        int uid = info.uid;
-        int callingUid = Binder.getCallingUid();
-        return callingUid == uid || (GmsUtils.GMS.equals(info.packageName) && canUseGms(callingUid, info.uid));
+        return false;
     }
 
-    public static boolean isSystemPackage(PackageManager pm, String packageName) {
+    private static boolean isSystemPackage(PackageManager pm, String packageName) {
         try {
             ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
             return PackageUtils.isSystemPackage(ai.flags);
         } catch (PackageManager.NameNotFoundException e) {
             PreventLog.d("cannot find package " + packageName, e);
             return false;
-        }
-    }
-
-    private static boolean canUseGms(int callingUid, int uid) {
-        PackageManager pm = mContext.getPackageManager();
-        String[] packageNames = pm.getPackagesForUid(callingUid);
-        if (packageNames == null || packageNames.length == 0) {
-            return false;
-        }
-        if (pm.checkSignatures(callingUid, uid) == PackageManager.SIGNATURE_MATCH) {
-            if (!isSystemPackage(pm, packageNames[0])) {
-                PreventLog.v("allow " + packageNames[0] + "(same signature) with gms to use gms if needed");
-            }
-            return true;
-        } else {
-            return packageNames.length == 1 && canUseGms(pm, packageNames[0]);
-        }
-    }
-
-    private static boolean canUseGms(PackageManager pm, String packageName) {
-        if (pm.getLaunchIntentForPackage(packageName) == null || !packageName.startsWith(GmsUtils.GAPPS_PREFIX)) {
-            return false;
-        } else {
-            if (!isSystemPackage(pm, packageName)) {
-                PreventLog.v("allow " + packageName + " to use gms if needed");
-            }
-            return true;
         }
     }
 

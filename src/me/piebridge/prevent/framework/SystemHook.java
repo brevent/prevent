@@ -45,6 +45,7 @@ public final class SystemHook {
     public static final int TIME_IMMEDIATE = 1;
     public static final int TIME_CHECK_SERVICE = 30;
     public static final int TIME_KILL = 1;
+    public static final int TIME_CHECK_DEPENDENCY = 120;
     public static final int FIRST_APPLICATION_UID = 10000;
 
     private static Context mContext;
@@ -235,7 +236,7 @@ public final class SystemHook {
             protected Collection<String> prepareWhiteList() {
                 return prepareServiceWhiteList(packageName);
             }
-        }, GmsUtils.isDependency(mContext, packageName) ? TIME_CHECK_SERVICE + TIME_PREVENT : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        }, GmsUtils.GMS.equals(packageName) ? TIME_CHECK_DEPENDENCY : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         synchronized (CHECKING_LOCK) {
             serviceFutures.put(packageName, serviceFuture);
         }

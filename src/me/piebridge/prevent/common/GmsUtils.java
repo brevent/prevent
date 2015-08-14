@@ -42,17 +42,4 @@ public class GmsUtils {
         }
     }
 
-    public static boolean isDependency(Context context, String packageName) {
-        return GmsUtils.GMS.equals(packageName) || isSystemPackageWithoutLauncher(context.getPackageManager(), packageName);
-    }
-
-    private static boolean isSystemPackageWithoutLauncher(PackageManager pm, String packageName) {
-        try {
-            return PackageUtils.isSystemPackageWithoutLauncher(pm, pm.getApplicationInfo(packageName, 0));
-        } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find package " + packageName, e);
-        }
-        return false;
-    }
-
 }
