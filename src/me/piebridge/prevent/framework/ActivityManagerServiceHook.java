@@ -37,7 +37,7 @@ public class ActivityManagerServiceHook {
                 && ComponentName.class.equals(types[0x5]);
     }
 
-    public static Method getStartProcessLocked(Class<?> activityManagerService) { // NOSONAR
+    public static Method getStartProcessLocked(Class<?> activityManagerService) {
         Method startProcessLocked = null;
         for (Method method : activityManagerService.getDeclaredMethods()) {
             if (!"startProcessLocked".equals(method.getName()) || !"ProcessRecord".equals(method.getReturnType().getSimpleName()) || !isWantedStartProcessLocked(method.getParameterTypes())) {
@@ -59,7 +59,7 @@ public class ActivityManagerServiceHook {
         return null;
     }
 
-    public static boolean hookBeforeStartProcessLocked(Object thiz, Object[] args) { // NOSONAR
+    public static boolean hookBeforeStartProcessLocked(Object thiz, Object[] args) {
         ApplicationInfo info = (ApplicationInfo) args[0x1];
         String hostingType = (String) args[0x4];
         ComponentName hostingName = (ComponentName) args[0x5];
@@ -73,33 +73,22 @@ public class ActivityManagerServiceHook {
             return true;
         }
 
-        Boolean prevents = mPreventPackages.get(packageName);
-        // never block activity
-        if ("activity".equals(hostingType) && Boolean.TRUE.equals(prevents)) {
+        boolean prevents = Boolean.TRUE.equals(mPreventPackages.get(packageName));
+        if ("activity".equals(hostingType) && prevents) {
+            // never block activity
             mPreventPackages.put(packageName, false);
             prevents = false;
         }
 
-        if (!Boolean.TRUE.equals(prevents)) {
-            return true;
-        }
+        return !prevents || hookDependency(hostingName, hostingType, packageName);
+    }
 
-        // always block broadcast
+    private static boolean hookDependency(ComponentName hostingName, String hostingType, String packageName) {
         if ("broadcast".equals(hostingType)) {
-            if (WidgetUtils.isWidget(mContext, hostingName)) {
-                SystemHook.checkRunningServices(packageName);
-                LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
-                return true;
-            } else {
-                SystemHook.checkRunningServices(packageName, SystemHook.TIME_PREVENT < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_PREVENT);
-                SystemHook.forceStopPackageLaterIfPrevent(packageName, SystemHook.TIME_PREVENT);
-                LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
-                return false;
-            }
-        }
-
-        // auto turn off service
-        if ("service".equals(hostingType)) {
+            // always block broadcast
+            return hookBroadcast(hostingName, hostingType, packageName);
+        } else if ("service".equals(hostingType)) {
+            // auto turn off service
             SystemHook.checkRunningServices(packageName);
             LogUtils.logStartProcess(false, packageName, hostingType, hostingName);
         }
@@ -107,7 +96,20 @@ public class ActivityManagerServiceHook {
         return true;
     }
 
-    public static void hookAfterCleanUpRemovedTaskLocked(Object[] args) { // NOSONAR
+    private static boolean hookBroadcast(ComponentName hostingName, String hostingType, String packageName) {
+        if (WidgetUtils.isWidget(mContext, hostingName)) {
+            SystemHook.checkRunningServices(packageName);
+            LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
+            return true;
+        } else {
+            SystemHook.checkRunningServices(packageName, SystemHook.TIME_PREVENT < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_PREVENT);
+            SystemHook.forceStopPackageLaterIfPrevent(packageName, SystemHook.TIME_PREVENT);
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
+            return false;
+        }
+    }
+
+    public static void hookAfterCleanUpRemovedTaskLocked(Object[] args) {
         String packageName = TaskRecordUtils.getPackageName(args[0]);
         if (packageName != null && mPreventPackages != null && mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
