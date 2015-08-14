@@ -47,7 +47,7 @@ public final class SystemHook {
     public static final int TIME_IMMEDIATE = 1;
     public static final int TIME_CHECK_SERVICE = 30;
     public static final int TIME_KILL = 1;
-    public static final int TIME_CHECK_GMS = 60;
+    public static final int TIME_CHECK_GMS = 30;
     public static final int FIRST_APPLICATION_UID = 10000;
 
     private static Context mContext;
