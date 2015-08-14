@@ -27,7 +27,6 @@ public class AlarmManagerServiceUtils {
         intent.putExtra(Intent.EXTRA_CHANGED_PACKAGE_LIST, new String[]{packageName});
         intent.addCategory(PreventIntent.CATEGORY_ALARM);
         intent.addFlags(FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
-        PreventLog.d("send broadcast to release alarm for " + packageName);
         context.sendBroadcast(intent);
     }
 
@@ -39,7 +38,6 @@ public class AlarmManagerServiceUtils {
 
     public static IntentFilterMatchResult hook(Object filter) {
         if (isAlarm(filter)) {
-            PreventLog.d("allow AlarmManagerService$UninstallReceiver to receive release alarm");
             return IntentFilterMatchResult.NONE;
         } else {
             return IntentFilterMatchResult.NO_MATCH;

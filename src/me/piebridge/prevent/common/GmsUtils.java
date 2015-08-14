@@ -26,14 +26,14 @@ public class GmsUtils {
     }
 
     public static void increaseGmsCount(Context context, String packageName) {
-        if (isGapps(context.getPackageManager(), packageName)) {
+        if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
             int gmsCount = gmsCounter.incrementAndGet();
             PreventLog.v("increase gms reference: " + gmsCount + ", packageName: " + packageName);
         }
     }
 
     public static int decreaseGmsCount(Context context, String packageName) {
-        if (isGapps(context.getPackageManager(), packageName)) {
+        if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
             int gmsCount = gmsCounter.decrementAndGet();
             PreventLog.v("decrease reference: " + gmsCount + ", packageName: " + packageName);
             return gmsCount;

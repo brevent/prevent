@@ -125,7 +125,6 @@ public class NotificationManagerServiceUtils {
     public static IntentFilterMatchResult hook(Uri data, Map<String, Boolean> preventPackages) {
         String packageName = data.getSchemeSpecificPart();
         if (packageName != null && preventPackages.containsKey(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
-            PreventLog.d("disallow " + Intent.ACTION_PACKAGE_RESTARTED + " from " + packageName + " to NotificationManagerService");
             return IntentFilterMatchResult.NO_MATCH;
         } else {
             return IntentFilterMatchResult.NONE;
