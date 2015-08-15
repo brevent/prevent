@@ -13,6 +13,8 @@ public class LogUtils {
     private static final String ACTION = "action: ";
     private static final String FILTER = "filter: ";
     private static final String PACKAGE = "package: ";
+    private static final String DISALLOW = "disallow";
+    private static final String ALLOW = "disallow";
 
     private LogUtils() {
 
@@ -70,9 +72,9 @@ public class LogUtils {
         }
     }
 
-    public static void logIntentFilter(boolean disallow, final Object filter, final String action, final String packageName) {
+    private static String buildIntentFilterLog(boolean disallow, final Object filter, final String action, final String packageName) {
         StringBuilder sb = new StringBuilder();
-        sb.append(disallow ? "disallow" : "allow");
+        sb.append(disallow ? DISALLOW : ALLOW);
         sb.append(" ");
         sb.append(ACTION);
         sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
@@ -86,12 +88,20 @@ public class LogUtils {
         sb.append(Binder.getCallingUid());
         sb.append(", callingPid: ");
         sb.append(Binder.getCallingPid());
-        PreventLog.v(sb.toString());
+        return sb.toString();
+    }
+
+    public static void logIntentFilter(boolean disallow, final Object filter, final String action, final String packageName) {
+        PreventLog.v(buildIntentFilterLog(disallow, filter, action, packageName));
+    }
+
+    public static void logIntentFilterWarning(boolean disallow, final Object filter, final String action, final String packageName) {
+        PreventLog.w(buildIntentFilterLog(disallow, filter, action, packageName));
     }
 
     public static void logStartProcess(boolean disallow, final String packageName, final String hostingType, final Object hostingName) {
         StringBuilder sb = new StringBuilder();
-        sb.append(disallow ? "disallow" : "wont disallow");
+        sb.append(disallow ? DISALLOW : ALLOW);
         sb.append(" start ");
         sb.append(packageName);
         sb.append(" for");

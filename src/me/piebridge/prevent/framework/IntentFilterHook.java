@@ -9,6 +9,8 @@ import android.content.pm.PackageParser;
 import android.net.Uri;
 import android.os.Binder;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 
 import me.piebridge.forcestopgb.BuildConfig;
@@ -27,6 +29,15 @@ public class IntentFilterHook {
     private static Context mContext;
     private static AccountWatcher accountWatcher;
     private static Map<String, Boolean> mPreventPackages;
+
+    private static final Collection<String> SAFE_ACTIONS = Arrays.asList(
+            // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
+            // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
+            AppWidgetManager.ACTION_APPWIDGET_UPDATE,
+            // https://developers.google.com/android/reference/com/google/android/gms/gcm/GcmReceiver
+            "com.google.android.c2dm.intent.RECEIVE",
+            "com.google.android.c2dm.intent.REGISTRATION"
+    );
 
     private IntentFilterHook() {
 
@@ -84,12 +95,11 @@ public class IntentFilterHook {
             // we only care about receiver
             return IntentFilterMatchResult.NONE;
         }
-        // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
-        // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
-        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
+        ApplicationInfo ai = owner.applicationInfo;
+        if (SAFE_ACTIONS.contains(action)) {
+            LogUtils.logIntentFilterWarning(true, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         }
-        ApplicationInfo ai = owner.applicationInfo;
         if (canNotHook(filter, action, ai)) {
             return IntentFilterMatchResult.NONE;
         }
@@ -114,8 +124,7 @@ public class IntentFilterHook {
         String packageName = ai.packageName;
         // so does this really exist?
         if (Binder.getCallingUid() != android.os.Process.SYSTEM_UID && !accountWatcher.canNotHook(action, packageName)) {
-            PreventLog.w("disallow filter: " + filter + ", action: " + action + ", package: " + packageName
-                    + ", callingUid: " + Binder.getCallingUid() + ", callingPid: " + Binder.getCallingPid());
+            LogUtils.logIntentFilterWarning(false, filter, action, ai.packageName);
             return IntentFilterMatchResult.NO_MATCH;
         }
         if (BuildConfig.DEBUG) {
