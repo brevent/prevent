@@ -97,7 +97,7 @@ public class IntentFilterHook {
         }
         ApplicationInfo ai = owner.applicationInfo;
         if (SAFE_ACTIONS.contains(action)) {
-            LogUtils.logIntentFilterWarning(true, filter, action, ai.packageName);
+            LogUtils.logIntentFilterWarning(false, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         }
         if (canNotHook(filter, action, ai)) {
