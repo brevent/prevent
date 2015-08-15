@@ -64,7 +64,7 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         PreventLog.d("enabled accounts: " + mEnabledPackages);
     }
 
-    public boolean canHook(String action, String packageName) {
+    public boolean canNotHook(String action, String packageName) {
         return AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action) && mEnabledPackages.contains(packageName);
     }
 

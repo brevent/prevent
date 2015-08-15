@@ -11,6 +11,7 @@ import android.os.Binder;
 
 import java.util.Map;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
@@ -32,16 +33,16 @@ public class IntentFilterHook {
     }
 
     public static void setContext(Context context, Map<String, Boolean> preventPackages) {
-        mContext = context;
         mPreventPackages = preventPackages;
-        accountWatcher = new AccountWatcher(mContext);
+        accountWatcher = new AccountWatcher(context);
+        mContext = context;
     }
 
     public static boolean canHook() {
-        return SystemHook.isSystemHook() && mContext != null && accountWatcher != null;
+        return SystemHook.isSystemHook() && mContext != null;
     }
 
-    public static IntentFilterMatchResult hookBeforeMatch(Object filter, Object[] args) {
+    public static IntentFilterMatchResult hookMatch(Object filter, Object[] args) {
         String action = (String) args[0];
         if (filter instanceof PackageParser.ActivityIntentInfo) {
             return hookActivityIntentInfo((PackageParser.ActivityIntentInfo) filter, action);
@@ -83,61 +84,62 @@ public class IntentFilterHook {
             // we only care about receiver
             return IntentFilterMatchResult.NONE;
         }
-        ApplicationInfo ai = owner.applicationInfo;
-        if (canNotHook(ai)) {
-            return IntentFilterMatchResult.NONE;
-        }
-        if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
-            // FIXME:
-            return IntentFilterMatchResult.NONE;
-        }
         // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
         // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
         if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
             return IntentFilterMatchResult.NONE;
         }
+        ApplicationInfo ai = owner.applicationInfo;
+        if (canNotHook(filter, action, ai)) {
+            return IntentFilterMatchResult.NONE;
+        }
+        if (BuildConfig.DEBUG) {
+            LogUtils.logIntentFilter(true, filter, action, ai.packageName);
+        }
         return IntentFilterMatchResult.NO_MATCH;
     }
 
-    private static boolean canNotHook(ApplicationInfo ai) {
+    private static boolean canNotHook(Object filter, String action, ApplicationInfo ai) {
         boolean prevents = Boolean.TRUE.equals(mPreventPackages.get(ai.packageName));
-        return !prevents || (GmsUtils.GMS.equals(ai.packageName) && canUseGmsForDependency());
+        return !prevents || (GmsUtils.GMS.equals(ai.packageName) && canUseGmsForDependency(filter, action));
     }
 
     private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String action) {
         PackageParser.Service service = filter.service;
         PackageParser.Package owner = service.owner;
         ApplicationInfo ai = owner.applicationInfo;
-        if (canNotHook(ai)) {
+        if (canNotHook(filter, action, ai)) {
             return IntentFilterMatchResult.NONE;
         }
         String packageName = ai.packageName;
-        if (!accountWatcher.canHook(action, packageName)) {
-            return IntentFilterMatchResult.NONE;
-        }
-        if (Binder.getCallingUid() != android.os.Process.SYSTEM_UID) {
-            PreventLog.w("filter: " + filter + ", action: " + action + ", packageName: " + packageName + ", callingUid: " + Binder.getCallingUid()
-                    + ", callingPid: " + Binder.getCallingPid());
+        // so does this really exist?
+        if (Binder.getCallingUid() != android.os.Process.SYSTEM_UID && !accountWatcher.canNotHook(action, packageName)) {
+            PreventLog.w("disallow filter: " + filter + ", action: " + action + ", package: " + packageName
+                    + ", callingUid: " + Binder.getCallingUid() + ", callingPid: " + Binder.getCallingPid());
             return IntentFilterMatchResult.NO_MATCH;
         }
-        LogUtils.logIntentFilter(false, filter, action, packageName);
+        if (BuildConfig.DEBUG) {
+            LogUtils.logIntentFilter(false, filter, action, packageName);
+        }
         return IntentFilterMatchResult.NONE;
     }
 
-    private static boolean canUseGmsForDependency() {
+    private static boolean canUseGmsForDependency(Object filter, String action) {
         int callingUid = Binder.getCallingUid();
         PackageManager pm = mContext.getPackageManager();
         String[] callingPackageNames = pm.getPackagesForUid(callingUid);
-        if (callingPackageNames == null || callingPackageNames.length == 0) {
-            // shouldn't happen
+        if (callingPackageNames == null) {
             return false;
         }
-        String callingPackageName = callingPackageNames[0];
-        if (GmsUtils.isGapps(pm, callingPackageName)) {
-            if (!isSystemPackage(pm, callingPackageName)) {
-                PreventLog.v("allow " + callingPackageName + " to use gms if needed");
+        for (String callingPackageName : callingPackageNames) {
+            if (GmsUtils.isGapps(pm, callingPackageName)) {
+                if (BuildConfig.DEBUG) {
+                    PreventLog.v("allow " + callingPackageName + " to use gms if needed, filter:  " + filter + ", action: " + action);
+                } else if (!isSystemPackage(pm, callingPackageName)) {
+                    PreventLog.d("allow " + callingPackageName + " to use gms if needed, action: " + action);
+                }
+                return true;
             }
-            return true;
         }
         return false;
     }
