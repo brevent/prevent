@@ -63,7 +63,24 @@ public class PreventProvider extends ContentProvider {
         if (packages.isEmpty()) {
             notifyNoPrevents(getContext());
         }
+        eraseFiles(getContext().getExternalCacheDir());
         return cursor;
+    }
+
+    private boolean eraseFiles(File path) {
+        if (path == null) {
+            return false;
+        }
+        if (path.isDirectory()) {
+            String[] files = path.list();
+            if (files != null) {
+                for (String file : files) {
+                    eraseFiles(new File(path, file));
+                }
+            }
+        }
+        path.delete();
+        return true;
     }
 
     private void saveLog(Uri uri, String log) {
