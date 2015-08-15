@@ -86,8 +86,8 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedBridge.hookMethod(match, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if ((int) param.getResult() > 0 && IntentFilterHook.canHook()) {
-                    IntentFilterMatchResult result = IntentFilterHook.hookMatch(param.thisObject, param.args);
+                if (IntentFilterHook.canHook((int) param.getResult())) {
+                    IntentFilterMatchResult result = IntentFilterHook.hookAfterMatch(param.thisObject, param.args);
                     if (!result.isNone()) {
                         param.setResult(result.getResult());
                     }

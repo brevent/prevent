@@ -49,11 +49,11 @@ public class IntentFilterHook {
         mContext = context;
     }
 
-    public static boolean canHook() {
-        return SystemHook.isSystemHook() && mContext != null;
+    public static boolean canHook(int result) {
+        return result > 0 && SystemHook.isSystemHook() && mContext != null;
     }
 
-    public static IntentFilterMatchResult hookMatch(Object filter, Object[] args) {
+    public static IntentFilterMatchResult hookAfterMatch(Object filter, Object[] args) {
         String action = (String) args[0];
         if (filter instanceof PackageParser.ActivityIntentInfo) {
             return hookActivityIntentInfo((PackageParser.ActivityIntentInfo) filter, action);
