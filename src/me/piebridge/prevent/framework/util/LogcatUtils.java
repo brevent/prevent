@@ -30,7 +30,7 @@ public class LogcatUtils {
     public static void logcat(Context context) {
         try {
             PreventLog.d("will execute logcat -d -v theradtime");
-            Process process = Runtime.getRuntime().exec("/system/bin/logcat -d -v threadtime");
+            Process process = Runtime.getRuntime().exec("/system/bin/logcat -d -v time");
             BufferedInputStream stdout = new BufferedInputStream(process.getInputStream());
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
