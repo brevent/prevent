@@ -9,8 +9,6 @@ import android.content.pm.PackageParser;
 import android.net.Uri;
 import android.os.Binder;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 
 import me.piebridge.forcestopgb.BuildConfig;
@@ -29,15 +27,6 @@ public class IntentFilterHook {
     private static Context mContext;
     private static AccountWatcher accountWatcher;
     private static Map<String, Boolean> mPreventPackages;
-
-    private static final Collection<String> SAFE_ACTIONS = Arrays.asList(
-            // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
-            // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
-            AppWidgetManager.ACTION_APPWIDGET_UPDATE,
-            // https://developers.google.com/android/reference/com/google/android/gms/gcm/GcmReceiver
-            "com.google.android.c2dm.intent.RECEIVE",
-            "com.google.android.c2dm.intent.REGISTRATION"
-    );
 
     private IntentFilterHook() {
 
@@ -96,7 +85,7 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         ApplicationInfo ai = owner.applicationInfo;
-        if (SAFE_ACTIONS.contains(action)) {
+        if (isSafeAction(action, ai)) {
             LogUtils.logIntentFilterWarning(false, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         }
@@ -107,6 +96,12 @@ public class IntentFilterHook {
             LogUtils.logIntentFilter(true, filter, action, ai.packageName);
         }
         return IntentFilterMatchResult.NO_MATCH;
+    }
+
+    private static boolean isSafeAction(String action, ApplicationInfo ai) {
+        // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
+        // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
+        return AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(mContext, action);
     }
 
     private static boolean canNotHook(Object filter, String action, ApplicationInfo ai) {
@@ -124,7 +119,7 @@ public class IntentFilterHook {
         String packageName = ai.packageName;
         // so does this really exist?
         if (Binder.getCallingUid() != android.os.Process.SYSTEM_UID && !accountWatcher.canNotHook(action, packageName)) {
-            LogUtils.logIntentFilterWarning(false, filter, action, ai.packageName);
+            LogUtils.logIntentFilterWarning(true, filter, action, ai.packageName);
             return IntentFilterMatchResult.NO_MATCH;
         }
         if (BuildConfig.DEBUG) {

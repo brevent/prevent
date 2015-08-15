@@ -90,7 +90,7 @@ public class ActivityManagerServiceHook {
         } else if ("service".equals(hostingType)) {
             // auto turn off service
             SystemHook.checkRunningServices(packageName);
-            LogUtils.logStartProcess(false, packageName, hostingType, hostingName);
+            LogUtils.logStartProcess(packageName, hostingType, hostingName);
         }
 
         return true;
@@ -99,14 +99,12 @@ public class ActivityManagerServiceHook {
     private static boolean hookBroadcast(ComponentName hostingName, String hostingType, String packageName) {
         if (WidgetUtils.isWidget(mContext, hostingName)) {
             SystemHook.checkRunningServices(packageName);
-            LogUtils.logStartProcess(false, packageName, hostingType + "(widget)", hostingName);
-            return true;
+            LogUtils.logStartProcess(packageName, hostingType + "(widget)", hostingName);
         } else {
             SystemHook.checkRunningServices(packageName, SystemHook.TIME_PREVENT < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_PREVENT);
-            SystemHook.forceStopPackageLaterIfPrevent(packageName, SystemHook.TIME_PREVENT);
-            LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
-            return false;
+            LogUtils.logStartProcess(packageName, hostingType, hostingName);
         }
+        return true;
     }
 
     public static void hookAfterCleanUpRemovedTaskLocked(Object[] args) {

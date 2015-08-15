@@ -14,22 +14,22 @@ public class Process {
       * @hide
       */
     public static final int getUidForPid(int pid) {
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     public static final void killProcess(int pid) {
     }
 
     public static final int myUid() {
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     public static final int myPid() {
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     public static final int myTid() {
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
 }

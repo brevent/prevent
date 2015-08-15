@@ -10,13 +10,12 @@ import android.os.RemoteException;
 public class ActivityThread {
 
     public static Application currentApplication() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     public ApplicationThread getApplicationThread() {
-        return null;
+        throw new UnsupportedOperationException();
     }
-
 
     private abstract class ApplicationThread implements IApplicationThread {
     }

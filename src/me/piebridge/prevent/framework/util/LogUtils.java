@@ -14,7 +14,7 @@ public class LogUtils {
     private static final String FILTER = "filter: ";
     private static final String PACKAGE = "package: ";
     private static final String DISALLOW = "disallow";
-    private static final String ALLOW = "disallow";
+    private static final String ALLOW = "allow";
 
     private LogUtils() {
 
@@ -81,9 +81,6 @@ public class LogUtils {
         sb.append(", ");
         sb.append(FILTER);
         sb.append(filter);
-        sb.append(", ");
-        sb.append(PACKAGE);
-        sb.append(packageName);
         sb.append(", callingUid: ");
         sb.append(Binder.getCallingUid());
         sb.append(", callingPid: ");
@@ -99,9 +96,9 @@ public class LogUtils {
         PreventLog.w(buildIntentFilterLog(disallow, filter, action, packageName));
     }
 
-    public static void logStartProcess(boolean disallow, final String packageName, final String hostingType, final Object hostingName) {
+    public static void logStartProcess(final String packageName, final String hostingType, final Object hostingName) {
         StringBuilder sb = new StringBuilder();
-        sb.append(disallow ? DISALLOW : ALLOW);
+        sb.append(ALLOW);
         sb.append(" start ");
         sb.append(packageName);
         sb.append(" for");
@@ -113,11 +110,7 @@ public class LogUtils {
             sb.append(" ");
             sb.append(hostingName);
         }
-        if (disallow) {
-            PreventLog.v(sb.toString());
-        } else {
-            PreventLog.d(sb.toString());
-        }
+        PreventLog.d(sb.toString());
     }
 
 }
