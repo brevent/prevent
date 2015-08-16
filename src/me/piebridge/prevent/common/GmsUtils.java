@@ -1,10 +1,8 @@
 package me.piebridge.prevent.common;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.*;
-import android.os.Process;
+import android.os.Binder;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

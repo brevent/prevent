@@ -79,6 +79,9 @@ public class LogUtils {
         sb.append(ACTION);
         sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
         sb.append(", ");
+        sb.append(PACKAGE);
+        sb.append(packageName);
+        sb.append(", ");
         sb.append(FILTER);
         sb.append(filter);
         sb.append(", callingUid: ");

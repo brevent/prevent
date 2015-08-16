@@ -85,7 +85,7 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         ApplicationInfo ai = owner.applicationInfo;
-        if (isSafeAction(action, ai)) {
+        if (isSafeAction(action)) {
             LogUtils.logIntentFilterWarning(false, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         }
@@ -98,7 +98,7 @@ public class IntentFilterHook {
         return IntentFilterMatchResult.NO_MATCH;
     }
 
-    private static boolean isSafeAction(String action, ApplicationInfo ai) {
+    private static boolean isSafeAction(String action) {
         // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
         // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
         return AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(mContext, action);
