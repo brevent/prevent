@@ -92,9 +92,7 @@ public class IntentFilterHook {
         if (canNotHook(filter, action, ai)) {
             return IntentFilterMatchResult.NONE;
         }
-        if (BuildConfig.DEBUG) {
-            LogUtils.logIntentFilter(true, filter, action, ai.packageName);
-        }
+        LogUtils.logIntentFilter(true, filter, action, ai.packageName);
         return IntentFilterMatchResult.NO_MATCH;
     }
 
@@ -117,14 +115,12 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         String packageName = ai.packageName;
-        // so does this really exist?
         if (Binder.getCallingUid() != android.os.Process.SYSTEM_UID && !accountWatcher.canNotHook(action, packageName)) {
+            // for call from non-system, accept account
             LogUtils.logIntentFilterWarning(true, filter, action, ai.packageName);
             return IntentFilterMatchResult.NO_MATCH;
         }
-        if (BuildConfig.DEBUG) {
-            LogUtils.logIntentFilter(false, filter, action, packageName);
-        }
+        LogUtils.logIntentFilter(false, filter, action, packageName);
         return IntentFilterMatchResult.NONE;
     }
 
