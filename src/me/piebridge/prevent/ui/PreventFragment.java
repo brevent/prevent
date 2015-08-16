@@ -48,6 +48,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 
@@ -527,11 +528,17 @@ public abstract class PreventFragment extends ListFragment {
             private boolean match(String query, AppInfo appInfo) {
                 return contains(query, appInfo)
                         || queryForThirdParty(query, appInfo)
-                        || containsExtra(query, appInfo);
+                        || queryExtra(query, appInfo)
+                        || queryCombined(query, appInfo);
             }
 
-            private boolean containsExtra(String query, AppInfo appInfo) {
+            private boolean queryCombined(String query, AppInfo appInfo) {
+                return "-sg".equals(query) && (appInfo.isSystem() && !GmsUtils.isGapps(mActivity.getPackageManager(), appInfo.packageName));
+            }
+
+            private boolean queryExtra(String query, AppInfo appInfo) {
                 return queryForSystem(query, appInfo)
+                        || queryForGapps(query, appInfo)
                         || queryForRunning(query, appInfo)
                         || queryForEnabled(query, appInfo);
             }
@@ -546,6 +553,10 @@ public abstract class PreventFragment extends ListFragment {
 
             private boolean queryForSystem(String query, AppInfo appInfo) {
                 return "-s".equals(query) && appInfo.isSystem();
+            }
+
+            private boolean queryForGapps(String query, AppInfo appInfo) {
+                return "-g".equals(query) && GmsUtils.isGapps(mActivity.getPackageManager(), appInfo.packageName);
             }
 
             private boolean queryForRunning(String query, AppInfo appInfo) {

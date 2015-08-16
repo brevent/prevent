@@ -541,7 +541,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private void refreshIfNeeded() {
         int position = mPager.getCurrentItem();
-        for (int item = mPageTitles.length - 1; item >= 0; --item) {
+        int size = mPager.getAdapter().getCount();
+        for (int item = 0; item < size; ++item) {
             if (item == position) {
                 refresh(item, false);
             } else {
@@ -551,12 +552,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private boolean refresh(boolean force) {
-        for (int item = mPageTitles.length - 1; item >= 0; --item) {
-            if (!refresh(item, force)) {
-                return false;
+        boolean showed = false;
+        int size = mPager.getAdapter().getCount();
+        for (int item = 0; item < size; ++item) {
+            if (refresh(item, force)) {
+                showed = true;
             }
         }
-        return true;
+        return showed;
     }
 
     private class HookReceiver extends BroadcastReceiver {

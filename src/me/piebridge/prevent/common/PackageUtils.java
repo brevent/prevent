@@ -5,6 +5,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 
+import me.piebridge.prevent.framework.SystemHook;
+
 /**
  * Created by thom on 15/7/23.
  */
@@ -18,12 +20,18 @@ public class PackageUtils {
         return (flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
     }
 
+    public static boolean isSystemSignaturePackage(PackageManager pm, ApplicationInfo appInfo) {
+        return pm.checkSignatures("android", appInfo.packageName) != PackageManager.SIGNATURE_NO_MATCH;
+    }
+
     public static boolean isSystemPackageWithoutLauncher(PackageManager pm, ApplicationInfo appInfo) {
         return isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(appInfo.packageName) == null;
     }
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
-        return !isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName);
+        return appInfo.uid >= SystemHook.FIRST_APPLICATION_UID
+                && !isSystemSignaturePackage(pm, appInfo)
+                && (!isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName));
     }
 
     public static String getPackageName(Intent intent) {
