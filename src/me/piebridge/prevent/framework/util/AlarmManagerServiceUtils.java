@@ -16,8 +16,6 @@ public class AlarmManagerServiceUtils {
 
     private static Object cachedFilter;
 
-    public static final int FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT = 0x04000000;
-
     private AlarmManagerServiceUtils() {
 
     }
@@ -26,7 +24,7 @@ public class AlarmManagerServiceUtils {
         final Intent intent = new Intent(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE, null);
         intent.putExtra(Intent.EXTRA_CHANGED_PACKAGE_LIST, new String[]{packageName});
         intent.addCategory(PreventIntent.CATEGORY_ALARM);
-        intent.addFlags(FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+        intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
         context.sendBroadcast(intent);
     }
 
