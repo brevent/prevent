@@ -15,15 +15,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.prevent.common.GmsUtils;
+
 /**
  * Created by thom on 15/7/31.
  */
-public class WidgetUtils {
+public class SafeActionUtils {
 
     private static final Object LOCK = new Object();
     private static Map<String, Set<ComponentName>> widgets = new HashMap<String, Set<ComponentName>>();
 
-    private WidgetUtils() {
+    private SafeActionUtils() {
 
     }
 
@@ -35,7 +37,7 @@ public class WidgetUtils {
         }
     }
 
-    public static boolean addWidget(ComponentName cn) {
+    private static boolean addSafeAction(ComponentName cn) {
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
@@ -51,7 +53,7 @@ public class WidgetUtils {
         return true;
     }
 
-    public static boolean isWidget(ComponentName cn) {
+    private static boolean isSafeAction(ComponentName cn) {
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
@@ -60,10 +62,11 @@ public class WidgetUtils {
         return components != null && components.contains(cn);
     }
 
-    public static boolean isWidget(Context context, ComponentName cn) {
-        if (isWidget(cn)) {
+    public static boolean isSafeAction(Context context, ComponentName cn) {
+        if (isSafeAction(cn)) {
             return true;
         }
+        // does we really need ?
         PackageManager packageManager = context.getPackageManager();
         Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
         intent.setPackage(cn.getPackageName());
@@ -75,9 +78,19 @@ public class WidgetUtils {
                 continue;
             }
             if (new ComponentName(ai.packageName, ai.name).equals(cn)) {
-                addWidget(cn);
+                addSafeAction(cn);
                 return true;
             }
+        }
+        return false;
+    }
+
+    public static boolean isSafeAction(Context context, String action, ComponentName cn) {
+        // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
+        // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
+        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(context, action)) {
+            addSafeAction(cn);
+            return true;
         }
         return false;
     }

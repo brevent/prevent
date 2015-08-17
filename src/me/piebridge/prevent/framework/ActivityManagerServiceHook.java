@@ -10,7 +10,7 @@ import java.util.Map;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
-import me.piebridge.prevent.framework.util.WidgetUtils;
+import me.piebridge.prevent.framework.util.SafeActionUtils;
 
 /**
  * Created by thom on 15/8/11.
@@ -102,14 +102,15 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookBroadcast(ComponentName hostingName, String hostingType, String packageName) {
-        if (WidgetUtils.isWidget(mContext, hostingName)) {
+        if (SafeActionUtils.isSafeAction(mContext, hostingName)) {
             SystemHook.checkRunningServices(packageName);
-            LogUtils.logStartProcess(packageName, hostingType + "(widget)", hostingName);
+            LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);
+            return true;
         } else {
             SystemHook.checkRunningServices(packageName, SystemHook.TIME_PREVENT < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_PREVENT);
             LogUtils.logStartProcess(packageName, hostingType, hostingName);
+            return false;
         }
-        return true;
     }
 
     public static void hookAfterCleanUpRemovedTaskLocked(Object[] args) {

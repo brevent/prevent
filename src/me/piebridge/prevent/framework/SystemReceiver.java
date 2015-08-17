@@ -23,7 +23,7 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
-import me.piebridge.prevent.framework.util.WidgetUtils;
+import me.piebridge.prevent.framework.util.SafeActionUtils;
 
 /**
  * Created by thom on 15/7/25.
@@ -106,9 +106,9 @@ public class SystemReceiver extends BroadcastReceiver {
             handlePackageRestarted("PACKAGE_RESTARTED", packageName);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
             IntentFilterHook.onPackageAdded();
-            WidgetUtils.onPackageChanged(packageName);
+            SafeActionUtils.onPackageChanged(packageName);
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
-            WidgetUtils.onPackageChanged(packageName);
+            SafeActionUtils.onPackageChanged(packageName);
         }
     }
 
