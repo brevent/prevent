@@ -36,6 +36,10 @@ public class GmsUtils {
         }
     }
 
+    public static int getGmsCount() {
+        return gmsCounter.get();
+    }
+
     public static int decreaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
             int gmsCount = gmsCounter.decrementAndGet();
