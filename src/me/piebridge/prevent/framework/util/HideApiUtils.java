@@ -32,7 +32,7 @@ public class HideApiUtils {
 
     public static void forceStopPackage(Context context, String packageName) {
         try {
-            ActivityManager activityManager = (ActivityManager) ServiceManager.getService(Context.ACTIVITY_SERVICE);
+            ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
             activityManager.forceStopPackage(packageName);
             AlarmManagerServiceUtils.releaseAlarm(context, packageName);
         } catch (Throwable t) { // NOSONAR
