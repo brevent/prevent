@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
 import me.piebridge.prevent.framework.util.WidgetUtils;
@@ -80,6 +81,9 @@ public class ActivityManagerServiceHook {
             prevents = false;
         }
 
+        if ("activity".equals(hostingType) || !GmsUtils.GMS.equals(packageName)) {
+            SystemHook.updateRunningGapps(packageName, true);
+        }
         return !prevents || hookDependency(hostingName, hostingType, packageName);
     }
 
@@ -88,6 +92,10 @@ public class ActivityManagerServiceHook {
             // always block broadcast
             return hookBroadcast(hostingName, hostingType, packageName);
         } else if ("service".equals(hostingType)) {
+            if (!SystemHook.hasRunningGapps() && GmsUtils.GMS.equals(packageName)) {
+                LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
+                return false;
+            }
             // auto turn off service
             SystemHook.checkRunningServices(packageName);
             LogUtils.logStartProcess(packageName, hostingType, hostingName);

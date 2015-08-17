@@ -102,8 +102,12 @@ public class LogUtils {
     }
 
     public static void logStartProcess(final String packageName, final String hostingType, final Object hostingName) {
+        logStartProcess(false, packageName, hostingType, hostingName);
+    }
+
+    public static void logStartProcess(boolean disallow, final String packageName, final String hostingType, final Object hostingName) {
         StringBuilder sb = new StringBuilder();
-        sb.append(ALLOW);
+        sb.append(disallow ? DISALLOW : ALLOW);
         sb.append(" start ");
         sb.append(packageName);
         sb.append(" for");
