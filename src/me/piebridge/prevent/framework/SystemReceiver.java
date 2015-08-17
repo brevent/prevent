@@ -23,6 +23,7 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
+import me.piebridge.prevent.framework.util.WidgetUtils;
 
 /**
  * Created by thom on 15/7/25.
@@ -51,7 +52,8 @@ public class SystemReceiver extends BroadcastReceiver {
     );
     private static final Collection<String> PACKAGE_ACTIONS = Arrays.asList(
             Intent.ACTION_PACKAGE_RESTARTED,
-            Intent.ACTION_PACKAGE_ADDED
+            Intent.ACTION_PACKAGE_ADDED,
+            Intent.ACTION_PACKAGE_REMOVED
     );
 
     public SystemReceiver(Map<String, Boolean> preventPackages) {
@@ -104,6 +106,9 @@ public class SystemReceiver extends BroadcastReceiver {
             handlePackageRestarted("PACKAGE_RESTARTED", packageName);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
             IntentFilterHook.onPackageAdded();
+            WidgetUtils.onPackageChanged(packageName);
+        } else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
+            WidgetUtils.onPackageChanged(packageName);
         }
     }
 

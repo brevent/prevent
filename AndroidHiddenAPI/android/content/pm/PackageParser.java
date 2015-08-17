@@ -20,6 +20,7 @@ public class PackageParser {
 
     public static class Component {
         public Package owner;
+        public String className;
     }
 
     public static class Activity extends Component {

@@ -1,6 +1,7 @@
 package me.piebridge.prevent.framework;
 
 import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -18,6 +19,7 @@ import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
+import me.piebridge.prevent.framework.util.WidgetUtils;
 
 /**
  * Created by thom on 15/8/11.
@@ -85,7 +87,7 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         ApplicationInfo ai = owner.applicationInfo;
-        if (isSafeAction(action)) {
+        if (isSafeAction(action, new ComponentName(ai.packageName, activity.className))) {
             LogUtils.logIntentFilterWarning(false, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         }
@@ -96,10 +98,16 @@ public class IntentFilterHook {
         return IntentFilterMatchResult.NO_MATCH;
     }
 
-    private static boolean isSafeAction(String action) {
+    private static boolean isSafeAction(String action, ComponentName cn) {
         // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
         // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
-        return AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(mContext, action);
+        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
+            WidgetUtils.addWidget(cn);
+            return true;
+        } else if (GmsUtils.isGcmAction(mContext, action)) {
+            return true;
+        }
+        return false;
     }
 
     private static boolean canNotHook(Object filter, String action, ApplicationInfo ai) {
