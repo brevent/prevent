@@ -119,7 +119,11 @@ public class LogUtils {
             sb.append(" ");
             sb.append(hostingName);
         }
-        PreventLog.d(sb.toString());
+        if (disallow) {
+            PreventLog.d(sb.toString());
+        } else {
+            PreventLog.i(sb.toString());
+        }
     }
 
 }
