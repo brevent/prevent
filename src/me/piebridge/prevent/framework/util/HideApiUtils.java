@@ -3,7 +3,6 @@ package me.piebridge.prevent.framework.util;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Process;
-import android.os.ServiceManager;
 
 import java.lang.reflect.Field;
 
