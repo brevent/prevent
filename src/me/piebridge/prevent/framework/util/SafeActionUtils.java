@@ -53,7 +53,7 @@ public class SafeActionUtils {
         return true;
     }
 
-    private static boolean isSafeAction(ComponentName cn) {
+    public static boolean isSafeComponent(ComponentName cn) {
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
@@ -63,7 +63,7 @@ public class SafeActionUtils {
     }
 
     public static boolean isSafeAction(Context context, ComponentName cn) {
-        if (isSafeAction(cn)) {
+        if (isSafeComponent(cn)) {
             return true;
         }
         // does we really need ?

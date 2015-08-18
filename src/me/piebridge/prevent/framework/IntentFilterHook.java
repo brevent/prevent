@@ -86,15 +86,21 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         ApplicationInfo ai = owner.applicationInfo;
-        if (SafeActionUtils.isSafeAction(mContext, action, new ComponentName(ai.packageName, activity.className))) {
+        ComponentName cn = new ComponentName(ai.packageName, activity.className);
+        if (SafeActionUtils.isSafeAction(mContext, action, cn)) {
             LogUtils.logIntentFilterWarning(false, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         }
         if (canNotHook(filter, action, ai)) {
             return IntentFilterMatchResult.NONE;
         }
-        LogUtils.logIntentFilter(true, filter, action, ai.packageName);
-        return IntentFilterMatchResult.NO_MATCH;
+        if (SafeActionUtils.isSafeComponent(cn)) {
+            LogUtils.logIntentFilter(false, filter, action, ai.packageName);
+            return IntentFilterMatchResult.NONE;
+        } else {
+            LogUtils.logIntentFilter(true, filter, action, ai.packageName);
+            return IntentFilterMatchResult.NO_MATCH;
+        }
     }
 
     private static boolean canNotHook(Object filter, String action, ApplicationInfo ai) {
