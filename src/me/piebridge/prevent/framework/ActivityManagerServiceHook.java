@@ -107,7 +107,6 @@ public class ActivityManagerServiceHook {
             LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);
             return true;
         } else {
-            SystemHook.checkRunningServices(packageName, SystemHook.TIME_PREVENT < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_PREVENT);
             LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
             return false;
         }

@@ -43,7 +43,6 @@ public final class SystemHook {
 
     public static final int TIME_SUICIDE = 6;
     public static final int TIME_DESTROY = 6;
-    public static final int TIME_PREVENT = 30;
     public static final int TIME_IMMEDIATE = 1;
     public static final int TIME_CHECK_SERVICE = 30;
     public static final int TIME_KILL = 1;
