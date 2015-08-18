@@ -24,14 +24,13 @@ public class PackageUtils {
         return pm.checkSignatures("android", appInfo.packageName) != PackageManager.SIGNATURE_NO_MATCH;
     }
 
-    public static boolean isSystemPackageWithoutLauncher(PackageManager pm, ApplicationInfo appInfo) {
+    private static boolean isSystemPackageWithoutLauncher(PackageManager pm, ApplicationInfo appInfo) {
         return isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(appInfo.packageName) == null;
     }
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
         return appInfo.uid >= SystemHook.FIRST_APPLICATION_UID
-                && !isSystemSignaturePackage(pm, appInfo)
-                && (!isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName));
+                && !isSystemSignaturePackage(pm, appInfo);
     }
 
     public static String getPackageName(Intent intent) {
