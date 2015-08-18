@@ -95,7 +95,7 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         if (SafeActionUtils.isSafeComponent(cn)) {
-            LogUtils.logIntentFilter(false, filter, action, ai.packageName);
+            LogUtils.logIntentFilterWarning(false, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else {
             LogUtils.logIntentFilter(true, filter, action, ai.packageName);
