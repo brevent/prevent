@@ -402,6 +402,10 @@ public final class SystemHook {
         return false;
     }
 
+    public static SystemReceiver getSystemReceiver() {
+        return systemReceiver;
+    }
+
     private static class RetrievingTask implements Runnable {
         @Override
         public void run() {

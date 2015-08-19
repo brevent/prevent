@@ -92,7 +92,7 @@ public class SafeActionUtils {
             addSafeAction(cn);
             return true;
         }
-        return false;
+        return isSafeComponent(cn);
     }
 
 }

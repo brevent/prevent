@@ -77,6 +77,15 @@ public class IntentFilterHook {
         return IntentFilterMatchResult.NONE;
     }
 
+    private static IntentFilterMatchResult allowSafeIntent(PackageParser.ActivityIntentInfo filter, String action, String packageName) {
+        LogUtils.logIntentFilterWarning(false, filter, action, packageName);
+        if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+            PreventLog.w("allow " + packageName + " for next service/broadcast");
+            mPreventPackages.put(packageName, false);
+        }
+        return IntentFilterMatchResult.NONE;
+    }
+
     private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String action) {
         // for receiver, we don't block for activity
         PackageParser.Activity activity = filter.activity;
@@ -89,19 +98,13 @@ public class IntentFilterHook {
         String packageName = ai.packageName;
         ComponentName cn = new ComponentName(packageName, activity.className);
         if (SafeActionUtils.isSafeAction(mContext, action, cn)) {
-            LogUtils.logIntentFilterWarning(false, filter, action, packageName);
-            return IntentFilterMatchResult.NONE;
+            return allowSafeIntent(filter, action, packageName);
         }
         if (canNotHook(filter, action, ai)) {
             return IntentFilterMatchResult.NONE;
         }
-        if (SafeActionUtils.isSafeComponent(cn)) {
-            LogUtils.logIntentFilterWarning(false, filter, action, packageName);
-            return IntentFilterMatchResult.NONE;
-        } else {
-            LogUtils.logIntentFilter(true, filter, action, packageName);
-            return IntentFilterMatchResult.NO_MATCH;
-        }
+        LogUtils.logIntentFilter(true, filter, action, packageName);
+        return IntentFilterMatchResult.NO_MATCH;
     }
 
     private static boolean canNotHook(Object filter, String action, ApplicationInfo ai) {
