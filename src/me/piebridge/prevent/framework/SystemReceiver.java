@@ -184,6 +184,7 @@ public class SystemReceiver extends BroadcastReceiver {
         if (count > 0) {
             return;
         }
+        SystemHook.updateRunningGapps(packageName, false);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
             LogUtils.logForceStop(action, packageName, "if needed in " + SystemHook.TIME_DESTROY + "s");
@@ -196,6 +197,7 @@ public class SystemReceiver extends BroadcastReceiver {
 
     private void handleDestroy(String action, String packageName) {
         LogUtils.logRequest(action, packageName, -1);
+        SystemHook.updateRunningGapps(packageName, false);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
             LogUtils.logForceStop(action, packageName, "destroy in " + SystemHook.TIME_SUICIDE + "s");
@@ -221,6 +223,7 @@ public class SystemReceiver extends BroadcastReceiver {
         if (!shouldStop(packageName, pid)) {
             return;
         }
+        SystemHook.updateRunningGapps(packageName, false);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
             LogUtils.logForceStop(action, packageName, "force in " + SystemHook.TIME_IMMEDIATE + "s" + ", uid: " + uid);
@@ -364,9 +367,9 @@ public class SystemReceiver extends BroadcastReceiver {
     private void handlePackageRestarted(String action, String packageName) {
         LogUtils.logRequest(action, packageName, -1);
         packageCounters.remove(packageName);
+        SystemHook.updateRunningGapps(packageName, false);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
-            SystemHook.updateRunningGapps(packageName, false);
         }
         SystemHook.killNoFather();
     }

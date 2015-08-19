@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -429,7 +430,11 @@ public final class SystemHook {
     }
 
     public static void updateRunningGapps(String packageName, boolean added) {
-        if (mContext != null && GmsUtils.isGapps(mContext.getPackageManager(), packageName)) {
+        if (mContext == null || packageName == null) {
+            return;
+        }
+        PackageManager pm = mContext.getPackageManager();
+        if (GmsUtils.isGapps(pm, packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
             if (added) {
                 runningGapps.add(packageName);
             } else {
