@@ -23,7 +23,7 @@ import me.piebridge.prevent.common.GmsUtils;
 public class SafeActionUtils {
 
     private static final Object LOCK = new Object();
-    private static Map<String, Set<ComponentName>> widgets = new HashMap<String, Set<ComponentName>>();
+    private static Map<String, Set<ComponentName>> safeActions = new HashMap<String, Set<ComponentName>>();
 
     private SafeActionUtils() {
 
@@ -32,7 +32,7 @@ public class SafeActionUtils {
     public static void onPackageChanged(String packageName) {
         if (packageName != null) {
             synchronized (LOCK) {
-                widgets.remove(packageName);
+                safeActions.remove(packageName);
             }
         }
     }
@@ -42,11 +42,11 @@ public class SafeActionUtils {
         if (packageName == null) {
             return false;
         }
-        Set<ComponentName> components = widgets.get(packageName);
+        Set<ComponentName> components = safeActions.get(packageName);
         if (components == null) {
             synchronized (LOCK) {
-                widgets.put(packageName, new HashSet<ComponentName>());
-                components = widgets.get(packageName);
+                safeActions.put(packageName, new HashSet<ComponentName>());
+                components = safeActions.get(packageName);
             }
         }
         components.add(cn);
@@ -58,15 +58,15 @@ public class SafeActionUtils {
         if (packageName == null) {
             return false;
         }
-        Set<ComponentName> components = widgets.get(packageName);
+        Set<ComponentName> components = safeActions.get(packageName);
         return components != null && components.contains(cn);
     }
 
-    public static boolean isSafeAction(Context context, ComponentName cn) {
-        if (isSafeComponent(cn)) {
-            return true;
-        }
-        // does we really need ?
+    public static boolean isSafeBroadcast(Context context, ComponentName cn) {
+        return isSafeComponent(cn) || isWidget(context, cn);
+    }
+
+    private static boolean isWidget(Context context, ComponentName cn) {
         PackageManager packageManager = context.getPackageManager();
         Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
         intent.setPackage(cn.getPackageName());
@@ -74,9 +74,6 @@ public class SafeActionUtils {
         final int size = broadcastReceivers == null ? 0 : broadcastReceivers.size();
         for (int i = 0; i < size; ++i) {
             ActivityInfo ai = broadcastReceivers.get(i).activityInfo;
-            if ((ai.applicationInfo.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) != 0) {
-                continue;
-            }
             if (new ComponentName(ai.packageName, ai.name).equals(cn)) {
                 addSafeAction(cn);
                 return true;
@@ -86,13 +83,13 @@ public class SafeActionUtils {
     }
 
     public static boolean isSafeAction(Context context, String action, ComponentName cn) {
-        // http://developer.android.com/guide/topics/appwidgets/index.html#Manifest
         // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
         if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(context, action)) {
             addSafeAction(cn);
             return true;
+        } else {
+            return false;
         }
-        return isSafeComponent(cn);
     }
 
 }

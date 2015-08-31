@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.prevent.framework.PreventLog;
@@ -15,10 +17,11 @@ import me.piebridge.prevent.framework.SystemHook;
 public class GmsUtils {
 
     private static int gmsUid;
-    private static AtomicInteger gmsCounter = new AtomicInteger();
     public static final String GMS = "com.google.android.gms";
     public static final String GAPPS_PREFIX = "com.google.android.";
-    public static final String ACTION_RECEIVE = "com.google.android.c2dm.intent.RECEIVE";
+    private static final AtomicInteger GMS_COUNTER = new AtomicInteger();
+    private static Collection<String> GCM_ACTIONS = Arrays.asList("com.google.android.c2dm.intent.RECEIVE",
+            "com.google.android.c2dm.intent.REGISTRATION");
 
     private GmsUtils() {
 
@@ -31,27 +34,27 @@ public class GmsUtils {
 
     public static void increaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
-            int gmsCount = gmsCounter.incrementAndGet();
+            int gmsCount = GMS_COUNTER.incrementAndGet();
             PreventLog.v("increase gms reference: " + gmsCount + ", packageName: " + packageName);
         }
     }
 
     public static int getGmsCount() {
-        return gmsCounter.get();
+        return GMS_COUNTER.get();
     }
 
     public static int decreaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
-            int gmsCount = gmsCounter.decrementAndGet();
+            int gmsCount = GMS_COUNTER.decrementAndGet();
             PreventLog.v("decrease reference: " + gmsCount + ", packageName: " + packageName);
             return gmsCount;
         } else {
-            return gmsCounter.get();
+            return GMS_COUNTER.get();
         }
     }
 
     public static boolean isGcmAction(Context context, String action) {
-        if (GmsUtils.ACTION_RECEIVE.equals(action)) {
+        if (GCM_ACTIONS.contains(action)) {
             int callingUid = Binder.getCallingUid();
             if (callingUid == gmsUid || callingUid < SystemHook.FIRST_APPLICATION_UID) {
                 return true;

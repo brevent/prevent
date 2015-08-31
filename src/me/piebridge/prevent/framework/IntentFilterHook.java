@@ -1,5 +1,6 @@
 package me.piebridge.prevent.framework;
 
+import android.app.AppGlobals;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +20,7 @@ import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
+import me.piebridge.prevent.xposed.XposedMod;
 
 /**
  * Created by thom on 15/8/11.
@@ -46,9 +48,9 @@ public class IntentFilterHook {
     public static IntentFilterMatchResult hookAfterMatch(Object filter, Object[] args) {
         String action = (String) args[0];
         if (filter instanceof PackageParser.ActivityIntentInfo) {
-            return hookActivityIntentInfo((PackageParser.ActivityIntentInfo) filter, action);
+            return hookActivityIntentInfo((PackageParser.ActivityIntentInfo) filter, XposedMod.BROADCAST_SENDER.get(), action);
         } else if (filter instanceof PackageParser.ServiceIntentInfo) {
-            return hookServiceIntentInfo((PackageParser.ServiceIntentInfo) filter, action);
+            return hookServiceIntentInfo((PackageParser.ServiceIntentInfo) filter, XposedMod.SERVICE_SENDER.get(), action);
         } else if (BroadcastFilterUtils.isBroadcastFilter(filter)) {
             return hookBroadcastFilter(filter, args);
         }
@@ -86,7 +88,7 @@ public class IntentFilterHook {
         return IntentFilterMatchResult.NONE;
     }
 
-    private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String action) {
+    private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
         // for receiver, we don't block for activity
         PackageParser.Activity activity = filter.activity;
         PackageParser.Package owner = activity.owner;
@@ -103,6 +105,10 @@ public class IntentFilterHook {
         if (canNotHook(filter, action, ai)) {
             return IntentFilterMatchResult.NONE;
         }
+        if (sender == null && !AppGlobals.getPackageManager().isProtectedBroadcast(action)) {
+            LogUtils.logIntentFilterWarning(false, filter, action, packageName);
+            return allowSafeIntent(filter, action, packageName);
+        }
         LogUtils.logIntentFilter(true, filter, action, packageName);
         return IntentFilterMatchResult.NO_MATCH;
     }
@@ -112,7 +118,7 @@ public class IntentFilterHook {
         return !prevents || (GmsUtils.GMS.equals(ai.packageName) && canUseGmsForDependency(filter, action));
     }
 
-    private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String action) {
+    private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
         PackageParser.Service service = filter.service;
         PackageParser.Package owner = service.owner;
         ApplicationInfo ai = owner.applicationInfo;
@@ -120,13 +126,19 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         String packageName = ai.packageName;
-        if (Binder.getCallingUid() != android.os.Process.SYSTEM_UID && !accountWatcher.canNotHook(action, packageName)) {
+        PreventLog.v("action: " + action + ", filter: " + filter + ", packageName: " + packageName + ", sender: " + sender);
+        if (!isSystemOrSelf(packageName, sender) && !accountWatcher.canNotHook(action, packageName)) {
             // for call from non-system, accept account
             LogUtils.logIntentFilterWarning(true, filter, action, ai.packageName);
             return IntentFilterMatchResult.NO_MATCH;
         }
         LogUtils.logIntentFilter(false, filter, action, packageName);
         return IntentFilterMatchResult.NONE;
+    }
+
+    private static boolean isSystemOrSelf(String packageName, String sender) {
+        return (sender == null && Binder.getCallingUid() == android.os.Process.SYSTEM_UID) ||
+                (sender != null && packageName.equals(sender));
     }
 
     private static boolean canUseGmsForDependency(Object filter, String action) {

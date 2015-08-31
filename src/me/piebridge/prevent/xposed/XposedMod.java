@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ActivityThread;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageParser;
 import android.net.Uri;
 import android.os.Build;
@@ -17,7 +18,6 @@ import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
-
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.ActivityHook;
@@ -26,10 +26,15 @@ import me.piebridge.prevent.framework.IntentFilterHook;
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.framework.SystemHook;
+import me.piebridge.prevent.framework.util.ProcessRecordUtils;
 
 public class XposedMod implements IXposedHookZygoteInit {
 
     private static boolean systemHooked;
+
+    public static final ThreadLocal<String> BROADCAST_SENDER = new ThreadLocal<String>();
+
+    public static final ThreadLocal<String> SERVICE_SENDER = new ThreadLocal<String>();
 
     @Override
     public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
@@ -68,6 +73,38 @@ public class XposedMod implements IXposedHookZygoteInit {
                 if (!ActivityManagerServiceHook.hookBeforeStartProcessLocked(param.thisObject, param.args)) {
                     param.setResult(null);
                 }
+            }
+        });
+
+        XposedBridge.hookAllMethods(activityManagerService, "broadcastIntent", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                Object caller = param.args[0];
+                Object callerApp = XposedHelpers.callMethod(param.thisObject, "getRecordForAppLocked", caller);
+                ApplicationInfo info = ProcessRecordUtils.getInfo(callerApp);
+                String sender = info == null ? "" : info.packageName;
+                BROADCAST_SENDER.set(sender);
+            }
+
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                BROADCAST_SENDER.remove();
+            }
+        });
+
+        XposedBridge.hookAllMethods(activityManagerService, "startService", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                Object caller = param.args[0];
+                Object callerApp = XposedHelpers.callMethod(param.thisObject, "getRecordForAppLocked", caller);
+                ApplicationInfo info = ProcessRecordUtils.getInfo(callerApp);
+                String sender = info == null ? "" : info.packageName;
+                SERVICE_SENDER.set(sender);
+            }
+
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                SERVICE_SENDER.remove();
             }
         });
 

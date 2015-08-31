@@ -364,7 +364,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        if (positionOffset == 0) {
+        if (Float.floatToRawIntBits(positionOffset) == 0) {
             checkSelection(position);
         }
     }

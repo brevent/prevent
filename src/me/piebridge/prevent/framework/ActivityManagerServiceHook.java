@@ -116,7 +116,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookBroadcast(ComponentName hostingName, String hostingType, String packageName) {
-        if (SafeActionUtils.isSafeAction(mContext, hostingName)) {
+        if (SafeActionUtils.isSafeBroadcast(mContext, hostingName)) {
             SystemHook.checkRunningServices(packageName);
             LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);
             return true;
