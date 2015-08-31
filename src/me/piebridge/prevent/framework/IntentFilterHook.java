@@ -10,7 +10,11 @@ import android.content.pm.PackageParser;
 import android.net.Uri;
 import android.os.Binder;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
@@ -30,6 +34,9 @@ public class IntentFilterHook {
     private static Context mContext;
     private static AccountWatcher accountWatcher;
     private static Map<String, Boolean> mPreventPackages;
+    private static ScheduledThreadPoolExecutor checkingExecutor = new ScheduledThreadPoolExecutor(0x2);
+    private static final Object CHECKING_LOCK = new Object();
+    private static Map<String, ScheduledFuture<?>> checkingFutures = new HashMap<String, ScheduledFuture<?>>();
 
     private IntentFilterHook() {
 
@@ -84,8 +91,28 @@ public class IntentFilterHook {
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             PreventLog.w("allow " + packageName + " for next service/broadcast");
             mPreventPackages.put(packageName, false);
+            disallowLater(packageName);
         }
         return IntentFilterMatchResult.NONE;
+    }
+
+    private static void disallowLater(final String packageName) {
+        synchronized (CHECKING_LOCK) {
+            ScheduledFuture<?> checkingFuture = checkingFutures.get(packageName);
+            if (checkingFuture != null && checkingFuture.getDelay(TimeUnit.SECONDS) > 0) {
+                checkingFuture.cancel(false);
+            }
+            checkingFuture = checkingExecutor.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    int count = SystemHook.getSystemReceiver().countCounter(packageName);
+                    if (count == 0 && Boolean.FALSE.equals(mPreventPackages.get(packageName))) {
+                        mPreventPackages.put(packageName, true);
+                    }
+                }
+            }, SystemHook.TIME_CHECK_DISALLOW, TimeUnit.SECONDS);
+            checkingFutures.put(packageName, checkingFuture);
+        }
     }
 
     private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
