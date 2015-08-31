@@ -91,12 +91,12 @@ public class IntentFilterHook {
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             PreventLog.w("allow " + packageName + " for next service/broadcast");
             mPreventPackages.put(packageName, false);
-            disallowLater(packageName);
+            restoreLater(packageName);
         }
         return IntentFilterMatchResult.NONE;
     }
 
-    private static void disallowLater(final String packageName) {
+    private static void restoreLater(final String packageName) {
         synchronized (CHECKING_LOCK) {
             ScheduledFuture<?> checkingFuture = checkingFutures.get(packageName);
             if (checkingFuture != null && checkingFuture.getDelay(TimeUnit.SECONDS) > 0) {
@@ -105,10 +105,7 @@ public class IntentFilterHook {
             checkingFuture = checkingExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
-                    int count = SystemHook.getSystemReceiver().countCounter(packageName);
-                    if (count == 0 && Boolean.FALSE.equals(mPreventPackages.get(packageName))) {
-                        mPreventPackages.put(packageName, true);
-                    }
+                    SystemHook.restorePrevent(packageName);
                 }
             }, SystemHook.TIME_CHECK_DISALLOW, TimeUnit.SECONDS);
             checkingFutures.put(packageName, checkingFuture);

@@ -91,10 +91,7 @@ public class ActivityManagerServiceHook {
 
     private static void restoreSafeIntentIfNeeded(String hostingType, String packageName) {
         if ("broadcast".equals(hostingType) || "service".equals(hostingType)) {
-            SystemReceiver systemReceiver = SystemHook.getSystemReceiver();
-            if (systemReceiver != null && 0 == systemReceiver.countCounter(packageName) && Boolean.FALSE.equals(mPreventPackages.get(packageName))) {
-                mPreventPackages.put(packageName, true);
-            }
+            SystemHook.restorePrevent(packageName);
         }
     }
 

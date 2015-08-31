@@ -403,8 +403,10 @@ public final class SystemHook {
         return false;
     }
 
-    public static SystemReceiver getSystemReceiver() {
-        return systemReceiver;
+    public static void restorePrevent(String packageName) {
+        if (systemReceiver != null && 0 == systemReceiver.countCounter(packageName) && Boolean.FALSE.equals(mPreventPackages.get(packageName))) {
+            mPreventPackages.put(packageName, true);
+        }
     }
 
     private static class RetrievingTask implements Runnable {
