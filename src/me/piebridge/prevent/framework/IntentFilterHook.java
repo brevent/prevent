@@ -127,7 +127,7 @@ public class IntentFilterHook {
         }
         if (isSystemSender(sender) && !AppGlobals.getPackageManager().isProtectedBroadcast(action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
-            return allowSafeIntent(filter, sender, action, packageName);
+            return IntentFilterMatchResult.NONE;
         } else if (GmsUtils.isGcmAction(sender, action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
             return allowSafeIntent(filter, sender, action, packageName);
