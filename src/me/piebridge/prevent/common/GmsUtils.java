@@ -52,7 +52,8 @@ public class GmsUtils {
     }
 
     public static boolean isGcmAction(String sender, String action) {
-        return GMS.equals(sender) && GCM_ACTIONS.contains(action);
+        // normally com.google.android.gsf
+        return (sender == null || sender.startsWith(GAPPS_PREFIX)) && GCM_ACTIONS.contains(action);
     }
 
 }
