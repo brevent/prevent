@@ -32,7 +32,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 
     private static boolean systemHooked;
 
-    public static final ThreadLocal<String> BROADCAST_SENDER = new ThreadLocal<String>();
+    public static final ThreadLocal<String> RECEIVER_SENDER = new ThreadLocal<String>();
 
     public static final ThreadLocal<String> SERVICE_SENDER = new ThreadLocal<String>();
 
@@ -83,12 +83,12 @@ public class XposedMod implements IXposedHookZygoteInit {
                 Object callerApp = XposedHelpers.callMethod(param.thisObject, "getRecordForAppLocked", caller);
                 ApplicationInfo info = ProcessRecordUtils.getInfo(callerApp);
                 String sender = info == null ? "" : info.packageName;
-                BROADCAST_SENDER.set(sender);
+                RECEIVER_SENDER.set(sender);
             }
 
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                BROADCAST_SENDER.remove();
+                RECEIVER_SENDER.remove();
             }
         });
 

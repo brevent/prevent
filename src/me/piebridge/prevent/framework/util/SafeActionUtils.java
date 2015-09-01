@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.framework.PreventLog;
 
 /**
  * Created by thom on 15/7/31.
@@ -38,6 +39,7 @@ public class SafeActionUtils {
     }
 
     private static boolean addSafeAction(ComponentName cn) {
+        PreventLog.w("add " + cn + " as safe action");
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
@@ -53,7 +55,7 @@ public class SafeActionUtils {
         return true;
     }
 
-    public static boolean isSafeComponent(ComponentName cn) {
+    private static boolean isSafeComponent(ComponentName cn) {
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
@@ -82,9 +84,9 @@ public class SafeActionUtils {
         return false;
     }
 
-    public static boolean isSafeAction(Context context, String action, ComponentName cn) {
+    public static boolean isSafeAction(String sender, String action, ComponentName cn) {
         // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
-        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(context, action)) {
+        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(sender, action)) {
             addSafeAction(cn);
             return true;
         } else {

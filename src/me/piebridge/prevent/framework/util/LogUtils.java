@@ -10,6 +10,7 @@ import me.piebridge.prevent.framework.PreventLog;
  */
 public class LogUtils {
 
+    private static final String SENDER = "sender: ";
     private static final String ACTION = "action: ";
     private static final String FILTER = "filter: ";
     private static final String PACKAGE = "package: ";
@@ -72,10 +73,13 @@ public class LogUtils {
         }
     }
 
-    private static String buildIntentFilterLog(boolean disallow, final Object filter, final String action, final String packageName) {
+    private static String buildIntentFilterLog(boolean disallow, String sender, final Object filter, final String action, final String packageName) {
         StringBuilder sb = new StringBuilder();
         sb.append(disallow ? DISALLOW : ALLOW);
         sb.append(" ");
+        sb.append(SENDER);
+        sb.append(sender);
+        sb.append(", ");
         sb.append(ACTION);
         sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
         if (packageName != null) {
@@ -93,12 +97,12 @@ public class LogUtils {
         return sb.toString();
     }
 
-    public static void logIntentFilter(boolean disallow, final Object filter, final String action, final String packageName) {
-        PreventLog.v(buildIntentFilterLog(disallow, filter, action, packageName));
+    public static void logIntentFilter(boolean disallow, String sender, final Object filter, final String action, final String packageName) {
+        PreventLog.v(buildIntentFilterLog(disallow, sender, filter, action, packageName));
     }
 
-    public static void logIntentFilterWarning(boolean disallow, final Object filter, final String action, final String packageName) {
-        PreventLog.w(buildIntentFilterLog(disallow, filter, action, packageName));
+    public static void logIntentFilterWarning(boolean disallow, String sender, final Object filter, final String action, final String packageName) {
+        PreventLog.w(buildIntentFilterLog(disallow, sender, filter, action, packageName));
     }
 
     public static void logStartProcess(final String packageName, final String hostingType, final Object hostingName) {

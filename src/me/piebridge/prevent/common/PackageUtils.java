@@ -5,7 +5,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.framework.SystemHook;
+import me.piebridge.prevent.ui.UILog;
 
 /**
  * Created by thom on 15/7/23.
@@ -20,8 +22,8 @@ public class PackageUtils {
         return (flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
     }
 
-    public static boolean isSystemSignaturePackage(PackageManager pm, ApplicationInfo appInfo) {
-        return pm.checkSignatures("android", appInfo.packageName) != PackageManager.SIGNATURE_NO_MATCH;
+    public static boolean isSystemSignaturePackage(PackageManager pm, String packageName) {
+        return pm.checkSignatures("android", packageName) != PackageManager.SIGNATURE_NO_MATCH;
     }
 
     private static boolean isSystemPackageWithoutLauncher(PackageManager pm, ApplicationInfo appInfo) {
@@ -29,8 +31,14 @@ public class PackageUtils {
     }
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
-        return appInfo.uid >= SystemHook.FIRST_APPLICATION_UID
-                && !isSystemSignaturePackage(pm, appInfo);
+        if (appInfo.uid < SystemHook.FIRST_APPLICATION_UID) {
+            return false;
+        }
+        if (SignatureUtils.canTrustSignature(pm)) {
+            return !isSystemSignaturePackage(pm, appInfo.packageName);
+        } else {
+            return !isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName);
+        }
     }
 
     public static String getPackageName(Intent intent) {
