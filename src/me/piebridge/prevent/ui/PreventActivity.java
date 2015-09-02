@@ -255,7 +255,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
         if (BuildConfig.WECHAT_DONATE && getDonateWeChat() != null) {
             menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
-            menu.add(Menu.NONE, R.string.donate_wechat_lucky, Menu.NONE, R.string.donate_wechat_lucky);
         }
         return super.onCreateOptionsMenu(menu);
     }
@@ -264,7 +263,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (BuildConfig.WECHAT_DONATE && canDonateViaWeChat(id)) {
-            return donateViaWeChat(id);
+            return donateViaWeChat();
         } else if (BuildConfig.ALIPAY_DONATE && canDonateViaAlipay(id)) {
             return donateViaAlipay();
         } else if (id == R.string.switch_theme) {
@@ -279,7 +278,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private boolean canDonateViaWeChat(int id) {
-        return id == R.string.donate_wechat || id == R.string.donate_wechat_lucky;
+        return id == R.string.donate_wechat;
     }
 
     private boolean switchTheme() {
@@ -328,7 +327,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return null;
     }
 
-    private boolean donateViaWeChat(int id) {
+    private boolean donateViaWeChat() {
         ComponentName cn = getDonateWeChat();
         if (cn == null) {
             return false;
@@ -336,11 +335,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         Intent intent = new Intent();
         intent.setComponent(cn);
         intent.putExtra("scene", 1);
-        if (id == R.string.donate_wechat_lucky) {
-            intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT + "&s=37");
-        } else {
-            intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT);
-        }
+        intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT);
         try {
             startActivity(intent);
         } catch (Throwable t) { // NOSONAR
