@@ -3,16 +3,20 @@ package me.piebridge.prevent.common;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 
-import me.piebridge.forcestopgb.BuildConfig;
+import java.util.HashSet;
+import java.util.Set;
+
 import me.piebridge.prevent.framework.SystemHook;
-import me.piebridge.prevent.ui.UILog;
 
 /**
  * Created by thom on 15/7/23.
  */
 public class PackageUtils {
+
+    private static Set<String> launchers;
 
     private PackageUtils() {
 
@@ -26,18 +30,44 @@ public class PackageUtils {
         return pm.checkSignatures("android", packageName) != PackageManager.SIGNATURE_NO_MATCH;
     }
 
-    private static boolean isSystemPackageWithoutLauncher(PackageManager pm, ApplicationInfo appInfo) {
-        return isSystemPackage(appInfo.flags) && pm.getLaunchIntentForPackage(appInfo.packageName) == null;
+    private static synchronized void initLauncher(PackageManager pm) {
+        if (launchers == null) {
+            launchers = new HashSet<String>();
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            for (ResolveInfo resolveInfo : pm.queryIntentActivities(intent, 0)) {
+                launchers.add(resolveInfo.activityInfo.packageName);
+            }
+        }
+    }
+
+    private static boolean isLauncher(PackageManager pm, String packageName) {
+        if (launchers == null) {
+            initLauncher(pm);
+        }
+        return launchers.contains(packageName);
     }
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
         if (appInfo.uid < SystemHook.FIRST_APPLICATION_UID) {
             return false;
         }
+        // can prevent non-system package
+        if (!isSystemPackage(appInfo.flags)) {
+            return true;
+        }
+        // can prevent system packages with launcher
+        if (pm.getLaunchIntentForPackage(appInfo.packageName) != null) {
+            return true;
+        }
+        // cannot prevent launcher
+        if (isLauncher(pm, appInfo.packageName)) {
+            return false;
+        }
         if (SignatureUtils.canTrustSignature(pm)) {
             return !isSystemSignaturePackage(pm, appInfo.packageName);
         } else {
-            return !isSystemPackageWithoutLauncher(pm, appInfo) || GmsUtils.isGapps(pm, appInfo.packageName);
+            return GmsUtils.isGapps(pm, appInfo.packageName);
         }
     }
 
