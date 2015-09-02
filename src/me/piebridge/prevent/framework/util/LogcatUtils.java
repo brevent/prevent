@@ -25,14 +25,16 @@ public class LogcatUtils {
 
     private static byte[] bytes;
 
+    private static final String COMMAND = "/system/bin/logcat -d -v time";
+
     private LogcatUtils() {
 
     }
 
     public static void logcat() {
         try {
-            PreventLog.d("will execute logcat -d -v theradtime");
-            Process process = Runtime.getRuntime().exec("/system/bin/logcat -d -v time");
+            PreventLog.d("will execute " + COMMAND);
+            Process process = Runtime.getRuntime().exec(COMMAND);
             BufferedInputStream stdout = new BufferedInputStream(process.getInputStream());
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
