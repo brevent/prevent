@@ -23,11 +23,13 @@ import me.piebridge.prevent.ui.PreventProvider;
  */
 public class LogcatUtils {
 
+    private static byte[] bytes;
+
     private LogcatUtils() {
 
     }
 
-    public static void logcat(Context context) {
+    public static void logcat() {
         try {
             PreventLog.d("will execute logcat -d -v theradtime");
             Process process = Runtime.getRuntime().exec("/system/bin/logcat -d -v time");
@@ -41,11 +43,23 @@ public class LogcatUtils {
             }
             stdout.close();
 
-            byte[] bytes = bos.toByteArray();
+            bytes = bos.toByteArray();
             bos.close();
 
             PreventLog.d("log size: " + bytes.length);
+        } catch (IOException e) {
+            PreventLog.d("exec wrong", e);
+        }
+    }
+
+    public static void logcat(Context context) {
+        try {
+            if (bytes == null) {
+                logcat();
+            }
+            PreventLog.d("log size: " + bytes.length);
             sendToUi(context, new ByteArrayInputStream(bytes));
+            bytes = null;
         } catch (IOException e) {
             PreventLog.d("exec wrong", e);
         }

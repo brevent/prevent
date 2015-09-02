@@ -26,6 +26,7 @@ import me.piebridge.prevent.framework.IntentFilterHook;
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.framework.SystemHook;
+import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.framework.util.ProcessRecordUtils;
 
 public class XposedMod implements IXposedHookZygoteInit {
@@ -51,6 +52,7 @@ public class XposedMod implements IXposedHookZygoteInit {
                     hookSystem(Thread.currentThread().getContextClassLoader());
                     PreventLog.d("finish prevent hook (system)");
                     systemHooked = true;
+                    LogcatUtils.logcat();
                 }
             }
         });
