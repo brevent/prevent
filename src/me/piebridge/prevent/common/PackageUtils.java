@@ -56,13 +56,13 @@ public class PackageUtils {
         if (!isSystemPackage(appInfo.flags)) {
             return true;
         }
-        // can prevent system packages with launcher
-        if (pm.getLaunchIntentForPackage(appInfo.packageName) != null) {
-            return true;
-        }
         // cannot prevent launcher
         if (isLauncher(pm, appInfo.packageName)) {
             return false;
+        }
+        // can prevent system packages with launcher
+        if (pm.getLaunchIntentForPackage(appInfo.packageName) != null) {
+            return true;
         }
         if (SignatureUtils.canTrustSignature(pm)) {
             return !isSystemSignaturePackage(pm, appInfo.packageName);
