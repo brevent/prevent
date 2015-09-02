@@ -151,6 +151,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             // do nothing
         }
 
+        if (BuildConfig.VERSION_NAME.contains("-")) {
+            showTestDialog();
+        } else {
+            init();
+        }
+    }
+
+    private void init() {
         showProcessDialog(R.string.retrieving);
         mHandler.postDelayed(new Runnable() {
             @Override
@@ -517,6 +525,33 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 } catch (ActivityNotFoundException e) { // NOSONAR
                     finish();
                 }
+            }
+        });
+        builder.create().show();
+    }
+
+    private void showTestDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
+        builder.setMessage(R.string.test_version);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                finish();
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                startActivity(new Intent(Intent.ACTION_DELETE, Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)));
+                finish();
+            }
+        });
+        builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                init();
             }
         });
         builder.create().show();
