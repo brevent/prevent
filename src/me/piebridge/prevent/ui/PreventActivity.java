@@ -85,6 +85,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private final Object preventLock = new Object();
 
+    private boolean inited;
+
     public int getDangerousColor() {
         if (dangerousColor == null) {
             dangerousColor = getThemedColor(R.attr.color_dangerous);
@@ -166,12 +168,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 retrievePrevents();
             }
         }, 0x100);
+        inited = true;
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (preventPackages == null) {
+        if (inited && preventPackages == null) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
