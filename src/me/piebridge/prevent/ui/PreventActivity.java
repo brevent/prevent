@@ -153,7 +153,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             // do nothing
         }
 
-        if (BuildConfig.VERSION_NAME.contains("-")) {
+        if (!BuildConfig.RELEASE) {
             showTestDialog();
         } else {
             init();

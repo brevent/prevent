@@ -30,7 +30,7 @@
         <xpath input="${manifest.abs.file}" expression="/manifest/@android:versionName" output="project.app.versionName" />
         <replaceregexp file="${gen.absolute.dir}/me/piebridge/forcestopgb/BuildConfig.java"
                        match="(.*boolean\s+DEBUG\s*=.*)"
-                       replace='\1${line.separator}    public static final String APPLICATION_ID = "${project.app.package}";${line.separator}    public static final String VERSION_NAME = "${project.app.versionName}";${line.separator}    public static final String ALIPAY_ACCOUNT = null;${line.separator}    public static final boolean ALIPAY_DONATE = false;${line.separator}    public static final String WECHAT_ACCOUNT = null;${line.separator}    public static final boolean WECHAT_DONATE = false;' />
+                       replace='\1${line.separator}    public static final boolean RELEASE = true;${line.separator}    public static final String APPLICATION_ID = "${project.app.package}";${line.separator}    public static final String VERSION_NAME = "${project.app.versionName}";${line.separator}    public static final String ALIPAY_ACCOUNT = null;${line.separator}    public static final boolean ALIPAY_DONATE = false;${line.separator}    public static final String WECHAT_ACCOUNT = null;${line.separator}    public static final boolean WECHAT_DONATE = false;' />
     </target>
 
     <property name="java.compilerargs" value="-Xlint:unchecked -Xlint:deprecation"/>
