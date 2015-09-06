@@ -40,6 +40,7 @@ import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.ui.PreventProvider;
+import me.piebridge.prevent.ui.util.PreventListUtils;
 
 public final class SystemHook {
 
@@ -194,8 +195,10 @@ public final class SystemHook {
             retrievingExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
-                    if (!retrievingFuture.isDone() && mPreventPackages == null) {
-                        retrievingFuture.cancel(true);
+                    if (mPreventPackages == null) {
+                        if (!retrievingFuture.isDone()) {
+                            retrievingFuture.cancel(true);
+                        }
                         retrievingTask = null;
                     }
                 }
@@ -417,16 +420,16 @@ public final class SystemHook {
         @Override
         public void run() {
             PreventLog.d("RetrievingTask");
-            Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
+
             Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
-            int index = cursor.getColumnIndex(PreventProvider.COLUMN_PACKAGE);
-            while (cursor.moveToNext()) {
-                String name = cursor.getString(index);
-                if (name != null && !preventPackages.containsKey(name)) {
-                    preventPackages.put(name, true);
+            try {
+                loadPrevent(preventPackages);
+            } catch (Throwable t) { // NOSONAR
+                PreventLog.e("cannot load prevent", t);
+                for (String packageName : PreventListUtils.load(null)) {
+                    preventPackages.put(packageName, true);
                 }
             }
-            cursor.close();
             PreventLog.d("prevents: " + preventPackages.size());
             mPreventPackages = new ConcurrentHashMap<String, Boolean>();
             mPreventPackages.putAll(preventPackages);
@@ -437,6 +440,18 @@ public final class SystemHook {
             PreventLog.d("prevent running activated");
 
             LogcatUtils.logcat(mContext);
+        }
+
+        private void loadPrevent(Map<String, Boolean> preventPackages) {
+            Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
+            int index = cursor.getColumnIndex(PreventProvider.COLUMN_PACKAGE);
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(index);
+                if (name != null && !preventPackages.containsKey(name)) {
+                    preventPackages.put(name, true);
+                }
+            }
+            cursor.close();
         }
     }
 

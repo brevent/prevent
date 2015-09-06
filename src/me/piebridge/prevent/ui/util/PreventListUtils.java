@@ -116,7 +116,7 @@ public final class PreventListUtils {
     public static Set<String> load(Context context) {
         File fileDeprecated = new File(PREVENT_DEPRECATED);
         Set<String> packages = load(new File(PREVENT));
-        if (packages.isEmpty()) {
+        if (context != null && packages.isEmpty()) {
             loadExternal(packages, context);
         }
         if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
