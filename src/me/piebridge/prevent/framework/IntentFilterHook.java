@@ -150,7 +150,7 @@ public class IntentFilterHook {
     }
 
     private static boolean canNotPrevent(String packageName, String sender) {
-        return canNotPreventNonGms(packageName) || canNotPreventGms(packageName, sender) || packageName.equals(sender);
+        return mPreventPackages.get(packageName) == null || canNotPreventNonGms(packageName) || canNotPreventGms(packageName, sender) || packageName.equals(sender);
     }
 
     private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
