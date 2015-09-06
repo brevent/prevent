@@ -1,14 +1,13 @@
 package me.piebridge.prevent.framework;
 
 import android.app.AppGlobals;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Process;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,14 +15,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
-import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
-import me.piebridge.prevent.framework.util.SafeActionUtils;
 import me.piebridge.prevent.xposed.XposedMod;
 
 /**
@@ -122,26 +118,39 @@ public class IntentFilterHook {
         }
         ApplicationInfo ai = owner.applicationInfo;
         String packageName = ai.packageName;
-        if (!isPrevent(ai) || packageName.equals(sender)) {
+        if (canNotPrevent(packageName, sender)) {
+            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        if (isSystemSender(sender) && !AppGlobals.getPackageManager().isProtectedBroadcast(action)) {
+        boolean isSystem = isSystemSender(sender);
+        if (isSystem && !AppGlobals.getPackageManager().isProtectedBroadcast(action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
-        } else if (GmsUtils.isGcmAction(sender, action)) {
+        } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
             return allowSafeIntent(filter, sender, action, packageName);
+        } else if (GmsUtils.isGms(packageName) && SystemHook.hasRunningGapps()) {
+            LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
+            return IntentFilterMatchResult.NONE;
         }
         LogUtils.logIntentFilter(true, sender, filter, action, packageName);
         return IntentFilterMatchResult.NO_MATCH;
     }
 
     private static boolean isSystemSender(String sender) {
-        return sender == null || "android".equals(sender);
+        return sender == null && Binder.getCallingUid() == Process.SYSTEM_UID;
     }
 
-    private static boolean isPrevent(ApplicationInfo ai) {
-        return Boolean.TRUE.equals(mPreventPackages.get(ai.packageName));
+    private static boolean isPrevent(String packageName) {
+        return Boolean.TRUE.equals(mPreventPackages.get(packageName));
+    }
+
+    private static boolean canNotPreventGms(String packageName, String sender) {
+        return GmsUtils.isGms(packageName) && (GmsUtils.isGms(sender) || GmsUtils.isGmsCaller(mContext) || SystemHook.hasRunningGapps());
+    }
+
+    private static boolean canNotPrevent(String packageName, String sender) {
+        return !isPrevent(packageName) || canNotPreventGms(packageName, sender) || packageName.equals(sender);
     }
 
     private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
@@ -149,10 +158,17 @@ public class IntentFilterHook {
         PackageParser.Package owner = service.owner;
         ApplicationInfo ai = owner.applicationInfo;
         String packageName = ai.packageName;
-        if (!isPrevent(ai) || packageName.equals(sender)) {
+        if (canNotPrevent(packageName, sender)) {
+            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        if (GmsUtils.GMS.equals(packageName) && sender != null && GmsUtils.isGapps(mContext.getPackageManager(), sender)) {
+        if (GmsUtils.isGms(packageName) && sender != null && GmsUtils.isGapps(mContext.getPackageManager(), sender)) {
+            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
+            return IntentFilterMatchResult.NONE;
+        } else if (accountWatcher.canNotHook(action, packageName)) {
+            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
+            return IntentFilterMatchResult.NONE;
+        } else if (GmsUtils.isGcmRegisterAction(action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (!isSystemSender(sender)) {
@@ -161,41 +177,6 @@ public class IntentFilterHook {
         }
         LogUtils.logIntentFilter(false, sender, filter, action, packageName);
         return IntentFilterMatchResult.NONE;
-    }
-
-    private static boolean isSystemOrSelf(String packageName, String sender) {
-        return (sender == null && Binder.getCallingUid() == android.os.Process.SYSTEM_UID) ||
-                (sender != null && packageName.equals(sender));
-    }
-
-    private static boolean canUseGmsForDependency(Object filter, String action) {
-        int callingUid = Binder.getCallingUid();
-        PackageManager pm = mContext.getPackageManager();
-        String[] callingPackageNames = pm.getPackagesForUid(callingUid);
-        if (callingPackageNames == null) {
-            return false;
-        }
-        for (String callingPackageName : callingPackageNames) {
-            if (GmsUtils.isGapps(pm, callingPackageName)) {
-                if (BuildConfig.DEBUG) {
-                    PreventLog.v("allow " + callingPackageName + " to use gms if needed, filter:  " + filter + ", action: " + action);
-                } else if (!isSystemPackage(pm, callingPackageName)) {
-                    PreventLog.d("allow " + callingPackageName + " to use gms if needed, action: " + action);
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean isSystemPackage(PackageManager pm, String packageName) {
-        try {
-            ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
-            return PackageUtils.isSystemPackage(ai.flags);
-        } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find package " + packageName, e);
-            return false;
-        }
     }
 
     public static void onPackageAdded() {

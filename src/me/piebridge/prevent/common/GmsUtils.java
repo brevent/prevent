@@ -2,6 +2,7 @@ package me.piebridge.prevent.common;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Binder;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,13 +15,18 @@ import me.piebridge.prevent.framework.PreventLog;
  */
 public class GmsUtils {
 
-    public static final String GMS = "com.google.android.gms";
-    public static final String GAPPS_PREFIX = "com.google.android.";
+    private static final String GMS = "com.google.android.gms";
+    private static final String GSF = "com.google.android.gsf";
+    private static final String GAPPS_PREFIX = "com.google.android.";
     private static final AtomicInteger GMS_COUNTER = new AtomicInteger();
     // https://developers.google.com/cloud-messaging/android/client
     private static Collection<String> GCM_ACTIONS = Arrays.asList(
             "com.google.android.c2dm.intent.RECEIVE",
             "com.google.android.c2dm.intent.REGISTRATION");
+    private static final String GCM_ACTION_REGISTER = "com.google.android.c2dm.intent.REGISTER";
+    private static Collection<String> GMS_PACKAGES = Arrays.asList(
+            GMS, GSF
+    );
 
     private GmsUtils() {
 
@@ -37,10 +43,6 @@ public class GmsUtils {
         }
     }
 
-    public static int getGmsCount() {
-        return GMS_COUNTER.get();
-    }
-
     public static int decreaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.decrementAndGet();
@@ -51,9 +53,28 @@ public class GmsUtils {
         }
     }
 
-    public static boolean isGcmAction(String sender, String action) {
-        // normally com.google.android.gsf
-        return (sender == null || sender.startsWith(GAPPS_PREFIX)) && GCM_ACTIONS.contains(action);
+    public static boolean isGcmAction(String sender, boolean isSystem, String action) {
+        return (isSystem || isGms(sender)) && GCM_ACTIONS.contains(action);
     }
 
+    public static boolean isGcmRegisterAction(String action) {
+        return GCM_ACTION_REGISTER.equals (action);
+    }
+
+    public static boolean isGms(String packageName) {
+        return GMS_PACKAGES.contains(packageName);
+    }
+
+    public static Collection<String> getGmsPackages() {
+        return GMS_PACKAGES;
+    }
+
+    public static boolean isGmsCaller(Context context) {
+        try {
+            PackageManager pm = context.getPackageManager();
+            return pm.getApplicationInfo(GMS, 0).uid == Binder.getCallingUid();
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
 }

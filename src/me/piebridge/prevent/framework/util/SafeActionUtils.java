@@ -5,7 +5,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**
@@ -55,6 +53,10 @@ public class SafeActionUtils {
         return true;
     }
 
+    public static boolean isSafeBroadcast(Context context, ComponentName cn) {
+        return isSafeComponent(cn) || isWidget(context, cn);
+    }
+
     private static boolean isSafeComponent(ComponentName cn) {
         String packageName = cn.getPackageName();
         if (packageName == null) {
@@ -62,10 +64,6 @@ public class SafeActionUtils {
         }
         Set<ComponentName> components = safeActions.get(packageName);
         return components != null && components.contains(cn);
-    }
-
-    public static boolean isSafeBroadcast(Context context, ComponentName cn) {
-        return isSafeComponent(cn) || isWidget(context, cn);
     }
 
     private static boolean isWidget(Context context, ComponentName cn) {
@@ -82,16 +80,6 @@ public class SafeActionUtils {
             }
         }
         return false;
-    }
-
-    public static boolean isSafeAction(String sender, String action, ComponentName cn) {
-        // http://developer.android.com/reference/android/appwidget/AppWidgetManager.html#ACTION_APPWIDGET_UPDATE
-        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(sender, action)) {
-            addSafeAction(cn);
-            return true;
-        } else {
-            return false;
-        }
     }
 
 }

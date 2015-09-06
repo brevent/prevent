@@ -244,7 +244,7 @@ public final class SystemHook {
             protected Collection<String> prepareWhiteList() {
                 return prepareServiceWhiteList(packageName);
             }
-        }, GmsUtils.GMS.equals(packageName) ? TIME_CHECK_GMS : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
+        }, GmsUtils.isGms(packageName) ? TIME_CHECK_GMS : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         synchronized (CHECKING_LOCK) {
             serviceFutures.put(packageName, serviceFuture);
         }
@@ -252,13 +252,13 @@ public final class SystemHook {
 
     private static Collection<String> prepareServiceWhiteList(String packageName) {
         int gmsCount = GmsUtils.decreaseGmsCount(mContext, packageName);
-        if (!GmsUtils.GMS.equals(packageName) || gmsCount == 0) {
+        if (!GmsUtils.isGms(packageName) || gmsCount == 0) {
             synchronized (CHECKING_LOCK) {
                 checkingWhiteList.remove(packageName);
             }
         }
         if (gmsCount > 0 || hasRunningGapps()) {
-            return Collections.singletonList(GmsUtils.GMS);
+            return GmsUtils.getGmsPackages();
         } else {
             return Collections.emptyList();
         }
@@ -302,7 +302,7 @@ public final class SystemHook {
             whiteList.addAll(checkingWhiteList);
         }
         if (hasRunningGapps()) {
-            whiteList.add(GmsUtils.GMS);
+            whiteList.addAll(GmsUtils.getGmsPackages());
         }
         return whiteList;
     }
