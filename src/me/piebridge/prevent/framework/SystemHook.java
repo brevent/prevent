@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +63,8 @@ public final class SystemHook {
 
     private static ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
 
+    private static ScheduledThreadPoolExecutor retrievingExecutor = new ScheduledThreadPoolExecutor(0x2);
+
     private static ScheduledThreadPoolExecutor checkingExecutor = new ScheduledThreadPoolExecutor(0x2);
 
     private static ScheduledThreadPoolExecutor forceStopExecutor = new ScheduledThreadPoolExecutor(0x1);
@@ -71,6 +74,7 @@ public final class SystemHook {
     private static Map<String, ScheduledFuture<?>> serviceFutures = new HashMap<String, ScheduledFuture<?>>();
 
     private static RetrievingTask retrievingTask;
+    private static Future<?> retrievingFuture;
 
     private static SystemReceiver systemReceiver;
 
@@ -186,7 +190,16 @@ public final class SystemHook {
         PreventLog.d("context: " + mContext.getClass().getName());
         if (retrievingTask == null) {
             retrievingTask = new RetrievingTask();
-            singleExecutor.submit(retrievingTask);
+            retrievingFuture = retrievingExecutor.submit(retrievingTask);
+            retrievingExecutor.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    if (!retrievingFuture.isDone() && mPreventPackages == null) {
+                        retrievingFuture.cancel(true);
+                        retrievingTask = null;
+                    }
+                }
+            }, 0x5, TimeUnit.SECONDS);
         }
         return true;
     }
@@ -317,15 +330,6 @@ public final class SystemHook {
     }
 
     public static void forceStopPackageLater(final String packageName, int second) {
-        singleExecutor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                forceStopPackage(packageName);
-            }
-        }, second, TimeUnit.SECONDS);
-    }
-
-    public static void forceStopPackageLaterIfPrevent(final String packageName, int second) {
         singleExecutor.schedule(new Runnable() {
             @Override
             public void run() {

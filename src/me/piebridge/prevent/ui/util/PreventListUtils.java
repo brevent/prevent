@@ -13,12 +13,13 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.ui.UILog;
 
 public final class PreventListUtils {
 
-    public static final String PREVENT = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/prevent.list";
-    public static final String PREVENT_DEPRECATED = Environment.getDataDirectory() + "/data/me.piebridge.forcestopgb/conf/forcestop.list";
+    public static final String PREVENT = Environment.getDataDirectory() + "/data/" + BuildConfig.APPLICATION_ID + "/conf/prevent.list";
+    public static final String PREVENT_DEPRECATED = Environment.getDataDirectory() + "/data/" + BuildConfig.APPLICATION_ID + "/conf/forcestop.list";
 
     private static final int MAX_WAIT = 3000;
     private static final int SINGLE_WAIT = 1000;
@@ -27,7 +28,7 @@ public final class PreventListUtils {
 
     }
 
-    private static File[] getExtailFilesDir(Context context) {
+    private static File[] getExternalFilesDirs(Context context) {
         File[] files;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             files = context.getExternalFilesDirs(null);
@@ -42,7 +43,7 @@ public final class PreventListUtils {
 
     public static synchronized void save(Context context, Set<String> packages) {
         save(PREVENT, packages);
-        for (File file : getExtailFilesDir(context)) {
+        for (File file : getExternalFilesDirs(context)) {
             if (file != null) {
                 save(new File(file, "prevent.list").getAbsolutePath(), packages);
             }
@@ -101,13 +102,22 @@ public final class PreventListUtils {
         return packages;
     }
 
+    private static void loadExternal(Set<String> packages, Context context) {
+        for (File file : getExternalFilesDirs(context)) {
+            if (file != null) {
+                packages.addAll(load(new File(file, "prevent.list")));
+                if (!packages.isEmpty()) {
+                    break;
+                }
+            }
+        }
+    }
+
     public static Set<String> load(Context context) {
         File fileDeprecated = new File(PREVENT_DEPRECATED);
         Set<String> packages = load(new File(PREVENT));
-        for (File file : getExtailFilesDir(context)) {
-            if (file != null) {
-                packages.addAll(load(new File(file, "prevent.list")));
-            }
+        if (packages.isEmpty()) {
+            loadExternal(packages, context);
         }
         if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
             UILog.d("migrate packages");
