@@ -19,6 +19,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.ActivityHook;
 import me.piebridge.prevent.framework.ActivityManagerServiceHook;
@@ -129,6 +130,22 @@ public class XposedMod implements IXposedHookZygoteInit {
                     IntentFilterMatchResult result = IntentFilterHook.hookAfterMatch(param.thisObject, param.args);
                     if (!result.isNone()) {
                         param.setResult(result.getResult());
+                    }
+                }
+            }
+        });
+
+        XposedBridge.hookAllMethods(activityManagerService, "removeProcessLocked", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                String reason = String.valueOf(param.args[param.args.length - 1]);
+                if (reason.startsWith("stop ")) {
+                    Object processRecord = param.args[0];
+                    String packageName = reason.substring(5);
+                    String killPackageName = ProcessRecordUtils.getInfo(processRecord).packageName;
+                    if (GmsUtils.isGms(packageName) && !GmsUtils.isGms(killPackageName)) {
+                        XposedHelpers.setBooleanField(processRecord, "removed", false);
+                        param.setResult(false);
                     }
                 }
             }
