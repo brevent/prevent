@@ -141,8 +141,8 @@ public class IntentFilterHook {
         return sender == null && Binder.getCallingUid() == Process.SYSTEM_UID;
     }
 
-    private static boolean isPrevent(String packageName) {
-        return Boolean.TRUE.equals(mPreventPackages.get(packageName));
+    private static boolean canNotPreventNonGms(String packageName) {
+        return !GmsUtils.isGms(packageName) && !Boolean.TRUE.equals(mPreventPackages.get(packageName));
     }
 
     private static boolean canNotPreventGms(String packageName, String sender) {
@@ -150,7 +150,7 @@ public class IntentFilterHook {
     }
 
     private static boolean canNotPrevent(String packageName, String sender) {
-        return !isPrevent(packageName) || canNotPreventGms(packageName, sender) || packageName.equals(sender);
+        return canNotPreventNonGms(packageName) || canNotPreventGms(packageName, sender) || packageName.equals(sender);
     }
 
     private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
