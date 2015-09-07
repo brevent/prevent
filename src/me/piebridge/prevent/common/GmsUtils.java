@@ -85,4 +85,8 @@ public class GmsUtils {
             return false;
         }
     }
+
+    public static int getGmsCount() {
+        return GMS_COUNTER.get();
+    }
 }
