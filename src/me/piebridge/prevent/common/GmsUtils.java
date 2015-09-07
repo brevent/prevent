@@ -28,13 +28,16 @@ public class GmsUtils {
     private static Collection<String> GMS_PACKAGES = Arrays.asList(
             GMS, GSF
     );
+    private static Collection<String> GAPPS = Arrays.asList(
+            "com.android.chrome", "com.android.facelock", "com.android.vending"
+    );
 
     private GmsUtils() {
 
     }
 
     public static boolean isGapps(String packageName) {
-        return packageName != null && (packageName.startsWith(GAPPS_PREFIX) || "com.android.vending".equals(packageName));
+        return packageName != null && (packageName.startsWith(GAPPS_PREFIX) || GAPPS.contains(packageName));
     }
 
     public static boolean isGapps(PackageManager pm, String packageName) {
