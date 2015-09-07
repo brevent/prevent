@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**
@@ -37,7 +38,7 @@ public class GmsUtils {
     }
 
     public static boolean isGapps(PackageManager pm, String packageName) {
-        return isGapps(packageName) || (SignatureUtils.canTrustSignature(pm) && pm.checkSignatures(packageName, GMS) == PackageManager.SIGNATURE_MATCH);
+        return isGapps(packageName) || (pm.checkSignatures(BuildConfig.APPLICATION_ID, GMS) != PackageManager.SIGNATURE_MATCH && pm.checkSignatures(packageName, GMS) == PackageManager.SIGNATURE_MATCH);
     }
 
     public static void increaseGmsCount(Context context, String packageName) {

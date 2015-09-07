@@ -9,6 +9,7 @@ import android.net.Uri;
 import java.util.HashSet;
 import java.util.Set;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.framework.SystemHook;
 
 /**
@@ -64,7 +65,7 @@ public class PackageUtils {
         if (pm.getLaunchIntentForPackage(appInfo.packageName) != null) {
             return true;
         }
-        if (SignatureUtils.canTrustSignature(pm)) {
+        if (!isSystemSignaturePackage(pm, BuildConfig.APPLICATION_ID)) {
             return !isSystemSignaturePackage(pm, appInfo.packageName);
         } else {
             return GmsUtils.isGapps(pm, appInfo.packageName);
