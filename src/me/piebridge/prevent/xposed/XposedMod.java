@@ -121,6 +121,18 @@ public class XposedMod implements IXposedHookZygoteInit {
             });
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            XposedHelpers.findAndHookMethod("android.content.Intent", classLoader, "isExcludingStopped", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    Boolean result = (Boolean) param.getResult();
+                    if (result != null && result && IntentFilterHook.isPrevent((Intent) param.thisObject)) {
+                        param.setResult(false);
+                    }
+                }
+            });
+        }
+
         final Class<?> intentFilter = Class.forName("android.content.IntentFilter", false, classLoader);
         Method match = intentFilter.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
         XposedBridge.hookMethod(match, new XC_MethodHook() {

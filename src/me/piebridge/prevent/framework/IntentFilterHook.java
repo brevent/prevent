@@ -185,4 +185,9 @@ public class IntentFilterHook {
         }
     }
 
+    public static boolean isPrevent(Intent intent) {
+        String action = intent.getAction();
+        return (!AppGlobals.getPackageManager().isProtectedBroadcast(action) || GmsUtils.isGcmAction(null, true, action));
+    }
+
 }
