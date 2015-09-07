@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.framework.PreventLog;
+import me.piebridge.prevent.framework.SystemHook;
 
 /**
  * Created by thom on 15/7/28.
@@ -77,13 +78,29 @@ public class GmsUtils {
         return GMS_PACKAGES;
     }
 
-    public static boolean isGmsCaller(Context context) {
+    public static boolean isGappsCaller(Context context) {
         try {
+            int callingUid = Binder.getCallingUid();
             PackageManager pm = context.getPackageManager();
-            return pm.getApplicationInfo(GMS, 0).uid == Binder.getCallingUid();
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;
+            if (pm.getApplicationInfo(GMS, 0).uid == callingUid) {
+                return true;
+            }
+            if (callingUid < SystemHook.FIRST_APPLICATION_UID) {
+                return false;
+            }
+            String[] packageNames = pm.getPackagesForUid(callingUid);
+            if (packageNames == null) {
+                return false;
+            }
+            for (String packageName : packageNames) {
+                if (isGapps(packageName)) {
+                    return true;
+                }
+            }
+        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
+            PreventLog.v("cannot find gms", e);
         }
+        return false;
     }
 
     public static int getGmsCount() {

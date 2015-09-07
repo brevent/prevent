@@ -146,7 +146,7 @@ public class IntentFilterHook {
     }
 
     private static boolean cannotPreventGms(String packageName, String sender) {
-        return GmsUtils.isGms(packageName) && (GmsUtils.isGapps(mContext.getPackageManager(), sender) || GmsUtils.isGmsCaller(mContext));
+        return GmsUtils.isGms(packageName) && (GmsUtils.isGapps(mContext.getPackageManager(), sender) || GmsUtils.isGappsCaller(mContext));
     }
 
     private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
