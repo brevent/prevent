@@ -101,7 +101,7 @@ public class ActivityManagerServiceHook {
             return hookBroadcast(hostingName, hostingType, packageName);
         } else if ("service".equals(hostingType)) {
             // auto turn off service
-            if (GmsUtils.isGms(packageName) && GmsUtils.getGmsCount() == 0 && !SystemHook.hasRunningGapps()) {
+            if (GmsUtils.isGms(packageName) && GmsUtils.getGmsCount() == 0 && !SystemHook.hasRunningGapps() && !SafeActionUtils.isSafeService(mContext, hostingName)) {
                 LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
                 return false;
             }

@@ -158,13 +158,13 @@ public class IntentFilterHook {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        if (cannotPreventGms(packageName, sender)) {
+        if (accountWatcher.cannotHook(action, packageName)) {
+            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
+            return IntentFilterMatchResult.NONE;
+        } else if (cannotPreventGms(packageName, sender)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (GmsUtils.isGcmRegisterAction(action)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
-            return IntentFilterMatchResult.NONE;
-        } else if (accountWatcher.cannotHook(action, packageName)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (!isSystemSender(sender)) {

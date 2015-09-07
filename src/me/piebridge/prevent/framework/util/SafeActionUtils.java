@@ -1,5 +1,6 @@
 package me.piebridge.prevent.framework.util;
 
+import android.accounts.AccountManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -7,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.pm.ServiceInfo;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +57,26 @@ public class SafeActionUtils {
 
     public static boolean isSafeBroadcast(Context context, ComponentName cn) {
         return isSafeComponent(cn) || isWidget(context, cn);
+    }
+
+    public static boolean isSafeService(Context context, ComponentName cn) {
+        return isSafeComponent(cn) || isAccount(context, cn);
+    }
+
+    public static boolean isAccount(Context context, ComponentName cn) {
+        Intent intent = new Intent();
+        intent.setAction(AccountManager.ACTION_AUTHENTICATOR_INTENT);
+        intent.setPackage(cn.getPackageName());
+        List<ResolveInfo> intentServices = context.getPackageManager().queryIntentServices(intent, 0);
+        final int size = intentServices == null ? 0 : intentServices.size();
+        for (int i = 0; i < size; ++i) {
+            ServiceInfo si = intentServices.get(i).serviceInfo;
+            if (new ComponentName(si.packageName, si.name).equals(cn)) {
+                addSafeAction(cn);
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isSafeComponent(ComponentName cn) {
