@@ -484,8 +484,8 @@ public final class SystemHook {
                 it.remove();
             }
         }
-        if (BuildConfig.DEBUG && !runningGapps.isEmpty()) {
-            PreventLog.v("running gapps: " + runningGapps);
+        if (BuildConfig.DEBUG || !runningGapps.isEmpty()) {
+            PreventLog.d("running gapps: " + runningGapps);
         }
         return !runningGapps.isEmpty();
     }
