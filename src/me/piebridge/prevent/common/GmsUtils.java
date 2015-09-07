@@ -32,8 +32,12 @@ public class GmsUtils {
 
     }
 
+    public static boolean isGapps(String packageName) {
+        return packageName != null && (packageName.startsWith(GAPPS_PREFIX) || "com.android.vending".equals(packageName));
+    }
+
     public static boolean isGapps(PackageManager pm, String packageName) {
-        return packageName.startsWith(GAPPS_PREFIX) || (SignatureUtils.canTrustSignature(pm) && pm.checkSignatures(packageName, GMS) == PackageManager.SIGNATURE_MATCH);
+        return isGapps(packageName) || (SignatureUtils.canTrustSignature(pm) && pm.checkSignatures(packageName, GMS) == PackageManager.SIGNATURE_MATCH);
     }
 
     public static void increaseGmsCount(Context context, String packageName) {
@@ -58,7 +62,7 @@ public class GmsUtils {
     }
 
     public static boolean isGcmRegisterAction(String action) {
-        return GCM_ACTION_REGISTER.equals (action);
+        return GCM_ACTION_REGISTER.equals(action);
     }
 
     public static boolean isGms(String packageName) {
