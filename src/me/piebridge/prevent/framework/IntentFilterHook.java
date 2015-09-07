@@ -118,18 +118,18 @@ public class IntentFilterHook {
         }
         ApplicationInfo ai = owner.applicationInfo;
         String packageName = ai.packageName;
-        if (canNotPrevent(packageName, sender)) {
+        if (canNotPreventNonGms(packageName, sender)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
         boolean isSystem = isSystemSender(sender);
-        if (isSystem && !AppGlobals.getPackageManager().isProtectedBroadcast(action)) {
+        if (canNotPreventGms(packageName, sender)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
             return allowSafeIntent(filter, sender, action, packageName);
-        } else if (GmsUtils.isGms(packageName) && SystemHook.hasRunningGapps()) {
+        } else if (isSystem && !AppGlobals.getPackageManager().isProtectedBroadcast(action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
@@ -145,12 +145,12 @@ public class IntentFilterHook {
         return !GmsUtils.isGms(packageName) && !Boolean.TRUE.equals(mPreventPackages.get(packageName));
     }
 
-    private static boolean canNotPreventGms(String packageName, String sender) {
-        return GmsUtils.isGms(packageName) && (GmsUtils.isGms(sender) || GmsUtils.isGmsCaller(mContext) || SystemHook.hasRunningGapps());
+    private static boolean canNotPreventNonGms(String packageName, String sender) {
+        return mPreventPackages.get(packageName) == null || canNotPreventNonGms(packageName) || packageName.equals(sender);
     }
 
-    private static boolean canNotPrevent(String packageName, String sender) {
-        return mPreventPackages.get(packageName) == null || canNotPreventNonGms(packageName) || canNotPreventGms(packageName, sender) || packageName.equals(sender);
+    private static boolean canNotPreventGms(String packageName, String sender) {
+        return GmsUtils.isGms(packageName) && (GmsUtils.isGapps(mContext.getPackageManager(), sender) || GmsUtils.isGmsCaller(mContext));
     }
 
     private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
@@ -158,17 +158,17 @@ public class IntentFilterHook {
         PackageParser.Package owner = service.owner;
         ApplicationInfo ai = owner.applicationInfo;
         String packageName = ai.packageName;
-        if (canNotPrevent(packageName, sender)) {
+        if (canNotPreventNonGms(packageName, sender)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        if (GmsUtils.isGms(packageName) && sender != null && GmsUtils.isGapps(mContext.getPackageManager(), sender)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
-            return IntentFilterMatchResult.NONE;
-        } else if (accountWatcher.canNotHook(action, packageName)) {
+        if (canNotPreventGms(packageName, sender)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (GmsUtils.isGcmRegisterAction(action)) {
+            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
+            return IntentFilterMatchResult.NONE;
+        } else if (accountWatcher.canNotHook(action, packageName)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (!isSystemSender(sender)) {
