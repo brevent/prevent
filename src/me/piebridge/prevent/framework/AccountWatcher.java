@@ -68,8 +68,4 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         return AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action) && mEnabledPackages.contains(packageName);
     }
 
-    public static boolean isEnabled(String packageName) {
-        return mEnabledPackages != null && mEnabledPackages.contains(packageName);
-    }
-
 }
