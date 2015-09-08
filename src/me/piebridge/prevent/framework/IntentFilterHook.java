@@ -9,11 +9,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Process;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
@@ -30,9 +26,6 @@ public class IntentFilterHook {
     private static Context mContext;
     private static AccountWatcher accountWatcher;
     private static Map<String, Boolean> mPreventPackages;
-    private static ScheduledThreadPoolExecutor checkingExecutor = new ScheduledThreadPoolExecutor(0x2);
-    private static final Object CHECKING_LOCK = new Object();
-    private static Map<String, ScheduledFuture<?>> checkingFutures = new HashMap<String, ScheduledFuture<?>>();
 
     private IntentFilterHook() {
 
@@ -87,25 +80,9 @@ public class IntentFilterHook {
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             PreventLog.w("allow " + packageName + " for next service/broadcast");
             mPreventPackages.put(packageName, false);
-            restoreLater(packageName);
+            SystemHook.restoreLater(packageName);
         }
         return IntentFilterMatchResult.NONE;
-    }
-
-    private static void restoreLater(final String packageName) {
-        synchronized (CHECKING_LOCK) {
-            ScheduledFuture<?> checkingFuture = checkingFutures.get(packageName);
-            if (checkingFuture != null && checkingFuture.getDelay(TimeUnit.SECONDS) > 0) {
-                checkingFuture.cancel(false);
-            }
-            checkingFuture = checkingExecutor.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    SystemHook.restorePrevent(packageName);
-                }
-            }, SystemHook.TIME_CHECK_DISALLOW, TimeUnit.SECONDS);
-            checkingFutures.put(packageName, checkingFuture);
-        }
     }
 
     private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
@@ -124,7 +101,7 @@ public class IntentFilterHook {
         }
         boolean isSystem = isSystemSender(sender);
         if (cannotPreventGms(packageName, sender)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
+            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
@@ -162,7 +139,7 @@ public class IntentFilterHook {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (cannotPreventGms(packageName, sender)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
+            LogUtils.logIntentFilter(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (GmsUtils.isGcmRegisterAction(action)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);

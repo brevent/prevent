@@ -3,11 +3,13 @@ package me.piebridge.prevent.framework;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 
 import java.lang.reflect.Method;
 import java.util.Map;
 
 import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
@@ -100,13 +102,7 @@ public class ActivityManagerServiceHook {
             // always block broadcast
             return hookBroadcast(hostingName, hostingType, packageName);
         } else if ("service".equals(hostingType)) {
-            // auto turn off service
-            if (GmsUtils.isGms(packageName) && GmsUtils.getGmsCount() == 0 && !SystemHook.hasRunningGapps() && !SafeActionUtils.isSafeService(mContext, hostingName)) {
-                LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
-                return false;
-            }
-            SystemHook.checkRunningServices(packageName);
-            LogUtils.logStartProcess(packageName, hostingType, hostingName);
+            return hookService(hostingName, hostingType, packageName);
         }
 
         return true;
@@ -120,6 +116,42 @@ public class ActivityManagerServiceHook {
         } else {
             LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
             return false;
+        }
+    }
+
+    private static boolean hookService(ComponentName hostingName, String hostingType, String packageName) {
+        if (SafeActionUtils.isSafeService(mContext, hostingName) && AccountWatcher.isEnabled(packageName)) {
+            handleSafeService(packageName);
+            SystemHook.checkRunningServices(packageName);
+            LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);
+            return true;
+        }
+        // if there is no gapps, prevent start gms
+        if (GmsUtils.isGms(packageName) && GmsUtils.getGmsCount() == 0 && !SystemHook.hasRunningGapps()) {
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
+            return false;
+        }
+        // prevent third party app
+        try {
+            PackageManager pm = mContext.getPackageManager();
+            ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
+            if (!PackageUtils.isSystemPackage(info.flags)) {
+                LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
+                return false;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package " + packageName, e);
+        }
+        SystemHook.checkRunningServices(packageName);
+        LogUtils.logStartProcess(packageName, hostingType, hostingName);
+        return true;
+    }
+
+    private static void handleSafeService(String packageName) {
+        if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+            PreventLog.w("allow " + packageName + " for next service/broadcast");
+            mPreventPackages.put(packageName, false);
+            SystemHook.restoreLater(packageName);
         }
     }
 

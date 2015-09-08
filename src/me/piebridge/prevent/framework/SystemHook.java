@@ -79,6 +79,10 @@ public final class SystemHook {
 
     private static SystemReceiver systemReceiver;
 
+    private static ScheduledThreadPoolExecutor restoreExecutor = new ScheduledThreadPoolExecutor(0x2);
+    private static final Object RESTORE_LOCK = new Object();
+    private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
+
     private SystemHook() {
 
     }
@@ -488,6 +492,22 @@ public final class SystemHook {
             PreventLog.d("running gapps: " + runningGapps);
         }
         return !runningGapps.isEmpty();
+    }
+
+    public static void restoreLater(final String packageName) {
+        synchronized (CHECKING_LOCK) {
+            ScheduledFuture<?> restoreFuture = restoreFutures.get(packageName);
+            if (restoreFuture != null && restoreFuture.getDelay(TimeUnit.SECONDS) > 0) {
+                restoreFuture.cancel(false);
+            }
+            restoreFuture = restoreExecutor.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    restorePrevent(packageName);
+                }
+            }, TIME_CHECK_DISALLOW, TimeUnit.SECONDS);
+            restoreFutures.put(packageName, restoreFuture);
+        }
     }
 
 }
