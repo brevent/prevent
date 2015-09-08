@@ -120,7 +120,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookService(ComponentName hostingName, String hostingType, String packageName) {
-        if (SafeActionUtils.isSafeService(mContext, hostingName) && AccountWatcher.isEnabled(packageName)) {
+        if (SafeActionUtils.isSafeService(mContext, hostingName)) {
             handleSafeService(packageName);
             SystemHook.checkRunningServices(packageName);
             LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);

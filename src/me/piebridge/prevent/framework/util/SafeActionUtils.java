@@ -64,8 +64,9 @@ public class SafeActionUtils {
     }
 
     public static boolean isAccount(Context context, ComponentName cn) {
+        PreventLog.v("check account for service: " + cn);
         Intent intent = new Intent();
-        intent.setAction(AccountManager.ACTION_AUTHENTICATOR_INTENT);
+        intent.setAction("android.content.SyncAdapter");
         intent.setPackage(cn.getPackageName());
         List<ResolveInfo> intentServices = context.getPackageManager().queryIntentServices(intent, 0);
         final int size = intentServices == null ? 0 : intentServices.size();
