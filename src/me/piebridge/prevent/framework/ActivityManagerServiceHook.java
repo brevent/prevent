@@ -96,8 +96,11 @@ public class ActivityManagerServiceHook {
             return hookBroadcast(hostingName, hostingType, packageName);
         } else if ("service".equals(hostingType)) {
             return hookService(hostingName, hostingType, packageName);
+        } else if ("content provider".equals(hostingType)){
+            SystemHook.checkRunningServices(packageName, false);
         }
 
+        LogUtils.logStartProcess(packageName, hostingType + "(should safe)", hostingName);
         return true;
     }
 
