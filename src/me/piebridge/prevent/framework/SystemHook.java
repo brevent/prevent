@@ -422,6 +422,7 @@ public final class SystemHook {
 
     public static void restorePrevent(String packageName) {
         if (systemReceiver != null && 0 == systemReceiver.countCounter(packageName) && Boolean.FALSE.equals(mPreventPackages.get(packageName))) {
+            PreventLog.v("restore prevent for " + packageName);
             mPreventPackages.put(packageName, true);
         }
     }

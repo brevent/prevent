@@ -84,17 +84,10 @@ public class ActivityManagerServiceHook {
                 mPreventPackages.put(packageName, false);
                 prevents = false;
             }
-        } else if (Boolean.FALSE.equals(mPreventPackages.get(packageName))) {
-            restoreSafeIntentIfNeeded(hostingType, packageName);
+            LogUtils.logStartProcess(packageName, hostingType, hostingName);
         }
 
         return !prevents || hookDependency(hostingName, hostingType, packageName);
-    }
-
-    private static void restoreSafeIntentIfNeeded(String hostingType, String packageName) {
-        if ("broadcast".equals(hostingType) || "service".equals(hostingType)) {
-            SystemHook.restorePrevent(packageName);
-        }
     }
 
     private static boolean hookDependency(ComponentName hostingName, String hostingType, String packageName) {
