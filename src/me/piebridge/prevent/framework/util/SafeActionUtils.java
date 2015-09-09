@@ -1,6 +1,5 @@
 package me.piebridge.prevent.framework.util;
 
-import android.accounts.AccountManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;

@@ -81,24 +81,26 @@ public class GmsUtils {
     public static boolean isGappsCaller(Context context) {
         try {
             int callingUid = Binder.getCallingUid();
-            PackageManager pm = context.getPackageManager();
-            if (pm.getApplicationInfo(GMS, 0).uid == callingUid) {
-                return true;
-            }
             if (callingUid < SystemHook.FIRST_APPLICATION_UID) {
                 return false;
             }
-            String[] packageNames = pm.getPackagesForUid(callingUid);
-            if (packageNames == null) {
-                return false;
-            }
-            for (String packageName : packageNames) {
-                if (isGapps(packageName)) {
-                    return true;
-                }
-            }
-        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
+            PackageManager pm = context.getPackageManager();
+            return pm.getApplicationInfo(GMS, 0).uid == callingUid || isGapps(pm, callingUid);
+        } catch (PackageManager.NameNotFoundException e) {
             PreventLog.v("cannot find gms", e);
+        }
+        return false;
+    }
+
+    private static boolean isGapps(PackageManager pm, int callingUid) {
+        String[] packageNames = pm.getPackagesForUid(callingUid);
+        if (packageNames == null) {
+            return false;
+        }
+        for (String packageName : packageNames) {
+            if (isGapps(packageName)) {
+                return true;
+            }
         }
         return false;
     }

@@ -85,35 +85,6 @@ public class IntentFilterHook {
         return IntentFilterMatchResult.NONE;
     }
 
-    private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
-        // for receiver, we don't block for activity
-        PackageParser.Activity activity = filter.activity;
-        PackageParser.Package owner = activity.owner;
-        if (!owner.receivers.contains(activity)) {
-            // we only care about receiver
-            return IntentFilterMatchResult.NONE;
-        }
-        ApplicationInfo ai = owner.applicationInfo;
-        String packageName = ai.packageName;
-        if (cannotPrevent(packageName, sender)) {
-            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
-            return IntentFilterMatchResult.NONE;
-        }
-        boolean isSystem = isSystemSender(sender);
-        if (cannotPreventGms(packageName, sender)) {
-            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
-            return IntentFilterMatchResult.NONE;
-        } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
-            return allowSafeIntent(filter, sender, action, packageName);
-        } else if (isSystem && !AppGlobals.getPackageManager().isProtectedBroadcast(action)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
-            return IntentFilterMatchResult.NONE;
-        }
-        LogUtils.logIntentFilter(true, sender, filter, action, packageName);
-        return IntentFilterMatchResult.NO_MATCH;
-    }
-
     private static boolean isSystemSender(String sender) {
         return sender == null && Binder.getCallingUid() == Process.SYSTEM_UID;
     }
@@ -126,6 +97,47 @@ public class IntentFilterHook {
         return GmsUtils.isGms(packageName) && (GmsUtils.isGapps(mContext.getPackageManager(), sender) || GmsUtils.isGappsCaller(mContext));
     }
 
+    private static boolean isSafeReceiverAction(boolean isSystem, String action) {
+        return isSystem && !AppGlobals.getPackageManager().isProtectedBroadcast(action);
+    }
+
+    private static boolean isSafeServiceAction(String action, String packageName) {
+        return accountWatcher.cannotHook(action, packageName) || GmsUtils.isGcmRegisterAction(action);
+    }
+
+    private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
+        // for receiver, we don't block for activity
+        PackageParser.Activity activity = filter.activity;
+        PackageParser.Package owner = activity.owner;
+        if (owner.receivers.contains(activity)) {
+            return hookReceiver(filter, owner.applicationInfo, sender, action);
+        } else {
+            // we only care about receiver
+            return IntentFilterMatchResult.NONE;
+        }
+    }
+
+    private static IntentFilterMatchResult hookReceiver(PackageParser.ActivityIntentInfo filter, ApplicationInfo ai, String sender, String action) {
+        String packageName = ai.packageName;
+        if (cannotPrevent(packageName, sender)) {
+            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
+            return IntentFilterMatchResult.NONE;
+        }
+        boolean isSystem = isSystemSender(sender);
+        if (cannotPreventGms(packageName, sender)) {
+            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
+            return IntentFilterMatchResult.NONE;
+        } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
+            LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
+            return allowSafeIntent(filter, sender, action, packageName);
+        } else if (isSafeReceiverAction(isSystem, action)) {
+            LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
+            return IntentFilterMatchResult.NONE;
+        }
+        LogUtils.logIntentFilter(true, sender, filter, action, packageName);
+        return IntentFilterMatchResult.NO_MATCH;
+    }
+
     private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
         PackageParser.Service service = filter.service;
         PackageParser.Package owner = service.owner;
@@ -135,14 +147,11 @@ public class IntentFilterHook {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        if (accountWatcher.cannotHook(action, packageName)) {
+        if (isSafeServiceAction(action, packageName)) {
             LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (cannotPreventGms(packageName, sender)) {
             LogUtils.logIntentFilter(false, sender, filter, action, ai.packageName);
-            return IntentFilterMatchResult.NONE;
-        } else if (GmsUtils.isGcmRegisterAction(action)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (!isSystemSender(sender)) {
             LogUtils.logIntentFilterWarning(true, sender, filter, action, ai.packageName);
@@ -160,7 +169,8 @@ public class IntentFilterHook {
 
     public static boolean isPrevent(Intent intent) {
         String action = intent.getAction();
-        return (!AppGlobals.getPackageManager().isProtectedBroadcast(action) || GmsUtils.isGcmAction(null, true, action));
+        return !AppGlobals.getPackageManager().isProtectedBroadcast(action) || GmsUtils.isGcmAction(null, true, action);
     }
+
 
 }

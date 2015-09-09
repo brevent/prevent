@@ -50,13 +50,10 @@ public class PackageUtils {
     }
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
-        if (appInfo.uid < SystemHook.FIRST_APPLICATION_UID) {
-            return false;
-        }
-        // can prevent non-system package
-        if (!isSystemPackage(appInfo.flags)) {
-            return true;
-        }
+        return appInfo.uid >= SystemHook.FIRST_APPLICATION_UID && (!isSystemPackage(appInfo.flags) || canPreventSystemPackage(pm, appInfo));
+    }
+
+    private static boolean canPreventSystemPackage(PackageManager pm, ApplicationInfo appInfo) {
         // cannot prevent launcher
         if (isLauncher(pm, appInfo.packageName)) {
             return false;

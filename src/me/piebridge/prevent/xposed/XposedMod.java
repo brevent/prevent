@@ -69,99 +69,24 @@ public class XposedMod implements IXposedHookZygoteInit {
         SystemHook.setClassLoader(classLoader);
 
         Class<?> activityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader);
-        Method startProcessLocked = ActivityManagerServiceHook.getStartProcessLocked(activityManagerService);
-        XposedBridge.hookMethod(startProcessLocked, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (!ActivityManagerServiceHook.hookBeforeStartProcessLocked(param.thisObject, param.args)) {
-                    param.setResult(null);
-                }
-            }
-        });
 
-        XposedBridge.hookAllMethods(activityManagerService, "broadcastIntent", new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Object caller = param.args[0];
-                Object callerApp = XposedHelpers.callMethod(param.thisObject, "getRecordForAppLocked", caller);
-                ApplicationInfo info = ProcessRecordUtils.getInfo(callerApp);
-                String sender = info == null ? "" : info.packageName;
-                RECEIVER_SENDER.set(sender);
-            }
+        XposedBridge.hookMethod(ActivityManagerServiceHook.getStartProcessLocked(activityManagerService), new ProcessHook());
 
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                RECEIVER_SENDER.remove();
-            }
-        });
+        XposedBridge.hookAllMethods(activityManagerService, "broadcastIntent", new ContextHook(RECEIVER_SENDER));
 
-        XposedBridge.hookAllMethods(activityManagerService, "startService", new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Object caller = param.args[0];
-                Object callerApp = XposedHelpers.callMethod(param.thisObject, "getRecordForAppLocked", caller);
-                ApplicationInfo info = ProcessRecordUtils.getInfo(callerApp);
-                String sender = info == null ? "" : info.packageName;
-                SERVICE_SENDER.set(sender);
-            }
-
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                SERVICE_SENDER.remove();
-            }
-        });
-
-        Method cleanUpRemovedTaskLocked = ActivityManagerServiceHook.getCleanUpRemovedTaskLocked(activityManagerService);
-        if (cleanUpRemovedTaskLocked != null) {
-            XposedBridge.hookMethod(cleanUpRemovedTaskLocked, new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    ActivityManagerServiceHook.hookAfterCleanUpRemovedTaskLocked(param.args);
-                }
-            });
-        }
+        XposedBridge.hookAllMethods(activityManagerService, "startService", new ContextHook(SERVICE_SENDER));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            XposedHelpers.findAndHookMethod("android.content.Intent", classLoader, "isExcludingStopped", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    Boolean result = (Boolean) param.getResult();
-                    if (result != null && result && IntentFilterHook.isPrevent((Intent) param.thisObject)) {
-                        param.setResult(false);
-                    }
-                }
-            });
+            XposedHelpers.findAndHookMethod("android.content.Intent", classLoader, "isExcludingStopped", new IntentExcludingStoppedHook());
         }
 
-        final Class<?> intentFilter = Class.forName("android.content.IntentFilter", false, classLoader);
-        Method match = intentFilter.getMethod("match", String.class, String.class, String.class, Uri.class, Set.class, String.class);
-        XposedBridge.hookMethod(match, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (IntentFilterHook.canHook((Integer) param.getResult())) {
-                    IntentFilterMatchResult result = IntentFilterHook.hookAfterMatch(param.thisObject, param.args);
-                    if (!result.isNone()) {
-                        param.setResult(result.getResult());
-                    }
-                }
-            }
-        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            XposedBridge.hookMethod(ActivityManagerServiceHook.getCleanUpRemovedTaskLocked(activityManagerService), new CleanUpRemovedHook());
+        }
 
-        XposedBridge.hookAllMethods(activityManagerService, "removeProcessLocked", new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                String reason = String.valueOf(param.args[param.args.length - 1]);
-                if (reason.startsWith("stop ")) {
-                    Object processRecord = param.args[0];
-                    String packageName = reason.substring(5);
-                    String killPackageName = ProcessRecordUtils.getInfo(processRecord).packageName;
-                    if (GmsUtils.isGms(packageName) && !GmsUtils.isGms(killPackageName)) {
-                        XposedHelpers.setBooleanField(processRecord, "removed", false);
-                        param.setResult(false);
-                    }
-                }
-            }
-        });
+        XposedHelpers.findAndHookMethod("android.content.IntentFilter", classLoader, "match", String.class, String.class, String.class, Uri.class, Set.class, String.class, new IntentFilterMatchHook());
+
+        XposedBridge.hookAllMethods(activityManagerService, "removeProcessLocked", new IgnoreDependencyHook());
 
         if (BuildConfig.ALIPAY_DONATE || BuildConfig.WECHAT_DONATE) {
             exportActivityIfNeeded();
@@ -251,6 +176,86 @@ public class XposedMod implements IXposedHookZygoteInit {
             XposedHelpers.findAndHookMethod(Activity.class, "startActivityForResult", Intent.class, int.class, Bundle.class, hookStartActivityForResult);
         } else {
             XposedHelpers.findAndHookMethod(Activity.class, "startActivityForResult", Intent.class, int.class, hookStartActivityForResult);
+        }
+    }
+
+
+    private static class ContextHook extends XC_MethodHook {
+
+        private final ThreadLocal<String> context;
+
+        public ContextHook(ThreadLocal<String> context) {
+            this.context = context;
+        }
+
+        @Override
+        protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
+            Object caller = param.args[0];
+            Object callerApp = XposedHelpers.callMethod(param.thisObject, "getRecordForAppLocked", caller);
+            ApplicationInfo info = ProcessRecordUtils.getInfo(callerApp);
+            String sender = info == null ? "" : info.packageName;
+            context.set(sender);
+        }
+
+        @Override
+        protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
+            context.remove();
+        }
+    }
+
+    private static class IgnoreDependencyHook extends XC_MethodHook {
+        @Override
+        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+            String reason = String.valueOf(param.args[param.args.length - 1]);
+            if (reason.startsWith("stop ")) {
+                Object processRecord = param.args[0];
+                // 0x5 = "stop "
+                String packageName = reason.substring(0x5);
+                String killPackageName = ProcessRecordUtils.getInfo(processRecord).packageName;
+                if (GmsUtils.isGms(packageName) && !GmsUtils.isGms(killPackageName)) {
+                    XposedHelpers.setBooleanField(processRecord, "removed", false);
+                    param.setResult(false);
+                }
+            }
+        }
+    }
+
+    private static class ProcessHook extends XC_MethodHook {
+        @Override
+        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+            if (!ActivityManagerServiceHook.hookBeforeStartProcessLocked(param.thisObject, param.args)) {
+                param.setResult(null);
+            }
+        }
+    }
+
+    private static class IntentExcludingStoppedHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
+            Boolean result = (Boolean) param.getResult();
+            if (result != null && result && IntentFilterHook.isPrevent((Intent) param.thisObject)) {
+                param.setResult(false);
+            }
+        }
+    }
+
+    private static class IntentFilterMatchHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            if (IntentFilterHook.canHook((Integer) param.getResult())) {
+                IntentFilterMatchResult result = IntentFilterHook.hookAfterMatch(param.thisObject, param.args);
+                if (!result.isNone()) {
+                    param.setResult(result.getResult());
+                }
+            }
+        }
+
+    }
+
+    private static class CleanUpRemovedHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            ActivityManagerServiceHook.hookAfterCleanUpRemovedTaskLocked(param.args);
         }
     }
 
