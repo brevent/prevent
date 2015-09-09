@@ -11,7 +11,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
 
-import java.lang.reflect.Method;
 import java.util.Set;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
@@ -75,6 +74,7 @@ public class XposedMod implements IXposedHookZygoteInit {
         XposedBridge.hookAllMethods(activityManagerService, "broadcastIntent", new ContextHook(RECEIVER_SENDER));
 
         XposedBridge.hookAllMethods(activityManagerService, "startService", new ContextHook(SERVICE_SENDER));
+        XposedBridge.hookAllMethods(activityManagerService, "bindService", new ContextHook(SERVICE_SENDER));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             XposedHelpers.findAndHookMethod("android.content.Intent", classLoader, "isExcludingStopped", new IntentExcludingStoppedHook());
@@ -178,7 +178,6 @@ public class XposedMod implements IXposedHookZygoteInit {
             XposedHelpers.findAndHookMethod(Activity.class, "startActivityForResult", Intent.class, int.class, hookStartActivityForResult);
         }
     }
-
 
     private static class ContextHook extends XC_MethodHook {
 
