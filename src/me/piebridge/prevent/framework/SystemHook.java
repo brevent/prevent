@@ -40,7 +40,6 @@ import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.ui.PreventProvider;
-import me.piebridge.prevent.ui.util.PreventListUtils;
 
 public final class SystemHook {
 
@@ -200,10 +199,14 @@ public final class SystemHook {
                 @Override
                 public void run() {
                     if (mPreventPackages == null) {
+                        PreventLog.d("checking prevents, no data");
                         if (!retrievingFuture.isDone()) {
                             retrievingFuture.cancel(true);
                         }
+                        PreventLog.d("checking prevents, wait for next check");
                         retrievingTask = null;
+                    } else {
+                        PreventLog.d("checking prevents, ok");
                     }
                 }
             }, 0x5, TimeUnit.SECONDS);
@@ -429,14 +432,7 @@ public final class SystemHook {
             PreventLog.d("RetrievingTask");
 
             Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
-            try {
-                loadPrevent(preventPackages);
-            } catch (Throwable t) { // NOSONAR
-                PreventLog.e("cannot load prevent", t);
-                for (String packageName : PreventListUtils.load(null)) {
-                    preventPackages.put(packageName, true);
-                }
-            }
+            loadPrevent(preventPackages);
             PreventLog.d("prevents: " + preventPackages.size());
             mPreventPackages = new ConcurrentHashMap<String, Boolean>();
             mPreventPackages.putAll(preventPackages);
