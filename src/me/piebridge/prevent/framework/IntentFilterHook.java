@@ -86,7 +86,7 @@ public class IntentFilterHook {
     }
 
     private static boolean isSystemSender(String sender) {
-        return sender == null && Binder.getCallingUid() == Process.SYSTEM_UID;
+        return (sender == null || "android".equals(sender)) && Binder.getCallingUid() == Process.SYSTEM_UID;
     }
 
     private static boolean cannotPrevent(String packageName, String sender) {
