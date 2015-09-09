@@ -474,6 +474,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return true;
     }
 
+    @SuppressWarnings("deprecation")
     public int getResourceColor(int colorId) {
         return getResources().getColor(colorId);
     }
