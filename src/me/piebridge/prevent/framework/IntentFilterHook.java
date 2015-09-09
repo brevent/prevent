@@ -69,14 +69,14 @@ public class IntentFilterHook {
     private static IntentFilterMatchResult hookCloseSystemDialogs(Object filter, String action) {
         String packageName = BroadcastFilterUtils.getPackageName(filter);
         if (packageName != null && mPreventPackages.containsKey(packageName)) {
-            LogUtils.logIntentFilter(true, "(ignore)", filter, action, packageName);
+            LogUtils.logIntentFilterInfo(true, "(ignore)", filter, action, packageName);
             return IntentFilterMatchResult.NO_MATCH;
         }
         return IntentFilterMatchResult.NONE;
     }
 
     private static IntentFilterMatchResult allowSafeIntent(PackageParser.ActivityIntentInfo filter, String sender, String action, String packageName) {
-        LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
+        LogUtils.logIntentFilterInfo(false, sender, filter, action, packageName);
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             PreventLog.w("allow " + packageName + " for next service/broadcast");
             mPreventPackages.put(packageName, false);
@@ -128,13 +128,13 @@ public class IntentFilterHook {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
+            LogUtils.logIntentFilterInfo(false, sender, filter, action, packageName);
             return allowSafeIntent(filter, sender, action, packageName);
         } else if (isSafeReceiverAction(isSystem, action)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, packageName);
+            LogUtils.logIntentFilterInfo(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        LogUtils.logIntentFilter(true, sender, filter, action, packageName);
+        LogUtils.logIntentFilterInfo(true, sender, filter, action, packageName);
         return IntentFilterMatchResult.NO_MATCH;
     }
 
@@ -148,13 +148,13 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         if (isSafeServiceAction(action, packageName)) {
-            LogUtils.logIntentFilterWarning(false, sender, filter, action, ai.packageName);
+            LogUtils.logIntentFilterInfo(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (cannotPreventGms(packageName, sender)) {
             LogUtils.logIntentFilter(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (!isSystemSender(sender)) {
-            LogUtils.logIntentFilterWarning(true, sender, filter, action, ai.packageName);
+            LogUtils.logIntentFilterInfo(true, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NO_MATCH;
         }
         LogUtils.logIntentFilter(false, sender, filter, action, packageName);

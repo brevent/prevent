@@ -101,8 +101,8 @@ public class LogUtils {
         PreventLog.v(buildIntentFilterLog(disallow, sender, filter, action, packageName));
     }
 
-    public static void logIntentFilterWarning(boolean disallow, String sender, final Object filter, final String action, final String packageName) {
-        PreventLog.w(buildIntentFilterLog(disallow, sender, filter, action, packageName));
+    public static void logIntentFilterInfo(boolean disallow, String sender, final Object filter, final String action, final String packageName) {
+        PreventLog.i(buildIntentFilterLog(disallow, sender, filter, action, packageName));
     }
 
     public static void logStartProcess(final String packageName, final String hostingType, final Object hostingName) {
