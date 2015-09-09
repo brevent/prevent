@@ -110,7 +110,7 @@ public class ActivityManagerServiceHook {
 
     private static boolean hookBroadcast(ComponentName hostingName, String hostingType, String packageName) {
         if (SafeActionUtils.isSafeBroadcast(mContext, hostingName)) {
-            SystemHook.checkRunningServices(packageName);
+            SystemHook.checkRunningServices(packageName, false);
             LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);
             return true;
         } else {
@@ -122,7 +122,7 @@ public class ActivityManagerServiceHook {
     private static boolean hookService(ComponentName hostingName, String hostingType, String packageName) {
         if (SafeActionUtils.isSafeService(mContext, hostingName)) {
             handleSafeService(packageName);
-            SystemHook.checkRunningServices(packageName);
+            SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);
             return true;
         }
@@ -142,7 +142,7 @@ public class ActivityManagerServiceHook {
         } catch (PackageManager.NameNotFoundException e) {
             PreventLog.d("cannot find package " + packageName, e);
         }
-        SystemHook.checkRunningServices(packageName);
+        SystemHook.checkRunningServices(packageName, true);
         LogUtils.logStartProcess(packageName, hostingType, hostingName);
         return true;
     }

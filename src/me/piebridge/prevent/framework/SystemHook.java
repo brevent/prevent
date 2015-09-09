@@ -240,7 +240,7 @@ public final class SystemHook {
         }
     }
 
-    public static void checkRunningServices(final String packageName) {
+    public static void checkRunningServices(final String packageName, final boolean forcestop) {
         if (packageName == null) {
             return;
         }
@@ -262,7 +262,7 @@ public final class SystemHook {
 
             @Override
             protected Collection<String> prepareWhiteList() {
-                return prepareServiceWhiteList(packageName);
+                return prepareServiceWhiteList(packageName, forcestop);
             }
         }, GmsUtils.isGms(packageName) ? TIME_CHECK_GMS : TIME_CHECK_SERVICE, TimeUnit.SECONDS);
         synchronized (CHECKING_LOCK) {
@@ -270,7 +270,7 @@ public final class SystemHook {
         }
     }
 
-    private static Collection<String> prepareServiceWhiteList(String packageName) {
+    private static Collection<String> prepareServiceWhiteList(String packageName, boolean forcestop) {
         int gmsCount = GmsUtils.decreaseGmsCount(mContext, packageName);
         if (!GmsUtils.isGms(packageName) || gmsCount == 0) {
             synchronized (CHECKING_LOCK) {
@@ -280,6 +280,9 @@ public final class SystemHook {
         if (gmsCount > 0 || hasRunningGapps()) {
             return GmsUtils.getGmsPackages();
         } else {
+            if (forcestop) {
+                HideApiUtils.forceStopPackage(mContext, packageName);
+            }
             return Collections.emptyList();
         }
     }
@@ -495,7 +498,7 @@ public final class SystemHook {
     }
 
     public static void restoreLater(final String packageName) {
-        synchronized (CHECKING_LOCK) {
+        synchronized (RESTORE_LOCK) {
             ScheduledFuture<?> restoreFuture = restoreFutures.get(packageName);
             if (restoreFuture != null && restoreFuture.getDelay(TimeUnit.SECONDS) > 0) {
                 restoreFuture.cancel(false);
