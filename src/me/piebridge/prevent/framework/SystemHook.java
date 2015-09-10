@@ -299,9 +299,6 @@ public final class SystemHook {
             synchronized (CHECKING_LOCK) {
                 checkingPackageNames.remove(packageName);
             }
-            if (checkingFuture != null) {
-                checkingFuture.cancel(false);
-            }
         }
     }
 
