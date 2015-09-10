@@ -145,6 +145,7 @@ public class SystemReceiver extends BroadcastReceiver {
     }
 
     private void handleIncreaseCounter(String action, String packageName, Intent intent) {
+        SystemHook.cancelCheck(packageName);
         SystemHook.updateRunningGapps(packageName, true);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, false);
@@ -201,13 +202,15 @@ public class SystemReceiver extends BroadcastReceiver {
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
             LogUtils.logForceStop(action, packageName, "destroy in " + SystemHook.TIME_SUICIDE + "s");
-            SystemHook.forceStopPackageLater(packageName, SystemHook.TIME_SUICIDE);
+            SystemHook.checkRunningServices(packageName, SystemHook.TIME_SUICIDE);
+        } else {
+            SystemHook.checkRunningServices(null, SystemHook.TIME_SUICIDE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_SUICIDE);
         }
-        SystemHook.checkRunningServices(null, SystemHook.TIME_SUICIDE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_SUICIDE);
         SystemHook.killNoFather();
     }
 
     private void handleRestart(String action, String packageName) {
+        SystemHook.cancelCheck(packageName);
         SystemHook.updateRunningGapps(packageName, true);
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             mPreventPackages.put(packageName, false);

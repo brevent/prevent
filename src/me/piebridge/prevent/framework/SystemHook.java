@@ -290,6 +290,21 @@ public final class SystemHook {
         }
     }
 
+    public static boolean inCheckQueue(String packageName) {
+        return packageName != null && checkingPackageNames.contains(packageName);
+    }
+
+    public static void cancelCheck(String packageName) {
+        if (packageName != null) {
+            synchronized (CHECKING_LOCK) {
+                checkingPackageNames.remove(packageName);
+            }
+            if (checkingFuture != null) {
+                checkingFuture.cancel(false);
+            }
+        }
+    }
+
     public static boolean checkRunningServices(final String packageName, int seconds) {
         if (packageName != null) {
             synchronized (CHECKING_LOCK) {
@@ -319,6 +334,7 @@ public final class SystemHook {
             packageNames.addAll(checkingPackageNames);
             checkingPackageNames.clear();
         }
+        PreventLog.v("checking packages: " + packageNames);
         return packageNames;
     }
 
@@ -334,15 +350,6 @@ public final class SystemHook {
     }
 
     static void forceStopPackageForce(final String packageName, int second) {
-        singleExecutor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                forceStopPackage(packageName);
-            }
-        }, second, TimeUnit.SECONDS);
-    }
-
-    public static void forceStopPackageLater(final String packageName, int second) {
         singleExecutor.schedule(new Runnable() {
             @Override
             public void run() {

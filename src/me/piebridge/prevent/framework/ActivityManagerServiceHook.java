@@ -78,6 +78,7 @@ public class ActivityManagerServiceHook {
 
         boolean prevents = Boolean.TRUE.equals(mPreventPackages.get(packageName));
         if ("activity".equals(hostingType)) {
+            SystemHook.cancelCheck(packageName);
             SystemHook.updateRunningGapps(packageName, true);
             if (prevents) {
                 // never block activity
@@ -131,7 +132,7 @@ public class ActivityManagerServiceHook {
         try {
             PackageManager pm = mContext.getPackageManager();
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
-            if (!PackageUtils.isSystemPackage(info.flags)) {
+            if (!PackageUtils.isSystemPackage(info.flags) && !SystemHook.inCheckQueue(packageName)) {
                 LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
                 return false;
             }
