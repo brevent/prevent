@@ -3,10 +3,9 @@ package me.piebridge.prevent.framework.util;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
+import android.util.Base64;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,9 +22,8 @@ import me.piebridge.prevent.ui.PreventProvider;
  */
 public class LogcatUtils {
 
-    private static byte[] bytes;
-
-    private static final String COMMAND = "/system/bin/logcat -d -v time";
+    private static final String CACHE = "/data/system/prevent.log";
+    private static final String COMMAND = "/system/bin/logcat -d -v time -f " + CACHE;
 
     private LogcatUtils() {
 
@@ -33,22 +31,9 @@ public class LogcatUtils {
 
     public static void logcat() {
         try {
-            PreventLog.d("will execute " + COMMAND);
-            Process process = Runtime.getRuntime().exec(COMMAND);
-            BufferedInputStream stdout = new BufferedInputStream(process.getInputStream());
-
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            int length;
-            byte[] buffer = new byte[0x400];
-            while ((length = stdout.read(buffer)) != -1) {
-                bos.write(buffer, 0, length);
-            }
-            stdout.close();
-
-            bytes = bos.toByteArray();
-            bos.close();
-
-            PreventLog.d("log size: " + bytes.length);
+            PreventLog.d("will execute: " + COMMAND);
+            Runtime.getRuntime().exec(COMMAND);
+            PreventLog.d("execute complete: " + COMMAND);
         } catch (IOException e) {
             PreventLog.d("exec wrong", e);
         }
@@ -56,26 +41,26 @@ public class LogcatUtils {
 
     public static void logcat(Context context) {
         try {
-            if (bytes == null) {
-                logcat();
+            File cache = new File(CACHE);
+            if (cache.exists()) {
+                PreventLog.d("log size: " + cache.length());
+                sendToUi(context, new BufferedInputStream(new FileInputStream(cache)));
+                cache.delete();
+            } else {
+                PreventLog.d("not exist: " + CACHE);
             }
-            PreventLog.d("log size: " + bytes.length);
-            sendToUi(context, new ByteArrayInputStream(bytes));
-            bytes = null;
         } catch (IOException e) {
             PreventLog.d("exec wrong", e);
         }
-
-
     }
 
     private static void sendToUi(Context context, InputStream is) throws IOException {
         int length;
-        byte[] buffer = new byte[0x400];
+        byte[] buffer = new byte[0x300];
         ContentResolver contentResolver = context.getContentResolver();
         String path = new SimpleDateFormat("yyyyMMdd.HH.mm.ss'.log'", Locale.US).format(new Date());
         while ((length = is.read(buffer)) != -1) {
-            String line = new String(buffer, 0, length);
+            String line = Base64.encodeToString(buffer, 0, length, Base64.URL_SAFE | Base64.NO_WRAP);
             Uri uri = PreventProvider.CONTENT_URI.buildUpon().appendQueryParameter("path", path)
                     .appendQueryParameter("log", line).build();
             contentResolver.query(uri, null, null, null, null);

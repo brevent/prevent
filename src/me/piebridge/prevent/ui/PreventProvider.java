@@ -14,6 +14,7 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
+import android.util.Base64;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -96,7 +97,7 @@ public class PreventProvider extends ContentProvider {
         File file = new File(dir, path);
         try {
             FileOutputStream fos = new FileOutputStream(file, true);
-            fos.write(log.getBytes());
+            fos.write(Base64.decode(log, Base64.URL_SAFE | Base64.NO_WRAP));
             fos.close();
         } catch (IOException e) {
             UILog.d("cannot save log", e);
