@@ -96,14 +96,14 @@ public class ActivityManagerServiceHook {
             LogUtils.logStartProcess(packageName, hostingType + "(self)", hostingName);
             return true;
         }
-        if (!SafeActionUtils.isExported(mContext, hostingName)) {
-            LogUtils.logStartProcess(packageName, hostingType + "(not exported)", hostingName);
-            return true;
-        }
         if ("broadcast".equals(hostingType)) {
             // always block broadcast
             return hookBroadcast(hostingName, hostingType, packageName);
         } else if ("service".equals(hostingType)) {
+            if (!SafeActionUtils.isExportedService(mContext, hostingName)) {
+                LogUtils.logStartProcess(packageName, hostingType + "(not exported)", hostingName);
+                return true;
+            }
             return hookService(hostingName, hostingType, packageName);
         } else if ("content provider".equals(hostingType)){
             SystemHook.checkRunningServices(packageName, false);
