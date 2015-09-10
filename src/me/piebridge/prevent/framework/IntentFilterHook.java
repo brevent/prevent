@@ -134,7 +134,8 @@ public class IntentFilterHook {
             LogUtils.logIntentFilterInfo(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        LogUtils.logIntentFilterInfo(true, sender, filter, action, packageName);
+        // the default action is block, so change the log level
+        LogUtils.logIntentFilter(true, sender, filter, action, packageName);
         return IntentFilterMatchResult.NO_MATCH;
     }
 
