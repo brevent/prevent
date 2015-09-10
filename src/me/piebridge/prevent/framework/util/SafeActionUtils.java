@@ -59,16 +59,16 @@ public class SafeActionUtils {
     }
 
     public static boolean isSafeService(Context context, ComponentName cn) {
-        return isSafeComponent(cn) || isAccount(context, cn) || isExported(context, cn);
+        return isSafeComponent(cn) || isAccount(context, cn);
     }
 
-    private static boolean isExported(Context context, ComponentName cn) {
+    public static boolean isExported(Context context, ComponentName cn) {
         try {
             PackageManager pm = context.getPackageManager();
             ServiceInfo si = pm.getServiceInfo(cn, 0);
             return si.exported;
         } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find cn");
+            PreventLog.d("cannot find " + cn, e);
             return false;
         }
     }

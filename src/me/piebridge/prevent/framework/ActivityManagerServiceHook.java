@@ -96,6 +96,10 @@ public class ActivityManagerServiceHook {
             LogUtils.logStartProcess(packageName, hostingType + "(self)", hostingName);
             return true;
         }
+        if (!SafeActionUtils.isExported(mContext, hostingName)) {
+            LogUtils.logStartProcess(packageName, hostingType + "(not exported)", hostingName);
+            return true;
+        }
         if ("broadcast".equals(hostingType)) {
             // always block broadcast
             return hookBroadcast(hostingName, hostingType, packageName);
@@ -136,7 +140,7 @@ public class ActivityManagerServiceHook {
         try {
             PackageManager pm = mContext.getPackageManager();
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
-            if (!PackageUtils.isSystemPackage(info.flags) && !SystemHook.inCheckQueue(packageName)) {
+            if (shouldPrevent(info)) {
                 LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
                 return false;
             }
@@ -146,6 +150,10 @@ public class ActivityManagerServiceHook {
         SystemHook.checkRunningServices(packageName, true);
         LogUtils.logStartProcess(packageName, hostingType, hostingName);
         return true;
+    }
+
+    private static boolean shouldPrevent(ApplicationInfo info) {
+        return !PackageUtils.isSystemPackage(info.flags) && !SystemHook.inCheckQueue(info.packageName);
     }
 
     private static void handleSafeService(String packageName) {
