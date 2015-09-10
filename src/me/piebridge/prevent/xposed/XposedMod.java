@@ -222,7 +222,11 @@ public class XposedMod implements IXposedHookZygoteInit {
     private static class ProcessHook extends XC_MethodHook {
         @Override
         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-            if (!ActivityManagerServiceHook.hookBeforeStartProcessLocked(param.thisObject, param.args)) {
+            String sender = SERVICE_SENDER.get();
+            if (sender == null) {
+                sender = RECEIVER_SENDER.get();
+            }
+            if (!ActivityManagerServiceHook.hookBeforeStartProcessLocked(param.thisObject, param.args, sender)) {
                 param.setResult(null);
             }
         }

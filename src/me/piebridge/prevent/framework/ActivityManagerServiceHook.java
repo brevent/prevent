@@ -62,7 +62,7 @@ public class ActivityManagerServiceHook {
         return null;
     }
 
-    public static boolean hookBeforeStartProcessLocked(Object thiz, Object[] args) {
+    public static boolean hookBeforeStartProcessLocked(Object thiz, Object[] args, String sender) {
         ApplicationInfo info = (ApplicationInfo) args[0x1];
         String hostingType = (String) args[0x4];
         ComponentName hostingName = (ComponentName) args[0x5];
@@ -88,10 +88,14 @@ public class ActivityManagerServiceHook {
             LogUtils.logStartProcess(packageName, hostingType, hostingName);
         }
 
-        return !prevents || hookDependency(hostingName, hostingType, packageName);
+        return !prevents || hookDependency(hostingName, hostingType, packageName, sender);
     }
 
-    private static boolean hookDependency(ComponentName hostingName, String hostingType, String packageName) {
+    private static boolean hookDependency(ComponentName hostingName, String hostingType, String packageName, String sender) {
+        if (packageName.equals(sender)) {
+            LogUtils.logStartProcess(packageName, hostingType + "(self)", hostingName);
+            return true;
+        }
         if ("broadcast".equals(hostingType)) {
             // always block broadcast
             return hookBroadcast(hostingName, hostingType, packageName);
