@@ -105,11 +105,11 @@ public class LogUtils {
         PreventLog.i(buildIntentFilterLog(disallow, sender, filter, action, packageName));
     }
 
-    public static void logStartProcess(final String packageName, final String hostingType, final Object hostingName) {
-        logStartProcess(false, packageName, hostingType, hostingName);
+    public static void logStartProcess(final String packageName, final String hostingType, final Object hostingName, String sender) {
+        logStartProcess(false, packageName, hostingType, hostingName, sender);
     }
 
-    public static void logStartProcess(boolean disallow, final String packageName, final String hostingType, final Object hostingName) {
+    public static void logStartProcess(boolean disallow, final String packageName, final String hostingType, final Object hostingName, String sender) {
         StringBuilder sb = new StringBuilder();
         sb.append(disallow ? DISALLOW : ALLOW);
         sb.append(" start ");
@@ -123,6 +123,8 @@ public class LogUtils {
             sb.append(" ");
             sb.append(hostingName);
         }
+        sb.append(", sender=");
+        sb.append(sender);
         if (disallow) {
             PreventLog.d(sb.toString());
         } else {

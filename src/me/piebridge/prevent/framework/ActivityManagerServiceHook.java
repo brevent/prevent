@@ -85,7 +85,7 @@ public class ActivityManagerServiceHook {
                 mPreventPackages.put(packageName, false);
                 prevents = false;
             }
-            LogUtils.logStartProcess(packageName, hostingType, hostingName);
+            LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
         }
 
         return !prevents || hookDependency(hostingName, hostingType, packageName, sender);
@@ -93,47 +93,47 @@ public class ActivityManagerServiceHook {
 
     private static boolean hookDependency(ComponentName hostingName, String hostingType, String packageName, String sender) {
         if (packageName.equals(sender)) {
-            LogUtils.logStartProcess(packageName, hostingType + "(self)", hostingName);
+            LogUtils.logStartProcess(packageName, hostingType + "(self)", hostingName, sender);
             return true;
         }
         if ("broadcast".equals(hostingType)) {
             // always block broadcast
-            return hookBroadcast(hostingName, hostingType, packageName);
+            return hookBroadcast(hostingName, hostingType, packageName, sender);
         } else if ("service".equals(hostingType)) {
             if (!SafeActionUtils.isExportedService(mContext, hostingName)) {
-                LogUtils.logStartProcess(packageName, hostingType + "(not exported)", hostingName);
+                LogUtils.logStartProcess(packageName, hostingType + "(not exported)", hostingName, sender);
                 return true;
             }
-            return hookService(hostingName, hostingType, packageName);
-        } else if ("content provider".equals(hostingType)){
+            return hookService(hostingName, hostingType, packageName, sender);
+        } else if ("content provider".equals(hostingType)) {
             SystemHook.checkRunningServices(packageName, false);
         }
 
-        LogUtils.logStartProcess(packageName, hostingType + "(should safe)", hostingName);
+        LogUtils.logStartProcess(packageName, hostingType + "(should safe)", hostingName, sender);
         return true;
     }
 
-    private static boolean hookBroadcast(ComponentName hostingName, String hostingType, String packageName) {
+    private static boolean hookBroadcast(ComponentName hostingName, String hostingType, String packageName, String sender) {
         if (SafeActionUtils.isSafeBroadcast(mContext, hostingName)) {
             SystemHook.checkRunningServices(packageName, false);
-            LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);
+            LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName, sender);
             return true;
         } else {
-            LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
             return false;
         }
     }
 
-    private static boolean hookService(ComponentName hostingName, String hostingType, String packageName) {
+    private static boolean hookService(ComponentName hostingName, String hostingType, String packageName, String sender) {
         if (SafeActionUtils.isSafeService(mContext, hostingName)) {
             handleSafeService(packageName);
             SystemHook.checkRunningServices(packageName, true);
-            LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName);
+            LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName, sender);
             return true;
         }
         // if there is no gapps, prevent start gms
         if (GmsUtils.isGms(packageName) && GmsUtils.getGmsCount() == 0 && !SystemHook.hasRunningGapps()) {
-            LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
             return false;
         }
         // prevent third party app
@@ -141,14 +141,14 @@ public class ActivityManagerServiceHook {
             PackageManager pm = mContext.getPackageManager();
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
             if (shouldPrevent(info)) {
-                LogUtils.logStartProcess(true, packageName, hostingType, hostingName);
+                LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
                 return false;
             }
         } catch (PackageManager.NameNotFoundException e) {
             PreventLog.d("cannot find package " + packageName, e);
         }
         SystemHook.checkRunningServices(packageName, true);
-        LogUtils.logStartProcess(packageName, hostingType, hostingName);
+        LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
         return true;
     }
 
