@@ -1,5 +1,6 @@
 package me.piebridge.prevent.framework.util;
 
+import android.accounts.AccountManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -75,8 +76,12 @@ public class SafeActionUtils {
 
     public static boolean isAccount(Context context, ComponentName cn) {
         PreventLog.v("check account for service: " + cn);
+        return isSafeAccount(context, cn, "android.content.SyncAdapter") || isSafeAccount(context, cn, AccountManager.ACTION_AUTHENTICATOR_INTENT);
+    }
+
+    private static boolean isSafeAccount(Context context, ComponentName cn, String action) {
         Intent intent = new Intent();
-        intent.setAction("android.content.SyncAdapter");
+        intent.setAction(action);
         intent.setPackage(cn.getPackageName());
         List<ResolveInfo> intentServices = context.getPackageManager().queryIntentServices(intent, 0);
         final int size = intentServices == null ? 0 : intentServices.size();
