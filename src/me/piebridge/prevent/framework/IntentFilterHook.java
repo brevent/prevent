@@ -1,6 +1,5 @@
 package me.piebridge.prevent.framework;
 
-import android.app.AppGlobals;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -16,6 +15,7 @@ import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
+import me.piebridge.prevent.framework.util.SafeActionUtils;
 import me.piebridge.prevent.xposed.XposedMod;
 
 /**
@@ -69,7 +69,7 @@ public class IntentFilterHook {
     private static IntentFilterMatchResult hookCloseSystemDialogs(Object filter, String action) {
         String packageName = BroadcastFilterUtils.getPackageName(filter);
         if (packageName != null && mPreventPackages.containsKey(packageName)) {
-            LogUtils.logIntentFilterInfo(true, "(ignore)", filter, action, packageName);
+            LogUtils.logIntentFilter(true, "(ignore)", filter, action, packageName);
             return IntentFilterMatchResult.NO_MATCH;
         }
         return IntentFilterMatchResult.NONE;
@@ -98,7 +98,7 @@ public class IntentFilterHook {
     }
 
     private static boolean isSafeReceiverAction(boolean isSystem, String action) {
-        return isSystem && !AppGlobals.getPackageManager().isProtectedBroadcast(action);
+        return isSystem && !SafeActionUtils.isProtectedBroadcast(action);
     }
 
     private static boolean isSafeServiceAction(String action, String packageName) {
@@ -128,10 +128,9 @@ public class IntentFilterHook {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
-            LogUtils.logIntentFilterInfo(false, sender, filter, action, packageName);
             return allowSafeIntent(filter, sender, action, packageName);
         } else if (isSafeReceiverAction(isSystem, action)) {
-            LogUtils.logIntentFilterInfo(false, sender, filter, action, packageName);
+            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
         // the default action is block, so change the log level
@@ -149,7 +148,7 @@ public class IntentFilterHook {
             return IntentFilterMatchResult.NONE;
         }
         if (isSafeServiceAction(action, packageName)) {
-            LogUtils.logIntentFilterInfo(false, sender, filter, action, ai.packageName);
+            LogUtils.logIntentFilter(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (cannotPreventGms(packageName, sender)) {
             LogUtils.logIntentFilter(false, sender, filter, action, ai.packageName);
@@ -170,7 +169,7 @@ public class IntentFilterHook {
 
     public static boolean isPrevent(Intent intent) {
         String action = intent.getAction();
-        return !AppGlobals.getPackageManager().isProtectedBroadcast(action) || GmsUtils.isGcmAction(null, true, action);
+        return !SafeActionUtils.isProtectedBroadcast(action) || GmsUtils.isGcmAction(null, true, action);
     }
 
 

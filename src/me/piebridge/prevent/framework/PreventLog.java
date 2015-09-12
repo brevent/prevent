@@ -29,12 +29,10 @@ public class PreventLog {
 
     public static void d(String msg) {
         Log.d(TAG, msg);
-        logToXposed("[D/" + TAG + "] " + msg);
     }
 
     public static void d(String msg, Throwable t) {
         Log.d(TAG, msg, t);
-        logToXposed("[D/" + TAG + "] " + msg);
     }
 
     public static void i(String msg) {

@@ -28,7 +28,7 @@ public class BroadcastFilterUtils {
     }
 
     private static void initReflections() {
-        PreventLog.i("init BroadcastFilterUtils");
+        PreventLog.d("init BroadcastFilterUtils");
         ClassLoader classLoader = SystemHook.getClassLoader();
         try {
             BroadcastFilter = Class.forName("com.android.server.am.BroadcastFilter", false, classLoader);

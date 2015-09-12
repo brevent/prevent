@@ -25,7 +25,7 @@ public class ProcessRecordUtils {
     }
 
     public static void initReflection() {
-        PreventLog.i("init ProcessRecordUtils");
+        PreventLog.d("init ProcessRecordUtils");
         ClassLoader classLoader = SystemHook.getClassLoader();
         try {
             ProcessRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);

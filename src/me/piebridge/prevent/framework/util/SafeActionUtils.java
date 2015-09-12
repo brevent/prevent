@@ -1,6 +1,7 @@
 package me.piebridge.prevent.framework.util;
 
 import android.accounts.AccountManager;
+import android.app.AppGlobals;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,7 +40,7 @@ public class SafeActionUtils {
     }
 
     private static boolean addSafeAction(ComponentName cn) {
-        PreventLog.w("add " + cn + " as safe action");
+        PreventLog.i("add " + cn + " as safe component");
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
@@ -118,6 +119,13 @@ public class SafeActionUtils {
             }
         }
         return false;
+    }
+
+    public static boolean isProtectedBroadcast(String action) {
+        if (action == null || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
+            return false;
+        }
+        return action.startsWith("android.intent.action") || AppGlobals.getPackageManager().isProtectedBroadcast(action);
     }
 
 }

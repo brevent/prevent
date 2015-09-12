@@ -132,7 +132,7 @@ public class ActivityManagerServiceHook {
             return true;
         }
         // if there is no gapps, prevent start gms
-        if (GmsUtils.isGms(packageName) && GmsUtils.getGmsCount() == 0 && !SystemHook.hasRunningGapps()) {
+        if (GmsUtils.isGms(packageName) && GmsUtils.canStopGms()) {
             LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
             return false;
         }

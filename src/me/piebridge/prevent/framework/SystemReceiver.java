@@ -319,7 +319,7 @@ public class SystemReceiver extends BroadcastReceiver {
                 abnormalProcesses.put(processName, abnormalProcess);
             }
             if (abnormalProcess.add(packageName)) {
-                PreventLog.i("package " + packageName + " has abnormal process: " + processName);
+                PreventLog.d("package " + packageName + " has abnormal process: " + processName);
             }
         }
     }
@@ -368,7 +368,7 @@ public class SystemReceiver extends BroadcastReceiver {
 
 
     private void handlePackageRestarted(String action, String packageName) {
-        LogUtils.logRequest(action, packageName, -1);
+        LogUtils.logRequestInfo(action, packageName, -1);
         packageCounters.remove(packageName);
         SystemHook.updateRunningGapps(packageName, false);
         if (mPreventPackages.containsKey(packageName)) {

@@ -53,7 +53,7 @@ public class LogUtils {
         PreventLog.v(sb.toString());
     }
 
-    public static void logRequest(String action, String packageName, int count) {
+    private static String buildLogRequest(String action, String packageName, int count) {
         StringBuilder sb = new StringBuilder();
         sb.append(ACTION);
         sb.append(action.replaceFirst(PreventIntent.NAMESPACE, ""));
@@ -66,11 +66,21 @@ public class LogUtils {
             sb.append(", count: ");
             sb.append(count);
         }
+        return sb.toString();
+    }
+
+    public static void logRequest(String action, String packageName, int count) {
+        String log = buildLogRequest(action, packageName, count);
         if (packageName != null && count >= 0) {
-            PreventLog.v(sb.toString());
+            PreventLog.v(log);
         } else {
-            PreventLog.d(sb.toString());
+            PreventLog.d(log);
         }
+    }
+
+    public static void logRequestInfo(String action, String packageName, int count) {
+        String log = buildLogRequest(action, packageName, count);
+        PreventLog.i(log);
     }
 
     private static String buildIntentFilterLog(boolean disallow, String sender, final Object filter, final String action, final String packageName) {

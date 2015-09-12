@@ -19,6 +19,7 @@ public class GmsUtils {
 
     private static final String GMS = "com.google.android.gms";
     private static final String GSF = "com.google.android.gsf";
+    private static final String GSF_LOGIN = "com.google.android.gsf.login";
     private static final String GAPPS_PREFIX = "com.google.android.";
     private static final AtomicInteger GMS_COUNTER = new AtomicInteger();
     // https://developers.google.com/cloud-messaging/android/client
@@ -27,7 +28,7 @@ public class GmsUtils {
             "com.google.android.c2dm.intent.REGISTRATION");
     private static final String GCM_ACTION_REGISTER = "com.google.android.c2dm.intent.REGISTER";
     private static Collection<String> GMS_PACKAGES = Arrays.asList(
-            GMS, GSF
+            GMS, GSF, GSF_LOGIN
     );
     private static Collection<String> GAPPS = Arrays.asList(
             "com.android.chrome", "com.android.facelock", "com.android.vending"
@@ -48,17 +49,14 @@ public class GmsUtils {
     public static void increaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.incrementAndGet();
-            PreventLog.d("increase gms reference: " + gmsCount + ", packageName: " + packageName);
+            PreventLog.i("increase gms reference: " + gmsCount + ", packageName: " + packageName);
         }
     }
 
-    public static int decreaseGmsCount(Context context, String packageName) {
+    public static void decreaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.decrementAndGet();
-            PreventLog.d("decrease reference: " + gmsCount + ", packageName: " + packageName);
-            return gmsCount;
-        } else {
-            return GMS_COUNTER.get();
+            PreventLog.i("decrease gms reference: " + gmsCount + ", packageName: " + packageName);
         }
     }
 
@@ -105,12 +103,8 @@ public class GmsUtils {
         return false;
     }
 
-    public static int getGmsCount() {
-        int count = GMS_COUNTER.get();
-        if (count > 0) {
-            PreventLog.d("current gms reference count: " + count);
-        }
-        return count;
+    public static boolean canStopGms() {
+        return GMS_COUNTER.get() == 0 && !SystemHook.hasRunningGapps();
     }
 
 }

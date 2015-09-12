@@ -44,7 +44,7 @@ public class NotificationManagerServiceUtils {
     }
 
     private static boolean initMethod() {
-        PreventLog.i("init NotificationManagerServiceUtils");
+        PreventLog.d("init NotificationManagerServiceUtils");
         Object object = ServiceManager.getService(Context.NOTIFICATION_SERVICE);
         if (object == null) {
             PreventLog.d("cannot find service: " + Context.NOTIFICATION_SERVICE);

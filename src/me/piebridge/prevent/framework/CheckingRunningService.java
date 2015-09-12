@@ -56,7 +56,7 @@ abstract class CheckingRunningService implements Runnable {
             return true;
         }
         if (isPersistentService(service)) {
-            PreventLog.i("package " + name + " has persistent process, will force stop it");
+            PreventLog.d("package " + name + " has persistent process, will force stop it");
             shouldStopPackageNames.add(name);
         } else {
             mContext.stopService(new Intent().setComponent(service.service));

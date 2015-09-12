@@ -43,7 +43,7 @@ public class ActivityHook {
 
     public static void hookAfterMoveTaskToBack(Activity activity, Boolean result) {
         if (Boolean.TRUE.equals(result)) {
-            PreventLog.i("move task to back: " + activity.getClass().getName());
+            PreventLog.d("move task to back: " + activity.getClass().getName());
             String packageName = getPackageName(activity);
             Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
             sendBroadcast(activity, intent);
@@ -51,7 +51,7 @@ public class ActivityHook {
     }
 
     public static void hookBeforeStartHomeActivityForResult(Activity activity) {
-        PreventLog.i("start home activity: " + activity.getClass().getName());
+        PreventLog.d("start home activity: " + activity.getClass().getName());
         String packageName = getPackageName(activity);
         Intent intent = new Intent(PreventIntent.ACTION_ACTIVITY_DESTROY, Uri.fromParts(PreventIntent.SCHEME, packageName, null));
         sendBroadcast(activity, intent);
@@ -62,9 +62,9 @@ public class ActivityHook {
         if (activity != null) {
             int uid = activity.getApplicationInfo().uid;
             if (pid != -1) {
-                PreventLog.i("Process.killProcess(self) is called in activity, uid: " + uid);
+                PreventLog.d("Process.killProcess(self) is called in activity, uid: " + uid);
             } else {
-                PreventLog.i("System.exit is called in activity, uid: " + uid);
+                PreventLog.d("System.exit is called in activity, uid: " + uid);
             }
             String packageName = getPackageName(activity);
             Intent intent = new Intent(PreventIntent.ACTION_FORCE_STOP, Uri.fromParts(PreventIntent.SCHEME, packageName, null));

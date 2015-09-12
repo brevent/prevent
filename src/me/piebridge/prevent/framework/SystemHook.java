@@ -274,13 +274,14 @@ public final class SystemHook {
     }
 
     private static Collection<String> prepareServiceWhiteList(String packageName, boolean forcestop) {
-        int gmsCount = GmsUtils.decreaseGmsCount(mContext, packageName);
-        if (!GmsUtils.isGms(packageName) || gmsCount == 0) {
+        GmsUtils.decreaseGmsCount(mContext, packageName);
+        boolean canStopGms = GmsUtils.canStopGms();
+        if (!GmsUtils.isGms(packageName) || canStopGms) {
             synchronized (CHECKING_LOCK) {
                 checkingWhiteList.remove(packageName);
             }
         }
-        if (gmsCount > 0 || hasRunningGapps()) {
+        if (!canStopGms) {
             return GmsUtils.getGmsPackages();
         } else {
             if (forcestop) {
@@ -340,7 +341,7 @@ public final class SystemHook {
         synchronized (CHECKING_LOCK) {
             whiteList.addAll(checkingWhiteList);
         }
-        if (hasRunningGapps()) {
+        if (!GmsUtils.canStopGms()) {
             whiteList.addAll(GmsUtils.getGmsPackages());
         }
         return whiteList;
