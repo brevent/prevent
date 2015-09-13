@@ -43,7 +43,7 @@ public class XposedMod implements IXposedHookZygoteInit {
     }
 
     private static void initZygote() {
-        PreventLog.d("prevent running " + BuildConfig.VERSION_NAME);
+        PreventLog.i("prevent running " + BuildConfig.VERSION_NAME);
         XposedBridge.hookAllMethods(ActivityThread.class, "systemMain", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {

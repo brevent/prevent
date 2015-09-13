@@ -444,7 +444,7 @@ public final class SystemHook {
             registerReceiver();
             ActivityManagerServiceHook.setContext(mContext, mPreventPackages);
             IntentFilterHook.setContext(mContext, mPreventPackages);
-            PreventLog.d("prevent running activated");
+            PreventLog.i("prevent running " + BuildConfig.VERSION_NAME + " activated");
 
             LogcatUtils.logcat(mContext);
         }
