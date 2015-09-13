@@ -34,6 +34,7 @@ public class LogcatUtils {
             PreventLog.d("will execute: " + COMMAND);
             Runtime.getRuntime().exec(COMMAND);
             PreventLog.d("execute complete: " + COMMAND);
+            Runtime.getRuntime().exec("/system/bin/sync");
         } catch (IOException e) {
             PreventLog.d("exec wrong", e);
         }
