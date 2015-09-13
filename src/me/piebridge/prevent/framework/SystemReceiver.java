@@ -23,6 +23,7 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
+import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
 
 /**
@@ -40,7 +41,8 @@ public class SystemReceiver extends BroadcastReceiver {
     private static final Collection<String> MANAGER_ACTIONS = Arrays.asList(
             PreventIntent.ACTION_GET_PACKAGES,
             PreventIntent.ACTION_GET_PROCESSES,
-            PreventIntent.ACTION_UPDATE_PREVENT
+            PreventIntent.ACTION_UPDATE_PREVENT,
+            PreventIntent.ACTION_REQUEST_LOG
     );
 
     private static final Collection<String> ACTIVITY_ACTIONS = Arrays.asList(
@@ -82,6 +84,9 @@ public class SystemReceiver extends BroadcastReceiver {
             handleGetProcesses(context, action);
         } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
             handleUpdatePrevent(action, intent);
+        } else if (PreventIntent.ACTION_REQUEST_LOG.equals(action)) {
+            LogcatUtils.logcat();
+            LogcatUtils.logcat(context);
         }
     }
 

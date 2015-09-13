@@ -31,10 +31,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -256,6 +258,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         if (BuildConfig.WECHAT_DONATE && getDonateWeChat() != null) {
             menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
         }
+        menu.add(Menu.NONE, R.string.request_log, Menu.NONE, R.string.request_log);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -268,9 +271,23 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             return donateViaAlipay();
         } else if (id == R.string.switch_theme) {
             return switchTheme();
+        } else if (id == R.string.request_log) {
+            return requestLog();
         } else {
             return onClick(id);
         }
+    }
+
+    private boolean requestLog() {
+        if (getExternalCacheDir() != null) {
+            Intent intent = new Intent();
+            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+            intent.setAction(PreventIntent.ACTION_REQUEST_LOG);
+            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+            UILog.i("sending request log broadcast");
+            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
+        }
+        return false;
     }
 
     private boolean canDonateViaAlipay(int id) {
@@ -605,6 +622,16 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 showFragments();
             } else if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
                 handleGetPackages();
+            } else if (PreventIntent.ACTION_REQUEST_LOG.equals(action)) {
+                handleRequestLog();
+            }
+        }
+
+        private void handleRequestLog() {
+            File file = getExternalCacheDir();
+            if (file != null) {
+                String path = file.getAbsolutePath();
+                Toast.makeText(getApplicationContext(), path, Toast.LENGTH_LONG).show();
             }
         }
 
