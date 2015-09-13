@@ -39,18 +39,22 @@ public class LogcatUtils {
         }
     }
 
-    public static void logcat(Context context) {
-        try {
-            File cache = new File(CACHE);
-            if (cache.exists()) {
-                PreventLog.d("log size: " + cache.length());
+    public static long logcat(Context context) {
+        File cache = new File(CACHE);
+        if (cache.exists()) {
+            long size = cache.length();
+            PreventLog.d("log size: " + cache.length());
+            try {
                 sendToUi(context, new BufferedInputStream(new FileInputStream(cache)));
-                cache.delete();
-            } else {
-                PreventLog.d("not exist: " + CACHE);
+                PreventLog.d("send to ui successfully");
+            } catch (IOException e) {
+                PreventLog.d("cannot send log to ui", e);
             }
-        } catch (IOException e) {
-            PreventLog.d("exec wrong", e);
+            cache.delete();
+            return size;
+        } else {
+            PreventLog.d("not exist: " + CACHE);
+            return 0L;
         }
     }
 
@@ -58,7 +62,7 @@ public class LogcatUtils {
         int length;
         byte[] buffer = new byte[0x300];
         ContentResolver contentResolver = context.getContentResolver();
-        String path = new SimpleDateFormat("yyyyMMdd.HH.mm.ss'.log'", Locale.US).format(new Date());
+        String path = new SimpleDateFormat("yyyyMMdd.HH.mm.ss'.txt'", Locale.US).format(new Date());
         while ((length = is.read(buffer)) != -1) {
             String line = Base64.encodeToString(buffer, 0, length, Base64.URL_SAFE | Base64.NO_WRAP);
             Uri uri = PreventProvider.CONTENT_URI.buildUpon().appendQueryParameter("path", path)

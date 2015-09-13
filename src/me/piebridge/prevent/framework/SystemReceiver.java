@@ -87,7 +87,8 @@ public class SystemReceiver extends BroadcastReceiver {
             handleUpdatePrevent(action, intent);
         } else if (PreventIntent.ACTION_REQUEST_LOG.equals(action)) {
             LogcatUtils.logcat();
-            LogcatUtils.logcat(context);
+            int size = (int) LogcatUtils.logcat(context);
+            setResultCode(size);
         }
     }
 

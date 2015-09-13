@@ -629,7 +629,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         private void handleRequestLog() {
             File file = getExternalCacheDir();
-            if (file != null) {
+            int result = getResultCode();
+            if (file != null && result > 0) {
                 String path = file.getAbsolutePath();
                 Toast.makeText(getApplicationContext(), path, Toast.LENGTH_LONG).show();
             }
