@@ -23,7 +23,7 @@ import me.piebridge.prevent.ui.PreventProvider;
 public class LogcatUtils {
 
     private static final String CACHE = "/data/system/prevent.log";
-    private static final String COMMAND = "/system/bin/logcat -d -v time -f " + CACHE;
+    private static final String COMMAND = "/system/bin/logcat -d -v time -f " + CACHE + " *:v";
 
     private LogcatUtils() {
 
