@@ -160,6 +160,7 @@ public final class SystemHook {
         manager.addAction(PreventIntent.ACTION_GET_PACKAGES);
         manager.addAction(PreventIntent.ACTION_GET_PROCESSES);
         manager.addAction(PreventIntent.ACTION_UPDATE_PREVENT);
+        manager.addAction(PreventIntent.ACTION_REQUEST_LOG);
         manager.addDataScheme(PreventIntent.SCHEME);
         mContext.registerReceiver(systemReceiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
 

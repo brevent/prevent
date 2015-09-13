@@ -158,7 +158,7 @@ public class ActivityManagerServiceHook {
 
     private static void handleSafeService(String packageName) {
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
-            PreventLog.w("allow " + packageName + " for next service/broadcast");
+            PreventLog.i("allow " + packageName + " for next service/broadcast");
             mPreventPackages.put(packageName, false);
             SystemHook.restoreLater(packageName);
         }

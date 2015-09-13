@@ -78,7 +78,7 @@ public class IntentFilterHook {
     private static IntentFilterMatchResult allowSafeIntent(PackageParser.ActivityIntentInfo filter, String sender, String action, String packageName) {
         LogUtils.logIntentFilterInfo(false, sender, filter, action, packageName);
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
-            PreventLog.w("allow " + packageName + " for next service/broadcast");
+            PreventLog.i("allow " + packageName + " for next service/broadcast");
             mPreventPackages.put(packageName, false);
             SystemHook.restoreLater(packageName);
         }
