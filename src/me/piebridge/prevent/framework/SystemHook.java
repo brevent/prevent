@@ -157,27 +157,24 @@ public final class SystemHook {
         systemReceiver = new SystemReceiver(mPreventPackages);
 
         IntentFilter manager = new IntentFilter();
-        manager.addAction(PreventIntent.ACTION_GET_PACKAGES);
-        manager.addAction(PreventIntent.ACTION_GET_PROCESSES);
-        manager.addAction(PreventIntent.ACTION_UPDATE_PREVENT);
-        manager.addAction(PreventIntent.ACTION_REQUEST_LOG);
+        for (String action : SystemReceiver.MANAGER_ACTIONS) {
+            manager.addAction(action);
+        }
         manager.addDataScheme(PreventIntent.SCHEME);
         mContext.registerReceiver(systemReceiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
 
         IntentFilter hook = new IntentFilter();
-        hook.addAction(PreventIntent.ACTION_INCREASE_COUNTER);
-        hook.addAction(PreventIntent.ACTION_DECREASE_COUNTER);
-        hook.addAction(PreventIntent.ACTION_RESTART);
-        hook.addAction(PreventIntent.ACTION_ACTIVITY_DESTROY);
-        hook.addAction(PreventIntent.ACTION_FORCE_STOP);
+        for (String action : SystemReceiver.ACTIVITY_ACTIONS) {
+            manager.addAction(action);
+        }
         hook.addDataScheme(PreventIntent.SCHEME);
         // FIXME: check permission
         mContext.registerReceiver(systemReceiver, hook, null, handler);
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_PACKAGE_RESTARTED);
-        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
-        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        for (String action : SystemReceiver.PACKAGE_ACTIONS) {
+            manager.addAction(action);
+        }
         filter.addDataScheme("package");
         mContext.registerReceiver(systemReceiver, filter, null, handler);
 

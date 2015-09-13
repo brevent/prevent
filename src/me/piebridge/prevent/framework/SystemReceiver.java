@@ -38,21 +38,22 @@ public class SystemReceiver extends BroadcastReceiver {
     private Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
 
 
-    private static final Collection<String> MANAGER_ACTIONS = Arrays.asList(
+    static final Collection<String> MANAGER_ACTIONS = Arrays.asList(
             PreventIntent.ACTION_GET_PACKAGES,
             PreventIntent.ACTION_GET_PROCESSES,
             PreventIntent.ACTION_UPDATE_PREVENT,
             PreventIntent.ACTION_REQUEST_LOG
     );
 
-    private static final Collection<String> ACTIVITY_ACTIONS = Arrays.asList(
+    static final Collection<String> ACTIVITY_ACTIONS = Arrays.asList(
             PreventIntent.ACTION_INCREASE_COUNTER,
             PreventIntent.ACTION_DECREASE_COUNTER,
             PreventIntent.ACTION_RESTART,
             PreventIntent.ACTION_ACTIVITY_DESTROY,
             PreventIntent.ACTION_FORCE_STOP
     );
-    private static final Collection<String> PACKAGE_ACTIONS = Arrays.asList(
+
+    static final Collection<String> PACKAGE_ACTIONS = Arrays.asList(
             Intent.ACTION_PACKAGE_RESTARTED,
             Intent.ACTION_PACKAGE_ADDED,
             Intent.ACTION_PACKAGE_REMOVED
