@@ -165,7 +165,7 @@ public final class SystemHook {
 
         IntentFilter hook = new IntentFilter();
         for (String action : SystemReceiver.ACTIVITY_ACTIONS) {
-            manager.addAction(action);
+            hook.addAction(action);
         }
         hook.addDataScheme(PreventIntent.SCHEME);
         // FIXME: check permission
@@ -173,7 +173,7 @@ public final class SystemHook {
 
         IntentFilter filter = new IntentFilter();
         for (String action : SystemReceiver.PACKAGE_ACTIONS) {
-            manager.addAction(action);
+            filter.addAction(action);
         }
         filter.addDataScheme("package");
         mContext.registerReceiver(systemReceiver, filter, null, handler);
