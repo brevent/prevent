@@ -285,6 +285,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             intent.setAction(PreventIntent.ACTION_REQUEST_LOG);
             intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
             UILog.i("sending request log broadcast");
+            showProcessDialog(R.string.retrieving);
             sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
         }
         return false;
@@ -628,6 +629,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
 
         private void handleRequestLog() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    dialog.dismiss();
+                }
+            });
             File file = getExternalCacheDir();
             int result = getResultCode();
             if (file != null && result > 0) {
