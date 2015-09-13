@@ -164,14 +164,31 @@ public class ActivityManagerServiceHook {
         }
     }
 
-    public static void hookAfterCleanUpRemovedTaskLocked(Object[] args) {
+    public static boolean hookAfterCleanUpRemovedTaskLocked(Object[] args) {
         String packageName = TaskRecordUtils.getPackageName(args[0]);
+        if (!shouldKillProcess(args[1])) {
+            return false;
+        }
         SystemHook.updateRunningGapps(packageName, false);
         if (packageName != null && mPreventPackages != null && mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
             LogUtils.logForceStop("removeTask", packageName, "force in " + SystemHook.TIME_IMMEDIATE + "s");
             SystemHook.forceStopPackageForce(packageName, SystemHook.TIME_IMMEDIATE);
         }
+        return true;
+    }
+
+    private static boolean shouldKillProcess(Object killProcess) {
+        if (killProcess == null) {
+            return false;
+        }
+        if (killProcess instanceof Boolean) {
+            return (Boolean) killProcess;
+        } else if (killProcess instanceof Integer) {
+            Integer flags = (Integer) killProcess;
+            return (flags & 0x1) != 0;
+        }
+        return false;
     }
 
 }
