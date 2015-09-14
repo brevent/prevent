@@ -61,7 +61,7 @@ public class SafeActionUtils {
     }
 
     public static boolean isSafeService(Context context, ComponentName cn) {
-        return isSafeComponent(cn) || isAccount(context, cn);
+        return AccountUtils.isPackageSyncable(context, cn.getPackageName()) && (isSafeComponent(cn) || isAccount(context, cn));
     }
 
     public static boolean isExportedService(Context context, ComponentName cn) {

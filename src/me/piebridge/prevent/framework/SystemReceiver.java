@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -112,7 +113,7 @@ public class SystemReceiver extends BroadcastReceiver {
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             handlePackageRestarted("PACKAGE_RESTARTED", packageName);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
-            IntentFilterHook.onPackageAdded();
+            AccountUtils.onPackageChanged(packageName);
             SafeActionUtils.onPackageChanged(packageName);
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
             SafeActionUtils.onPackageChanged(packageName);

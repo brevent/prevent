@@ -11,6 +11,7 @@ import android.os.Process;
 import java.util.Map;
 
 import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -24,7 +25,6 @@ import me.piebridge.prevent.xposed.XposedMod;
 public class IntentFilterHook {
 
     private static Context mContext;
-    private static AccountWatcher accountWatcher;
     private static Map<String, Boolean> mPreventPackages;
 
     private IntentFilterHook() {
@@ -33,7 +33,6 @@ public class IntentFilterHook {
 
     public static void setContext(Context context, Map<String, Boolean> preventPackages) {
         mPreventPackages = preventPackages;
-        accountWatcher = new AccountWatcher(context);
         mContext = context;
     }
 
@@ -102,7 +101,7 @@ public class IntentFilterHook {
     }
 
     private static boolean isSafeServiceAction(String action, String packageName) {
-        return accountWatcher.cannotHook(action, packageName) || GmsUtils.isGcmRegisterAction(action);
+        return AccountUtils.cannotHook(mContext, action, packageName) || GmsUtils.isGcmRegisterAction(action);
     }
 
     private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
@@ -159,12 +158,6 @@ public class IntentFilterHook {
         }
         LogUtils.logIntentFilter(false, sender, filter, action, packageName);
         return IntentFilterMatchResult.NONE;
-    }
-
-    public static void onPackageAdded() {
-        if (accountWatcher != null) {
-            accountWatcher.updateAuthDescriptions();
-        }
     }
 
     public static boolean isPrevent(Intent intent) {
