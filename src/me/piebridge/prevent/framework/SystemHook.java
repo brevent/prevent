@@ -491,10 +491,12 @@ public final class SystemHook {
                 it.remove();
             }
         }
-        if (BuildConfig.DEBUG || !runningGapps.isEmpty()) {
-            PreventLog.d("running gapps: " + runningGapps);
+        if (!runningGapps.isEmpty()) {
+            PreventLog.i("running gapps: " + runningGapps);
+            return true;
+        } else {
+            return false;
         }
-        return !runningGapps.isEmpty();
     }
 
     public static void restoreLater(final String packageName) {

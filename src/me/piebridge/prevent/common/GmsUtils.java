@@ -104,7 +104,14 @@ public class GmsUtils {
     }
 
     public static boolean canStopGms() {
-        return GMS_COUNTER.get() == 0 && !SystemHook.hasRunningGapps();
+        int count = GMS_COUNTER.get();
+        if (count != 0) {
+            PreventLog.i("cannot stop gms now, gms reference: " + count);
+            return false;
+        } else {
+            // I think it's logged already
+            return !SystemHook.hasRunningGapps();
+        }
     }
 
 }
