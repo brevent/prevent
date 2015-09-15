@@ -2,6 +2,7 @@ package me.piebridge.prevent.xposed;
 
 import android.app.Activity;
 import android.app.ActivityThread;
+import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
@@ -28,6 +29,7 @@ import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.framework.SystemHook;
 import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.framework.util.ProcessRecordUtils;
+import me.piebridge.prevent.framework.util.SafeActionUtils;
 
 public class XposedMod implements IXposedHookZygoteInit {
 
@@ -71,7 +73,7 @@ public class XposedMod implements IXposedHookZygoteInit {
 
         XposedBridge.hookMethod(ActivityManagerServiceHook.getStartProcessLocked(activityManagerService), new ProcessHook());
 
-        XposedBridge.hookAllMethods(activityManagerService, "broadcastIntent", new ContextHook(RECEIVER_SENDER));
+        XposedBridge.hookAllMethods(activityManagerService, "broadcastIntent", new IntentContextHook(RECEIVER_SENDER));
 
         XposedBridge.hookAllMethods(activityManagerService, "startService", new ContextHook(SERVICE_SENDER));
         XposedBridge.hookAllMethods(activityManagerService, "bindService", new ContextHook(SERVICE_SENDER));
@@ -199,6 +201,26 @@ public class XposedMod implements IXposedHookZygoteInit {
         @Override
         protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
             context.remove();
+        }
+    }
+
+    private static class IntentContextHook extends ContextHook {
+        public IntentContextHook(ThreadLocal<String> context) {
+            super(context);
+        }
+
+        @Override
+        protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
+            super.beforeHookedMethod(param);
+            Intent intent = (Intent) param.args[0x1];
+            if (intent != null) {
+                String action = intent.getAction();
+                if (AppWidgetManager.ACTION_APPWIDGET_ENABLED.equals(action)) {
+                    SafeActionUtils.updateWidget(intent.getComponent(), true);
+                } else if (AppWidgetManager.ACTION_APPWIDGET_DISABLED.equals(action)) {
+                    SafeActionUtils.updateWidget(intent.getComponent(), false);
+                }
+            }
         }
     }
 

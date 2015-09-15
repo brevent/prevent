@@ -1,12 +1,10 @@
 package me.piebridge.prevent.framework.util;
 
-import android.accounts.AccountManager;
 import android.app.AppGlobals;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
@@ -26,6 +24,7 @@ public class SafeActionUtils {
 
     private static final Object LOCK = new Object();
     private static Map<String, Set<ComponentName>> safeActions = new HashMap<String, Set<ComponentName>>();
+    private static Set<ComponentName> widgets = new HashSet<ComponentName>();
 
     private SafeActionUtils() {
 
@@ -56,8 +55,8 @@ public class SafeActionUtils {
         return true;
     }
 
-    public static boolean isSafeBroadcast(Context context, ComponentName cn) {
-        return isSafeComponent(cn) || isWidget(context, cn);
+    public static boolean isSafeBroadcast(ComponentName cn) {
+        return isSafeComponent(cn) || widgets.contains(cn);
     }
 
     public static boolean isSafeService(Context context, ComponentName cn) {
@@ -77,7 +76,7 @@ public class SafeActionUtils {
 
     public static boolean isAccount(Context context, ComponentName cn) {
         PreventLog.v("check account for service: " + cn);
-        return isSafeAccount(context, cn, "android.content.SyncAdapter") || isSafeAccount(context, cn, AccountManager.ACTION_AUTHENTICATOR_INTENT);
+        return isSafeAccount(context, cn, "android.content.SyncAdapter");
     }
 
     private static boolean isSafeAccount(Context context, ComponentName cn, String action) {
@@ -105,27 +104,23 @@ public class SafeActionUtils {
         return components != null && components.contains(cn);
     }
 
-    private static boolean isWidget(Context context, ComponentName cn) {
-        PackageManager packageManager = context.getPackageManager();
-        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-        intent.setPackage(cn.getPackageName());
-        List<ResolveInfo> broadcastReceivers = packageManager.queryBroadcastReceivers(intent, 0);
-        final int size = broadcastReceivers == null ? 0 : broadcastReceivers.size();
-        for (int i = 0; i < size; ++i) {
-            ActivityInfo ai = broadcastReceivers.get(i).activityInfo;
-            if (new ComponentName(ai.packageName, ai.name).equals(cn)) {
-                addSafeAction(cn);
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static boolean isProtectedBroadcast(String action) {
         if (action == null || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
             return false;
         }
         return action.startsWith("android.intent.action") || AppGlobals.getPackageManager().isProtectedBroadcast(action);
+    }
+
+    public static void updateWidget(ComponentName component, boolean added) {
+        if (component != null) {
+            if (added) {
+                PreventLog.i("add widget " + component);
+                widgets.add(component);
+            } else {
+                PreventLog.i("remove widget " + component);
+                widgets.remove(component);
+            }
+        }
     }
 
 }
