@@ -2,14 +2,10 @@ package me.piebridge.prevent.framework.util;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AuthenticatorDescription;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SyncAdapterType;
-import android.os.Build;
-
-import java.util.HashMap;
-import java.util.Map;
+import android.content.pm.ProviderInfo;
 
 import me.piebridge.prevent.framework.PreventLog;
 
@@ -18,73 +14,46 @@ import me.piebridge.prevent.framework.PreventLog;
  */
 public class AccountUtils {
 
-    private static Map<String, String> packageTypes = new HashMap<String, String>();
+    private static final String PACKAGE = "package ";
 
     private AccountUtils() {
 
-    }
-
-    public static void updateAuthDescriptions(Context context) {
-        packageTypes.clear();
-        AccountManager accountManager = AccountManager.get(context);
-        for (AuthenticatorDescription ad : accountManager.getAuthenticatorTypes()) {
-            if (ad.packageName != null) {
-                PreventLog.d("ad type: " + ad.type + ", packageName: " + ad.packageName);
-                packageTypes.put(ad.packageName, ad.type);
-            }
-        }
     }
 
     public static boolean isPackageSyncable(Context context, String packageName) {
         if (!ContentResolver.getMasterSyncAutomatically()) {
             return false;
         }
-        if (packageTypes.isEmpty()) {
-            updateAuthDescriptions(context);
-        }
-        String accountType = packageTypes.get(packageName);
-        if (accountType == null) {
-            return false;
-        }
-        PreventLog.d("check sync for " + packageName + ", account type: " + accountType);
+        PreventLog.d("check sync for " + packageName);
         for (SyncAdapterType type : ContentResolver.getSyncAdapterTypes()) {
-            if (accountType.equals(type.accountType) && isSyncable(context, type)) {
-                PreventLog.i("package " + packageName + " is syncable");
+            if (!type.isUserVisible()) {
+                continue;
+            }
+            ProviderInfo pi = context.getPackageManager().resolveContentProvider(type.authority, 0);
+            if (pi != null && packageName.equals(pi.packageName) && isSyncable(context, type)) {
+                PreventLog.d(PACKAGE + packageName + " is syncable");
                 return true;
             }
         }
+        PreventLog.d(PACKAGE + packageName + " isn't syncable");
         return false;
     }
 
     private static boolean isSyncable(Context context, SyncAdapterType type) {
-        // skip always syncable
-        if (isAlwaysSyncable(type)) {
-            PreventLog.d("type " + type.accountType + ", authority" + type.authority + " is always syncable");
-            return false;
-        }
         AccountManager accountManager = AccountManager.get(context);
         Account[] accounts = accountManager.getAccountsByType(type.accountType);
         for (Account account : accounts) {
-            if (ContentResolver.getSyncAutomatically(account, type.authority)) {
-                PreventLog.d("type " + type.accountType + ", authority" + type.authority + " is syncable");
+            if (isSyncable(account, type.authority)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isAlwaysSyncable(SyncAdapterType type) {
-        return Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1 && type.isAlwaysSyncable();
-    }
-
-    public static boolean cannotHook(Context context, String action, String packageName) {
-        return AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action) && isPackageSyncable(context, packageName);
-    }
-
-    public static void onPackageChanged(String packageName) {
-        if (packageName != null) {
-            packageTypes.clear();
-        }
+    private static boolean isSyncable(Account account, String authority) {
+        PreventLog.d("check sync for account type: " + account.type + ", authority: " + authority);
+        return ContentResolver.getSyncAutomatically(account, authority)
+                && (ContentResolver.getIsSyncable(account, authority) > 0);
     }
 
 }

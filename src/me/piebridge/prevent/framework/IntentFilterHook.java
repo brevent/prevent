@@ -11,7 +11,6 @@ import android.os.Process;
 import java.util.Map;
 
 import me.piebridge.prevent.common.GmsUtils;
-import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -100,8 +99,8 @@ public class IntentFilterHook {
         return isSystem && !SafeActionUtils.isProtectedBroadcast(action);
     }
 
-    private static boolean isSafeServiceAction(String action, String packageName) {
-        return AccountUtils.cannotHook(mContext, action, packageName) || GmsUtils.isGcmRegisterAction(action);
+    private static boolean isSafeServiceAction(String action) {
+        return "android.content.SyncAdapter".equals(action) || GmsUtils.isGcmRegisterAction(action);
     }
 
     private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
@@ -146,7 +145,7 @@ public class IntentFilterHook {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        if (isSafeServiceAction(action, packageName)) {
+        if (isSafeServiceAction(action)) {
             LogUtils.logIntentFilter(false, sender, filter, action, ai.packageName);
             return IntentFilterMatchResult.NONE;
         } else if (cannotPreventGms(packageName, sender)) {

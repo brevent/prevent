@@ -16,10 +16,10 @@ public class PreventReceiver extends BroadcastReceiver {
         if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
             // replacing
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
-            UILog.d("action: " + action + ", packageName: " + packageName);
+            UILog.d("action: " + action + ", package: " + packageName);
             PreventUtils.update(context, new String[]{packageName}, false);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
-            UILog.d("action: " + action + ", packageName: " + packageName);
+            UILog.d("action: " + action + ", package: " + packageName);
             PreventUtils.update(context, new String[]{packageName}, true);
         }
     }

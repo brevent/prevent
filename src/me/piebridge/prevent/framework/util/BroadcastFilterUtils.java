@@ -64,7 +64,7 @@ public class BroadcastFilterUtils {
                 return info.packageName;
             }
         } catch (IllegalAccessException e) {
-            PreventLog.e("cannot get packageName from " + filter, e);
+            PreventLog.e("cannot get package name from " + filter, e);
         }
         return null;
     }
