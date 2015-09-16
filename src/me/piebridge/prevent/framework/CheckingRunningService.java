@@ -30,6 +30,7 @@ abstract class CheckingRunningService implements Runnable {
     public void run() {
         Collection<String> packageNames = preparePackageNames();
         Collection<String> whiteList = prepareWhiteList();
+        PreventLog.d("checking services, packages: " + packageNames + ", whitelist: " + whiteList);
         if (!packageNames.isEmpty() && packageNames.equals(whiteList)) {
             return;
         }

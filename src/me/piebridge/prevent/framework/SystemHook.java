@@ -252,7 +252,9 @@ public final class SystemHook {
                 GmsUtils.decreaseGmsCount(mContext, packageName);
                 serviceFuture.cancel(false);
             }
-            checkingWhiteList.add(packageName);
+            if (!GmsUtils.isGms(packageName)) {
+                checkingWhiteList.add(packageName);
+            }
         }
         GmsUtils.increaseGmsCount(mContext, packageName);
         serviceFuture = checkingExecutor.schedule(new CheckingRunningService(mContext, mPreventPackages) {
@@ -273,13 +275,12 @@ public final class SystemHook {
 
     private static Collection<String> prepareServiceWhiteList(String packageName, boolean forcestop) {
         GmsUtils.decreaseGmsCount(mContext, packageName);
-        boolean canStopGms = GmsUtils.canStopGms();
-        if (!GmsUtils.isGms(packageName) || canStopGms) {
+        if (!GmsUtils.isGms(packageName)) {
             synchronized (CHECKING_LOCK) {
                 checkingWhiteList.remove(packageName);
             }
         }
-        if (!canStopGms) {
+        if (!GmsUtils.canStopGms()) {
             return GmsUtils.getGmsPackages();
         } else {
             if (forcestop) {
@@ -330,7 +331,6 @@ public final class SystemHook {
             packageNames.addAll(checkingPackageNames);
             checkingPackageNames.clear();
         }
-        PreventLog.v("checking packages: " + packageNames);
         return packageNames;
     }
 
