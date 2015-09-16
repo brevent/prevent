@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 
@@ -61,17 +60,6 @@ public class SafeActionUtils {
 
     public static boolean isSafeService(Context context, ComponentName cn) {
         return AccountUtils.isPackageSyncable(context, cn.getPackageName()) && (isSafeComponent(cn) || isAccount(context, cn));
-    }
-
-    public static boolean isExportedService(Context context, ComponentName cn) {
-        try {
-            PackageManager pm = context.getPackageManager();
-            ServiceInfo si = pm.getServiceInfo(cn, 0);
-            return si.exported;
-        } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.v("cannot find " + cn, e);
-            return false;
-        }
     }
 
     public static boolean isAccount(Context context, ComponentName cn) {

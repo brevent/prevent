@@ -100,15 +100,12 @@ public class ActivityManagerServiceHook {
             // always block broadcast
             return hookBroadcast(hostingName, hostingType, packageName, sender);
         } else if ("service".equals(hostingType)) {
-            if (!SafeActionUtils.isExportedService(mContext, hostingName)) {
-                LogUtils.logStartProcess(packageName, hostingType + "(not exported)", hostingName, sender);
-                return true;
-            }
             return hookService(hostingName, hostingType, packageName, sender);
-        } else if ("content provider".equals(hostingType)) {
-            SystemHook.checkRunningServices(packageName, false);
+        } else if ("content provider".equals(hostingType) && !canNotStart(hostingName, hostingType, packageName, sender)) {
+            return false;
         }
 
+        SystemHook.checkRunningServices(packageName, false);
         LogUtils.logStartProcess(packageName, hostingType + "(should safe)", hostingName, sender);
         return true;
     }
@@ -131,6 +128,15 @@ public class ActivityManagerServiceHook {
             LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName, sender);
             return true;
         }
+        if (!canNotStart(hostingName, hostingType, packageName, sender)) {
+            return false;
+        }
+        SystemHook.checkRunningServices(packageName, true);
+        LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
+        return true;
+    }
+
+    private static boolean canNotStart(ComponentName hostingName, String hostingType, String packageName, String sender) {
         // if there is no gapps, prevent start gms
         if (GmsUtils.isGms(packageName) && GmsUtils.canStopGms()) {
             LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
@@ -147,8 +153,6 @@ public class ActivityManagerServiceHook {
         } catch (PackageManager.NameNotFoundException e) {
             PreventLog.d("cannot find package " + packageName, e);
         }
-        SystemHook.checkRunningServices(packageName, true);
-        LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
         return true;
     }
 

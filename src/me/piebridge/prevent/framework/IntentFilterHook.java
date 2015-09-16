@@ -1,5 +1,6 @@
 package me.piebridge.prevent.framework;
 
+import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -100,7 +101,9 @@ public class IntentFilterHook {
     }
 
     private static boolean isSafeServiceAction(String action) {
-        return "android.content.SyncAdapter".equals(action) || GmsUtils.isGcmRegisterAction(action);
+        return "android.content.SyncAdapter".equals(action)
+                || AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action)
+                || GmsUtils.isGcmRegisterAction(action);
     }
 
     private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
