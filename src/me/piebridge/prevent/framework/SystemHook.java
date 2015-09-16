@@ -470,12 +470,12 @@ public final class SystemHook {
         if (GmsUtils.isGapps(pm, packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
             if (added) {
                 if (!runningGapps.contains(packageName)) {
-                    PreventLog.v("add " + packageName + " to running gapps: " + runningGapps);
+                    PreventLog.d("add " + packageName + " to running gapps: " + runningGapps);
                 }
                 runningGapps.add(packageName);
             } else {
                 if (runningGapps.contains(packageName)) {
-                    PreventLog.v("remove " + packageName + " from running gapps: " + runningGapps);
+                    PreventLog.d("remove " + packageName + " from running gapps: " + runningGapps);
                 }
                 runningGapps.remove(packageName);
             }
@@ -492,7 +492,7 @@ public final class SystemHook {
             }
         }
         if (!runningGapps.isEmpty()) {
-            PreventLog.i("running gapps: " + runningGapps);
+            PreventLog.d("running gapps: " + runningGapps);
             return true;
         } else {
             return false;

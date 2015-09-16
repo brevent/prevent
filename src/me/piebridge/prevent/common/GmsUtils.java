@@ -49,14 +49,14 @@ public class GmsUtils {
     public static void increaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.incrementAndGet();
-            PreventLog.i("increase gms reference: " + gmsCount + ", package: " + packageName);
+            PreventLog.d("increase gms reference: " + gmsCount + ", package: " + packageName);
         }
     }
 
     public static void decreaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.decrementAndGet();
-            PreventLog.i("decrease gms reference: " + gmsCount + ", package: " + packageName);
+            PreventLog.d("decrease gms reference: " + gmsCount + ", package: " + packageName);
         }
     }
 
@@ -106,7 +106,7 @@ public class GmsUtils {
     public static boolean canStopGms() {
         int gmsCount = GMS_COUNTER.get();
         if (gmsCount != 0) {
-            PreventLog.i("cannot stop gms now, gms reference: " + gmsCount);
+            PreventLog.d("cannot stop gms now, gms reference: " + gmsCount);
             return false;
         } else {
             // I think it's logged already
