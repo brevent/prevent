@@ -1,6 +1,5 @@
 package me.piebridge.prevent.framework.util;
 
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 
@@ -76,21 +75,23 @@ public class ActivityRecordUtils {
         return (String) getField(target, "packageName");
     }
 
-    public static Intent getIntent(Object target) {
-        return (Intent) getField(target, "intent");
-    }
-
     public static ActivityInfo getInfo(Object target) {
         return (ActivityInfo) getField(target, "info");
-    }
-
-    public static ApplicationInfo getAppInfo(Object target) {
-        return (ApplicationInfo) getField(target, "appInfo");
     }
 
     public static int getPid(Object target) {
         Object processRecord = getField(target, "app");
         return ProcessRecordUtils.getPid(processRecord);
+    }
+
+    public static int getUid(Object target) {
+        Object processRecord = getField(target, "app");
+        ApplicationInfo info = ProcessRecordUtils.getInfo(processRecord);
+        if (info == null) {
+            return 0;
+        } else {
+            return info.uid;
+        }
     }
 
 }

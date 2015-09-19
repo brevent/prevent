@@ -160,7 +160,7 @@ public class ActivityManagerServiceHook {
 
     private static boolean canNotPrevent(PackageManager pm, String packageName) {
         try {
-            if (!PackageUtils.canPrevent(pm, pm.getApplicationInfo(packageName, 0))) {
+            if (packageName != null && !PackageUtils.canPrevent(pm, pm.getApplicationInfo(packageName, 0))) {
                 return true;
             }
         } catch (PackageManager.NameNotFoundException e) {

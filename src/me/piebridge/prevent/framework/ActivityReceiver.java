@@ -97,7 +97,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             mPreventPackages.put(packageName, false);
         }
         int pid = ActivityRecordUtils.getPid(activityRecord);
-        int uid = ActivityRecordUtils.getAppInfo(activityRecord).uid;
+        int uid = ActivityRecordUtils.getUid(activityRecord);
         String processName = ActivityRecordUtils.getInfo(activityRecord).processName;
         setAbnormalProcessIfNeeded(processName, packageName);
         if (uid > 0) {
@@ -180,8 +180,8 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         SystemHook.updateRunningGapps(packageName, false);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
+            SystemHook.checkRunningServices(null, SystemHook.TIME_IMMEDIATE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_IMMEDIATE);
         }
-        SystemHook.checkRunningServices(null, SystemHook.TIME_IMMEDIATE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_IMMEDIATE);
     }
 
     private boolean shouldStop(String packageName, int pid) {
