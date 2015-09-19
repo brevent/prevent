@@ -159,8 +159,14 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean canNotPrevent(PackageManager pm, String packageName) {
+        if (packageName == null || "android".equals(packageName)) {
+            return false;
+        }
+        if ("com.android.settings".equals(packageName)) {
+            return true;
+        }
         try {
-            if (packageName != null && !PackageUtils.canPrevent(pm, pm.getApplicationInfo(packageName, 0))) {
+            if (!PackageUtils.canPrevent(pm, pm.getApplicationInfo(packageName, 0))) {
                 return true;
             }
         } catch (PackageManager.NameNotFoundException e) {
