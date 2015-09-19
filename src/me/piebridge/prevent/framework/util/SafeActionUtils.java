@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**
@@ -59,15 +60,25 @@ public class SafeActionUtils {
     }
 
     public static boolean isSafeService(Context context, ComponentName cn) {
-        return AccountUtils.isPackageSyncable(context, cn.getPackageName()) && (isSafeComponent(cn) || isAccount(context, cn));
+        if (AccountUtils.isPackageSyncable(context, cn.getPackageName())) {
+            return isSafeComponent(cn) || isAccount(context, cn);
+        } else if (GmsUtils.isGms(cn.getPackageName())) {
+            return isSafeComponent(cn) || isGcmService(context, cn);
+        }
+        return false;
     }
 
     public static boolean isAccount(Context context, ComponentName cn) {
         PreventLog.v("check account for service: " + cn);
-        return isSafeAccount(context, cn, "android.content.SyncAdapter");
+        return isSafeService(context, cn, "android.content.SyncAdapter");
     }
 
-    private static boolean isSafeAccount(Context context, ComponentName cn, String action) {
+    public static boolean isGcmService(Context context, ComponentName cn) {
+        PreventLog.v("check gcm for service: " + cn);
+        return isSafeService(context, cn, GmsUtils.GCM_ACTION_REGISTER);
+    }
+
+    private static boolean isSafeService(Context context, ComponentName cn, String action) {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.setPackage(cn.getPackageName());

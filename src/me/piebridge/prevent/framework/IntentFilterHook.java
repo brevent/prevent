@@ -11,13 +11,13 @@ import android.os.Process;
 
 import java.util.Map;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
-import me.piebridge.prevent.xposed.XposedMod;
 
 /**
  * Created by thom on 15/8/11.
@@ -40,26 +40,13 @@ public class IntentFilterHook {
         return result > 0 && SystemHook.isSystemHook() && mContext != null;
     }
 
-    public static IntentFilterMatchResult hookAfterMatch(Object filter, Object[] args) {
-        String action = (String) args[0];
-        if (filter instanceof PackageParser.ActivityIntentInfo) {
-            return hookActivityIntentInfo((PackageParser.ActivityIntentInfo) filter, XposedMod.RECEIVER_SENDER.get(), action);
-        } else if (filter instanceof PackageParser.ServiceIntentInfo) {
-            return hookServiceIntentInfo((PackageParser.ServiceIntentInfo) filter, XposedMod.SERVICE_SENDER.get(), action);
-        } else if (BroadcastFilterUtils.isBroadcastFilter(filter)) {
-            return hookBroadcastFilter(filter, args);
-        }
-
-        return IntentFilterMatchResult.NONE;
-    }
-
-    private static IntentFilterMatchResult hookBroadcastFilter(Object filter, Object[] args) {
+    public static IntentFilterMatchResult hookBroadcastFilter(Object filter, Object[] args) {
         String action = (String) args[0];
         if (NotificationManagerServiceUtils.canHook(filter, action)) {
             return NotificationManagerServiceUtils.hook((Uri) args[0x3], mPreventPackages);
         } else if (AlarmManagerServiceUtils.canHook(args)) {
             return AlarmManagerServiceUtils.hook(filter);
-        } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
+        } else if (BuildConfig.DEBUG && Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             return hookCloseSystemDialogs(filter, action);
         }
         return IntentFilterMatchResult.NONE;
@@ -106,7 +93,7 @@ public class IntentFilterHook {
                 || GmsUtils.isGcmRegisterAction(action);
     }
 
-    private static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
+    public static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
         // for receiver, we don't block for activity
         PackageParser.Activity activity = filter.activity;
         PackageParser.Package owner = activity.owner;
@@ -139,7 +126,7 @@ public class IntentFilterHook {
         return IntentFilterMatchResult.NO_MATCH;
     }
 
-    private static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
+    public static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
         PackageParser.Service service = filter.service;
         PackageParser.Package owner = service.owner;
         ApplicationInfo ai = owner.applicationInfo;

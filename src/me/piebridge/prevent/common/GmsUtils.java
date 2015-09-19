@@ -1,7 +1,9 @@
 package me.piebridge.prevent.common;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 
 import java.util.Arrays;
@@ -26,7 +28,7 @@ public class GmsUtils {
     private static Collection<String> GCM_ACTIONS = Arrays.asList(
             "com.google.android.c2dm.intent.RECEIVE",
             "com.google.android.c2dm.intent.REGISTRATION");
-    private static final String GCM_ACTION_REGISTER = "com.google.android.c2dm.intent.REGISTER";
+    public static final String GCM_ACTION_REGISTER = "com.google.android.c2dm.intent.REGISTER";
     private static Collection<String> GMS_PACKAGES = Arrays.asList(
             GMS, GSF, GSF_LOGIN
     );

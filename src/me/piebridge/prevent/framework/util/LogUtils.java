@@ -71,11 +71,7 @@ public class LogUtils {
 
     public static void logRequest(String action, String packageName, int count) {
         String log = buildLogRequest(action, packageName, count);
-        if (packageName != null && count >= 0) {
-            PreventLog.v(log);
-        } else {
-            PreventLog.d(log);
-        }
+        PreventLog.d(log);
     }
 
     public static void logRequestInfo(String action, String packageName, int count) {
@@ -135,11 +131,28 @@ public class LogUtils {
         }
         sb.append(", sender=");
         sb.append(sender);
-        if (disallow) {
+        if (disallow || "activity".equals(hostingType)) {
             PreventLog.d(sb.toString());
         } else {
             PreventLog.i(sb.toString());
         }
+    }
+
+    public static void logActivity(String action, String packageName, int count) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ACTION);
+        sb.append(action);
+        sb.append(", ");
+        sb.append(PACKAGE);
+        sb.append(packageName);
+        sb.append(", count: ");
+        sb.append(count);
+        PreventLog.d(sb.toString());
+    }
+
+    public static void logActivity(String reason, Object activityRecord) {
+        String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+        PreventLog.d(reason + ", callingPackage: " + packageName + ", ActivityRecord: " + activityRecord);
     }
 
 }

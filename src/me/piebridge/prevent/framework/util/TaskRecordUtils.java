@@ -59,25 +59,4 @@ public class TaskRecordUtils {
         return intent;
     }
 
-    private static class ActivityRecordUtils {
-
-        private static Field task;
-
-        private ActivityRecordUtils() {
-
-        }
-
-        private static boolean isActivityRecord(Object object) {
-            return object != null && "ActivityRecord".equals(object.getClass().getSimpleName());
-        }
-
-        private static Object getTask(Object activityRecord) throws NoSuchFieldException, IllegalAccessException {
-            if (task == null) {
-                task = activityRecord.getClass().getDeclaredField("task");
-                task.setAccessible(true);
-            }
-            return task.get(activityRecord);
-        }
-    }
-
 }

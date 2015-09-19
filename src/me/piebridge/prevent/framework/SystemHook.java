@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.LogcatUtils;
@@ -163,14 +164,6 @@ public final class SystemHook {
         manager.addDataScheme(PreventIntent.SCHEME);
         mContext.registerReceiver(systemReceiver, manager, PreventIntent.PERMISSION_MANAGER, handler);
 
-        IntentFilter hook = new IntentFilter();
-        for (String action : SystemReceiver.ACTIVITY_ACTIONS) {
-            hook.addAction(action);
-        }
-        hook.addDataScheme(PreventIntent.SCHEME);
-        // FIXME: check permission
-        mContext.registerReceiver(systemReceiver, hook, null, handler);
-
         IntentFilter filter = new IntentFilter();
         for (String action : SystemReceiver.PACKAGE_ACTIONS) {
             filter.addAction(action);
@@ -288,10 +281,6 @@ public final class SystemHook {
             }
             return Collections.emptyList();
         }
-    }
-
-    public static boolean inCheckQueue(String packageName) {
-        return packageName != null && checkingPackageNames.contains(packageName);
     }
 
     public static void cancelCheck(String packageName) {
@@ -427,6 +416,43 @@ public final class SystemHook {
         if (systemReceiver != null && 0 == systemReceiver.countCounter(packageName) && Boolean.FALSE.equals(mPreventPackages.get(packageName))) {
             PreventLog.v("restore prevent for " + packageName);
             mPreventPackages.put(packageName, true);
+        }
+    }
+
+    public static void onStartActivity(Object activityRecord) {
+        if (systemReceiver != null) {
+            systemReceiver.onStartActivity(activityRecord);
+        }
+    }
+
+    public static void onDestroyActivity(Object activityRecord) {
+        if (systemReceiver != null) {
+            systemReceiver.onDestroyActivity(activityRecord);
+        }
+    }
+
+    public static void onResumeActivity(Object activityRecord) {
+        if (systemReceiver != null) {
+            systemReceiver.onResumeActivity(activityRecord);
+        }
+    }
+
+    public static void onStartHomeActivity(String packageName) {
+        if (systemReceiver != null) {
+            systemReceiver.onDestroyActivity("start home activity", packageName);
+        }
+    }
+
+    public static void onMoveActivityToBack(Object activityRecord) {
+        if (systemReceiver != null) {
+            String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+            systemReceiver.onDestroyActivity("move activity to back", packageName);
+        }
+    }
+
+    public static void onAppDied(Object processRecord) {
+        if (systemReceiver != null) {
+            systemReceiver.onAppDied(processRecord);
         }
     }
 

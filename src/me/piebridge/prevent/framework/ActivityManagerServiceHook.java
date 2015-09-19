@@ -157,7 +157,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean shouldPrevent(ApplicationInfo info) {
-        return !PackageUtils.isSystemPackage(info.flags) && !SystemHook.inCheckQueue(info.packageName);
+        return !PackageUtils.isSystemPackage(info.flags);
     }
 
     private static void handleSafeService(String packageName) {
