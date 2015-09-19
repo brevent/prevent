@@ -255,6 +255,8 @@ public abstract class PreventFragment extends ListFragment {
 
     protected abstract int getQueryHint();
 
+    protected abstract String getDefaultQuery();
+
     public void saveListPosition() {
         if (mAdapter != null) {
             ListView l = getListView();
@@ -533,7 +535,12 @@ public abstract class PreventFragment extends ListFragment {
             }
 
             private boolean queryCombined(String query, AppInfo appInfo) {
-                return "-sg".equals(query) && (appInfo.isSystem() && !GmsUtils.isGapps(mActivity.getPackageManager(), appInfo.packageName));
+                if ("-sg".equals(query)) {
+                    return appInfo.isSystem() && !GmsUtils.isGapps(mActivity.getPackageManager(), appInfo.packageName);
+                } else if ("-3g".equals(query)) {
+                    return !appInfo.isSystem() || GmsUtils.isGapps(mActivity.getPackageManager(), appInfo.packageName);
+                }
+                return false;
             }
 
             private boolean queryExtra(String query, AppInfo appInfo) {
@@ -625,6 +632,9 @@ public abstract class PreventFragment extends ListFragment {
                     mView.setVisibility(View.VISIBLE);
                 }
                 String query = search.getText().toString();
+                if (TextUtils.isEmpty(query)) {
+                    query = getDefaultQuery();
+                }
                 if (!TextUtils.isEmpty(query)) {
                     getFilter().filter(query);
                 }
@@ -732,7 +742,12 @@ public abstract class PreventFragment extends ListFragment {
 
         @Override
         protected int getQueryHint() {
-            return R.string.query_hint;
+            return R.string.query_hint_system;
+        }
+
+        @Override
+        protected String getDefaultQuery() {
+            return "-3g";
         }
 
     }
@@ -765,7 +780,12 @@ public abstract class PreventFragment extends ListFragment {
 
         @Override
         protected int getQueryHint() {
-            return R.string.query_hint_system;
+            return R.string.query_hint;
+        }
+
+        @Override
+        protected String getDefaultQuery() {
+            return null;
         }
 
     }
