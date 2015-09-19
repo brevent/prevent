@@ -1,9 +1,7 @@
 package me.piebridge.prevent.common;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.pm.ServiceInfo;
 import android.os.Binder;
 
 import java.util.Arrays;

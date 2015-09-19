@@ -128,7 +128,7 @@ public class ActivityManagerServiceHook {
             LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName, sender);
             return true;
         }
-        if (!canNotStart(hostingName, hostingType, packageName, sender)) {
+        if (!"com.android.settings".equals(sender) && !canNotStart(hostingName, hostingType, packageName, sender)) {
             return false;
         }
         SystemHook.checkRunningServices(packageName, true);
@@ -137,6 +137,10 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean canNotStart(ComponentName hostingName, String hostingType, String packageName, String sender) {
+        PackageManager pm = mContext.getPackageManager();
+        if (canNotPrevent(pm, sender)) {
+            return true;
+        }
         // if there is no gapps, prevent start gms
         if (GmsUtils.isGms(packageName) && GmsUtils.canStopGms()) {
             LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
@@ -144,9 +148,7 @@ public class ActivityManagerServiceHook {
         }
         // prevent third party app
         try {
-            PackageManager pm = mContext.getPackageManager();
-            ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
-            if (shouldPrevent(info)) {
+            if (shouldPrevent(pm.getApplicationInfo(packageName, 0))) {
                 LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
                 return false;
             }
@@ -154,6 +156,17 @@ public class ActivityManagerServiceHook {
             PreventLog.d("cannot find package " + packageName, e);
         }
         return true;
+    }
+
+    private static boolean canNotPrevent(PackageManager pm, String packageName) {
+        try {
+            if (!PackageUtils.canPrevent(pm, pm.getApplicationInfo(packageName, 0))) {
+                return true;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package " + packageName, e);
+        }
+        return false;
     }
 
     private static boolean shouldPrevent(ApplicationInfo info) {
