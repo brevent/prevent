@@ -417,6 +417,7 @@ public final class SystemHook {
         if (systemReceiver != null && 0 == systemReceiver.countCounter(packageName) && Boolean.FALSE.equals(mPreventPackages.get(packageName))) {
             PreventLog.v("restore prevent for " + packageName);
             mPreventPackages.put(packageName, true);
+            checkRunningServices(packageName, TIME_DESTROY);
         }
     }
 
