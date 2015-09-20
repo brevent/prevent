@@ -120,18 +120,20 @@ public class LogUtils {
         StringBuilder sb = new StringBuilder();
         sb.append(disallow ? DISALLOW : ALLOW);
         sb.append(" start ");
-        sb.append(packageName);
-        sb.append(" for");
         if (hostingType != null) {
-            sb.append(" ");
             sb.append(hostingType);
+            sb.append(" ");
         }
         if (hostingName != null) {
-            sb.append(" ");
-            sb.append(hostingName.getShortClassName());
+            sb.append(hostingName.flattenToShortString());
+        } else {
+            sb.append(packageName);
         }
-        sb.append(", sender=");
-        sb.append(sender);
+        if (sender != null) {
+            sb.append(", ");
+            sb.append(SENDER);
+            sb.append(sender);
+        }
         if ("service".equals(hostingType) && sender == null) {
             PreventLog.w(sb.toString());
         } else if (disallow || "activity".equals(hostingType)) {
