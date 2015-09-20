@@ -68,14 +68,6 @@ public class IntentFilterHook {
             mPreventPackages.put(packageName, false);
             SystemHook.restoreLater(packageName);
         }
-        // send from gms
-        if (GmsUtils.isGms(sender) && !Boolean.TRUE.equals(mPreventPackages.get(sender))) {
-            Intent intent = new Intent(Intent.ACTION_BOOT_COMPLETED);
-            intent.setPackage(packageName);
-            intent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-            PreventLog.i("send boot completed to awake " + packageName);
-            mContext.sendBroadcast(intent);
-        }
         return IntentFilterMatchResult.NONE;
     }
 
