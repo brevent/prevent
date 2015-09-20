@@ -2,6 +2,7 @@ package me.piebridge.prevent.framework.util;
 
 import android.os.Binder;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.PreventLog;
 
@@ -125,13 +126,15 @@ public class LogUtils {
             sb.append(" ");
             sb.append(hostingType);
         }
-        if (hostingName != null) {
+        if (BuildConfig.DEBUG && hostingName != null) {
             sb.append(" ");
             sb.append(hostingName);
         }
         sb.append(", sender=");
         sb.append(sender);
-        if (disallow || "activity".equals(hostingType)) {
+        if (sender == null) {
+            PreventLog.w(sb.toString());
+        } else if (disallow || "activity".equals(hostingType)) {
             PreventLog.d(sb.toString());
         } else {
             PreventLog.i(sb.toString());
@@ -148,11 +151,6 @@ public class LogUtils {
         sb.append(", count: ");
         sb.append(count);
         PreventLog.d(sb.toString());
-    }
-
-    public static void logActivity(String reason, Object activityRecord) {
-        String packageName = ActivityRecordUtils.getPackageName(activityRecord);
-        PreventLog.d(reason + ", callingPackage: " + packageName + ", ActivityRecord: " + activityRecord);
     }
 
 }

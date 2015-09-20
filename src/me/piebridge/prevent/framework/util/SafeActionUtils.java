@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**
@@ -23,7 +22,7 @@ import me.piebridge.prevent.framework.PreventLog;
 public class SafeActionUtils {
 
     private static final Object LOCK = new Object();
-    private static Map<String, Set<ComponentName>> safeActions = new HashMap<String, Set<ComponentName>>();
+    private static Map<String, Set<ComponentName>> syncAdapters = new HashMap<String, Set<ComponentName>>();
     private static Set<ComponentName> widgets = new HashSet<ComponentName>();
 
     private SafeActionUtils() {
@@ -33,22 +32,22 @@ public class SafeActionUtils {
     public static void onPackageChanged(String packageName) {
         if (packageName != null) {
             synchronized (LOCK) {
-                safeActions.remove(packageName);
+                syncAdapters.remove(packageName);
             }
         }
     }
 
-    private static boolean addSafeAction(ComponentName cn) {
-        PreventLog.i("add " + cn + " as safe component");
+    private static boolean addSyncAdapter(ComponentName cn) {
+        PreventLog.i("add " + cn + " as sync adapter");
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
         }
-        Set<ComponentName> components = safeActions.get(packageName);
+        Set<ComponentName> components = syncAdapters.get(packageName);
         if (components == null) {
             synchronized (LOCK) {
-                safeActions.put(packageName, new HashSet<ComponentName>());
-                components = safeActions.get(packageName);
+                syncAdapters.put(packageName, new HashSet<ComponentName>());
+                components = syncAdapters.get(packageName);
             }
         }
         components.add(cn);
@@ -56,29 +55,24 @@ public class SafeActionUtils {
     }
 
     public static boolean isSafeBroadcast(ComponentName cn) {
-        return isSafeComponent(cn) || widgets.contains(cn);
+        return widgets.contains(cn);
     }
 
-    public static boolean isSafeService(Context context, ComponentName cn) {
-        if (AccountUtils.isPackageSyncable(context, cn.getPackageName())) {
-            return isSafeComponent(cn) || isAccount(context, cn);
-        } else if (GmsUtils.isGms(cn.getPackageName())) {
-            return isSafeComponent(cn) || isGcmService(context, cn);
-        }
-        return false;
+    public static boolean isSyncService(Context context, ComponentName cn) {
+        return isSyncAdapterCache(cn) || isSyncAdapter(context, cn);
     }
 
-    public static boolean isAccount(Context context, ComponentName cn) {
+    public static boolean isSyncAdapter(Context context, ComponentName cn) {
         PreventLog.v("check account for service: " + cn);
-        return isSafeService(context, cn, "android.content.SyncAdapter");
+        if (isActionService(context, cn, "android.content.SyncAdapter")) {
+            addSyncAdapter(cn);
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public static boolean isGcmService(Context context, ComponentName cn) {
-        PreventLog.v("check gcm for service: " + cn);
-        return isSafeService(context, cn, GmsUtils.GCM_ACTION_REGISTER);
-    }
-
-    private static boolean isSafeService(Context context, ComponentName cn, String action) {
+    private static boolean isActionService(Context context, ComponentName cn, String action) {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.setPackage(cn.getPackageName());
@@ -87,19 +81,18 @@ public class SafeActionUtils {
         for (int i = 0; i < size; ++i) {
             ServiceInfo si = intentServices.get(i).serviceInfo;
             if (new ComponentName(si.packageName, si.name).equals(cn)) {
-                addSafeAction(cn);
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isSafeComponent(ComponentName cn) {
+    private static boolean isSyncAdapterCache(ComponentName cn) {
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
         }
-        Set<ComponentName> components = safeActions.get(packageName);
+        Set<ComponentName> components = syncAdapters.get(packageName);
         return components != null && components.contains(cn);
     }
 

@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
@@ -453,6 +454,31 @@ public final class SystemHook {
     public static void onAppDied(Object processRecord) {
         if (systemReceiver != null) {
             systemReceiver.onAppDied(processRecord);
+        }
+    }
+
+    public static boolean isSafeSender(String packageName) {
+        return packageName != null && !Boolean.TRUE.equals(mPreventPackages.get(packageName));
+    }
+
+    public static boolean isFramework(String packageName) {
+        return "android".equals(packageName);
+    }
+
+    public static boolean isSystemPackage(String packageName) {
+        if (packageName == null) {
+            return false;
+        }
+        if (isFramework(packageName) || GmsUtils.isGms(packageName)) {
+            return true;
+        }
+        try {
+            PackageManager pm = mContext.getPackageManager();
+            int flags = pm.getApplicationInfo(packageName, 0).flags;
+            return PackageUtils.isSystemPackage(flags);
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package: " + packageName, e);
+            return false;
         }
     }
 

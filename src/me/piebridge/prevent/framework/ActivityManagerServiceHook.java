@@ -8,8 +8,8 @@ import android.content.pm.PackageManager;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
+import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
@@ -101,7 +101,8 @@ public class ActivityManagerServiceHook {
             return hookBroadcast(hostingName, hostingType, packageName, sender);
         } else if ("service".equals(hostingType)) {
             return hookService(hostingName, hostingType, packageName, sender);
-        } else if ("content provider".equals(hostingType) && !canNotStart(hostingName, hostingType, packageName, sender)) {
+        } else if ("content provider".equals(hostingType) && !SystemHook.isSystemPackage(packageName)) {
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
             return false;
         }
 
@@ -122,61 +123,42 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        if (SafeActionUtils.isSafeService(mContext, hostingName)) {
-            handleSafeService(packageName);
+        if (SafeActionUtils.isSyncService(mContext, hostingName)) {
+            return hookSyncService(hostingName, hostingType, packageName, sender);
+        }
+        if (canNotPrevent(sender) || (SystemHook.isSafeSender(sender) && SystemHook.isSystemPackage(packageName))) {
             SystemHook.checkRunningServices(packageName, true);
-            LogUtils.logStartProcess(packageName, hostingType + "(safe)", hostingName, sender);
+            LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;
         }
-        if (!"com.android.settings".equals(sender) && !canNotStart(hostingName, hostingType, packageName, sender)) {
-            return false;
-        }
-        SystemHook.checkRunningServices(packageName, true);
-        LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
-        return true;
-    }
-
-    private static boolean canNotStart(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        PackageManager pm = mContext.getPackageManager();
-        if (canNotPrevent(pm, sender)) {
-            return true;
-        }
-        // if there is no gapps, prevent start gms
-        if (GmsUtils.isGms(packageName) && GmsUtils.canStopGms()) {
-            LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
-            return false;
-        }
-        // prevent third party app
-        try {
-            if (shouldPrevent(pm.getApplicationInfo(packageName, 0))) {
-                LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
-                return false;
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find package " + packageName, e);
-        }
-        return true;
-    }
-
-    private static boolean canNotPrevent(PackageManager pm, String packageName) {
-        if (packageName == null || "android".equals(packageName)) {
-            return false;
-        }
-        if ("com.android.settings".equals(packageName)) {
-            return true;
-        }
-        try {
-            if (!PackageUtils.canPrevent(pm, pm.getApplicationInfo(packageName, 0))) {
-                return true;
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find package " + packageName, e);
-        }
+        LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
         return false;
     }
 
-    private static boolean shouldPrevent(ApplicationInfo info) {
-        return !PackageUtils.isSystemPackage(info.flags);
+    private static boolean canNotPrevent(String sender) {
+        if (sender == null|| SystemHook.isFramework(sender)) {
+            return true;
+        }
+        try {
+            PackageManager pm = mContext.getPackageManager();
+            ApplicationInfo info = pm.getApplicationInfo(sender, 0);
+            return !PackageUtils.canPrevent(pm, info);
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package: " + sender, e);
+            return false;
+        }
+    }
+
+    private static boolean hookSyncService(ComponentName hostingName, String hostingType, String packageName, String sender) {
+        if (AccountUtils.isPackageSyncable(mContext, packageName)) {
+            handleSafeService(packageName);
+            SystemHook.checkRunningServices(packageName, true);
+            LogUtils.logStartProcess(packageName, hostingType + "(sync)", hostingName, sender);
+            return true;
+        } else {
+            LogUtils.logStartProcess(true, packageName, hostingType + "(sync)", hostingName, sender);
+            return false;
+        }
     }
 
     private static void handleSafeService(String packageName) {

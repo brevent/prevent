@@ -76,6 +76,9 @@ public class IntentFilterHook {
     }
 
     private static boolean cannotPrevent(String packageName, String sender) {
+        if (SystemHook.isSafeSender(sender) && SystemHook.isSystemPackage(packageName)) {
+            return true;
+        }
         return !Boolean.TRUE.equals(mPreventPackages.get(packageName)) || packageName.equals(sender);
     }
 
