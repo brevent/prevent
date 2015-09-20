@@ -3,12 +3,10 @@ package me.piebridge.prevent.framework;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
@@ -126,27 +124,13 @@ public class ActivityManagerServiceHook {
         if (SafeActionUtils.isSyncService(mContext, hostingName)) {
             return hookSyncService(hostingName, hostingType, packageName, sender);
         }
-        if (canNotPrevent(sender) || (SystemHook.isSafeSender(sender) && SystemHook.isSystemPackage(packageName))) {
+        if (sender == null || SystemHook.cannotPrevent(sender) || (SystemHook.isSystemPackage(packageName) && SystemHook.hasRunningActivity(sender))) {
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;
         }
         LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
         return false;
-    }
-
-    private static boolean canNotPrevent(String sender) {
-        if (sender == null|| SystemHook.isFramework(sender)) {
-            return true;
-        }
-        try {
-            PackageManager pm = mContext.getPackageManager();
-            ApplicationInfo info = pm.getApplicationInfo(sender, 0);
-            return !PackageUtils.canPrevent(pm, info);
-        } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find package: " + sender, e);
-            return false;
-        }
     }
 
     private static boolean hookSyncService(ComponentName hostingName, String hostingType, String packageName, String sender) {

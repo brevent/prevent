@@ -76,10 +76,14 @@ public class IntentFilterHook {
     }
 
     private static boolean cannotPrevent(String packageName, String sender) {
-        if (SystemHook.isSafeSender(sender) && SystemHook.isSystemPackage(packageName)) {
+        if (!Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+            return true;
+        } else if (packageName.equals(sender)) {
+            return true;
+        } else if (SystemHook.isSystemPackage(packageName) && SystemHook.hasRunningActivity(sender)) {
             return true;
         }
-        return !Boolean.TRUE.equals(mPreventPackages.get(packageName)) || packageName.equals(sender);
+        return false;
     }
 
     private static boolean cannotPreventGms(String packageName, String sender) {
