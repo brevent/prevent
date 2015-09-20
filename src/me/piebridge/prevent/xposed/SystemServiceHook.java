@@ -59,30 +59,39 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
+    public static void hookAllMethods(Class<?> hookClass, String methodName, XC_MethodHook callback) {
+        int size = XposedBridge.hookAllMethods(hookClass, methodName, callback).size();
+        if (size == 0) {
+            PreventLog.e("cannot hook " + hookClass.getSimpleName() + "." + methodName);
+        } else {
+            PreventLog.d("hook " + size + " " + hookClass.getSimpleName() + "." + methodName);
+        }
+    }
+
     private static void hookActivityManagerService(ClassLoader classLoader) throws ClassNotFoundException, NoSuchMethodException {
         Class<?> activityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader);
 
         XposedBridge.hookMethod(ActivityManagerServiceHook.getStartProcessLocked(activityManagerService), new ProcessHook());
 
-        XposedBridge.hookAllMethods(activityManagerService, "broadcastIntent", new IntentContextHook(RECEIVER_SENDER));
-        XposedBridge.hookAllMethods(activityManagerService, "startService", new ContextHook(SERVICE_SENDER));
-        XposedBridge.hookAllMethods(activityManagerService, "bindService", new ContextHook(SERVICE_SENDER));
+        hookAllMethods(activityManagerService, "broadcastIntent", new IntentContextHook(RECEIVER_SENDER));
+        hookAllMethods(activityManagerService, "startService", new ContextHook(SERVICE_SENDER));
+        hookAllMethods(activityManagerService, "bindService", new ContextHook(SERVICE_SENDER));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             XposedBridge.hookMethod(ActivityManagerServiceHook.getCleanUpRemovedTaskLocked(activityManagerService), new CleanUpRemovedHook());
         }
 
         // for start home activity
-        XposedBridge.hookAllMethods(activityManagerService, "onStartActivity", new HomeActivityHook());
+        hookAllMethods(activityManagerService, "startActivity", new HomeActivityHook());
 
         // for move activity to back
-        XposedBridge.hookAllMethods(activityManagerService, "moveActivityTaskToBack", new BackActivityHook());
+        hookAllMethods(activityManagerService, "moveActivityTaskToBack", new BackActivityHook());
 
         // for app died
-        XposedBridge.hookAllMethods(activityManagerService, "handleAppDiedLocked", new AppDiedHook());
+        hookAllMethods(activityManagerService, "handleAppDiedLocked", new AppDiedHook());
 
         // for android 5.1's dependency
-        XposedBridge.hookAllMethods(activityManagerService, "removeProcessLocked", new IgnoreDependencyHook());
+        hookAllMethods(activityManagerService, "removeProcessLocked", new IgnoreDependencyHook());
     }
 
     private static class AppDiedHook extends XC_MethodHook {
@@ -128,7 +137,7 @@ public class SystemServiceHook extends XC_MethodHook {
     }
 
     private static void exportActivityIfNeeded() {
-        XposedBridge.hookAllMethods(PackageParser.class, "parseActivity", new XC_MethodHook() {
+        hookAllMethods(PackageParser.class, "parseActivity", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 PackageParser.Activity result = (PackageParser.Activity) param.getResult();
@@ -148,7 +157,7 @@ public class SystemServiceHook extends XC_MethodHook {
 
     private static void hookActivity(ClassLoader classLoader) throws ClassNotFoundException {
         Class<?> applicationThread = Class.forName("android.app.ApplicationThreadProxy", false, classLoader);
-        XposedBridge.hookAllMethods(applicationThread, "scheduleLaunchActivity", new XC_MethodHook() {
+        hookAllMethods(applicationThread, "scheduleLaunchActivity", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x1]);
@@ -156,7 +165,7 @@ public class SystemServiceHook extends XC_MethodHook {
             }
         });
 
-        XposedBridge.hookAllMethods(applicationThread, "scheduleResumeActivity", new XC_MethodHook() {
+        hookAllMethods(applicationThread, "scheduleResumeActivity", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);
@@ -164,7 +173,7 @@ public class SystemServiceHook extends XC_MethodHook {
             }
         });
 
-        XposedBridge.hookAllMethods(applicationThread, "scheduleDestroyActivity", new XC_MethodHook() {
+        hookAllMethods(applicationThread, "scheduleDestroyActivity", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);

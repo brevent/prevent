@@ -1,8 +1,8 @@
 package me.piebridge.prevent.framework.util;
 
+import android.content.ComponentName;
 import android.os.Binder;
 
-import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.PreventLog;
 
@@ -112,11 +112,11 @@ public class LogUtils {
         PreventLog.i(buildIntentFilterLog(disallow, sender, filter, action, packageName));
     }
 
-    public static void logStartProcess(final String packageName, final String hostingType, final Object hostingName, String sender) {
+    public static void logStartProcess(final String packageName, final String hostingType, final ComponentName hostingName, String sender) {
         logStartProcess(false, packageName, hostingType, hostingName, sender);
     }
 
-    public static void logStartProcess(boolean disallow, final String packageName, final String hostingType, final Object hostingName, String sender) {
+    public static void logStartProcess(boolean disallow, final String packageName, final String hostingType, final ComponentName hostingName, String sender) {
         StringBuilder sb = new StringBuilder();
         sb.append(disallow ? DISALLOW : ALLOW);
         sb.append(" start ");
@@ -126,13 +126,13 @@ public class LogUtils {
             sb.append(" ");
             sb.append(hostingType);
         }
-        if (BuildConfig.DEBUG && hostingName != null) {
+        if (hostingName != null) {
             sb.append(" ");
-            sb.append(hostingName);
+            sb.append(hostingName.getShortClassName());
         }
         sb.append(", sender=");
         sb.append(sender);
-        if (sender == null) {
+        if ("service".equals(hostingType) && sender == null) {
             PreventLog.w(sb.toString());
         } else if (disallow || "activity".equals(hostingType)) {
             PreventLog.d(sb.toString());

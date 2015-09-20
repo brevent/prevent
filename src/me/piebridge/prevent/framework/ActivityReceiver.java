@@ -145,8 +145,6 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     }
 
     public void onDestroyActivity(String reason, String packageName) {
-        int count = countCounter(packageName);
-        LogUtils.logActivity(reason, packageName, count);
         SystemHook.updateRunningGapps(packageName, false);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
