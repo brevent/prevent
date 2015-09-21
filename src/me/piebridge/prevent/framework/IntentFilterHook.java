@@ -11,10 +11,8 @@ import android.os.Process;
 
 import java.util.Map;
 
-import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
-import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
@@ -46,17 +44,6 @@ public class IntentFilterHook {
             return NotificationManagerServiceUtils.hook((Uri) args[0x3], mPreventPackages);
         } else if (AlarmManagerServiceUtils.canHook(args)) {
             return AlarmManagerServiceUtils.hook(filter);
-        } else if (BuildConfig.DEBUG && Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
-            return hookCloseSystemDialogs(filter, action);
-        }
-        return IntentFilterMatchResult.NONE;
-    }
-
-    private static IntentFilterMatchResult hookCloseSystemDialogs(Object filter, String action) {
-        String packageName = BroadcastFilterUtils.getPackageName(filter);
-        if (packageName != null && mPreventPackages.containsKey(packageName)) {
-            LogUtils.logIntentFilter(true, "(ignore)", filter, action, packageName);
-            return IntentFilterMatchResult.NO_MATCH;
         }
         return IntentFilterMatchResult.NONE;
     }
