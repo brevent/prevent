@@ -124,7 +124,7 @@ public class ActivityManagerServiceHook {
         if (SafeActionUtils.isSyncService(mContext, hostingName)) {
             return hookSyncService(hostingName, hostingType, packageName, sender);
         }
-        if (sender != null && cannotPrevent(sender, packageName)) {
+        if (!SafeActionUtils.isTrustAgent(mContext, hostingName) && sender != null && cannotPrevent(sender, packageName)) {
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;

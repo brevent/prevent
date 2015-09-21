@@ -72,6 +72,11 @@ public class SafeActionUtils {
         }
     }
 
+    public static boolean isTrustAgent(Context context, ComponentName cn) {
+        PreventLog.v("check trust agent for service: " + cn);
+        return isActionService(context, cn, "android.service.trust.TrustAgentService");
+    }
+
     private static boolean isActionService(Context context, ComponentName cn, String action) {
         Intent intent = new Intent();
         intent.setAction(action);
