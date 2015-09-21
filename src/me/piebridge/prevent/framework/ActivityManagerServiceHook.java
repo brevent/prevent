@@ -124,12 +124,26 @@ public class ActivityManagerServiceHook {
         if (SafeActionUtils.isSyncService(mContext, hostingName)) {
             return hookSyncService(hostingName, hostingType, packageName, sender);
         }
-        if (sender == null || SystemHook.cannotPrevent(sender) || (SystemHook.isSystemPackage(packageName) && SystemHook.hasRunningActivity(sender))) {
+        if (cannotPrevent(sender, packageName)) {
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;
         }
         LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
+        return false;
+    }
+
+    private static boolean cannotPrevent(String sender, String packageName) {
+        if (sender == null) {
+            // shouldn't happen for service
+            return true;
+        } else if (SystemHook.cannotPrevent(sender)) {
+            // the sender cannot be prevent
+            return true;
+        } else if (SystemHook.isSystemPackage(packageName) && SystemHook.hasRunningActivity(sender)) {
+            // allow third-party app to call system package
+            return true;
+        }
         return false;
     }
 
