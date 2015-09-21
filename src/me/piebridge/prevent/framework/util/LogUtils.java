@@ -13,7 +13,7 @@ import me.piebridge.prevent.framework.PreventLog;
  */
 public class LogUtils {
 
-    private static final String SENDER = "sender ";
+    private static final String SENDER = "sender: ";
     private static final String ACTION = "action: ";
     private static final String FILTER = "filter: ";
     private static final String PACKAGE = "package: ";
