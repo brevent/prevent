@@ -38,7 +38,7 @@ public class SafeActionUtils {
     }
 
     private static boolean addSyncAdapter(ComponentName cn) {
-        PreventLog.i("add " + cn + " as sync adapter");
+        PreventLog.i("add " + cn.flattenToShortString() + " as sync adapter");
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
@@ -63,18 +63,13 @@ public class SafeActionUtils {
     }
 
     public static boolean isSyncAdapter(Context context, ComponentName cn) {
-        PreventLog.v("check account for service: " + cn);
+        PreventLog.v("check account for service: " + cn.flattenToShortString());
         if (isActionService(context, cn, "android.content.SyncAdapter")) {
             addSyncAdapter(cn);
             return true;
         } else {
             return false;
         }
-    }
-
-    public static boolean isTrustAgent(Context context, ComponentName cn) {
-        PreventLog.v("check trust agent for service: " + cn);
-        return isActionService(context, cn, "android.service.trust.TrustAgentService");
     }
 
     private static boolean isActionService(Context context, ComponentName cn, String action) {
@@ -111,10 +106,10 @@ public class SafeActionUtils {
     public static void updateWidget(ComponentName component, boolean added) {
         if (component != null) {
             if (added) {
-                PreventLog.i("add widget " + component);
+                PreventLog.i("add widget " + component.flattenToShortString());
                 widgets.add(component);
             } else {
-                PreventLog.i("remove widget " + component);
+                PreventLog.i("remove widget " + component.flattenToShortString());
                 widgets.remove(component);
             }
         }

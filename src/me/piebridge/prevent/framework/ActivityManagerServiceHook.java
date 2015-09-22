@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
@@ -124,7 +125,12 @@ public class ActivityManagerServiceHook {
         if (SafeActionUtils.isSyncService(mContext, hostingName)) {
             return hookSyncService(hostingName, hostingType, packageName, sender);
         }
-        if (!SafeActionUtils.isTrustAgent(mContext, hostingName) && sender != null && cannotPrevent(sender, packageName)) {
+        if (GmsUtils.isGms(packageName) && !GmsUtils.isGapps(mContext.getPackageManager(), sender)) {
+            // only allow gapps to use gms
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
+            return false;
+        }
+        if (sender != null && cannotPrevent(sender, packageName)) {
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;
@@ -141,7 +147,7 @@ public class ActivityManagerServiceHook {
             // allow the sender has no launcher
             return true;
         } else if (SystemHook.isSystemPackage(packageName) && SystemHook.hasRunningActivity(sender)) {
-            // allow third-party app to call system package
+            // allow third-party app to call system package (except gms)
             return true;
         }
         return false;
