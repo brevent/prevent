@@ -274,8 +274,6 @@ public class SystemServiceHook extends XC_MethodHook {
                 IntentFilterMatchResult result;
                 if (filter instanceof PackageParser.ActivityIntentInfo) {
                     result = IntentFilterHook.hookActivityIntentInfo((PackageParser.ActivityIntentInfo) filter, RECEIVER_SENDER.get(), action);
-                } else if (filter instanceof PackageParser.ServiceIntentInfo) {
-                    result = IntentFilterHook.hookServiceIntentInfo((PackageParser.ServiceIntentInfo) filter, SERVICE_SENDER.get(), action);
                 } else if (BroadcastFilterUtils.isBroadcastFilter(filter)) {
                     result = IntentFilterHook.hookBroadcastFilter(filter, param.args);
                 } else {

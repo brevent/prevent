@@ -460,7 +460,13 @@ public final class SystemHook {
     }
 
     public static boolean hasRunningActivity(String packageName) {
-        return packageName != null && systemReceiver != null && systemReceiver.countCounter(packageName) != 0;
+        if (packageName != null && systemReceiver != null && systemReceiver.countCounter(packageName) != 0) {
+            return true;
+        }
+
+        // for temp allow
+        ScheduledFuture<?> restoreFuture = restoreFutures.get(packageName);
+        return restoreFuture != null && restoreFuture.getDelay(TimeUnit.SECONDS) > 0;
     }
 
     public static boolean cannotPrevent(String packageName) {

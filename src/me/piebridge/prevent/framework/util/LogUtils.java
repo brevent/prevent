@@ -152,9 +152,7 @@ public class LogUtils {
             sb.append(SENDER);
             sb.append(sender);
         }
-        if ("service".equals(hostingType) && sender == null) {
-            PreventLog.w(sb.toString());
-        } else if (disallow || "activity".equals(hostingType)) {
+        if (disallow || "activity".equals(hostingType) || packageName.equals(sender)) {
             PreventLog.d(sb.toString());
         } else {
             PreventLog.i(sb.toString());

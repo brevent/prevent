@@ -81,12 +81,6 @@ public class IntentFilterHook {
         return isSystem && !SafeActionUtils.isProtectedBroadcast(action);
     }
 
-    private static boolean isSafeServiceAction(String action) {
-        return "android.content.SyncAdapter".equals(action)
-                || AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action)
-                || GmsUtils.isGcmRegisterAction(action);
-    }
-
     public static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
         // for receiver, we don't block for activity
         PackageParser.Activity activity = filter.activity;
@@ -118,29 +112,6 @@ public class IntentFilterHook {
         // the default action is block, so change the log level
         LogUtils.logIntentFilter(true, sender, filter, action, packageName);
         return IntentFilterMatchResult.NO_MATCH;
-    }
-
-    public static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
-        PackageParser.Service service = filter.service;
-        PackageParser.Package owner = service.owner;
-        ApplicationInfo ai = owner.applicationInfo;
-        String packageName = ai.packageName;
-        if (cannotPrevent(packageName, sender)) {
-            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
-            return IntentFilterMatchResult.NONE;
-        }
-        if (isSafeServiceAction(action)) {
-            LogUtils.logIntentFilter(false, sender, filter, action, ai.packageName);
-            return IntentFilterMatchResult.NONE;
-        } else if (cannotPreventGms(packageName, sender)) {
-            LogUtils.logIntentFilter(false, sender, filter, action, ai.packageName);
-            return IntentFilterMatchResult.NONE;
-        } else if (!isSystemSender(sender)) {
-            LogUtils.logIntentFilterInfo(true, sender, filter, action, ai.packageName);
-            return IntentFilterMatchResult.NO_MATCH;
-        }
-        LogUtils.logIntentFilter(false, sender, filter, action, packageName);
-        return IntentFilterMatchResult.NONE;
     }
 
     public static boolean isPrevent(Intent intent) {
