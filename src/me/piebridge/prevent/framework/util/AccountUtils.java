@@ -2,6 +2,8 @@ package me.piebridge.prevent.framework.util;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AuthenticatorDescription;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SyncAdapterType;
@@ -14,46 +16,64 @@ import me.piebridge.prevent.framework.PreventLog;
  */
 public class AccountUtils {
 
-    private static final String PACKAGE = "package ";
-
     private AccountUtils() {
 
     }
 
-    public static boolean isPackageSyncable(Context context, String packageName) {
+    public static boolean isComponentSyncable(Context context, ComponentName component) {
         if (!ContentResolver.getMasterSyncAutomatically()) {
             return false;
         }
-        PreventLog.d("check sync for " + packageName);
+        PreventLog.d("check sync for " + component.flattenToShortString());
+        AccountManager accountManager = AccountManager.get(context);
+        for (AuthenticatorDescription description : accountManager.getAuthenticatorTypes()) {
+            if (isSyncable(context, description, component)) {
+                PreventLog.d(component.flattenToShortString() + " is syncable");
+                return true;
+            }
+        }
+        PreventLog.d(component.flattenToShortString() + " isn't syncable");
+        return false;
+    }
+
+    private static boolean isSyncable(Context context, AuthenticatorDescription description, ComponentName component) {
+        String packageName = component.getPackageName();
+        AccountManager accountManager = AccountManager.get(context);
         for (SyncAdapterType type : ContentResolver.getSyncAdapterTypes()) {
-            if (!type.isUserVisible()) {
+            ProviderInfo provider = context.getPackageManager().resolveContentProvider(type.authority, 0);
+            if (provider == null || !type.isUserVisible() || !type.accountType.equals(description.type)) {
                 continue;
             }
-            ProviderInfo pi = context.getPackageManager().resolveContentProvider(type.authority, 0);
-            if (pi != null && packageName.equals(pi.packageName) && isSyncable(context, type)) {
-                PreventLog.d(PACKAGE + packageName + " is syncable");
+            if (isSamePackage(packageName, description.packageName, provider.packageName) && isSyncable(accountManager, type)) {
+                PreventLog.d("syncable, account type: " + type.accountType + ", authority: " + type.authority
+                        + ", authenticator package: " + description.packageName + ", provider package: " + provider.packageName);
                 return true;
             }
         }
-        PreventLog.d(PACKAGE + packageName + " isn't syncable");
         return false;
     }
 
-    private static boolean isSyncable(Context context, SyncAdapterType type) {
-        AccountManager accountManager = AccountManager.get(context);
+    private static boolean isSamePackage(String packageName, String descriptionPackageName, String providerPackageName) {
+        if (packageName.equals(descriptionPackageName) || packageName.equals(providerPackageName)) {
+            return true;
+        } else if ("com.android.providers.calendar".equals(providerPackageName) && "com.google.android.calendar".equals(packageName)) {
+            // should use better way, however, i think hardcode is ok
+            PreventLog.d("consider " + packageName + " equals " + providerPackageName);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean isSyncable(AccountManager accountManager, SyncAdapterType type) {
         Account[] accounts = accountManager.getAccountsByType(type.accountType);
         for (Account account : accounts) {
-            if (isSyncable(account, type.authority)) {
+            if (ContentResolver.getSyncAutomatically(account, type.authority)
+                    && ContentResolver.getIsSyncable(account, type.authority) > 0) {
                 return true;
             }
         }
         return false;
-    }
-
-    private static boolean isSyncable(Account account, String authority) {
-        PreventLog.d("check sync for account type: " + account.type + ", authority: " + authority);
-        return ContentResolver.getSyncAutomatically(account, authority)
-                && (ContentResolver.getIsSyncable(account, authority) > 0);
     }
 
 }

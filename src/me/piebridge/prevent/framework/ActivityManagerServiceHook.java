@@ -125,12 +125,17 @@ public class ActivityManagerServiceHook {
         if (SafeActionUtils.isSyncService(mContext, hostingName)) {
             return hookSyncService(hostingName, hostingType, packageName, sender);
         }
+        if (SystemHook.cannotPrevent(sender)) {
+            SystemHook.checkRunningServices(packageName, true);
+            LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
+            return true;
+        }
         if (GmsUtils.isGms(packageName) && !GmsUtils.isGapps(mContext.getPackageManager(), sender)) {
             // only allow gapps to use gms
             LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
             return false;
         }
-        if (sender != null && cannotPrevent(sender, packageName)) {
+        if (cannotPrevent(sender, packageName)) {
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;
@@ -140,9 +145,8 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean cannotPrevent(String sender, String packageName) {
-        if (SystemHook.cannotPrevent(sender)) {
-            // the sender cannot be prevent
-            return true;
+        if (sender == null) {
+            return false;
         } else if (mContext.getPackageManager().getLaunchIntentForPackage(sender) == null) {
             // allow the sender has no launcher
             return true;
@@ -154,7 +158,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookSyncService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        if (AccountUtils.isPackageSyncable(mContext, packageName)) {
+        if (AccountUtils.isComponentSyncable(mContext, hostingName)) {
             handleSafeService(packageName);
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType + "(sync)", hostingName, sender);
