@@ -125,17 +125,12 @@ public class ActivityManagerServiceHook {
         if (SafeActionUtils.isSyncService(mContext, hostingName)) {
             return hookSyncService(hostingName, hostingType, packageName, sender);
         }
-        if (SystemHook.cannotPrevent(sender)) {
-            SystemHook.checkRunningServices(packageName, true);
-            LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
-            return true;
-        }
-        if (GmsUtils.isGms(packageName) && !GmsUtils.isGapps(mContext.getPackageManager(), sender)) {
+        if (GmsUtils.isGms(packageName) && !cannotPreventGms(sender)) {
             // only allow gapps to use gms
             LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
             return false;
         }
-        if (cannotPrevent(sender, packageName)) {
+        if (sender != null && cannotPrevent(sender, packageName)) {
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;
@@ -144,9 +139,18 @@ public class ActivityManagerServiceHook {
         return false;
     }
 
-    private static boolean cannotPrevent(String sender, String packageName) {
-        if (sender == null) {
+    private static boolean cannotPreventGms(String sender) {
+        if (sender == null || SystemHook.isFramework(sender)) {
             return false;
+        }
+        return GmsUtils.isGapps(mContext.getPackageManager(), sender) ||
+                (SystemHook.isSystemPackage(sender) && SystemHook.hasRunningActivity(sender));
+    }
+
+    private static boolean cannotPrevent(String sender, String packageName) {
+        if (SystemHook.cannotPrevent(sender)) {
+            // the sender cannot be prevent
+            return true;
         } else if (mContext.getPackageManager().getLaunchIntentForPackage(sender) == null) {
             // allow the sender has no launcher
             return true;
