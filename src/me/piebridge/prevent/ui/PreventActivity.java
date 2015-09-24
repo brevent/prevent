@@ -258,17 +258,30 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         if (BuildConfig.WECHAT_DONATE && getDonateWeChat() != null) {
             menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
         }
+        if (BuildConfig.PAYPAL_ACCOUNT != null) {
+            menu.add(Menu.NONE, R.string.donate_paypal, Menu.NONE, R.string.donate_paypal);
+        }
         menu.add(Menu.NONE, R.string.request_log, Menu.NONE, R.string.request_log);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    private boolean isDonate(int id) {
+        if (canDonateViaWeChat(id)) {
+            return donateViaWeChat();
+        } else if (canDonateViaAlipay(id)) {
+            return donateViaAlipay();
+        } else if (id == R.string.donate_paypal) {
+            return donateViaPayPal();
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (canDonateViaWeChat(id)) {
-            return donateViaWeChat();
-        } else if (canDonateViaAlipay(id)) {
-            return donateViaAlipay();
+        if (isDonate(id)) {
+            return true;
         } else if (id == R.string.switch_theme) {
             return switchTheme();
         } else if (id == R.string.request_log) {
@@ -375,6 +388,15 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         intent.putExtra("mExtras", mExtras);
         try {
             startActivity(intent);
+        } catch (Throwable t) { // NOSONAR
+            // do nothing
+        }
+        return true;
+    }
+
+    private boolean donateViaPayPal() {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.PAYPAL_ACCOUNT)));
         } catch (Throwable t) { // NOSONAR
             // do nothing
         }
