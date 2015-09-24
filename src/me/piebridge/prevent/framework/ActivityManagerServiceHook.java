@@ -2,11 +2,18 @@ package me.piebridge.prevent.framework;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -20,6 +27,8 @@ public class ActivityManagerServiceHook {
 
     private static Context mContext;
     private static Map<String, Boolean> mPreventPackages;
+    // normally, there is only one
+    private static Collection<String> settingsPackages = new HashSet<String>();
 
     private ActivityManagerServiceHook() {
 
@@ -139,12 +148,24 @@ public class ActivityManagerServiceHook {
         return false;
     }
 
-    private static boolean cannotPreventGms(String sender) {
-        if (sender == null || SystemHook.isFramework(sender)) {
-            return false;
+    private static void retrieveSettingsPackage(PackageManager pm, Collection<String> packages) {
+        Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", BuildConfig.APPLICATION_ID, null));
+        for (ResolveInfo resolveInfo : pm.queryIntentActivities(intent, 0)) {
+            String packageName = resolveInfo.activityInfo.packageName;
+            if (SystemHook.isSystemPackage(packageName)) {
+                PreventLog.d("add " + packageName + " as settings");
+                packages.add(packageName);
+            }
         }
-        return GmsUtils.isGapps(mContext.getPackageManager(), sender) ||
-                (SystemHook.isSystemPackage(sender) && SystemHook.hasRunningActivity(sender));
+    }
+
+    private static boolean cannotPreventGms(String sender) {
+        if (settingsPackages.isEmpty()) {
+            retrieveSettingsPackage(mContext.getPackageManager(), settingsPackages);
+        }
+        // only allow gapps and settings to use gms
+        return GmsUtils.isGapps(mContext.getPackageManager(), sender) || settingsPackages.contains(sender);
     }
 
     private static boolean cannotPrevent(String sender, String packageName) {
