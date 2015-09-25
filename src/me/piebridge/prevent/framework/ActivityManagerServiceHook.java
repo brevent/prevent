@@ -15,7 +15,7 @@ import java.util.Map;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
-import me.piebridge.prevent.framework.util.AccountUtils;
+import me.piebridge.prevent.framework.util.AccountWatcher;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
@@ -29,6 +29,7 @@ public class ActivityManagerServiceHook {
     private static Map<String, Boolean> mPreventPackages;
     // normally, there is only one
     private static Collection<String> settingsPackages = new HashSet<String>();
+    private static AccountWatcher mAccountWatcher;
 
     private ActivityManagerServiceHook() {
 
@@ -37,6 +38,7 @@ public class ActivityManagerServiceHook {
     public static void setContext(Context context, Map<String, Boolean> preventPackages) {
         mContext = context;
         mPreventPackages = preventPackages;
+        mAccountWatcher = new AccountWatcher(context);
     }
 
     private static boolean isWantedStartProcessLocked(Class<?>[] types) {
@@ -131,13 +133,11 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        if (SafeActionUtils.isSyncService(mContext, hostingName)) {
+        if (SystemHook.isFramework(sender) && SafeActionUtils.isSyncService(mContext, hostingName)) {
             return hookSyncService(hostingName, hostingType, packageName, sender);
         }
-        if (GmsUtils.isGms(packageName) && !cannotPreventGms(sender)) {
-            // only allow gapps to use gms
-            LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
-            return false;
+        if (GmsUtils.isGms(packageName)) {
+            return hookGmsService(hostingName, hostingType, packageName, sender);
         }
         if (sender != null && cannotPrevent(sender, packageName)) {
             SystemHook.checkRunningServices(packageName, true);
@@ -146,6 +146,18 @@ public class ActivityManagerServiceHook {
         }
         LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
         return false;
+    }
+
+    private static boolean hookGmsService(ComponentName hostingName, String hostingType, String packageName, String sender) {
+        if (cannotPreventGms(sender)) {
+            // only allow gapps to use gms
+            SystemHook.checkRunningServices(packageName, true);
+            LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
+            return true;
+        } else {
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
+            return false;
+        }
     }
 
     private static void retrieveSettingsPackage(PackageManager pm, Collection<String> packages) {
@@ -183,7 +195,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookSyncService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        if (AccountUtils.isComponentSyncable(mContext, hostingName)) {
+        if (mAccountWatcher.isComponentSyncable(hostingName)) {
             handleSafeService(packageName);
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType + "(sync)", hostingName, sender);
