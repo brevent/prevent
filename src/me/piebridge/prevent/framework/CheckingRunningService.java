@@ -30,10 +30,10 @@ abstract class CheckingRunningService implements Runnable {
     public void run() {
         Collection<String> packageNames = preparePackageNames();
         Collection<String> whiteList = prepareWhiteList();
-        PreventLog.d("checking services, packages: " + packageNames + ", whitelist: " + whiteList);
         if (!packageNames.isEmpty() && packageNames.equals(whiteList)) {
             return;
         }
+        PreventLog.d("checking services, packages: " + packageNames + ", whitelist: " + whiteList);
         Set<String> shouldStopPackageNames = new TreeSet<String>();
         for (ActivityManager.RunningServiceInfo service : HookUtils.getServices(mContext)) {
             checkService(service, packageNames, whiteList, shouldStopPackageNames);
@@ -49,18 +49,8 @@ abstract class CheckingRunningService implements Runnable {
         if (!prevent || whiteList.contains(name)) {
             return false;
         }
-        if (packageNames.contains(name)) {
+        if (packageNames.contains(name) || service.started) {
             shouldStopPackageNames.add(name);
-            return true;
-        }
-        if (!service.started) {
-            return true;
-        }
-        if (isPersistentService(service)) {
-            PreventLog.d("package " + name + " has persistent process, will force stop it");
-            shouldStopPackageNames.add(name);
-        } else {
-            mContext.stopService(new Intent().setComponent(service.service));
         }
         return true;
     }
@@ -68,10 +58,6 @@ abstract class CheckingRunningService implements Runnable {
     protected abstract Collection<String> preparePackageNames();
 
     protected abstract Collection<String> prepareWhiteList();
-
-    private boolean isPersistentService(ActivityManager.RunningServiceInfo service) {
-        return service.process.endsWith(".persistent") || (service.flags & ActivityManager.RunningServiceInfo.FLAG_PERSISTENT_PROCESS) != 0;
-    }
 
     private void logServiceIfNeeded(boolean prevents, String name, ActivityManager.RunningServiceInfo service) {
         if (!service.started) {
