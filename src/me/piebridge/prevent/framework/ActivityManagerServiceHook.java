@@ -149,7 +149,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookGmsService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        if (cannotPreventGms(sender)) {
+        if (cannotPreventGms(hostingName, sender)) {
             // only allow gapps to use gms
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
@@ -172,7 +172,10 @@ public class ActivityManagerServiceHook {
         }
     }
 
-    private static boolean cannotPreventGms(String sender) {
+    private static boolean cannotPreventGms(ComponentName component, String sender) {
+        if (GmsUtils.isGmsRegister(mContext, component)) {
+            return true;
+        }
         if (settingsPackages.isEmpty()) {
             retrieveSettingsPackage(mContext.getPackageManager(), settingsPackages);
         }

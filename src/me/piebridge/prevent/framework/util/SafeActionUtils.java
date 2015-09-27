@@ -72,7 +72,7 @@ public class SafeActionUtils {
         }
     }
 
-    private static boolean isActionService(Context context, ComponentName cn, String action) {
+    public static boolean isActionService(Context context, ComponentName cn, String action) {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.setPackage(cn.getPackageName());

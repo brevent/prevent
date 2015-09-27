@@ -1,11 +1,18 @@
 package me.piebridge.prevent.common;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import me.piebridge.forcestopgb.BuildConfig;
@@ -26,13 +33,15 @@ public class GmsUtils {
     private static Collection<String> GCM_ACTIONS = Arrays.asList(
             "com.google.android.c2dm.intent.RECEIVE",
             "com.google.android.c2dm.intent.REGISTRATION");
-    public static final String GCM_ACTION_REGISTER = "com.google.android.c2dm.intent.REGISTER";
+    private static final String GCM_ACTION_REGISTER = "com.google.android.c2dm.intent.REGISTER";
+    private static final String GCM_ACTION_UNREGISTER = "com.google.android.c2dm.intent.UNREGISTER";
     private static Collection<String> GMS_PACKAGES = Arrays.asList(
             GMS, GSF, GSF_LOGIN
     );
     private static Collection<String> GAPPS = Arrays.asList(
             "com.android.chrome", "com.android.facelock", "com.android.vending"
     );
+    private static Set<ComponentName> GCM_REGISTERS = new HashSet<ComponentName>();
 
     private GmsUtils() {
 
@@ -64,8 +73,26 @@ public class GmsUtils {
         return (isSystem || isGms(sender)) && GCM_ACTIONS.contains(action);
     }
 
-    public static boolean isGcmRegisterAction(String action) {
-        return GCM_ACTION_REGISTER.equals(action);
+    public static boolean isGmsRegister(Context context, ComponentName component) {
+        if (GCM_REGISTERS.isEmpty()) {
+            initGmsRegisters(context, GCM_ACTION_REGISTER);
+            initGmsRegisters(context, GCM_ACTION_UNREGISTER);
+        }
+        return GCM_REGISTERS.contains(component);
+    }
+
+    private static void initGmsRegisters(Context context, String action) {
+        Intent intent = new Intent();
+        intent.setAction(action);
+        intent.setPackage(GMS);
+        List<ResolveInfo> intentServices = context.getPackageManager().queryIntentServices(intent, 0);
+        final int size = intentServices == null ? 0 : intentServices.size();
+        for (int i = 0; i < size; ++i) {
+            ServiceInfo si = intentServices.get(i).serviceInfo;
+            if (GMS.equals(si.packageName) && GCM_REGISTERS.add(new ComponentName(si.packageName, si.name))) {
+                PreventLog.d("add gcm register/unregister: " + si.name);
+            }
+        }
     }
 
     public static boolean isGms(String packageName) {
