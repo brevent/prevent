@@ -178,7 +178,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         SystemHook.updateRunningGapps(packageName, false);
         if (mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
-            SystemHook.checkRunningServices(null, SystemHook.TIME_IMMEDIATE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_IMMEDIATE);
+            SystemHook.checkRunningServices(packageName, SystemHook.TIME_IMMEDIATE < SystemHook.TIME_DESTROY ? SystemHook.TIME_DESTROY : SystemHook.TIME_IMMEDIATE);
         }
     }
 
