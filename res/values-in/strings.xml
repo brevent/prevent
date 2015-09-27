@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Prevent Running</string>
+    <string name="xposed_summary">Mencegah berjalannya aplikasi.</string>
+    <string name="remove">Hapus Pencegahan</string>
+    <string name="prevent">Pencegahan Otomatis</string>
+    <string name="applications">Aplikasi</string>
+    <string name="preventlist">Daftar Pencegahan</string>
+    <string name="loading">Memuat. . .</string>
+    <string name="notrunning">(tidak berjalan)</string>
+    <string name="background">Latar belakang</string>
+    <string name="foreground">Latar depan</string>
+    <string name="empty">Kosong</string>
+    <string name="perceptible">Terlihat</string>
+    <string name="service">Layanan</string>
+    <string name="visible">Nyata</string>
+    <string name="app_info">Info Aplikasi</string>
+    <string name="uninstall">Hapus Pemasangan</string>
+    <string name="switch_theme">Ubah tema</string>
+    <string name="app_notenabled">Tolong aktifkan \"Prevent Running\" di \"Xposed Installer\", atau matikan kemudian aktifkan \"Prevent Running\".</string>
+    <string name="open">Buka</string>
+    <string name="query_hint">\"-3\" untuk aplikasi pengguna</string>
+    <string name="query_hint_system">\"-s\" untuk aplikasi sistem</string>
+    <string name="retrieving">Mengambil status, silahkan tunggu. . .</string>
+    <string name="no_prevents">Tolong atur daftar pencegahan.</string>
+    <string name="donate_wechat">Donasi via WeChat</string>
+    <string name="donate_alipay">Donasi via Alipay</string>
+    <string name="donate_paypal">Donasi via PayPal</string>
+    <string name="notstarted">Belum dimulai</string>
+    <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
+    <string name="test_version">Ini bukan versi rilis, dan mungkin memblokir perangkatmu. Jika kamu tidak suka untuk berpartisipasi, tolong hapus pemasangan dan kembali gunakan versi rilis.</string>
+    <string name="request_log">Meminta catatan sistem</string>
+
+</resources>
