@@ -22,6 +22,7 @@ android {
         buildConfigField "boolean", "ALIPAY_DONATE", "false"
         buildConfigField "String", "WECHAT_ACCOUNT", "null"
         buildConfigField "String", "ALIPAY_ACCOUNT", "null"
+        buildConfigField "String", "PAYPAL_ACCOUNT", "null"
     }
 
     buildTypes {
