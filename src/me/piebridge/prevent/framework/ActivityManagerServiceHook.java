@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,37 +38,6 @@ public class ActivityManagerServiceHook {
         mContext = context;
         mPreventPackages = preventPackages;
         mAccountWatcher = new AccountWatcher(context);
-    }
-
-    private static boolean isWantedStartProcessLocked(Class<?>[] types) {
-        if (types == null || types.length < 0x6) {
-            return false;
-        }
-        return ApplicationInfo.class.equals(types[0x1])
-                && String.class.equals(types[0x4])
-                && ComponentName.class.equals(types[0x5]);
-    }
-
-    public static Method getStartProcessLocked(Class<?> activityManagerService) {
-        Method startProcessLocked = null;
-        for (Method method : activityManagerService.getDeclaredMethods()) {
-            if (!"startProcessLocked".equals(method.getName()) || !"ProcessRecord".equals(method.getReturnType().getSimpleName()) || !isWantedStartProcessLocked(method.getParameterTypes())) {
-                continue;
-            }
-            if (startProcessLocked == null || startProcessLocked.getParameterTypes().length < method.getParameterTypes().length) {
-                startProcessLocked = method;
-            }
-        }
-        return startProcessLocked;
-    }
-
-    public static Method getCleanUpRemovedTaskLocked(Class<?> activityManagerService) {
-        for (Method method : activityManagerService.getDeclaredMethods()) {
-            if ("cleanUpRemovedTaskLocked".equals(method.getName()) && method.getParameterTypes().length == 0x2) {
-                return method;
-            }
-        }
-        return null;
     }
 
     public static boolean hookBeforeStartProcessLocked(Object thiz, Object[] args, String sender) {
@@ -176,11 +144,17 @@ public class ActivityManagerServiceHook {
         if (GmsUtils.isGmsRegister(mContext, component)) {
             return true;
         }
+        PackageManager pm = mContext.getPackageManager();
         if (settingsPackages.isEmpty()) {
-            retrieveSettingsPackage(mContext.getPackageManager(), settingsPackages);
+            retrieveSettingsPackage(pm, settingsPackages);
         }
-        // only allow gapps and settings to use gms
-        return GmsUtils.isGapps(mContext.getPackageManager(), sender) || settingsPackages.contains(sender);
+        if (settingsPackages.contains(sender)) {
+            return true;
+        }
+        if (!GmsUtils.isGapps(pm, sender)) {
+            return false;
+        }
+        return pm.getLaunchIntentForPackage(sender) == null || SystemHook.hasRunningActivity(sender);
     }
 
     private static boolean cannotPrevent(String sender, String packageName) {

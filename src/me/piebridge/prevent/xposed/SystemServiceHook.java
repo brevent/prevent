@@ -1,18 +1,26 @@
 package me.piebridge.prevent.xposed;
 
+import android.app.IApplicationThread;
 import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageParser;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PreventIntent;
@@ -34,6 +42,8 @@ public class SystemServiceHook extends XC_MethodHook {
 
     private static boolean systemHooked;
 
+    private static Method getRecordForAppLocked;
+
     private static final ThreadLocal<String> RECEIVER_SENDER = new ThreadLocal<String>();
 
     private static final ThreadLocal<String> SERVICE_SENDER = new ThreadLocal<String>();
@@ -46,16 +56,237 @@ public class SystemServiceHook extends XC_MethodHook {
             SystemHook.setClassLoader(classLoader);
             hookActivityManagerService(classLoader);
             hookActivity(classLoader);
-            XposedHelpers.findAndHookMethod("android.content.IntentFilter", classLoader, "match", String.class, String.class, String.class, Uri.class, Set.class, String.class, new IntentFilterMatchHook());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-                XposedHelpers.findAndHookMethod("android.content.Intent", classLoader, "isExcludingStopped", new IntentExcludingStoppedHook());
-            }
+            hookIntentFilter(classLoader);
+            hookIntentIfNeeded(classLoader);
             if (BuildConfig.ALIPAY_DONATE || BuildConfig.WECHAT_DONATE) {
                 exportActivityIfNeeded();
             }
             PreventLog.d("finish prevent hook (system)");
             systemHooked = true;
             LogcatUtils.logcat();
+        }
+    }
+
+    private void hookIntentIfNeeded(ClassLoader classLoader) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            XposedHelpers.findAndHookMethod("android.content.Intent", classLoader,
+                    "isExcludingStopped",
+                    new IntentExcludingStoppedHook());
+        }
+    }
+
+    private void hookIntentFilter(ClassLoader classLoader) {
+        XposedHelpers.findAndHookMethod("android.content.IntentFilter", classLoader, "match",
+                String.class, String.class, String.class, Uri.class, Set.class, String.class,
+                new IntentFilterMatchHook());
+    }
+
+    private void hookActivityManagerService(ClassLoader classLoader) throws ClassNotFoundException, NoSuchMethodException {
+        Class<?> activityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader);
+
+        hookActivityManagerServiceStartProcessLocked(activityManagerService);
+
+        hookActivityManagerServiceBroadcastIntent(activityManagerService, classLoader);
+
+        hookActivityManagerServiceStartService(activityManagerService);
+
+        hookActivityManagerServiceBindService(activityManagerService, classLoader);
+
+        hookActivityManagerServiceCleanUpRemovedTaskLocked(activityManagerService, classLoader);
+
+        hookActivityManagerServiceStartActivity(activityManagerService, classLoader);
+
+        hookActivityManagerServiceMoveActivityTaskToBack(activityManagerService);
+
+        hookActivityManagerServiceHandleAppDiedLocked(activityManagerService, classLoader);
+
+        hookActivityManagerServiceRemoveProcessLocked(activityManagerService, classLoader);
+
+        getRecordForAppLocked = activityManagerService.getClass().getDeclaredMethod("getRecordForAppLocked", IApplicationThread.class);
+        getRecordForAppLocked.setAccessible(true);
+    }
+
+    private void hookActivityManagerServiceRemoveProcessLocked(Class<?> activityManagerService, ClassLoader classLoader) throws ClassNotFoundException {
+        // mainly for android 5.1's dependency
+        int sdk = Build.VERSION.SDK_INT;
+        String method = "removeProcessLocked";
+        Class<?> processRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
+        if (sdk >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+            // sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    processRecord, boolean.class, boolean.class, String.class,
+                    new IgnoreDependencyHook());
+        } else if (sdk >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            // sdk 14
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    processRecord, boolean.class, boolean.class,
+                    new IgnoreDependencyHook());
+        } else {
+            // sdk 10
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    processRecord, boolean.class,
+                    new IgnoreDependencyHook());
+        }
+    }
+
+    private void hookActivityManagerServiceHandleAppDiedLocked(Class<?> activityManagerService, ClassLoader classLoader) throws ClassNotFoundException {
+        int sdk = Build.VERSION.SDK_INT;
+        String method = "handleAppDiedLocked";
+        Class<?> processRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
+        if (sdk >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            // sdk 14, sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    processRecord, boolean.class, boolean.class, new AppDiedHook());
+        } else {
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    processRecord, boolean.class,
+                    new AppDiedHook());
+        }
+
+    }
+
+    private void hookActivityManagerServiceMoveActivityTaskToBack(Class<?> activityManagerService) {
+        // for move activity to back
+        // sdk 10, sdk 14, sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
+        XposedHelpers.findAndHookMethod(activityManagerService, "moveActivityTaskToBack",
+                IBinder.class, boolean.class,
+                new BackActivityHook());
+    }
+
+    private void hookActivityManagerServiceStartActivity(Class<?> activityManagerService, ClassLoader classLoader) throws ClassNotFoundException {
+        // for start home activity
+        int sdk = Build.VERSION.SDK_INT;
+        String method = "startActivity";
+        if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
+            // sdk 22, sdk 21
+            Class<?> profilerInfo = Class.forName("android.app.ProfilerInfo", false, classLoader);
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, String.class, Intent.class, String.class, IBinder.class, String.class, int.class, profilerInfo, Bundle.class,
+                    new HomeActivityHook());
+        } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            // sdk 18, sdk 19
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, String.class, Intent.class, String.class, IBinder.class, String.class, int.class, int.class, String.class, ParcelFileDescriptor.class, Bundle.class,
+                    new HomeActivityHook());
+        } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
+            // sdk 16, sdk 17
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, Intent.class, String.class, IBinder.class, String.class, int.class, int.class, String.class, ParcelFileDescriptor.class, Bundle.class,
+                    new HomeActivityHook());
+        } else if (sdk >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            // sdk 14, sdk 15
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, Intent.class, String.class, Uri[].class, int.class, IBinder.class, String.class, int.class, boolean.class, boolean.class, String.class, ParcelFileDescriptor.class, boolean.class,
+                    new HomeActivityHook());
+        } else {
+            // sdk 10
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, Intent.class, String.class, Uri[].class, int.class, IBinder.class, String.class, int.class, boolean.class, boolean.class,
+                    new HomeActivityHook());
+        }
+    }
+
+    private void hookActivityManagerServiceCleanUpRemovedTaskLocked(Class<?> activityManagerService, ClassLoader classLoader) throws ClassNotFoundException {
+        int sdk = Build.VERSION.SDK_INT;
+        String method = "cleanUpRemovedTaskLocked";
+        if (sdk >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            // sdk 22
+            Class<?> taskRecord = Class.forName("com.android.server.am.TaskRecord", false, classLoader);
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    taskRecord, boolean.class, new CleanUpRemovedHook());
+        } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
+            // sdk 16, sdk 17, sdk 18, sdk 19, sdk 21
+            Class<?> taskRecord = Class.forName("com.android.server.am.TaskRecord", false, classLoader);
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    taskRecord, int.class,
+                    new CleanUpRemovedHook());
+        } else if (sdk >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            // sdk 14, sdk 15
+            Class<?> activityRecord = Class.forName("com.android.server.am.ActivityRecord", false, classLoader);
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    activityRecord, boolean.class,
+                    new CleanUpRemovedHook());
+        }
+    }
+
+    private void hookActivityManagerServiceBindService(Class<?> activityManagerService, ClassLoader classLoader) throws ClassNotFoundException {
+        int sdk = Build.VERSION.SDK_INT;
+        String method = "bindService";
+        Class<?> iServiceConnection = Class.forName("android.app.IServiceConnection", false, classLoader);
+        if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
+            // sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, IBinder.class, Intent.class, String.class, iServiceConnection, int.class, int.class,
+                    new ContextHook(SERVICE_SENDER));
+        } else {
+            // sdk 10, sdk 14, sdk 15
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, IBinder.class, Intent.class, String.class, iServiceConnection, int.class,
+                    new ContextHook(SERVICE_SENDER));
+        }
+    }
+
+    private void hookActivityManagerServiceStartService(Class<?> activityManagerService) {
+        int sdk = Build.VERSION.SDK_INT;
+        String method = "startService";
+        if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            // sdk 18, sdk 19, sdk 21, sdk 22
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, Intent.class, String.class, int.class,
+                    new ContextHook(SERVICE_SENDER));
+        } else {
+            // sdk 10, sdk 14, sdk 15, sdk 16, sdk 17
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, Intent.class, String.class,
+                    new ContextHook(SERVICE_SENDER));
+        }
+    }
+
+    private void hookActivityManagerServiceBroadcastIntent(Class<?> activityManagerService, ClassLoader classLoader) throws ClassNotFoundException {
+        int sdk = Build.VERSION.SDK_INT;
+        String method = "broadcastIntent";
+        Class<?> iIntentReceiver = Class.forName("android.content.IIntentReceiver", false, classLoader);
+        if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            // sdk 18, sdk 19, sdk 21, sdk 22
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, Intent.class, String.class, iIntentReceiver, int.class, String.class, Bundle.class, String.class, int.class, boolean.class, boolean.class, int.class,
+                    new IntentContextHook(RECEIVER_SENDER));
+        } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
+            // sdk 16, sdk 17
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, Intent.class, String.class, iIntentReceiver, int.class, String.class, Bundle.class, String.class, boolean.class, boolean.class, int.class,
+                    new IntentContextHook(RECEIVER_SENDER));
+        } else {
+            // sdk 10, sdk 14, sdk 15
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    IApplicationThread.class, Intent.class, String.class, iIntentReceiver, int.class, String.class, Bundle.class, String.class, boolean.class, boolean.class,
+                    new IntentContextHook(RECEIVER_SENDER));
+        }
+    }
+
+    private void hookActivityManagerServiceStartProcessLocked(Class<?> activityManagerService) {
+        int sdk = Build.VERSION.SDK_INT;
+        String method = "startProcessLocked";
+        if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
+            // sdk 21, sdk 22
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class, int.class, boolean.class, String.class, String.class, String[].class, Runnable.class,
+                    new ProcessHook());
+        } else if (sdk >= Build.VERSION_CODES.KITKAT) {
+            // sdk 19, sdk 20
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class, boolean.class,
+                    new ProcessHook());
+        } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
+            // sdk 16, sdk 17, sdk 18
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class,
+                    new ProcessHook());
+        } else {
+            // sdk 10, 14, 15
+            XposedHelpers.findAndHookMethod(activityManagerService, method,
+                    String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class,
+                    new ProcessHook());
         }
     }
 
@@ -68,30 +299,18 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static void hookActivityManagerService(ClassLoader classLoader) throws ClassNotFoundException, NoSuchMethodException {
-        Class<?> activityManagerService = Class.forName("com.android.server.am.ActivityManagerService", false, classLoader);
-
-        XposedBridge.hookMethod(ActivityManagerServiceHook.getStartProcessLocked(activityManagerService), new ProcessHook());
-
-        hookAllMethods(activityManagerService, "broadcastIntent", new IntentContextHook(RECEIVER_SENDER));
-        hookAllMethods(activityManagerService, "startService", new ContextHook(SERVICE_SENDER));
-        hookAllMethods(activityManagerService, "bindService", new ContextHook(SERVICE_SENDER));
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            XposedBridge.hookMethod(ActivityManagerServiceHook.getCleanUpRemovedTaskLocked(activityManagerService), new CleanUpRemovedHook());
+    private static Object getRecordForAppLocked(Object activityManagerService, Object thread) {
+        if (getRecordForAppLocked == null) {
+            return null;
         }
-
-        // for start home activity
-        hookAllMethods(activityManagerService, "startActivity", new HomeActivityHook());
-
-        // for move activity to back
-        hookAllMethods(activityManagerService, "moveActivityTaskToBack", new BackActivityHook());
-
-        // for app died
-        hookAllMethods(activityManagerService, "handleAppDiedLocked", new AppDiedHook());
-
-        // for android 5.1's dependency
-        hookAllMethods(activityManagerService, "removeProcessLocked", new IgnoreDependencyHook());
+        try {
+            return getRecordForAppLocked.invoke(activityManagerService, thread);
+        } catch (IllegalAccessException e) {
+            PreventLog.d("cannot access getRecordForAppLocked", e);
+        } catch (InvocationTargetException e) {
+            PreventLog.d("cannot invoke getRecordForAppLocked", e);
+        }
+        return null;
     }
 
     private static class AppDiedHook extends XC_MethodHook {
@@ -126,7 +345,7 @@ public class SystemServiceHook extends XC_MethodHook {
                     break;
                 }
             }
-            Object processRecord = XposedHelpers.callMethod(param.thisObject, "getRecordForAppLocked", param.args[0]);
+            Object processRecord = getRecordForAppLocked(param.thisObject, param.args[0]);
             ApplicationInfo info = ProcessRecordUtils.getInfo(processRecord);
             if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
                 String sender = info == null ? "" : info.packageName;
@@ -137,22 +356,7 @@ public class SystemServiceHook extends XC_MethodHook {
     }
 
     private static void exportActivityIfNeeded() {
-        hookAllMethods(PackageParser.class, "parseActivity", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                PackageParser.Activity result = (PackageParser.Activity) param.getResult();
-                if (result == null) {
-                    return;
-                }
-                ActivityInfo info = result.info;
-                if (BuildConfig.ALIPAY_DONATE && PreventIntent.NAME_ALIPAY.equals(info.packageName) && PreventIntent.CLASS_ALIPAY.equals(info.name)) {
-                    info.exported = true;
-                }
-                if (BuildConfig.WECHAT_DONATE && PreventIntent.NAME_WECHAT.equals(info.packageName) && PreventIntent.CLASS_WECHAT.equals(info.name)) {
-                    info.exported = true;
-                }
-            }
-        });
+        hookAllMethods(PackageParser.class, "parseActivity", new ExportedActivityHook());
     }
 
     private static void hookActivity(ClassLoader classLoader) throws ClassNotFoundException {
@@ -192,9 +396,8 @@ public class SystemServiceHook extends XC_MethodHook {
 
         @Override
         protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
-            Object caller = param.args[0];
-            Object callerApp = XposedHelpers.callMethod(param.thisObject, "getRecordForAppLocked", caller);
-            ApplicationInfo info = ProcessRecordUtils.getInfo(callerApp);
+            Object processRecord = getRecordForAppLocked(param.thisObject, param.args[0]);
+            ApplicationInfo info = ProcessRecordUtils.getInfo(processRecord);
             String sender = info == null ? "" : info.packageName;
             context.set(sender);
         }
@@ -291,6 +494,23 @@ public class SystemServiceHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             ActivityManagerServiceHook.hookAfterCleanUpRemovedTaskLocked(param.args);
+        }
+    }
+
+    private static class ExportedActivityHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            PackageParser.Activity result = (PackageParser.Activity) param.getResult();
+            if (result == null) {
+                return;
+            }
+            ActivityInfo info = result.info;
+            if (BuildConfig.ALIPAY_DONATE && PreventIntent.NAME_ALIPAY.equals(info.packageName) && PreventIntent.CLASS_ALIPAY.equals(info.name)) {
+                info.exported = true;
+            }
+            if (BuildConfig.WECHAT_DONATE && PreventIntent.NAME_WECHAT.equals(info.packageName) && PreventIntent.CLASS_WECHAT.equals(info.name)) {
+                info.exported = true;
+            }
         }
     }
 }

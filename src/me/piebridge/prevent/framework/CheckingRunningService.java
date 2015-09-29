@@ -2,7 +2,6 @@ package me.piebridge.prevent.framework;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.Intent;
 
 import java.util.Collection;
 import java.util.Map;
