@@ -102,7 +102,7 @@ public class SystemServiceHook extends XC_MethodHook {
 
         hookActivityManagerServiceRemoveProcessLocked(activityManagerService, classLoader);
 
-        getRecordForAppLocked = activityManagerService.getClass().getDeclaredMethod("getRecordForAppLocked", IApplicationThread.class);
+        getRecordForAppLocked = activityManagerService.getDeclaredMethod("getRecordForAppLocked", IApplicationThread.class);
         getRecordForAppLocked.setAccessible(true);
     }
 
@@ -158,10 +158,10 @@ public class SystemServiceHook extends XC_MethodHook {
         int sdk = Build.VERSION.SDK_INT;
         String method = "startActivity";
         if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
-            // sdk 22, sdk 21
+            // sdk 21, sdk 22
             Class<?> profilerInfo = Class.forName("android.app.ProfilerInfo", false, classLoader);
             XposedHelpers.findAndHookMethod(activityManagerService, method,
-                    IApplicationThread.class, String.class, Intent.class, String.class, IBinder.class, String.class, int.class, profilerInfo, Bundle.class,
+                    IApplicationThread.class, String.class, Intent.class, String.class, IBinder.class, String.class, int.class, int.class, profilerInfo, Bundle.class,
                     new HomeActivityHook());
         } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             // sdk 18, sdk 19
