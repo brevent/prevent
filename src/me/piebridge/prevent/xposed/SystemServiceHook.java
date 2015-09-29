@@ -376,7 +376,21 @@ public class SystemServiceHook extends XC_MethodHook {
         return null;
     }
 
-    private static class AppDiedHook extends XC_MethodHook {
+
+    private static void exportActivityIfNeeded() {
+        hookAllMethods(PackageParser.class, "parseActivity", new ExportedActivityHook());
+    }
+
+    private static void hookActivity(ClassLoader classLoader) throws ClassNotFoundException {
+        Class<?> applicationThread = Class.forName("android.app.ApplicationThreadProxy", false, classLoader);
+        hookAllMethods(applicationThread, "scheduleLaunchActivity", new StartActivityHook());
+
+        hookAllMethods(applicationThread, "scheduleResumeActivity", new ResumeActivityHook());
+
+        hookAllMethods(applicationThread, "scheduleDestroyActivity", new DestroyActivityHook());
+    }
+
+    public static class AppDiedHook extends XC_MethodHook {
         @Override
         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
             Boolean restarting = (Boolean) param.args[0x1];
@@ -387,7 +401,7 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static class BackActivityHook extends XC_MethodHook {
+    public static class BackActivityHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             Boolean result = (Boolean) param.getResult();
@@ -398,7 +412,7 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static class HomeActivityHook extends XC_MethodHook {
+    public static class HomeActivityHook extends XC_MethodHook {
         @Override
         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
             Intent intent = null;
@@ -418,38 +432,8 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static void exportActivityIfNeeded() {
-        hookAllMethods(PackageParser.class, "parseActivity", new ExportedActivityHook());
-    }
 
-    private static void hookActivity(ClassLoader classLoader) throws ClassNotFoundException {
-        Class<?> applicationThread = Class.forName("android.app.ApplicationThreadProxy", false, classLoader);
-        hookAllMethods(applicationThread, "scheduleLaunchActivity", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x1]);
-                SystemHook.onStartActivity(activityRecord);
-            }
-        });
-
-        hookAllMethods(applicationThread, "scheduleResumeActivity", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);
-                SystemHook.onResumeActivity(activityRecord);
-            }
-        });
-
-        hookAllMethods(applicationThread, "scheduleDestroyActivity", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);
-                SystemHook.onDestroyActivity(activityRecord);
-            }
-        });
-    }
-
-    private static class ContextHook extends XC_MethodHook {
+    public static class ContextHook extends XC_MethodHook {
 
         private final ThreadLocal<String> context;
 
@@ -471,7 +455,7 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static class IntentContextHook extends ContextHook {
+    public static class IntentContextHook extends ContextHook {
         public IntentContextHook(ThreadLocal<String> context) {
             super(context);
         }
@@ -491,7 +475,7 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static class IgnoreDependencyHook extends XC_MethodHook {
+    public static class IgnoreDependencyHook extends XC_MethodHook {
         @Override
         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
             String reason = String.valueOf(param.args[param.args.length - 1]);
@@ -508,7 +492,7 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static class ProcessHook extends XC_MethodHook {
+    public static class ProcessHook extends XC_MethodHook {
         @Override
         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
             String sender = SERVICE_SENDER.get();
@@ -521,7 +505,7 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static class IntentExcludingStoppedHook extends XC_MethodHook {
+    public static class IntentExcludingStoppedHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
             Boolean result = (Boolean) param.getResult();
@@ -531,7 +515,7 @@ public class SystemServiceHook extends XC_MethodHook {
         }
     }
 
-    private static class IntentFilterMatchHook extends XC_MethodHook {
+    public static class IntentFilterMatchHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             if (IntentFilterHook.canHook((Integer) param.getResult())) {
@@ -553,14 +537,14 @@ public class SystemServiceHook extends XC_MethodHook {
 
     }
 
-    private static class CleanUpRemovedHook extends XC_MethodHook {
+    public static class CleanUpRemovedHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             ActivityManagerServiceHook.hookAfterCleanUpRemovedTaskLocked(param.args);
         }
     }
 
-    private static class ExportedActivityHook extends XC_MethodHook {
+    public static class ExportedActivityHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             PackageParser.Activity result = (PackageParser.Activity) param.getResult();
@@ -576,4 +560,29 @@ public class SystemServiceHook extends XC_MethodHook {
             }
         }
     }
+
+    public static class StartActivityHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x1]);
+            SystemHook.onStartActivity(activityRecord);
+        }
+    }
+
+    public static class ResumeActivityHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);
+            SystemHook.onResumeActivity(activityRecord);
+        }
+    }
+
+    public static class DestroyActivityHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);
+            SystemHook.onDestroyActivity(activityRecord);
+        }
+    }
+
 }
