@@ -118,7 +118,7 @@ public class SystemServiceHook extends XC_MethodHook {
         String method = "removeProcessLocked";
         XC_MethodHook hook = new IgnoreDependencyHook();
         try {
-            hookAllMethods(activityManagerService, method, hook);
+            hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
             Class<?> processRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
@@ -146,7 +146,7 @@ public class SystemServiceHook extends XC_MethodHook {
         String method = "handleAppDiedLocked";
         XC_MethodHook hook = new AppDiedHook();
         try {
-            hookAllMethods(activityManagerService, method, hook);
+            hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
             Class<?> processRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
@@ -170,7 +170,7 @@ public class SystemServiceHook extends XC_MethodHook {
         String method = "moveActivityTaskToBack";
         XC_MethodHook hook = new BackActivityHook();
         try {
-            hookAllMethods(activityManagerService, method, hook);
+            hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
             // sdk 10, sdk 14, sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
@@ -186,7 +186,7 @@ public class SystemServiceHook extends XC_MethodHook {
         String method = "startActivity";
         XC_MethodHook hook = new HomeActivityHook();
         try {
-            hookAllMethods(activityManagerService, method, hook);
+            hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
             if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
@@ -224,7 +224,7 @@ public class SystemServiceHook extends XC_MethodHook {
         String method = "cleanUpRemovedTaskLocked";
         XC_MethodHook hook = new CleanUpRemovedHook();
         try {
-            hookAllMethods(activityManagerService, method, hook);
+            hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
             if (sdk >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -254,7 +254,7 @@ public class SystemServiceHook extends XC_MethodHook {
         String method = "bindService";
         XC_MethodHook hook = new ContextHook(SERVICE_SENDER);
         try {
-            hookAllMethods(activityManagerService, method, hook);
+            hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
             Class<?> iServiceConnection = Class.forName("android.app.IServiceConnection", false, classLoader);
@@ -277,7 +277,7 @@ public class SystemServiceHook extends XC_MethodHook {
         String method = "startService";
         XC_MethodHook hook = new ContextHook(SERVICE_SENDER);
         try {
-            hookAllMethods(activityManagerService, method, hook);
+            hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
             if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -299,7 +299,7 @@ public class SystemServiceHook extends XC_MethodHook {
         String method = "broadcastIntent";
         XC_MethodHook hook = new IntentContextHook(RECEIVER_SENDER);
         try {
-            hookAllMethods(activityManagerService, method, hook);
+            hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
             Class<?> iIntentReceiver = Class.forName("android.content.IIntentReceiver", false, classLoader);
@@ -326,40 +326,61 @@ public class SystemServiceHook extends XC_MethodHook {
         int sdk = Build.VERSION.SDK_INT;
         String method = "startProcessLocked";
         XC_MethodHook hook = new ProcessHook();
-        if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
-            // sdk 21, sdk 22
-            XposedHelpers.findAndHookMethod(activityManagerService, method,
-                    String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class, int.class, boolean.class, String.class, String.class, String[].class, Runnable.class,
-                    hook);
-        } else if (sdk >= Build.VERSION_CODES.KITKAT) {
-            // sdk 19, sdk 20
-            XposedHelpers.findAndHookMethod(activityManagerService, method,
-                    String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class, boolean.class,
-                    hook);
-        } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
-            // sdk 16, sdk 17, sdk 18
-            XposedHelpers.findAndHookMethod(activityManagerService, method,
-                    String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class,
-                    hook);
-        } else {
-            // sdk 10, 14, 15
-            XposedHelpers.findAndHookMethod(activityManagerService, method,
-                    String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class,
-                    hook);
+        try {
+            hookLongestMethod(activityManagerService, method, "ProcessRecord", hook);
+        } catch (LinkageError e) {
+            logLinkageError(method, e);
+            if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
+                // sdk 21, sdk 22
+                XposedHelpers.findAndHookMethod(activityManagerService, method,
+                        String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class, int.class, boolean.class, String.class, String.class, String[].class, Runnable.class,
+                        hook);
+            } else if (sdk >= Build.VERSION_CODES.KITKAT) {
+                // sdk 19, sdk 20
+                XposedHelpers.findAndHookMethod(activityManagerService, method,
+                        String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class, boolean.class,
+                        hook);
+            } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
+                // sdk 16, sdk 17, sdk 18
+                XposedHelpers.findAndHookMethod(activityManagerService, method,
+                        String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class,
+                        hook);
+            } else {
+                // sdk 10, 14, 15
+                XposedHelpers.findAndHookMethod(activityManagerService, method,
+                        String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class,
+                        hook);
+            }
         }
     }
 
-    public static Set<Unhook> hookAllMethods(Class<?> hookClass, String methodName, XC_MethodHook callback) {
-        Set<Unhook> hooks = XposedBridge.hookAllMethods(hookClass, methodName, callback);
-        int size = hooks.size();
-        if (size == 0) {
-            PreventLog.e("cannot hook " + hookClass.getSimpleName() + "." + methodName);
-        } else if (size == 1) {
-            PreventLog.d("hook " + size + " " + hookClass.getSimpleName() + "." + methodName);
-        } else {
-            PreventLog.w("hook " + size + " " + hookClass.getSimpleName() + "." + methodName);
+    private static Method findLongestMethod(Class<?> hookClass, String methodName, String returnName) {
+        Method longestMethod = null;
+        for (Method method : hookClass.getDeclaredMethods()) {
+            if (!methodName.equals(method.getName())) {
+                continue;
+            }
+            String returnType = method.getReturnType().getSimpleName();
+            PreventLog.v("found " + hookClass.getSimpleName() + "." + methodName + ": " + method);
+            if ((returnName == null || returnName.equals(returnType)) && (longestMethod == null || longestMethod.getParameterTypes().length < method.getParameterTypes().length)) {
+                longestMethod = method;
+            }
         }
-        return hooks;
+        return longestMethod;
+    }
+
+    private static void hookLongestMethod(Class<?> hookClass, String methodName, XC_MethodHook hook) {
+        hookLongestMethod(hookClass, methodName, null, hook);
+    }
+
+    private static void hookLongestMethod(Class<?> hookClass, String methodName, String returnName, XC_MethodHook hook) {
+        Method method = findLongestMethod(hookClass, methodName, returnName);
+        if (method == null) {
+            PreventLog.e("cannot find " + hookClass.getSimpleName() + "." + methodName);
+        } else {
+            XposedBridge.hookMethod(method, hook);
+            PreventLog.d("hooked " + hookClass.getSimpleName() + "." + methodName);
+        }
     }
 
     private static Object getRecordForAppLocked(Object activityManagerService, Object thread) {
@@ -376,18 +397,17 @@ public class SystemServiceHook extends XC_MethodHook {
         return null;
     }
 
-
     private static void exportActivityIfNeeded() {
-        hookAllMethods(PackageParser.class, "parseActivity", new ExportedActivityHook());
+        hookLongestMethod(PackageParser.class, "parseActivity", new ExportedActivityHook());
     }
 
     private static void hookActivity(ClassLoader classLoader) throws ClassNotFoundException {
         Class<?> applicationThread = Class.forName("android.app.ApplicationThreadProxy", false, classLoader);
-        hookAllMethods(applicationThread, "scheduleLaunchActivity", new StartActivityHook());
+        hookLongestMethod(applicationThread, "scheduleLaunchActivity", new StartActivityHook());
 
-        hookAllMethods(applicationThread, "scheduleResumeActivity", new ResumeActivityHook());
+        hookLongestMethod(applicationThread, "scheduleResumeActivity", new ResumeActivityHook());
 
-        hookAllMethods(applicationThread, "scheduleDestroyActivity", new DestroyActivityHook());
+        hookLongestMethod(applicationThread, "scheduleDestroyActivity", new DestroyActivityHook());
     }
 
     public static class AppDiedHook extends XC_MethodHook {
