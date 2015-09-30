@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Prevent Running</string>
+    <string name="xposed_summary">Hindere Apps am Laufen</string>
+    <string name="remove">Blockieren entfernen</string>
+    <string name="prevent">Automatisch blockieren</string>
+    <string name="applications">Anwendungen</string>
+    <string name="preventlist">Blockier-Liste</string>
+    <string name="loading">Lädt. . .</string>
+    <string name="notrunning">(nicht gestartet)</string>
+    <string name="background">Hintergrund</string>
+    <string name="foreground">Vordergrund</string>
+    <string name="empty">Leer</string>
+    <string name="perceptible">Wahrnehmbar</string>
+    <string name="service">Service</string>
+    <string name="visible">Sichtbar</string>
+    <string name="app_info">App-Info</string>
+    <string name="uninstall">Deinstallieren</string>
+    <string name="switch_theme">Schema wechseln</string>
+    <string name="app_notenabled">Bitte schalte \"Prevent Running\" im \"Xposed Installer\" ein und starte dein Gerät neu.</string>
+    <string name="open">Öffnen</string>
+    <string name="query_hint">\"-3\" für Benuteranwendungen</string>
+    <string name="query_hint_system">\"-s\" für Systemanwendungen</string>
+    <string name="retrieving">Status wird überprüft, bitte warten. . .</string>
+    <string name="no_prevents">Bitte konfiguriere die Blockier-Liste.</string>
+    <string name="donate_wechat">Spenden via WeChat</string>
+    <string name="donate_alipay">Spenden via Alipay</string>
+    <string name="donate_paypal">Spenden via PayPal</string>
+    <string name="notstarted">Nicht gestartet</string>
+    <string name="updated_prevents">Blockier-Liste auf %1$d aktualisiert</string>
+    <string name="test_version">Dies ist keine Releaseversion und könnte dein Gerät unnutzbar machen. Falls du nichts testen willst, deinstalliere diese Version bitte und wechsle zu einer Releaseversion.</string>
+    <string name="request_log">Systemlog anfordern</string>
+
+</resources>
