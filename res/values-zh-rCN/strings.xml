@@ -20,8 +20,8 @@
     <string name="switch_theme">切换主题</string>
     <string name="app_notenabled">请在“Xposed Installer”中启用“阻止运行”，或者先禁用再启用“阻止运行”。</string>
     <string name="open">打开</string>
-    <string name="query_hint">\"-3\"表示用户应用</string>
-    <string name="query_hint_system">\"-s\"表示系统应用</string>
+    <string name="query_hint">\"-3\"为已下载应用</string>
+    <string name="query_hint_system">\"-s\"为系统应用</string>
     <string name="retrieving">正在获取数据，请稍候. . .</string>
     <string name="no_prevents">请配置“阻止列表”。</string>
     <string name="donate_wechat">捐赠 - 微信</string>
@@ -30,6 +30,6 @@
     <string name="notstarted">没有开始</string>
     <string name="updated_prevents">成功更新阻止列表，共%1$d条</string>
     <string name="test_version">这是测试版本，可能导致您的机器无法运行。如果不想参加测试，请恢复至正式版本。</string>
-    <string name="request_log">生成系统日志</string>
+    <string name="request_log">申请系统日志</string>
 
 </resources>
