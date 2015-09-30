@@ -62,8 +62,8 @@ public class IntentFilterHook {
     private static IntentFilterMatchResult allowSafeIntent(PackageParser.ActivityIntentInfo filter, String sender, String action, String packageName) {
         LogUtils.logIntentFilterInfo(false, sender, filter, action, packageName);
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
-            PreventLog.i("allow " + packageName + " for next service/broadcast");
             mPreventPackages.put(packageName, false);
+            PreventLog.i("allow " + packageName + " for next service/broadcast");
             SystemHook.restoreLater(packageName);
         }
         return IntentFilterMatchResult.NONE;
@@ -74,7 +74,14 @@ public class IntentFilterHook {
     }
 
     private static boolean cannotPrevent(String packageName, String sender) {
-        if (!Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+        Boolean prevents = mPreventPackages.get(packageName);
+        if (prevents == null) {
+            if (GmsUtils.isGapps(mContext.getPackageManager(), packageName)) {
+                PreventLog.d("allow " + packageName + " to use gms for next service");
+                SystemHook.restoreLater(packageName);
+            }
+            return true;
+        } else if (!prevents) {
             return true;
         } else if (packageName.equals(sender)) {
             return true;
