@@ -3,6 +3,7 @@ package me.piebridge.prevent.framework;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
 import android.net.Uri;
 import android.os.Binder;
@@ -76,7 +77,8 @@ public class IntentFilterHook {
     private static boolean cannotPrevent(String packageName, String sender) {
         Boolean prevents = mPreventPackages.get(packageName);
         if (prevents == null) {
-            if (GmsUtils.isGapps(mContext.getPackageManager(), packageName)) {
+            PackageManager pm = mContext.getPackageManager();
+            if (GmsUtils.isGapps(pm, packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
                 PreventLog.d("allow " + packageName + " to use gms for next service");
                 SystemHook.restoreLater(packageName);
             }
