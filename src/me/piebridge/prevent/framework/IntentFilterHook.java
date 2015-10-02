@@ -74,7 +74,7 @@ public class IntentFilterHook {
         return (sender == null || "android".equals(sender)) && Binder.getCallingUid() == Process.SYSTEM_UID;
     }
 
-    private static boolean cannotPrevent(String packageName, String sender) {
+    private static boolean isPrevent(String packageName) {
         Boolean prevents = mPreventPackages.get(packageName);
         if (prevents == null) {
             PackageManager pm = mContext.getPackageManager();
@@ -82,8 +82,13 @@ public class IntentFilterHook {
                 PreventLog.d("allow " + packageName + " to use gms for next service");
                 SystemHook.restoreLater(packageName);
             }
-            return true;
-        } else if (!prevents) {
+            return false;
+        }
+        return prevents;
+    }
+
+    private static boolean cannotPrevent(String packageName, String sender) {
+        if (!isPrevent(packageName)) {
             return true;
         } else if (packageName.equals(sender)) {
             return true;
