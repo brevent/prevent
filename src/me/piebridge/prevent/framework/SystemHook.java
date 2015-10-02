@@ -553,6 +553,7 @@ public final class SystemHook {
             } else {
                 if (runningGapps.contains(packageName)) {
                     PreventLog.d("remove " + packageName + " from running gapps: " + runningGapps);
+                    checkRunningServices(null, SystemHook.TIME_CHECK_SERVICE);
                 }
                 runningGapps.remove(packageName);
             }
