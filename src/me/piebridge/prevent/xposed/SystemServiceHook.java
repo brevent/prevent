@@ -407,6 +407,10 @@ public class SystemServiceHook extends XC_MethodHook {
 
         hookLongestMethod(applicationThread, "scheduleResumeActivity", new ResumeActivityHook());
 
+        if (!BuildConfig.RELEASE) {
+            hookLongestMethod(applicationThread, "schedulePauseActivity", new PauseActivityHook());
+        }
+
         hookLongestMethod(applicationThread, "scheduleDestroyActivity", new DestroyActivityHook());
     }
 
@@ -451,7 +455,6 @@ public class SystemServiceHook extends XC_MethodHook {
             }
         }
     }
-
 
     public static class ContextHook extends XC_MethodHook {
 
@@ -594,6 +597,17 @@ public class SystemServiceHook extends XC_MethodHook {
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);
             SystemHook.onResumeActivity(activityRecord);
+        }
+    }
+
+    public static class PauseActivityHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);
+            Boolean userLeaving = (Boolean) param.args[0x2];
+            if (userLeaving) {
+                SystemHook.onUserLeavingActivity(activityRecord);
+            }
         }
     }
 

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.HookUtils;
@@ -40,8 +41,13 @@ public class SystemReceiver extends ActivityReceiver {
             Intent.ACTION_PACKAGE_REMOVED
     );
 
-    public SystemReceiver(Map<String, Boolean> preventPackages) {
-        super(preventPackages);
+    public static final Collection<String> NON_SCHEME_ACTIONS = Arrays.asList(
+            Intent.ACTION_SCREEN_OFF,
+            Intent.ACTION_SCREEN_ON
+    );
+
+    public SystemReceiver(Context context, Map<String, Boolean> preventPackages) {
+        super(context, preventPackages);
     }
 
     @Override
@@ -51,6 +57,10 @@ public class SystemReceiver extends ActivityReceiver {
             handleManager(context, intent, action);
         } else if (PACKAGE_ACTIONS.contains(action)) {
             handlePackage(intent, action);
+        } else if (NON_SCHEME_ACTIONS.contains(action)) {
+            if (!BuildConfig.RELEASE) {
+                handleNonScheme(action);
+            }
         }
     }
 
@@ -72,10 +82,20 @@ public class SystemReceiver extends ActivityReceiver {
         String packageName = PackageUtils.getPackageName(intent);
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             handlePackageRestarted("PACKAGE_RESTARTED", packageName);
+            onPackageRestarted(packageName);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
             SafeActionUtils.onPackageChanged(packageName);
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
             SafeActionUtils.onPackageChanged(packageName);
+            onPackageRemoved(packageName);
+        }
+    }
+
+    private void handleNonScheme(String action) {
+        if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+            onScreenOff();
+        } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
+            onScreenOn();
         }
     }
 

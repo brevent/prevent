@@ -53,6 +53,8 @@ public final class SystemHook {
     public static final int TIME_KILL = 1;
     public static final int TIME_CHECK_GMS = 30;
     public static final int TIME_CHECK_DISALLOW = 5;
+    public static final int TIME_USER_LEAVING = 10 * 60;
+    public static final int TIME_CHECK_USER_LEAVING = 60;
     public static final int FIRST_APPLICATION_UID = 10000;
 
     private static Context mContext;
@@ -157,7 +159,7 @@ public final class SystemHook {
         thread.start();
         Handler handler = new Handler(thread.getLooper());
 
-        systemReceiver = new SystemReceiver(mPreventPackages);
+        systemReceiver = new SystemReceiver(mContext, mPreventPackages);
 
         IntentFilter manager = new IntentFilter();
         for (String action : SystemReceiver.MANAGER_ACTIONS) {
@@ -172,6 +174,13 @@ public final class SystemHook {
         }
         filter.addDataScheme("package");
         mContext.registerReceiver(systemReceiver, filter, null, handler);
+
+        IntentFilter noSchemeFilter = new IntentFilter();
+        for (String action : SystemReceiver.NON_SCHEME_ACTIONS) {
+            noSchemeFilter.addAction(action);
+        }
+        noSchemeFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
+        mContext.registerReceiver(systemReceiver, noSchemeFilter, null, handler);
 
         PreventLog.i("registered receiver");
         return true;
@@ -437,6 +446,12 @@ public final class SystemHook {
     public static void onResumeActivity(Object activityRecord) {
         if (systemReceiver != null) {
             systemReceiver.onResumeActivity(activityRecord);
+        }
+    }
+
+    public static void onUserLeavingActivity(Object activityRecord) {
+        if (systemReceiver != null) {
+            systemReceiver.onUserLeavingActivity(activityRecord);
         }
     }
 
