@@ -407,9 +407,7 @@ public class SystemServiceHook extends XC_MethodHook {
 
         hookLongestMethod(applicationThread, "scheduleResumeActivity", new ResumeActivityHook());
 
-        if (!BuildConfig.RELEASE) {
-            hookLongestMethod(applicationThread, "schedulePauseActivity", new PauseActivityHook());
-        }
+        hookLongestMethod(applicationThread, "schedulePauseActivity", new PauseActivityHook());
 
         hookLongestMethod(applicationThread, "scheduleDestroyActivity", new DestroyActivityHook());
     }

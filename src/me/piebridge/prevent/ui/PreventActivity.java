@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -262,6 +263,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             menu.add(Menu.NONE, R.string.donate_paypal, Menu.NONE, R.string.donate_paypal);
         }
         menu.add(Menu.NONE, R.string.request_log, Menu.NONE, R.string.request_log);
+        menu.add(Menu.NONE, R.string.settings, Menu.NONE, R.string.settings);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -508,6 +510,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 preventPackages.remove(packageName);
             }
             savePackages();
+        } else if (id == R.string.settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
         }
         selections.clear();
         checkSelection();
@@ -708,7 +712,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
 
         private Set<Integer> convertImportance(String value) {
-            Set<Integer> importance = new HashSet<Integer>();
+            Set<Integer> importance = new LinkedHashSet<Integer>();
             for (String s : value.split(",")) {
                 if (!TextUtils.isEmpty(s)) {
                     try {

@@ -9,12 +9,16 @@
     <string name="preventlist">Prevent List</string>
     <string name="loading">Loading. . .</string>
     <string name="notrunning">(not running)</string>
-    <string name="background">Background</string>
-    <string name="foreground">Foreground</string>
-    <string name="empty">Empty</string>
-    <string name="perceptible">Perceptible</string>
-    <string name="service">Service</string>
-    <string name="visible">Visible</string>
+    <string name="importance_background">Background</string>
+    <string name="importance_foreground">Foreground</string>
+    <string name="importance_empty">Empty</string>
+    <string name="importance_perceptible">Perceptible</string>
+    <string name="importance_service">Service</string>
+    <string name="importance_visible">Visible</string>
+    <string name="importance_gone">Gone</string>
+    <string name="importance_foreground_service">Foreground Service</string>
+    <string name="importance_top_sleeping">Top Sleeping</string>
+    <string name="importance_service_not_started">Service (Not started)</string>
     <string name="app_info">App Info</string>
     <string name="uninstall">Uninstall</string>
     <string name="switch_theme">Switch theme</string>
@@ -27,9 +31,17 @@
     <string name="donate_wechat">Donate via WeChat</string>
     <string name="donate_alipay">Donate via Alipay</string>
     <string name="donate_paypal">Donate via PayPal</string>
-    <string name="notstarted">Not started</string>
     <string name="updated_prevents">Updated prevent list to %1$d</string>
     <string name="test_version">This is not a release version, and may block your device. If you don\'t like to be participate, please uninstall and restore to release version.</string>
     <string name="request_log">Request system log</string>
+    <string name="settings">Settings</string>
+    <string name="screen_off">Screen turns off</string>
+    <string name="force_stop_label">Force stop</string>
+    <string name="force_stop_summary">After %1$s of inactivity</string>
+    <string name="force_stop_never">Never</string>
+    <string name="force_stop_5min">5 minutes</string>
+    <string name="force_stop_10min">10 minutes</string>
+    <string name="force_stop_15min">15 minutes</string>
+    <string name="force_stop_30min">30 minutes</string>
 
 </resources>

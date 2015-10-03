@@ -1,0 +1,15 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:key="screen_off_clean"
+        android:title="@string/screen_off">
+        <me.piebridge.prevent.ui.ListPreferenceSummary
+            android:defaultValue="-1"
+            android:entries="@array/force_stop_entries"
+            android:entryValues="@array/force_stop_values"
+            android:key="force_stop_timeout"
+            android:summary="@string/force_stop_summary"
+            android:title="@string/force_stop_label" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

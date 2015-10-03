@@ -38,6 +38,13 @@ public class PreventUtils {
         context.sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new PreventListReceiver(), null, 0, null, null);
     }
 
+    public static void updateTimeout(Context context, long timeout) {
+        Intent intent = new Intent(PreventIntent.ACTION_UPDATE_TIMEOUT, Uri.fromParts(PreventIntent.SCHEME, context.getPackageName(), null));
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+        intent.putExtra(PreventIntent.EXTRA_TIMEOUT, timeout);
+        context.sendBroadcast(intent, PreventIntent.PERMISSION_SYSTEM);
+    }
+
     private static class PreventListReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {

@@ -41,6 +41,9 @@
 
                 <data android:scheme="package" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="me.piebridge.prevent.UPDATE_TIMEOUT" />
+            </intent-filter>
         </receiver>
 
         <activity
@@ -54,6 +57,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="me.piebridge.prevent.ui.SettingsActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden" />
 
         <provider
             android:name="me.piebridge.prevent.ui.PreventProvider"

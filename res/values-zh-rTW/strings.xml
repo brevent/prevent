@@ -9,12 +9,16 @@
     <string name="preventlist">阻止列表</string>
     <string name="loading">正在加載. . .</string>
     <string name="notrunning">(沒有運行)</string>
-    <string name="background">背景</string>
-    <string name="foreground">前景</string>
-    <string name="empty">空</string>
-    <string name="perceptible">察覺</string>
-    <string name="service">服務</string>
-    <string name="visible">可見</string>
+    <string name="importance_background">背景</string>
+    <string name="importance_foreground">前景</string>
+    <string name="importance_empty">空</string>
+    <string name="importance_perceptible">察覺</string>
+    <string name="importance_service">服務</string>
+    <string name="importance_visible">可見</string>
+    <string name="importance_gone">空</string>
+    <string name="importance_foreground_service">前景</string>
+    <string name="importance_top_sleeping">前景</string>
+    <string name="importance_service_not_started">服務(沒有開始)</string>
     <string name="app_info">程式資訊</string>
     <string name="uninstall">解除安裝</string>
     <string name="switch_theme">切換主題</string>
@@ -27,9 +31,17 @@
     <string name="donate_wechat">捐贈 - WeChat</string>
     <string name="donate_alipay">捐贈 - 支付寶</string>
     <string name="donate_paypal">捐贈 - PayPal</string>
-    <string name="notstarted">沒有開始</string>
     <string name="updated_prevents">成功更新阻止列表，共%1$d條</string>
     <string name="test_version">這是測試版本，可能導致您的機器無法運行。如果不想參加測試，請恢復至正式版本。</string>
     <string name="request_log">取得系統日誌</string>
+    <string name="settings">設定</string>
+    <string name="screen_off">螢幕關閉</string>
+    <string name="force_stop_label">強制停止</string>
+    <string name="force_stop_summary">閒置%1$s後</string>
+    <string name="force_stop_never">永不</string>
+    <string name="force_stop_5min">5分鐘</string>
+    <string name="force_stop_10min">10分鐘</string>
+    <string name="force_stop_15min">15分鐘</string>
+    <string name="force_stop_30min">30分鐘</string>
 
 </resources>

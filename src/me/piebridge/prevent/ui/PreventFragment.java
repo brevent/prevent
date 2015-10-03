@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -63,6 +64,21 @@ public abstract class PreventFragment extends ListFragment {
     private int headerIconWidth;
     private static final int HEADER_ICON_WIDTH = 48;
     private static Map<String, Position> positions = new HashMap<String, Position>();
+
+    private static Map<Integer, Integer> statusMap = new HashMap<Integer, Integer>();
+
+    static {
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_BACKGROUND, R.string.importance_background);
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_EMPTY, R.string.importance_empty);
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_GONE, R.string.importance_gone);
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_FOREGROUND, R.string.importance_foreground);
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE, R.string.importance_foreground_service);
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING, R.string.importance_top_sleeping);
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE, R.string.importance_perceptible);
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_SERVICE, R.string.importance_service);
+        statusMap.put(RunningAppProcessInfo.IMPORTANCE_VISIBLE, R.string.importance_visible);
+        statusMap.put(-RunningAppProcessInfo.IMPORTANCE_SERVICE, R.string.importance_service_not_started);
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -679,32 +695,13 @@ public abstract class PreventFragment extends ListFragment {
         }
 
         private CharSequence doFormatRunning(Set<Integer> running) {
-            Set<String> sets = new TreeSet<String>();
+            Set<String> sets = new LinkedHashSet<>();
             for (Integer i : running) {
-                switch (i) {
-                    case RunningAppProcessInfo.IMPORTANCE_BACKGROUND:
-                        sets.add(mActivity.getString(R.string.background));
-                        break;
-                    case RunningAppProcessInfo.IMPORTANCE_EMPTY:
-                        sets.add(mActivity.getString(R.string.empty));
-                        break;
-                    case RunningAppProcessInfo.IMPORTANCE_FOREGROUND:
-                        sets.add(mActivity.getString(R.string.foreground));
-                        break;
-                    case RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE:
-                        sets.add(mActivity.getString(R.string.perceptible));
-                        break;
-                    case RunningAppProcessInfo.IMPORTANCE_SERVICE:
-                        sets.add(mActivity.getString(R.string.service));
-                        break;
-                    case RunningAppProcessInfo.IMPORTANCE_VISIBLE:
-                        sets.add(mActivity.getString(R.string.visible));
-                        break;
-                    case -RunningAppProcessInfo.IMPORTANCE_SERVICE:
-                        sets.add(mActivity.getString(R.string.service) + "(" + mActivity.getString(R.string.notstarted) + ")");
-                        break;
-                    default:
-                        break;
+                Integer v = statusMap.get(i);
+                if (v == null) {
+                    sets.add(i + "s");
+                } else {
+                    sets.add(mActivity.getString(v));
                 }
             }
             return toString(sets);

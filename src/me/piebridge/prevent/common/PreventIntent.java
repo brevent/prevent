@@ -12,9 +12,11 @@ public final class PreventIntent {
     public static final String ACTION_GET_PROCESSES = NAMESPACE + "GET_PROCESSES";
     public static final String ACTION_UPDATE_PREVENT = NAMESPACE + "UPDATE_PREVENT";
     public static final String ACTION_REQUEST_LOG = NAMESPACE + "REQUEST_LOG";
+    public static final String ACTION_UPDATE_TIMEOUT = NAMESPACE + "UPDATE_TIMEOUT";
 
     public static final String EXTRA_PACKAGES = NAMESPACE + "PACKAGES";
     public static final String EXTRA_PREVENT = NAMESPACE + "PREVENT";
+    public static final String EXTRA_TIMEOUT = NAMESPACE + "TIMEOUT";
 
     public static final String CATEGORY_ALARM = NAMESPACE + ".CATEGORY_ALARM";
 

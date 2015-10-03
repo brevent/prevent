@@ -3,6 +3,7 @@ package me.piebridge.prevent.framework;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 
 import org.json.JSONObject;
 
@@ -11,11 +12,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
-import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
@@ -33,7 +35,8 @@ public class SystemReceiver extends ActivityReceiver {
             PreventIntent.ACTION_GET_PACKAGES,
             PreventIntent.ACTION_GET_PROCESSES,
             PreventIntent.ACTION_UPDATE_PREVENT,
-            PreventIntent.ACTION_REQUEST_LOG
+            PreventIntent.ACTION_REQUEST_LOG,
+            PreventIntent.ACTION_UPDATE_TIMEOUT
     );
 
     public static final Collection<String> PACKAGE_ACTIONS = Arrays.asList(
@@ -59,9 +62,7 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (PACKAGE_ACTIONS.contains(action)) {
             handlePackage(intent, action);
         } else if (NON_SCHEME_ACTIONS.contains(action)) {
-            if (!BuildConfig.RELEASE) {
-                handleNonScheme(action);
-            }
+            handleNonScheme(action);
         }
     }
 
@@ -76,6 +77,9 @@ public class SystemReceiver extends ActivityReceiver {
             LogcatUtils.logcat();
             int size = (int) LogcatUtils.logcat(context);
             setResultCode(size);
+        } else if (PreventIntent.ACTION_UPDATE_TIMEOUT.equals(action)) {
+            timeout = intent.getLongExtra(PreventIntent.EXTRA_TIMEOUT, -1);
+            PreventLog.i("update timeout to " + timeout + "s");
         }
     }
 
@@ -102,6 +106,18 @@ public class SystemReceiver extends ActivityReceiver {
 
     private void handleGetProcesses(Context context, String action) {
         Map<String, Set<Integer>> running = getRunningAppProcesses(context);
+        long now = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime());
+        for (Map.Entry<String, Long> entry : leavingPackages.entrySet()) {
+            String packageName = entry.getKey();
+            Set<Integer> status = running.get(packageName);
+            if (status != null) {
+                int elapsed = (int) (now - entry.getValue());
+                if (elapsed % 0xa == 0) {
+                    elapsed += 1;
+                }
+                status.add(elapsed);
+            }
+        }
         LogUtils.logRequest(action, null, running.size());
         setResultData(toJSON(running));
         abortBroadcast();
@@ -178,7 +194,7 @@ public class SystemReceiver extends ActivityReceiver {
             for (String pkg : process.pkgList) {
                 Set<Integer> importance = running.get(pkg);
                 if (importance == null) {
-                    importance = new HashSet<Integer>();
+                    importance = new LinkedHashSet<Integer>();
                     running.put(pkg, importance);
                 }
                 if (process.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {

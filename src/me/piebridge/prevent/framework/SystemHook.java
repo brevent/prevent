@@ -182,6 +182,9 @@ public final class SystemHook {
         noSchemeFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         mContext.registerReceiver(systemReceiver, noSchemeFilter, null, handler);
 
+        Intent intent = new Intent(PreventIntent.ACTION_UPDATE_TIMEOUT);
+        intent.setPackage(BuildConfig.APPLICATION_ID);
+        mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
         PreventLog.i("registered receiver");
         return true;
     }

@@ -9,12 +9,16 @@
     <string name="preventlist">阻止列表</string>
     <string name="loading">正在加载. . .</string>
     <string name="notrunning">(没有运行)</string>
-    <string name="background">缓存</string>
-    <string name="foreground">前台</string>
-    <string name="empty">空</string>
-    <string name="perceptible">察觉</string>
-    <string name="service">服务</string>
-    <string name="visible">可见</string>
+    <string name="importance_background">后台</string>
+    <string name="importance_foreground">前台</string>
+    <string name="importance_empty">空</string>
+    <string name="importance_perceptible">察觉</string>
+    <string name="importance_service">服务</string>
+    <string name="importance_visible">可见</string>
+    <string name="importance_gone">空</string>
+    <string name="importance_foreground_service">前台</string>
+    <string name="importance_top_sleeping">前台</string>
+    <string name="importance_service_not_started">服务(没有开始)</string>
     <string name="app_info">程序信息</string>
     <string name="uninstall">卸载</string>
     <string name="switch_theme">切换主题</string>
@@ -27,9 +31,17 @@
     <string name="donate_wechat">捐赠 - 微信</string>
     <string name="donate_alipay">捐赠 - 支付宝</string>
     <string name="donate_paypal">捐赠 - 贝宝</string>
-    <string name="notstarted">没有开始</string>
     <string name="updated_prevents">成功更新阻止列表，共%1$d条</string>
     <string name="test_version">这是测试版本，可能导致您的机器无法运行。如果不想参加测试，请恢复至正式版本。</string>
     <string name="request_log">申请系统日志</string>
+    <string name="settings">设置</string>
+    <string name="screen_off">屏幕关闭</string>
+    <string name="force_stop_label">强行停止</string>
+    <string name="force_stop_summary">无操作%1$s后</string>
+    <string name="force_stop_never">永不</string>
+    <string name="force_stop_5min">5分钟</string>
+    <string name="force_stop_10min">10分钟</string>
+    <string name="force_stop_15min">15分钟</string>
+    <string name="force_stop_30min">30分钟</string>
 
 </resources>

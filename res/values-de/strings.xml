@@ -9,12 +9,16 @@
     <string name="preventlist">Blockier-Liste</string>
     <string name="loading">Lädt. . .</string>
     <string name="notrunning">(nicht gestartet)</string>
-    <string name="background">Hintergrund</string>
-    <string name="foreground">Vordergrund</string>
-    <string name="empty">Leer</string>
-    <string name="perceptible">Wahrnehmbar</string>
-    <string name="service">Service</string>
-    <string name="visible">Sichtbar</string>
+    <string name="importance_background">Hintergrund</string>
+    <string name="importance_foreground">Vordergrund</string>
+    <string name="importance_empty">Leer</string>
+    <string name="importance_perceptible">Wahrnehmbar</string>
+    <string name="importance_service">Service</string>
+    <string name="importance_visible">Sichtbar</string>
+    <string name="importance_gone">Leer</string>
+    <string name="importance_foreground_service">Vordergrund</string>
+    <string name="importance_top_sleeping">Vordergrund</string>
+    <string name="importance_service_not_started">Service (Nicht gestartet)</string>
     <string name="app_info">App-Info</string>
     <string name="uninstall">Deinstallieren</string>
     <string name="switch_theme">Schema wechseln</string>
@@ -27,9 +31,17 @@
     <string name="donate_wechat">Spenden via WeChat</string>
     <string name="donate_alipay">Spenden via Alipay</string>
     <string name="donate_paypal">Spenden via PayPal</string>
-    <string name="notstarted">Nicht gestartet</string>
     <string name="updated_prevents">Blockier-Liste auf %1$d aktualisiert</string>
     <string name="test_version">Dies ist keine Releaseversion und könnte dein Gerät unnutzbar machen. Falls du nichts testen willst, deinstalliere diese Version bitte und wechsle zu einer Releaseversion.</string>
     <string name="request_log">Systemlog anfordern</string>
+    <string name="settings">Einstellungen</string>
+    <string name="screen_off">Display wird ausgeschaltet</string>
+    <string name="force_stop_label">Beenden erzwingen</string>
+    <string name="force_stop_summary">Nach %1$s ohne Aktivität</string>
+    <string name="force_stop_never">Nie</string>
+    <string name="force_stop_5min">5 Minuten</string>
+    <string name="force_stop_10min">10 Minuten</string>
+    <string name="force_stop_15min">15 Minuten</string>
+    <string name="force_stop_30min">30 Minuten</string>
 
 </resources>

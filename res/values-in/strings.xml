@@ -9,12 +9,16 @@
     <string name="preventlist">Daftar Pencegahan</string>
     <string name="loading">Memuat. . .</string>
     <string name="notrunning">(tidak berjalan)</string>
-    <string name="background">Latar belakang</string>
-    <string name="foreground">Latar depan</string>
-    <string name="empty">Kosong</string>
-    <string name="perceptible">Terlihat</string>
-    <string name="service">Layanan</string>
-    <string name="visible">Nyata</string>
+    <string name="importance_background">Latar belakang</string>
+    <string name="importance_foreground">Latar depan</string>
+    <string name="importance_empty">Kosong</string>
+    <string name="importance_perceptible">Terlihat</string>
+    <string name="importance_service">Layanan</string>
+    <string name="importance_visible">Nyata</string>
+    <string name="importance_gone">Kosong</string>
+    <string name="importance_foreground_service">Latar depan</string>
+    <string name="importance_top_sleeping">Latar depan</string>
+    <string name="importance_service_not_started">Layanan (Belum dimulai)</string>
     <string name="app_info">Info Aplikasi</string>
     <string name="uninstall">Hapus Pemasangan</string>
     <string name="switch_theme">Ubah tema</string>
@@ -27,9 +31,17 @@
     <string name="donate_wechat">Donasi via WeChat</string>
     <string name="donate_alipay">Donasi via Alipay</string>
     <string name="donate_paypal">Donasi via PayPal</string>
-    <string name="notstarted">Belum dimulai</string>
     <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
     <string name="test_version">Ini bukan versi rilis, dan mungkin memblokir perangkatmu. Jika kamu tidak suka untuk berpartisipasi, tolong hapus pemasangan dan kembali gunakan versi rilis.</string>
     <string name="request_log">Meminta catatan sistem</string>
+    <string name="settings">Setelan</string>
+    <string name="screen_off">Layar mati</string>
+    <string name="force_stop_label">Paksa berhenti</string>
+    <string name="force_stop_summary">Nach %1$s ohne Aktivität</string>
+    <string name="force_stop_never">Tidak pernah</string>
+    <string name="force_stop_5min">5 menit</string>
+    <string name="force_stop_10min">10 menit</string>
+    <string name="force_stop_15min">15 menit</string>
+    <string name="force_stop_30min">30 menit</string>
 
 </resources>

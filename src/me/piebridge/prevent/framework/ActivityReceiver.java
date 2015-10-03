@@ -26,10 +26,11 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     protected Map<String, Boolean> mPreventPackages;
 
     private boolean screen = false;
+    protected long timeout = -1;
     private Map<String, Integer> packageUids = new HashMap<String, Integer>();
     private Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
     private Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
-    private Map<String, Long> leavingPackages = new ConcurrentHashMap<String, Long>();
+    protected Map<String, Long> leavingPackages = new ConcurrentHashMap<String, Long>();
     private ScheduledFuture<?> leavingFuture;
     private ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
 
@@ -224,18 +225,21 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         while (iterator.hasNext()) {
             Map.Entry<String, Long> entry = iterator.next();
             long elapsed = now - entry.getValue();
-            if (elapsed >= SystemHook.TIME_USER_LEAVING) {
-                String packageName = entry.getKey();
-                if (mPreventPackages.containsKey(packageName)) {
+            if (timeout <= 0 || elapsed < timeout) {
+                continue;
+            }
+            String packageName = entry.getKey();
+            if (mPreventPackages.containsKey(packageName)) {
+                if (!screen) {
                     PreventLog.i("leaving package " + packageName + " for " + elapsed + " seconds, force stop it");
                     HideApiUtils.forceStopPackage(mContext, packageName);
-                } else {
-                    PreventLog.d("leaving package " + packageName + " for " + elapsed + " seconds, ignore it");
                 }
-                iterator.remove();
+            } else {
+                PreventLog.d("leaving package " + packageName + " for " + elapsed + " seconds, ignore it");
             }
+            iterator.remove();
         }
-        if (!leavingPackages.isEmpty()) {
+        if (!screen && !leavingPackages.isEmpty()) {
             leavingFuture = singleExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
