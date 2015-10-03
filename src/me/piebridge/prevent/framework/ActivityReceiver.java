@@ -233,11 +233,11 @@ abstract class ActivityReceiver extends BroadcastReceiver {
                 if (!screen) {
                     PreventLog.i("leaving package " + packageName + " for " + elapsed + " seconds, force stop it");
                     HideApiUtils.forceStopPackage(mContext, packageName);
+                    iterator.remove();
                 }
             } else {
                 PreventLog.d("leaving package " + packageName + " for " + elapsed + " seconds, ignore it");
             }
-            iterator.remove();
         }
         if (!screen && !leavingPackages.isEmpty()) {
             leavingFuture = singleExecutor.schedule(new Runnable() {
