@@ -53,7 +53,6 @@ public final class SystemHook {
     public static final int TIME_KILL = 1;
     public static final int TIME_CHECK_GMS = 30;
     public static final int TIME_CHECK_DISALLOW = 5;
-    public static final int TIME_USER_LEAVING = 10 * 60;
     public static final int TIME_CHECK_USER_LEAVING = 60;
     public static final int FIRST_APPLICATION_UID = 10000;
 

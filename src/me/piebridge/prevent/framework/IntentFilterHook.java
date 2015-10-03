@@ -1,5 +1,6 @@
 package me.piebridge.prevent.framework;
 
+import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -74,11 +75,11 @@ public class IntentFilterHook {
         return (sender == null || "android".equals(sender)) && Binder.getCallingUid() == Process.SYSTEM_UID;
     }
 
-    private static boolean isPrevent(String packageName) {
+    private static boolean isPrevent(String packageName, boolean receiver) {
         Boolean prevents = mPreventPackages.get(packageName);
         if (prevents == null) {
             PackageManager pm = mContext.getPackageManager();
-            if (GmsUtils.isGapps(pm, packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
+            if (receiver && GmsUtils.isGapps(pm, packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
                 PreventLog.d("allow " + packageName + " to use gms for next service");
                 SystemHook.restoreLater(packageName);
             }
@@ -87,8 +88,8 @@ public class IntentFilterHook {
         return prevents;
     }
 
-    private static boolean cannotPrevent(String packageName, String sender) {
-        if (!isPrevent(packageName)) {
+    private static boolean cannotPrevent(String packageName, String sender, boolean receiver) {
+        if (!isPrevent(packageName, receiver)) {
             return true;
         } else if (packageName.equals(sender)) {
             return true;
@@ -120,7 +121,7 @@ public class IntentFilterHook {
 
     private static IntentFilterMatchResult hookReceiver(PackageParser.ActivityIntentInfo filter, ApplicationInfo ai, String sender, String action) {
         String packageName = ai.packageName;
-        if (cannotPrevent(packageName, sender)) {
+        if (cannotPrevent(packageName, sender, true)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
@@ -144,5 +145,30 @@ public class IntentFilterHook {
         return !SafeActionUtils.isProtectedBroadcast(action) || GmsUtils.isGcmAction(null, true, action);
     }
 
+    private static boolean isSafeServiceAction(String action) {
+        return "android.content.SyncAdapter".equals(action)
+                || AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action)
+                || GmsUtils.isGcmRegisterAction(action);
+    }
+
+    public static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
+        PackageParser.Service service = filter.service;
+        PackageParser.Package owner = service.owner;
+        ApplicationInfo ai = owner.applicationInfo;
+        String packageName = ai.packageName;
+        if (cannotPrevent(packageName, sender, false)) {
+            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
+            return IntentFilterMatchResult.NONE;
+        }
+        if (isSafeServiceAction(action)) {
+            LogUtils.logIntentFilter(false, sender, filter, action, packageName);
+            return IntentFilterMatchResult.NONE;
+        } else if (!SystemHook.isSystemPackage(packageName) && !isSystemSender(sender)) {
+            LogUtils.logIntentFilterInfo(true, sender, filter, action, packageName);
+            return IntentFilterMatchResult.NO_MATCH;
+        }
+        LogUtils.logIntentFilter(false, sender, filter, action, packageName);
+        return IntentFilterMatchResult.NONE;
+    }
 
 }

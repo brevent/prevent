@@ -73,6 +73,10 @@ public class GmsUtils {
         return (isSystem || isGms(sender)) && GCM_ACTIONS.contains(action);
     }
 
+    public static boolean isGcmRegisterAction(String action) {
+        return GCM_ACTION_REGISTER.equals(action) || GCM_ACTION_UNREGISTER.equals(action);
+    }
+
     public static boolean isGmsRegister(Context context, ComponentName component) {
         if (GCM_REGISTERS.isEmpty()) {
             initGmsRegisters(context, GCM_ACTION_REGISTER);
