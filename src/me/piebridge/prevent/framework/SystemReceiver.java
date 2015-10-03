@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.HookUtils;
@@ -107,9 +108,19 @@ public class SystemReceiver extends ActivityReceiver {
     }
 
     private void handleGetPackages(String action) {
-        setResultCode(mPreventPackages.size());
-        setResultData(new JSONObject(mPreventPackages).toString());
-        LogUtils.logRequest(action, null, mPreventPackages.size());
+        Map<String, Boolean> preventPackages = new HashMap<String, Boolean>(mPreventPackages);
+        Boolean canStopGms = GmsUtils.canStopGms();
+        if (!canStopGms) {
+            for (String packageName : GmsUtils.getGmsPackages()) {
+                if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
+                    preventPackages.put(packageName, false);
+                }
+            }
+        }
+        int size = preventPackages.size();
+        setResultCode(size);
+        setResultData(new JSONObject(preventPackages).toString());
+        LogUtils.logRequest(action, null, size);
         abortBroadcast();
     }
 
