@@ -25,6 +25,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     protected Context mContext;
     protected Map<String, Boolean> mPreventPackages;
 
+    private boolean screen = false;
     private Map<String, Integer> packageUids = new HashMap<String, Integer>();
     private Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
     private Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
@@ -204,13 +205,20 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     }
 
     protected void onScreenOn() {
-        PreventLog.d("screen on");
+        PreventLog.i("screen on");
+        screen = true;
         cancelCheckingIfNeeded();
     }
 
     protected void onScreenOff() {
-        PreventLog.d("screen off");
+        PreventLog.i("screen off");
+        screen = false;
         cancelCheckingIfNeeded();
+        checkLeavingPackages();
+    }
+
+    private void checkLeavingPackages() {
+        PreventLog.i("checking leaving packages");
         long now = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime());
         Iterator<Map.Entry<String, Long>> iterator = leavingPackages.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -231,7 +239,9 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             leavingFuture = singleExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
-                    onScreenOff();
+                    if (!screen) {
+                        checkLeavingPackages();
+                    }
                 }
             }, SystemHook.TIME_CHECK_USER_LEAVING, TimeUnit.SECONDS);
         }
