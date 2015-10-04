@@ -524,7 +524,9 @@ public abstract class PreventFragment extends ListFragment {
             protected FilterResults performFiltering(CharSequence prefix) {
                 FilterResults results = new FilterResults();
                 String query = null;
-                if (prefix != null && prefix.length() > 0) {
+                if (TextUtils.isEmpty(prefix)) {
+                    query = getDefaultQuery();
+                } else {
                     query = prefix.toString().toLowerCase(Locale.US);
                 }
                 if (mFiltered == null) {
