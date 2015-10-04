@@ -262,18 +262,24 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             removeMenu.setVisible(false);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-        if (BuildConfig.ALIPAY_DONATE && getDonateAlipay() != null) {
-            menu.add(Menu.NONE, R.string.donate_alipay, Menu.NONE, R.string.donate_alipay);
-        }
-        if (BuildConfig.WECHAT_DONATE && getDonateWeChat() != null) {
-            menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
-        }
-        if (BuildConfig.PAYPAL_ACCOUNT != null) {
-            menu.add(Menu.NONE, R.string.donate_paypal, Menu.NONE, R.string.donate_paypal);
-        }
+        addDoanteIfNeeded(menu);
         menu.add(Menu.NONE, R.string.request_log, Menu.NONE, R.string.request_log);
         menu.add(Menu.NONE, R.string.settings, Menu.NONE, R.string.settings);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    private void addDoanteIfNeeded(Menu menu) {
+        if (TextUtils.isEmpty(SettingsActivity.getLicense(this))) {
+            if (BuildConfig.ALIPAY_DONATE && getDonateAlipay() != null) {
+                menu.add(Menu.NONE, R.string.donate_alipay, Menu.NONE, R.string.donate_alipay);
+            }
+            if (BuildConfig.WECHAT_DONATE && getDonateWeChat() != null) {
+                menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
+            }
+            if (BuildConfig.PAYPAL_ACCOUNT != null) {
+                menu.add(Menu.NONE, R.string.donate_paypal, Menu.NONE, R.string.donate_paypal);
+            }
+        }
     }
 
     private boolean isDonate(int id) {
