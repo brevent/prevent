@@ -462,6 +462,7 @@ public abstract class PreventFragment extends ListFragment {
             AppInfo appInfo = getItem(position);
             appInfo.running = mActivity.getRunningProcesses().get(appInfo.packageName);
             appInfo.result = mActivity.getPreventPackages().get(appInfo.packageName);
+            holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
             if (isEquals(holder, appInfo)) {
                 holder.summaryView.setText(formatRunning(holder.running));
                 return view;
@@ -473,7 +474,6 @@ public abstract class PreventFragment extends ListFragment {
             holder.nameView.setText(appInfo.name);
             holder.summaryView.setVisibility(View.GONE);
             holder.loadingView.setVisibility(View.VISIBLE);
-            holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
             if (appInfo.isSystem()) {
                 view.setBackgroundColor(mActivity.getDangerousColor());
             } else {
