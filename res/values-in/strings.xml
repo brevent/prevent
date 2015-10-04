@@ -15,9 +15,9 @@
     <string name="importance_perceptible">Terlihat</string>
     <string name="importance_service">Layanan</string>
     <string name="importance_visible">Nyata</string>
-    <string name="importance_gone">Kosong</string>
-    <string name="importance_foreground_service">Latar depan</string>
-    <string name="importance_top_sleeping">Latar depan</string>
+    <string name="importance_gone">Gone (English)</string>
+    <string name="importance_foreground_service">Latar depan Layanan</string>
+    <string name="importance_top_sleeping">Top Sleeping (English)</string>
     <string name="importance_service_not_started">Layanan (Belum dimulai)</string>
     <string name="app_info">Info Aplikasi</string>
     <string name="uninstall">Hapus Pemasangan</string>

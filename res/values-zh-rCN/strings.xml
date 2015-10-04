@@ -15,9 +15,9 @@
     <string name="importance_perceptible">察觉</string>
     <string name="importance_service">服务</string>
     <string name="importance_visible">可见</string>
-    <string name="importance_gone">空</string>
-    <string name="importance_foreground_service">前台</string>
-    <string name="importance_top_sleeping">前台</string>
+    <string name="importance_gone">无</string>
+    <string name="importance_foreground_service">前台服务</string>
+    <string name="importance_top_sleeping">前台休眠</string>
     <string name="importance_service_not_started">服务(没有开始)</string>
     <string name="app_info">程序信息</string>
     <string name="uninstall">卸载</string>

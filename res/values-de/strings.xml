@@ -15,9 +15,9 @@
     <string name="importance_perceptible">Wahrnehmbar</string>
     <string name="importance_service">Service</string>
     <string name="importance_visible">Sichtbar</string>
-    <string name="importance_gone">Leer</string>
-    <string name="importance_foreground_service">Vordergrund</string>
-    <string name="importance_top_sleeping">Vordergrund</string>
+    <string name="importance_gone">Gone (English)</string>
+    <string name="importance_foreground_service">Vordergrund Service</string>
+    <string name="importance_top_sleeping">Top Sleeping (English)</string>
     <string name="importance_service_not_started">Service (Nicht gestartet)</string>
     <string name="app_info">App-Info</string>
     <string name="uninstall">Deinstallieren</string>
