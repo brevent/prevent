@@ -30,7 +30,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     private Map<String, Integer> packageUids = new HashMap<String, Integer>();
     private Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
     private Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
-    protected Map<String, Long> leavingPackages = new ConcurrentHashMap<String, Long>();
+    private Map<String, Long> leavingPackages = new ConcurrentHashMap<String, Long>();
     private ScheduledFuture<?> leavingFuture;
     private ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
 
@@ -172,7 +172,6 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         String packageName = ActivityRecordUtils.getPackageName(activityRecord);
         SystemHook.cancelCheck(packageName);
         SystemHook.updateRunningGapps(packageName, true);
-        leavingPackages.remove(packageName);
         if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             mPreventPackages.put(packageName, false);
         }
@@ -189,10 +188,6 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             leavingPackages.remove(packageName);
         }
         LogUtils.logActivity("user leaving activity", packageName, count);
-    }
-
-    protected void onPackageRestarted(String packageName) {
-        leavingPackages.remove(packageName);
     }
 
     protected void onPackageRemoved(String packageName) {
@@ -279,6 +274,14 @@ abstract class ActivityReceiver extends BroadcastReceiver {
 
     protected void removePackageCounters(String packageName) {
         packageCounters.remove(packageName);
+    }
+
+    public Map<String, Long> getLeavingPackages() {
+        return new HashMap<String, Long>(leavingPackages);
+    }
+
+    public void removeLeavingPackage(String packageName) {
+        leavingPackages.remove(packageName);
     }
 
 }

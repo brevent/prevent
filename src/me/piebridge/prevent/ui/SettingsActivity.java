@@ -1,8 +1,10 @@
 package me.piebridge.prevent.ui;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
@@ -18,6 +20,8 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
     @Override
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        setTheme(PreventActivity.THEME_LIGHT.equals(sp.getString(PreventActivity.THEME, PreventActivity.THEME_LIGHT)) ? R.style.light : R.style.dark);
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.settings);
         findPreference(KEY_FORCE_STOP_TIMEOUT).setOnPreferenceChangeListener(this);

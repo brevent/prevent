@@ -10,6 +10,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -46,9 +47,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
@@ -60,7 +63,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private List<Set<String>> mPageSelections;
 
     private static Map<String, Boolean> preventPackages = null;
-    private static Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
+    private static Map<String, Set<Long>> running = new HashMap<String, Set<Long>>();
 
     private View main;
     private View actions;
@@ -72,9 +75,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private static final int APPLICATIONS = 0;
     private static final int PREVENT_LIST = 1;
 
-    private static final String THEME = "theme";
-    private static final String THEME_LIGHT = "light";
-    private static final String THEME_DARK = "dark";
+    public static final String THEME = "theme";
+    public static final String THEME_LIGHT = "light";
+    public static final String THEME_DARK = "dark";
 
     private ProgressDialog dialog;
 
@@ -192,6 +195,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     }
                 }
             }, 0x100);
+        } else if (preventPackages != null) {
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    retrieveRunning();
+                }
+            }, 0x3e8);
         }
     }
 
@@ -226,7 +236,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
     }
 
-    public Map<String, Set<Integer>> getRunningProcesses() {
+    public Map<String, Set<Long>> getRunningProcesses() {
         return running;
     }
 
@@ -629,6 +639,20 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
+    private void updateTimeIfNeeded() {
+        int position = mPager.getCurrentItem();
+        String tag = getTag(position);
+        final PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
+        if (fragment != null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    fragment.updateTimeIfNeeded();
+                }
+            });
+        }
+    }
+
     private boolean refresh(boolean force) {
         boolean showed = false;
         int size = mPager.getAdapter().getCount();
@@ -651,6 +675,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 handleGetPackages();
             } else if (PreventIntent.ACTION_REQUEST_LOG.equals(action)) {
                 handleRequestLog();
+            } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
+                String packageName = PackageUtils.getPackageName(intent);
+                if (running != null) {
+                    running.remove(packageName);
+                }
+                if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+                    preventPackages.put(packageName, true);
+                }
             }
         }
 
@@ -670,17 +702,26 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
 
         private void showFragments() {
-            runOnUiThread(new Runnable() {
+            if (dialog != null && dialog.isShowing()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!refresh(true)) {
+                            showViewPager();
+                            retrieveRunning();
+                        } else {
+                            dialog.dismiss();
+                        }
+                    }
+                });
+            }
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (!refresh(true)) {
-                        showViewPager();
-                        retrieveRunning();
-                    } else {
-                        dialog.dismiss();
-                    }
+                    updateTimeIfNeeded();
+                    mHandler.postDelayed(this, 0x3e8);
                 }
-            });
+            }, 0x3e8);
         }
 
         private void handleGetProcesses() {
@@ -695,7 +736,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             try {
                 UILog.d("result: " + result);
                 JSONObject json = new JSONObject(result);
-                Map<String, Set<Integer>> processes = new HashMap<String, Set<Integer>>();
+                Map<String, Set<Long>> processes = new HashMap<String, Set<Long>>();
                 Iterator<String> it = json.keys();
                 while (it.hasNext()) {
                     String key = it.next();
@@ -711,12 +752,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             }
         }
 
-        private Set<Integer> convertImportance(String value) {
-            Set<Integer> importance = new LinkedHashSet<Integer>();
+        private Set<Long> convertImportance(String value) {
+            Set<Long> importance = new LinkedHashSet<Long>();
             for (String s : value.split(",")) {
                 if (!TextUtils.isEmpty(s)) {
                     try {
-                        importance.add(Integer.parseInt(s));
+                        importance.add(Long.parseLong(s));
                     } catch (NumberFormatException e) {
                         UILog.d("cannot format " + s, e);
                     }
@@ -813,6 +854,20 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         public CharSequence getPageTitle(int position) {
             return mPageTitles[position];
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
+        filter.addDataScheme("package");
+        registerReceiver(receiver, filter);
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(receiver);
+        super.onPause();
     }
 
     @Override

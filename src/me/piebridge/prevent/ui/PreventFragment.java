@@ -13,10 +13,12 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.v4.app.ListFragment;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.format.DateUtils;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -47,6 +49,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.GmsUtils;
@@ -298,7 +301,7 @@ public abstract class PreventFragment extends ListFragment {
         } else {
             names = prevNames;
         }
-        if (mAdapter == null || !names.equals(prevNames)) {
+        if (force || mAdapter == null || !names.equals(prevNames)) {
             if (mAdapter != null) {
                 setListAdapter(null);
             }
@@ -322,6 +325,10 @@ public abstract class PreventFragment extends ListFragment {
         mAdapter.startTaskIfNeeded();
     }
 
+    public void updateTimeIfNeeded() {
+        mAdapter.notifyDataSetChanged();
+    }
+
     private static class Position {
         int pos;
         int top;
@@ -336,9 +343,10 @@ public abstract class PreventFragment extends ListFragment {
         int flags;
         String name = "";
         String packageName;
-        Set<Integer> running;
+        Set<Long> running;
+        Boolean result;
 
-        public AppInfo(String packageName, String name, Set<Integer> running) {
+        public AppInfo(String packageName, String name, Set<Long> running) {
             super();
             this.packageName = packageName;
             if (name != null) {
@@ -387,9 +395,10 @@ public abstract class PreventFragment extends ListFragment {
         TextView loadingView;
         ImageView preventView;
         Drawable icon;
-        Set<Integer> running;
+        Set<Long> running;
         RetrieveIconTask task;
         boolean canUninstall;
+        Boolean result;
     }
 
     private class Adapter extends ArrayAdapter<AppInfo> {
@@ -451,24 +460,33 @@ public abstract class PreventFragment extends ListFragment {
 
             ViewHolder holder = (ViewHolder) view.getTag();
             AppInfo appInfo = getItem(position);
+            appInfo.running = mActivity.getRunningProcesses().get(appInfo.packageName);
+            appInfo.result = mActivity.getPreventPackages().get(appInfo.packageName);
+            if (isEqual(appInfo.packageName, holder.packageName)
+                    && isEqual(appInfo.running, holder.running)
+                    && isEqual(appInfo.result, holder.result)) {
+                holder.summaryView.setText(formatRunning(holder.running));
+                return view;
+            }
+            holder.result = appInfo.result;
+            holder.running = appInfo.running;
             holder.label = appInfo.name;
             holder.packageName = appInfo.packageName;
             holder.nameView.setText(appInfo.name);
             holder.summaryView.setVisibility(View.GONE);
             holder.loadingView.setVisibility(View.VISIBLE);
             holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
-            Boolean result = mActivity.getPreventPackages().get(appInfo.packageName);
             if (appInfo.isSystem()) {
                 view.setBackgroundColor(mActivity.getDangerousColor());
             } else {
                 view.setBackgroundColor(mActivity.getTransparentColor());
             }
             holder.canUninstall = ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) || ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0);
-            if (result == null) {
+            if (appInfo.result == null) {
                 holder.preventView.setVisibility(View.INVISIBLE);
             } else {
                 holder.preventView.setVisibility(View.VISIBLE);
-                holder.preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
+                holder.preventView.setImageResource(appInfo.result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
             }
             if (holder.task != null) {
                 holder.task.cancel(true);
@@ -607,7 +625,7 @@ public abstract class PreventFragment extends ListFragment {
 
             @Override
             protected Set<AppInfo> doInBackground(Void... params) {
-                Map<String, Set<Integer>> running = mActivity.getRunningProcesses();
+                Map<String, Set<Long>> running = mActivity.getRunningProcesses();
                 Set<AppInfo> applications = new TreeSet<AppInfo>();
                 int i = 1;
                 for (String name : mNames) {
@@ -659,6 +677,49 @@ public abstract class PreventFragment extends ListFragment {
 
     }
 
+    private static boolean isEqual(Object a, Object b) {
+        return (a == null) ? (b == null) : a.equals(b);
+    }
+
+    private CharSequence formatRunning(Set<Long> running) {
+        if (running == null) {
+            return mActivity.getString(R.string.notrunning);
+        } else {
+            if (running.contains((long) RunningAppProcessInfo.IMPORTANCE_SERVICE) && running.contains((long) -RunningAppProcessInfo.IMPORTANCE_SERVICE)) {
+                running.remove((long) -RunningAppProcessInfo.IMPORTANCE_SERVICE);
+            }
+            return doFormatRunning(running);
+        }
+    }
+
+    private CharSequence doFormatRunning(Set<Long> running) {
+        Set<String> sets = new LinkedHashSet<>();
+        for (Long i : running) {
+            Integer v = statusMap.get(i.intValue());
+            if (v == null) {
+                long elapsed = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime()) - i;
+                sets.add(DateUtils.formatElapsedTime(elapsed));
+            } else {
+                sets.add(mActivity.getString(v));
+            }
+        }
+        return toString(sets);
+    }
+
+    private CharSequence toString(Set<String> sets) {
+        StringBuilder buffer = new StringBuilder();
+        Iterator<?> it = sets.iterator();
+        while (it.hasNext()) {
+            buffer.append(it.next());
+            if (it.hasNext()) {
+                buffer.append(", ");
+            } else {
+                break;
+            }
+        }
+        return buffer.toString();
+    }
+
     private class RetrieveIconTask extends AsyncTask<Object, Void, ViewHolder> {
         final PackageManager pm = mActivity.getPackageManager();
 
@@ -671,7 +732,6 @@ public abstract class PreventFragment extends ListFragment {
             } catch (NameNotFoundException e) { // NOSONAR
                 // do nothing
             }
-            holder.running = mActivity.getRunningProcesses().get(appInfo.packageName);
             return holder;
         }
 
@@ -679,46 +739,8 @@ public abstract class PreventFragment extends ListFragment {
         protected void onPostExecute(ViewHolder holder) {
             holder.iconView.setImageDrawable(holder.icon);
             holder.loadingView.setVisibility(View.GONE);
-            holder.summaryView.setText(formatRunning(holder.running));
             holder.summaryView.setVisibility(View.VISIBLE);
-        }
-
-        private CharSequence formatRunning(Set<Integer> running) {
-            if (running == null) {
-                return mActivity.getString(R.string.notrunning);
-            } else {
-                if (running.contains(RunningAppProcessInfo.IMPORTANCE_SERVICE) && running.contains(-RunningAppProcessInfo.IMPORTANCE_SERVICE)) {
-                    running.remove(-RunningAppProcessInfo.IMPORTANCE_SERVICE);
-                }
-                return doFormatRunning(running);
-            }
-        }
-
-        private CharSequence doFormatRunning(Set<Integer> running) {
-            Set<String> sets = new LinkedHashSet<>();
-            for (Integer i : running) {
-                Integer v = statusMap.get(i);
-                if (v == null) {
-                    sets.add(i + "s");
-                } else {
-                    sets.add(mActivity.getString(v));
-                }
-            }
-            return toString(sets);
-        }
-
-        private CharSequence toString(Set<String> sets) {
-            StringBuilder buffer = new StringBuilder();
-            Iterator<?> it = sets.iterator();
-            while (it.hasNext()) {
-                buffer.append(it.next());
-                if (it.hasNext()) {
-                    buffer.append(", ");
-                } else {
-                    break;
-                }
-            }
-            return buffer.toString();
+            holder.summaryView.setText(formatRunning(holder.running));
         }
     }
 

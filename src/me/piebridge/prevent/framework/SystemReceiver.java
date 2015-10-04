@@ -87,7 +87,6 @@ public class SystemReceiver extends ActivityReceiver {
         String packageName = PackageUtils.getPackageName(intent);
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             handlePackageRestarted("PACKAGE_RESTARTED", packageName);
-            onPackageRestarted(packageName);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
             SafeActionUtils.onPackageChanged(packageName);
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
@@ -105,13 +104,13 @@ public class SystemReceiver extends ActivityReceiver {
     }
 
     private void handleGetProcesses(Context context, String action) {
-        Map<String, Set<Integer>> running = getRunningAppProcesses(context);
-        long now = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime());
-        for (Map.Entry<String, Long> entry : leavingPackages.entrySet()) {
+        Map<String, Set<Long>> running = getRunningAppProcesses(context);
+        Map<String, Long> leaving = getLeavingPackages();
+        for (Map.Entry<String, Long> entry : leaving.entrySet()) {
             String packageName = entry.getKey();
-            Set<Integer> status = running.get(packageName);
+            Set<Long> status = running.get(packageName);
             if (status != null) {
-                int elapsed = (int) (now - entry.getValue());
+                long elapsed = entry.getValue();
                 if (elapsed % 0xa == 0) {
                     elapsed += 1;
                 }
@@ -158,19 +157,19 @@ public class SystemReceiver extends ActivityReceiver {
         abortBroadcast();
     }
 
-    private String toJSON(Map<String, Set<Integer>> processes) {
+    private String toJSON(Map<String, Set<Long>> processes) {
         Map<String, String> results = new HashMap<String, String>();
-        for (Map.Entry<String, Set<Integer>> entry : processes.entrySet()) {
+        for (Map.Entry<String, Set<Long>> entry : processes.entrySet()) {
             results.put(entry.getKey(), convertSet(entry.getValue()));
         }
         return new JSONObject(results).toString();
     }
 
-    private String convertSet(Set<Integer> value) {
+    private String convertSet(Set<Long> value) {
         StringBuilder sb = new StringBuilder();
-        Iterator<Integer> it = value.iterator();
+        Iterator<Long> it = value.iterator();
         while (it.hasNext()) {
-            Integer v = it.next();
+            Number v = it.next();
             if (v != null) {
                 sb.append(v);
                 if (it.hasNext()) {
@@ -181,8 +180,8 @@ public class SystemReceiver extends ActivityReceiver {
         return sb.toString();
     }
 
-    private Map<String, Set<Integer>> getRunningAppProcesses(Context context) {
-        Map<String, Set<Integer>> running = new HashMap<String, Set<Integer>>();
+    private Map<String, Set<Long>> getRunningAppProcesses(Context context) {
+        Map<String, Set<Long>> running = new HashMap<String, Set<Long>>();
         Set<String> services = getRunningServices(context);
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
@@ -192,17 +191,17 @@ public class SystemReceiver extends ActivityReceiver {
         }
         for (ActivityManager.RunningAppProcessInfo process : processes) {
             for (String pkg : process.pkgList) {
-                Set<Integer> importance = running.get(pkg);
+                Set<Long> importance = running.get(pkg);
                 if (importance == null) {
-                    importance = new LinkedHashSet<Integer>();
+                    importance = new LinkedHashSet<Long>();
                     running.put(pkg, importance);
                 }
                 if (process.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {
-                    importance.add(process.importance);
+                    importance.add((long) process.importance);
                 } else if (services.contains(pkg)) {
-                    importance.add(process.importance);
+                    importance.add((long) process.importance);
                 } else {
-                    importance.add(-process.importance);
+                    importance.add((long) -process.importance);
                 }
             }
         }

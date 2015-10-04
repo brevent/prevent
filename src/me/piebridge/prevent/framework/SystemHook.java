@@ -560,6 +560,7 @@ public final class SystemHook {
         if (mContext == null || packageName == null) {
             return;
         }
+        systemReceiver.removeLeavingPackage(packageName);
         PackageManager pm = mContext.getPackageManager();
         if (GmsUtils.isGapps(pm, packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
             if (added) {
