@@ -87,20 +87,29 @@ public class SystemReceiver extends ActivityReceiver {
         }
     }
 
-    private void handleCheckLicense(Context context, Intent intent) {
+    private boolean handleCheckLicense(Context context, Intent intent) {
         String user = intent.getStringExtra(Intent.EXTRA_USER);
-        boolean licensed = false;
+        Set<String> users = new LinkedHashSet<String>();
         for (Account account : AccountManager.get(context).getAccounts()) {
+            users.add(account.name);
             if (user.equals(account.name)) {
                 setResultCode(0x1);
-                licensed = true;
-                break;
+                return true;
             }
         }
-        if (!licensed && user.equals(((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getLine1Number())) {
-            setResultCode(0x1);
+        String number = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getLine1Number();
+        if (number != null) {
+            number = number.replace("-", "");
+            number = number.replace(" ", "");
+            users.add(number);
+            if (user.equals(number)) {
+                setResultCode(0x1);
+                return true;
+            }
         }
-        abortBroadcast();
+        setResultCode(0x0);
+        setResultData(users.toString());
+        return false;
     }
 
     private void handlePackage(Intent intent, String action) {

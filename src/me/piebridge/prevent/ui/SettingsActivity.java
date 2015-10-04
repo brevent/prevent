@@ -40,7 +40,7 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
 
     private boolean licensed = false;
 
-    private RSAPublicKey publicKey;
+    private static String license;
 
     public static final String KEY_FORCE_STOP_TIMEOUT = "force_stop_timeout";
 
@@ -54,34 +54,9 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         findPreference(KEY_FORCE_STOP_TIMEOUT).setOnPreferenceChangeListener(this);
         // check license
         licensed = false;
-        publicKey = getPublicKey();
-        byte[] license = new BigInteger(readLicense()).modPow(publicKey.getPublicExponent(), publicKey.getModulus()).toByteArray();
-        int i;
-        int size = license.length;
-        for (i = 0; i < size; ++i) {
-            if (license[i] == 0x00) {
-                break;
-            }
-        }
-        String name = new String(license, i + 1, license.length - i - 1);
+        String name = getLicense(this);
         if (TextUtils.isEmpty(name)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
-            builder.setMessage(R.string.no_license);
-            builder.setIcon(R.drawable.ic_launcher);
-            builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                @Override
-                public void onCancel(DialogInterface dialog) {
-                    dialog.dismiss();
-                }
-            });
-            builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-            builder.create().show();
+            alert(getString(R.string.no_license));
         } else {
             Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
             intent.putExtra(Intent.EXTRA_USER, name);
@@ -89,12 +64,37 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
             sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction()) && getResultCode() == 1) {
-                        licensed = true;
+                    if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction())) {
+                        if (getResultCode() == 1) {
+                            licensed = true;
+                        } else {
+                            licensed = false;
+                            alert(getResultData());
+                        }
                     }
                 }
             }, null, 0, null, null);
         }
+    }
+
+    private void alert(String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
+        builder.setMessage(message);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                dialog.dismiss();
+            }
+        });
+        builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
     }
 
     @Override
@@ -116,9 +116,9 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         return true;
     }
 
-    private byte[] readLicense() {
+    private static byte[] readLicense(Context context) {
         byte[] license = new byte[0x100];
-        for (File file : PreventListUtils.getExternalFilesDirs(this)) {
+        for (File file : PreventListUtils.getExternalFilesDirs(context)) {
             if (file == null) {
                 continue;
             }
@@ -137,10 +137,10 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         return license;
     }
 
-    private RSAPublicKey getPublicKey() {
+    private static RSAPublicKey getPublicKey(Context context) {
         PackageInfo pi;
         try {
-            pi = getPackageManager().getPackageInfo(BuildConfig.APPLICATION_ID, PackageManager.GET_SIGNATURES);
+            pi = context.getPackageManager().getPackageInfo(BuildConfig.APPLICATION_ID, PackageManager.GET_SIGNATURES);
         } catch (PackageManager.NameNotFoundException e) {
             UILog.d("cannot get certificate", e);
             return null;
@@ -156,6 +156,22 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
             }
         }
         return null;
+    }
+
+    public static String getLicense(Context context) {
+        if (!TextUtils.isEmpty(license)) {
+            return license;
+        }
+        RSAPublicKey publicKey = getPublicKey(context);
+        byte[] signature = new BigInteger(1, readLicense(context)).modPow(publicKey.getPublicExponent(), publicKey.getModulus()).toByteArray();
+        int size = signature.length;
+        for (int i = 0; i < size; ++i) {
+            if (signature[i] == 0x00) {
+                license = new String(signature, i + 1, signature.length - i - 1);
+                break;
+            }
+        }
+        return license;
     }
 
 }

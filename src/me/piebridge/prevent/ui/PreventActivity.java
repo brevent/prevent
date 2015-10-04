@@ -47,7 +47,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
@@ -159,7 +158,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             // do nothing
         }
 
-        if (!BuildConfig.RELEASE) {
+        if (!BuildConfig.RELEASE && TextUtils.isEmpty(SettingsActivity.getLicense(this))) {
             showTestDialog();
         } else {
             init();
