@@ -2,6 +2,8 @@ package me.piebridge.prevent.framework;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.SystemClock;
 
 import java.util.HashMap;
@@ -15,6 +17,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -181,6 +184,16 @@ abstract class ActivityReceiver extends BroadcastReceiver {
 
     public void onUserLeavingActivity(Object activityRecord) {
         String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+        try {
+            PackageManager pm = mContext.getPackageManager();
+            ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
+            if (!PackageUtils.canPrevent(pm, ai)) {
+                return;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find " + packageName, e);
+            return;
+        }
         int count = countCounter(packageName);
         if (count > 0) {
             leavingPackages.put(packageName, TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime()));

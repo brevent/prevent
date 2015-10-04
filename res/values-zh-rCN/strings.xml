@@ -43,5 +43,6 @@
     <string name="force_stop_10min">10分钟</string>
     <string name="force_stop_15min">15分钟</string>
     <string name="force_stop_30min">30分钟</string>
+    <string name="no_license">您没有许可修改所有设置，请累积捐赠10元或以上，然后联系作者获取许可。</string>
 
 </resources>

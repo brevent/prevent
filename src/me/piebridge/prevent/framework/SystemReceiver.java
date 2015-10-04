@@ -1,9 +1,11 @@
 package me.piebridge.prevent.framework;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
-import android.os.SystemClock;
+import android.telephony.TelephonyManager;
 
 import org.json.JSONObject;
 
@@ -16,7 +18,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
@@ -36,7 +37,8 @@ public class SystemReceiver extends ActivityReceiver {
             PreventIntent.ACTION_GET_PROCESSES,
             PreventIntent.ACTION_UPDATE_PREVENT,
             PreventIntent.ACTION_REQUEST_LOG,
-            PreventIntent.ACTION_UPDATE_TIMEOUT
+            PreventIntent.ACTION_UPDATE_TIMEOUT,
+            PreventIntent.ACTION_CHECK_LICENSE
     );
 
     public static final Collection<String> PACKAGE_ACTIONS = Arrays.asList(
@@ -80,7 +82,25 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (PreventIntent.ACTION_UPDATE_TIMEOUT.equals(action)) {
             timeout = intent.getLongExtra(PreventIntent.EXTRA_TIMEOUT, -1);
             PreventLog.i("update timeout to " + timeout + "s");
+        } else if (PreventIntent.ACTION_CHECK_LICENSE.equals(action)) {
+            handleCheckLicense(context, intent);
         }
+    }
+
+    private void handleCheckLicense(Context context, Intent intent) {
+        String user = intent.getStringExtra(Intent.EXTRA_USER);
+        boolean licensed = false;
+        for (Account account : AccountManager.get(context).getAccounts()) {
+            if (user.equals(account.name)) {
+                setResultCode(0x1);
+                licensed = true;
+                break;
+            }
+        }
+        if (!licensed && user.equals(((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getLine1Number())) {
+            setResultCode(0x1);
+        }
+        abortBroadcast();
     }
 
     private void handlePackage(Intent intent, String action) {

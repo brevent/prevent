@@ -28,7 +28,7 @@ public final class PreventListUtils {
 
     }
 
-    private static File[] getExternalFilesDirs(Context context) {
+    public static File[] getExternalFilesDirs(Context context) {
         File[] files;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             files = context.getExternalFilesDirs(null);

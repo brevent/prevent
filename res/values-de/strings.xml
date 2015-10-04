@@ -43,5 +43,6 @@
     <string name="force_stop_10min">10 Minuten</string>
     <string name="force_stop_15min">15 Minuten</string>
     <string name="force_stop_30min">30 Minuten</string>
+    <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
 
 </resources>
