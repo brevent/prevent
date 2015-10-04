@@ -101,7 +101,7 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
         if (KEY_FORCE_STOP_TIMEOUT.equals(key)) {
-            if (licensed) {
+            if (licensed || !BuildConfig.RELEASE) {
                 try {
                     long timeout = Long.valueOf(String.valueOf(newValue));
                     PreventUtils.updateTimeout(this, timeout);

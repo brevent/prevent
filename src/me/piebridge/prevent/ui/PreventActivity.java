@@ -680,7 +680,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 if (running != null) {
                     running.remove(packageName);
                 }
-                if (Boolean.FALSE.equals(preventPackages.get(packageName))) {
+                if (preventPackages != null && Boolean.FALSE.equals(preventPackages.get(packageName))) {
                     preventPackages.put(packageName, true);
                 }
             }
