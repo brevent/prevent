@@ -170,9 +170,6 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
     }
 
     public static String getLicense(Context context) {
-        if (!TextUtils.isEmpty(license)) {
-            return license;
-        }
         RSAPublicKey publicKey = getPublicKey(context);
         byte[] signature = new BigInteger(1, readLicense(context)).modPow(publicKey.getPublicExponent(), publicKey.getModulus()).toByteArray();
         int size = signature.length;
