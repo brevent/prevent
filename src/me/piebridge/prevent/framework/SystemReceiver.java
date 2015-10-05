@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,9 +90,9 @@ public class SystemReceiver extends ActivityReceiver {
 
     private boolean handleCheckLicense(Context context, Intent intent) {
         String user = intent.getStringExtra(Intent.EXTRA_USER);
-        Set<String> users = new LinkedHashSet<String>();
+        Map<String, String> users = new LinkedHashMap<String, String>();
         for (Account account : AccountManager.get(context).getAccounts()) {
-            users.add(account.name);
+            users.put(account.type, account.name);
             if (user.equals(account.name)) {
                 setResultCode(0x1);
                 return true;
@@ -101,7 +102,7 @@ public class SystemReceiver extends ActivityReceiver {
         if (number != null) {
             number = number.replace("-", "");
             number = number.replace(" ", "");
-            users.add(number);
+            users.put("line1Number", number);
             if (user.equals(number)) {
                 setResultCode(0x1);
                 return true;
