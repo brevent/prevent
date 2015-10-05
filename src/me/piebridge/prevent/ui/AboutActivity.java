@@ -1,6 +1,5 @@
 package me.piebridge.prevent.ui;
 
-import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ComponentName;
@@ -16,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,6 +34,8 @@ import me.piebridge.prevent.common.PreventIntent;
  * Created by thom on 15/10/3.
  */
 public class AboutActivity extends Activity implements View.OnClickListener {
+
+    private View donateView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -64,6 +66,10 @@ public class AboutActivity extends Activity implements View.OnClickListener {
         checkView(R.id.wechat, getDonateWeChat());
         if (!Locale.CHINA.equals(Locale.getDefault())) {
             setView(R.id.paypal, "com.paypal.android.p2pmobile");
+        }
+        donateView = findViewById(R.id.donate);
+        if (TextUtils.isEmpty(SettingsActivity.getLicense(this))) {
+            donateView.setVisibility(View.VISIBLE);
         }
     }
 
@@ -199,7 +205,6 @@ public class AboutActivity extends Activity implements View.OnClickListener {
     }
 
     @Override
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
         menu.add(Menu.NONE, R.string.donate, Menu.NONE, R.string.donate);
@@ -211,7 +216,7 @@ public class AboutActivity extends Activity implements View.OnClickListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.string.donate) {
-            findViewById(R.id.donate).setVisibility(View.VISIBLE);
+            donateView.setVisibility(View.VISIBLE);
         } else if (id == R.string.feedback) {
             EmailUtils.sendEmail(this, getString(R.string.feedback));
         }
@@ -222,13 +227,22 @@ public class AboutActivity extends Activity implements View.OnClickListener {
         webView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
             @Override
             public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY > oldScrollY && scrollY >= webView.getContentHeight()) {
-                    findViewById(R.id.donate).setVisibility(View.VISIBLE);
+                if (scrollY > oldScrollY && scrollY >= (webView.getContentHeight() * 0x3ea / 0x400)) {
+                    donateView.setVisibility(View.VISIBLE);
                 } else if (scrollY < oldScrollY && scrollY == 0) {
-                    findViewById(R.id.donate).setVisibility(View.GONE);
+                    donateView.setVisibility(View.GONE);
                 }
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (donateView.getVisibility() == View.VISIBLE) {
+            donateView.setVisibility(View.GONE);
+        } else {
+            super.onBackPressed();
+        }
     }
 
 }

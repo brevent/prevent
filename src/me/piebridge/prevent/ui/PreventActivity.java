@@ -1,6 +1,5 @@
 package me.piebridge.prevent.ui;
 
-import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -246,7 +245,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     @Override
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
