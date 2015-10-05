@@ -33,7 +33,7 @@
     <string name="donate_paypal">Donasi via PayPal</string>
     <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
     <string name="test_version">Ini bukan versi rilis, dan mungkin memblokir perangkatmu. Jika kamu tidak suka untuk berpartisipasi, tolong hapus pemasangan dan kembali gunakan versi rilis.</string>
-    <string name="request_log">Meminta catatan sistem</string>
+    <string name="request_log">Sistem log</string>
     <string name="settings">Setelan</string>
     <string name="screen_off">Layar mati</string>
     <string name="force_stop_label">Paksa berhenti</string>
@@ -44,5 +44,7 @@
     <string name="force_stop_15min">15 menit</string>
     <string name="force_stop_30min">30 menit</string>
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
+    <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
+    <string name="apply">apply</string>
 
 </resources>

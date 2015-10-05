@@ -40,47 +40,49 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
 
     private boolean licensed = false;
 
-    private static String license;
+    private static String license = "";
 
     public static final String KEY_FORCE_STOP_TIMEOUT = "force_stop_timeout";
 
     @Override
-    @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         setTheme(PreventActivity.THEME_LIGHT.equals(sp.getString(PreventActivity.THEME, PreventActivity.THEME_LIGHT)) ? R.style.light : R.style.dark);
         super.onCreate(savedInstanceState);
+        //noinspection deprecation
         addPreferencesFromResource(R.xml.settings);
+        //noinspection deprecation
         findPreference(KEY_FORCE_STOP_TIMEOUT).setOnPreferenceChangeListener(this);
         // check license
         licensed = false;
-        String name = getLicense(this);
-        if (TextUtils.isEmpty(name)) {
-            alert(getString(R.string.no_license));
-        } else {
-            Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-            intent.putExtra(Intent.EXTRA_USER, name);
-            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
-            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction())) {
-                        if (getResultCode() == 1) {
-                            licensed = true;
-                        } else {
-                            licensed = false;
-                            alert(getResultData());
-                        }
+        getLicense(this);
+        Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+        intent.putExtra(Intent.EXTRA_USER, license);
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+        sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction())) {
+                    if (getResultCode() == 1) {
+                        licensed = true;
+                    } else {
+                        licensed = false;
+                        alert(getResultData());
                     }
                 }
-            }, null, 0, null, null);
-        }
+            }
+        }, null, 0, null, null);
     }
 
-    private void alert(String message) {
+    private void alert(String accounts) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final String content = "license: " + license + ", accounts: " + accounts;
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
-        builder.setMessage(message);
+        if (TextUtils.isEmpty(license)) {
+            builder.setMessage(R.string.no_license);
+        } else {
+            builder.setMessage(getString(R.string.no_valid_license, license, getString(R.string.apply)));
+        }
         builder.setIcon(R.drawable.ic_launcher);
         builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
@@ -88,10 +90,19 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
                 dialog.dismiss();
             }
         });
-        builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+        builder.setNeutralButton(getString(android.R.string.copy), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
+                //noinspection deprecation
+                ((android.text.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE)).setText(content);
+            }
+        });
+        builder.setPositiveButton(R.string.apply, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                EmailUtils.sendEmail(SettingsActivity.this, content);
             }
         });
         builder.create().show();

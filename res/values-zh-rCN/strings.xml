@@ -33,7 +33,7 @@
     <string name="donate_paypal">捐赠 - 贝宝</string>
     <string name="updated_prevents">成功更新阻止列表，共%1$d条</string>
     <string name="test_version">这是测试版本，可能导致您的机器无法运行。如果不想参加测试，请恢复至正式版本。</string>
-    <string name="request_log">申请系统日志</string>
+    <string name="request_log">系统日志</string>
     <string name="settings">设置</string>
     <string name="screen_off">屏幕关闭</string>
     <string name="force_stop_label">强行停止</string>
@@ -44,5 +44,7 @@
     <string name="force_stop_15min">15分钟</string>
     <string name="force_stop_30min">30分钟</string>
     <string name="no_license">您没有许可修改所有设置，请累积捐赠10元或以上，然后联系作者获取许可。</string>
+    <string name="no_valid_license">您没有权限使用颁发给“%1$s”的许可，请点击“%2$s”重新获取。</string>
+    <string name="apply">申请</string>
 
 </resources>

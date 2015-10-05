@@ -33,7 +33,7 @@
     <string name="donate_paypal">Donate via PayPal</string>
     <string name="updated_prevents">Updated prevent list to %1$d</string>
     <string name="test_version">This is not a release version, and may block your device. If you don\'t like to be participate, please uninstall and restore to release version.</string>
-    <string name="request_log">Request system log</string>
+    <string name="request_log">System log</string>
     <string name="settings">Settings</string>
     <string name="screen_off">Screen turns off</string>
     <string name="force_stop_label">Force stop</string>
@@ -44,5 +44,7 @@
     <string name="force_stop_15min">15 minutes</string>
     <string name="force_stop_30min">30 minutes</string>
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
+    <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
+    <string name="apply">apply</string>
 
 </resources>
