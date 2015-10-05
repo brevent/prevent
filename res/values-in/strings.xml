@@ -2,13 +2,37 @@
 <resources>
 
     <string name="app_name">Prevent Running</string>
+
+    <string name="soak_version">Ini bukan versi rilis, dan mungkin memblokir perangkatmu. Jika kamu tidak suka untuk berpartisipasi, tolong hapus pemasangan dan kembali gunakan versi rilis.</string>
+
+    <!-- xposed -->
     <string name="xposed_summary">Mencegah berjalannya aplikasi.</string>
-    <string name="remove">Hapus Pencegahan</string>
-    <string name="prevent">Pencegahan Otomatis</string>
+    <string name="xposed_disabled">Tolong aktifkan \"Prevent Running\" di \"Xposed Installer\", atau matikan kemudian aktifkan \"Prevent Running\".</string>
+
+    <!-- receiver -->
+    <string name="no_prevents">Tolong atur daftar pencegahan.</string>
+    <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
+
+    <!-- main activity -->
     <string name="applications">Aplikasi</string>
-    <string name="preventlist">Daftar Pencegahan</string>
+    <string name="prevent_list">Daftar Pencegahan</string>
+    <string name="prevent">Pencegahan Otomatis</string>
+    <string name="remove">Hapus Pencegahan</string>
+
+    <!-- search hint -->
+    <string name="query_hint">\"-3\" untuk aplikasi pengguna</string>
+    <string name="query_hint_system">\"-s\" untuk aplikasi sistem</string>
+
+    <!-- main menu -->
+    <string name="switch_theme">Ubah tema</string>
+    <string name="system_log">Sistem log</string>
+    <string name="advanced_settings">Setelan lanjutan</string>
+    <string name="user_guide">User guide</string>
+
+    <!-- app status -->
+    <string name="retrieving">Mengambil status, silahkan tunggu. . .</string>
     <string name="loading">Memuat. . .</string>
-    <string name="notrunning">(tidak berjalan)</string>
+    <string name="not_running">(tidak berjalan)</string>
     <string name="importance_background">Latar belakang</string>
     <string name="importance_foreground">Latar depan</string>
     <string name="importance_empty">Kosong</string>
@@ -19,19 +43,13 @@
     <string name="importance_foreground_service">Latar depan Layanan</string>
     <string name="importance_top_sleeping">Top Sleeping</string>
     <string name="importance_service_not_started">Layanan (Belum dimulai)</string>
+
+    <!-- app menu -->
     <string name="app_info">Info Aplikasi</string>
-    <string name="uninstall">Hapus Pemasangan</string>
-    <string name="switch_theme">Ubah tema</string>
-    <string name="app_notenabled">Tolong aktifkan \"Prevent Running\" di \"Xposed Installer\", atau matikan kemudian aktifkan \"Prevent Running\".</string>
     <string name="open">Buka</string>
-    <string name="query_hint">\"-3\" untuk aplikasi pengguna</string>
-    <string name="query_hint_system">\"-s\" untuk aplikasi sistem</string>
-    <string name="retrieving">Mengambil status, silahkan tunggu. . .</string>
-    <string name="no_prevents">Tolong atur daftar pencegahan.</string>
-    <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
-    <string name="test_version">Ini bukan versi rilis, dan mungkin memblokir perangkatmu. Jika kamu tidak suka untuk berpartisipasi, tolong hapus pemasangan dan kembali gunakan versi rilis.</string>
-    <string name="request_log">Sistem log</string>
-    <string name="settings">Setelan</string>
+    <string name="uninstall">Hapus Pemasangan</string>
+
+    <!-- advanced settings -->
     <string name="screen_off">Layar mati</string>
     <string name="force_stop_label">Paksa berhenti</string>
     <string name="force_stop_summary">Nach %1$s ohne Aktivität</string>
@@ -43,9 +61,13 @@
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>
-    <string name="about">About</string>
-    <string name="paypal">PayPal</string>
+
+    <!-- user guide menu -->
     <string name="donate">Donasi</string>
     <string name="feedback">Feedback</string>
+
+    <!-- donation -->
+    <string name="paypal">PayPal</string>
+
 
 </resources>

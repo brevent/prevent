@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.PreventLog;
 
 /**
@@ -97,7 +98,7 @@ public class SafeActionUtils {
     }
 
     public static boolean isProtectedBroadcast(String action) {
-        if (action == null || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
+        if (action == null || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || PreventIntent.ACTION_UPDATE_TIMEOUT.equals(action)) {
             return false;
         }
         return action.startsWith("android.intent.action") || AppGlobals.getPackageManager().isProtectedBroadcast(action);

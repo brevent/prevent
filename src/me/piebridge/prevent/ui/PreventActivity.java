@@ -49,6 +49,7 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 
@@ -134,7 +135,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         removeButton.setEnabled(false);
         receiver = new HookReceiver();
 
-        mPageTitles = new String[]{getString(R.string.applications), getString(R.string.preventlist)};
+        mPageTitles = new String[]{getString(R.string.applications), getString(R.string.prevent_list)};
         mPageSelections = new ArrayList<Set<String>>();
         mPageSelections.add(new HashSet<String>());
         mPageSelections.add(new HashSet<String>());
@@ -155,7 +156,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             // do nothing
         }
 
-        if (!BuildConfig.RELEASE && TextUtils.isEmpty(SettingsActivity.getLicense(this))) {
+        if (!BuildConfig.RELEASE && TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             showTestDialog();
         } else {
             init();
@@ -258,9 +259,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             removeMenu.setVisible(false);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-        menu.add(Menu.NONE, R.string.request_log, Menu.NONE, R.string.request_log);
-        menu.add(Menu.NONE, R.string.settings, Menu.NONE, R.string.settings);
-        menu.add(Menu.NONE, R.string.about, Menu.NONE, R.string.about);
+        menu.add(Menu.NONE, R.string.system_log, Menu.NONE, R.string.system_log);
+        menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
+        menu.add(Menu.NONE, R.string.user_guide, Menu.NONE, R.string.user_guide);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -269,7 +270,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         int id = item.getItemId();
         if (id == R.string.switch_theme) {
             return switchTheme();
-        } else if (id == R.string.request_log) {
+        } else if (id == R.string.system_log) {
             return requestLog();
         } else {
             return onClick(id);
@@ -408,9 +409,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 preventPackages.remove(packageName);
             }
             savePackages();
-        } else if (id == R.string.settings) {
+        } else if (id == R.string.advanced_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
-        } else if (id == R.string.about) {
+        } else if (id == R.string.user_guide) {
             startActivity(new Intent(this, AboutActivity.class));
         }
         selections.clear();
@@ -447,7 +448,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private void showDisableDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
-        builder.setMessage(R.string.app_notenabled);
+        builder.setMessage(R.string.xposed_disabled);
         builder.setIcon(R.drawable.ic_launcher);
         builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
@@ -476,7 +477,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private void showTestDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
-        builder.setMessage(R.string.test_version);
+        builder.setMessage(R.string.soak_version);
         builder.setIcon(R.drawable.ic_launcher);
         builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override

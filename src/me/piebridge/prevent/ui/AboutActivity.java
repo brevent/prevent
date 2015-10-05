@@ -29,6 +29,7 @@ import java.util.Locale;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.LicenseUtils;
 
 /**
  * Created by thom on 15/10/3.
@@ -68,7 +69,7 @@ public class AboutActivity extends Activity implements View.OnClickListener {
             setView(R.id.paypal, "com.paypal.android.p2pmobile");
         }
         donateView = findViewById(R.id.donate);
-        if (TextUtils.isEmpty(SettingsActivity.getLicense(this))) {
+        if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             donateView.setVisibility(View.VISIBLE);
         }
     }

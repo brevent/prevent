@@ -689,7 +689,7 @@ public abstract class PreventFragment extends ListFragment {
 
     private CharSequence formatRunning(Set<Long> running) {
         if (running == null) {
-            return mActivity.getString(R.string.notrunning);
+            return mActivity.getString(R.string.not_running);
         } else {
             if (running.contains((long) RunningAppProcessInfo.IMPORTANCE_SERVICE) && running.contains((long) -RunningAppProcessInfo.IMPORTANCE_SERVICE)) {
                 running.remove((long) -RunningAppProcessInfo.IMPORTANCE_SERVICE);

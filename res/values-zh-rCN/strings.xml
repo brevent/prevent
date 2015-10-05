@@ -2,13 +2,37 @@
 <resources>
 
     <string name="app_name">阻止运行</string>
+
+    <string name="soak_version">这是测试版本，可能导致您的机器无法运行。如果不想参加测试，请恢复至正式版本。</string>
+
+    <!-- xposed -->
     <string name="xposed_summary">阻止程序自动运行</string>
-    <string name="remove">不再阻止</string>
-    <string name="prevent">自动阻止</string>
+    <string name="xposed_disabled">请在“Xposed Installer”中启用“阻止运行”，或者先禁用再启用“阻止运行”。</string>
+
+    <!-- receiver -->
+    <string name="no_prevents">请配置“阻止列表”。</string>
+    <string name="updated_prevents">成功更新阻止列表，共%1$d条</string>
+
+    <!-- main activity -->
     <string name="applications">所有程序</string>
-    <string name="preventlist">阻止列表</string>
+    <string name="prevent_list">阻止列表</string>
+    <string name="prevent">自动阻止</string>
+    <string name="remove">不再阻止</string>
+
+    <!-- search hint -->
+    <string name="query_hint">\"-3\"为已下载应用</string>
+    <string name="query_hint_system">\"-s\"为系统应用</string>
+
+    <!-- main menu -->
+    <string name="switch_theme">切换主题</string>
+    <string name="system_log">系统日志</string>
+    <string name="advanced_settings">高级设置</string>
+    <string name="user_guide">用户指南</string>
+
+    <!-- app status -->
+    <string name="retrieving">正在获取数据，请稍候. . .</string>
     <string name="loading">正在加载. . .</string>
-    <string name="notrunning">(没有运行)</string>
+    <string name="not_running">(没有运行)</string>
     <string name="importance_background">后台</string>
     <string name="importance_foreground">前台</string>
     <string name="importance_empty">空</string>
@@ -19,19 +43,13 @@
     <string name="importance_foreground_service">前台服务</string>
     <string name="importance_top_sleeping">前台休眠</string>
     <string name="importance_service_not_started">服务(没有开始)</string>
+
+    <!-- app menu -->
     <string name="app_info">程序信息</string>
-    <string name="uninstall">卸载</string>
-    <string name="switch_theme">切换主题</string>
-    <string name="app_notenabled">请在“Xposed Installer”中启用“阻止运行”，或者先禁用再启用“阻止运行”。</string>
     <string name="open">打开</string>
-    <string name="query_hint">\"-3\"为已下载应用</string>
-    <string name="query_hint_system">\"-s\"为系统应用</string>
-    <string name="retrieving">正在获取数据，请稍候. . .</string>
-    <string name="no_prevents">请配置“阻止列表”。</string>
-    <string name="updated_prevents">成功更新阻止列表，共%1$d条</string>
-    <string name="test_version">这是测试版本，可能导致您的机器无法运行。如果不想参加测试，请恢复至正式版本。</string>
-    <string name="request_log">系统日志</string>
-    <string name="settings">设置</string>
+    <string name="uninstall">卸载</string>
+
+    <!-- advanced settings -->
     <string name="screen_off">屏幕关闭</string>
     <string name="force_stop_label">强行停止</string>
     <string name="force_stop_summary">无操作%1$s后</string>
@@ -43,9 +61,12 @@
     <string name="no_license">您没有许可修改所有设置，请累积捐赠10元或以上，然后联系作者获取许可。</string>
     <string name="no_valid_license">您没有权限使用颁发给“%1$s”的许可，请点击“%2$s”重新获取。</string>
     <string name="apply">申请</string>
-    <string name="about">关于</string>
-    <string name="paypal">贝宝</string>
+
+    <!-- user guide menu -->
     <string name="donate">捐赠</string>
     <string name="feedback">反馈</string>
+
+    <!-- donation -->
+    <string name="paypal">贝宝</string>
 
 </resources>

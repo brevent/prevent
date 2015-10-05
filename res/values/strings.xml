@@ -2,13 +2,37 @@
 <resources>
 
     <string name="app_name">Prevent Running</string>
-    <string name="xposed_summary">Prevent applicatons from running.</string>
-    <string name="remove">Remove Prevent</string>
-    <string name="prevent">Auto Prevent</string>
+
+    <string name="soak_version">This is not a release version, and may block your device. If you don\'t like to be participate, please uninstall and restore to release version.</string>
+
+    <!-- xposed -->
+    <string name="xposed_summary">Prevent applications from running.</string>
+    <string name="xposed_disabled">Please enable \"Prevent Running\" in \"Xposed Installer\", or disable then enable \"Prevent Running\".</string>
+
+    <!-- receiver -->
+    <string name="no_prevents">Please configure prevent list.</string>
+    <string name="updated_prevents">Updated prevent list to %1$d</string>
+
+    <!-- main activity -->
     <string name="applications">Applications</string>
-    <string name="preventlist">Prevent List</string>
+    <string name="prevent_list">Prevent List</string>
+    <string name="prevent">Auto Prevent</string>
+    <string name="remove">Remove Prevent</string>
+
+    <!-- search hint -->
+    <string name="query_hint">\"-3\" for user\'s apps</string>
+    <string name="query_hint_system">\"-s\" for system apps</string>
+
+    <!-- main menu -->
+    <string name="switch_theme">Switch theme</string>
+    <string name="system_log">System log</string>
+    <string name="advanced_settings">Advanced Settings</string>
+    <string name="user_guide">User guide</string>
+
+    <!-- app status -->
+    <string name="retrieving">Retrieving status, please wait. . .</string>
     <string name="loading">Loading. . .</string>
-    <string name="notrunning">(not running)</string>
+    <string name="not_running">(not running)</string>
     <string name="importance_background">Background</string>
     <string name="importance_foreground">Foreground</string>
     <string name="importance_empty">Empty</string>
@@ -19,21 +43,13 @@
     <string name="importance_foreground_service">Foreground Service</string>
     <string name="importance_top_sleeping">Top Sleeping</string>
     <string name="importance_service_not_started">Service (Not started)</string>
+
+    <!-- app menu -->
     <string name="app_info">App Info</string>
-    <string name="uninstall">Uninstall</string>
-    <string name="switch_theme">Switch theme</string>
-    <string name="app_notenabled">Please enable \"Prevent Running\" in \"Xposed Installer\", or disable then enable \"Prevent Running\".</string>
     <string name="open">Open</string>
-    <string name="query_hint">\"-3\" for user\'s apps</string>
-    <string name="query_hint_system">\"-s\" for system apps</string>
-    <string name="retrieving">Retrieving status, please wait. . .</string>
-    <string name="no_prevents">Please configure prevent list.</string>
-    <string name="about">About</string>
-    <string name="paypal">PayPal</string>
-    <string name="updated_prevents">Updated prevent list to %1$d</string>
-    <string name="test_version">This is not a release version, and may block your device. If you don\'t like to be participate, please uninstall and restore to release version.</string>
-    <string name="request_log">System log</string>
-    <string name="settings">Settings</string>
+    <string name="uninstall">Uninstall</string>
+
+    <!-- advanced settings -->
     <string name="screen_off">Screen turns off</string>
     <string name="force_stop_label">Force stop</string>
     <string name="force_stop_summary">After %1$s of inactivity</string>
@@ -45,7 +61,12 @@
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>
+
+    <!-- user guide menu -->
     <string name="donate">Donate</string>
     <string name="feedback">Feedback</string>
+
+    <!-- donation -->
+    <string name="paypal">PayPal</string>
 
 </resources>
