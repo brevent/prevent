@@ -20,7 +20,6 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -34,7 +33,7 @@ import me.piebridge.prevent.common.PreventIntent;
 /**
  * Created by thom on 15/10/3.
  */
-public class AboutActivity extends Activity implements View.OnClickListener, View.OnScrollChangeListener {
+public class AboutActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,7 +52,9 @@ public class AboutActivity extends Activity implements View.OnClickListener, Vie
         WebView webView = (WebView) findViewById(R.id.webview);
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
-        webView.setOnScrollChangeListener(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            setScrollChangeListener(webView);
+        }
         if ("zh".equals(Locale.getDefault().getLanguage())) {
             webView.loadUrl("file:///android_asset/about.zh.html");
         } else {
@@ -217,15 +218,17 @@ public class AboutActivity extends Activity implements View.OnClickListener, Vie
         return true;
     }
 
-    @Override
-    public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-        if (v instanceof WebView) {
-            if (scrollY > oldScrollY && scrollY >= ((WebView) v).getContentHeight()) {
-                findViewById(R.id.donate).setVisibility(View.VISIBLE);
-            } else if (scrollY < oldScrollY && scrollY == 0) {
-                findViewById(R.id.donate).setVisibility(View.GONE);
+    private void setScrollChangeListener(final WebView webView) {
+        webView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
+            @Override
+            public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                if (scrollY > oldScrollY && scrollY >= webView.getContentHeight()) {
+                    findViewById(R.id.donate).setVisibility(View.VISIBLE);
+                } else if (scrollY < oldScrollY && scrollY == 0) {
+                    findViewById(R.id.donate).setVisibility(View.GONE);
+                }
             }
-        }
+        });
     }
 
 }
