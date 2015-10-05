@@ -28,9 +28,6 @@
     <string name="query_hint_system">\"-s\"為系統程式</string>
     <string name="retrieving">正在獲取數據，請稍候. . .</string>
     <string name="no_prevents">請配置『阻止列表』。 </string>
-    <string name="donate_wechat">捐贈 - WeChat</string>
-    <string name="donate_alipay">捐贈 - 支付寶</string>
-    <string name="donate_paypal">捐贈 - PayPal</string>
     <string name="updated_prevents">成功更新阻止列表，共%1$d條</string>
     <string name="test_version">這是測試版本，可能導致您的機器無法運行。如果不想參加測試，請恢復至正式版本。</string>
     <string name="request_log">系統日誌</string>
@@ -46,5 +43,9 @@
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>
+    <string name="about">關於</string>
+    <string name="paypal">PayPal</string>
+    <string name="donate">捐贈</string>
+    <string name="feedback">回饋</string>
 
 </resources>

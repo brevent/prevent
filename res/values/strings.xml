@@ -28,9 +28,8 @@
     <string name="query_hint_system">\"-s\" for system apps</string>
     <string name="retrieving">Retrieving status, please wait. . .</string>
     <string name="no_prevents">Please configure prevent list.</string>
-    <string name="donate_wechat">Donate via WeChat</string>
-    <string name="donate_alipay">Donate via Alipay</string>
-    <string name="donate_paypal">Donate via PayPal</string>
+    <string name="about">About</string>
+    <string name="paypal">PayPal</string>
     <string name="updated_prevents">Updated prevent list to %1$d</string>
     <string name="test_version">This is not a release version, and may block your device. If you don\'t like to be participate, please uninstall and restore to release version.</string>
     <string name="request_log">System log</string>
@@ -46,5 +45,7 @@
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>
+    <string name="donate">Donate</string>
+    <string name="feedback">Feedback</string>
 
 </resources>

@@ -61,7 +61,13 @@
         <activity
             android:name="me.piebridge.prevent.ui.SettingsActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:label="@string/app_name"
+            android:label="@string/settings"
+            android:windowSoftInputMode="stateHidden" />
+
+        <activity
+            android:name="me.piebridge.prevent.ui.AboutActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:label="@string/about"
             android:windowSoftInputMode="stateHidden" />
 
         <provider

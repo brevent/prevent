@@ -15,9 +15,9 @@
     <string name="importance_perceptible">Terlihat</string>
     <string name="importance_service">Layanan</string>
     <string name="importance_visible">Nyata</string>
-    <string name="importance_gone">Gone (English)</string>
+    <string name="importance_gone">Gone</string>
     <string name="importance_foreground_service">Latar depan Layanan</string>
-    <string name="importance_top_sleeping">Top Sleeping (English)</string>
+    <string name="importance_top_sleeping">Top Sleeping</string>
     <string name="importance_service_not_started">Layanan (Belum dimulai)</string>
     <string name="app_info">Info Aplikasi</string>
     <string name="uninstall">Hapus Pemasangan</string>
@@ -28,9 +28,6 @@
     <string name="query_hint_system">\"-s\" untuk aplikasi sistem</string>
     <string name="retrieving">Mengambil status, silahkan tunggu. . .</string>
     <string name="no_prevents">Tolong atur daftar pencegahan.</string>
-    <string name="donate_wechat">Donasi via WeChat</string>
-    <string name="donate_alipay">Donasi via Alipay</string>
-    <string name="donate_paypal">Donasi via PayPal</string>
     <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
     <string name="test_version">Ini bukan versi rilis, dan mungkin memblokir perangkatmu. Jika kamu tidak suka untuk berpartisipasi, tolong hapus pemasangan dan kembali gunakan versi rilis.</string>
     <string name="request_log">Sistem log</string>
@@ -46,5 +43,9 @@
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>
+    <string name="about">About</string>
+    <string name="paypal">PayPal</string>
+    <string name="donate">Donasi</string>
+    <string name="feedback">Feedback</string>
 
 </resources>

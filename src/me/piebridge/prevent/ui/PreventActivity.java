@@ -6,14 +6,12 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -262,44 +260,16 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             removeMenu.setVisible(false);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-        addDoanteIfNeeded(menu);
         menu.add(Menu.NONE, R.string.request_log, Menu.NONE, R.string.request_log);
         menu.add(Menu.NONE, R.string.settings, Menu.NONE, R.string.settings);
+        menu.add(Menu.NONE, R.string.about, Menu.NONE, R.string.about);
         return super.onCreateOptionsMenu(menu);
-    }
-
-    private void addDoanteIfNeeded(Menu menu) {
-        if (TextUtils.isEmpty(SettingsActivity.getLicense(this))) {
-            if (BuildConfig.ALIPAY_DONATE && getDonateAlipay() != null) {
-                menu.add(Menu.NONE, R.string.donate_alipay, Menu.NONE, R.string.donate_alipay);
-            }
-            if (BuildConfig.WECHAT_DONATE && getDonateWeChat() != null) {
-                menu.add(Menu.NONE, R.string.donate_wechat, Menu.NONE, R.string.donate_wechat);
-            }
-            if (BuildConfig.PAYPAL_ACCOUNT != null) {
-                menu.add(Menu.NONE, R.string.donate_paypal, Menu.NONE, R.string.donate_paypal);
-            }
-        }
-    }
-
-    private boolean isDonate(int id) {
-        if (canDonateViaWeChat(id)) {
-            return donateViaWeChat();
-        } else if (canDonateViaAlipay(id)) {
-            return donateViaAlipay();
-        } else if (id == R.string.donate_paypal) {
-            return donateViaPayPal();
-        } else {
-            return false;
-        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (isDonate(id)) {
-            return true;
-        } else if (id == R.string.switch_theme) {
+        if (id == R.string.switch_theme) {
             return switchTheme();
         } else if (id == R.string.request_log) {
             return requestLog();
@@ -321,14 +291,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return false;
     }
 
-    private boolean canDonateViaAlipay(int id) {
-        return BuildConfig.ALIPAY_DONATE && id == R.string.donate_alipay;
-    }
-
-    private boolean canDonateViaWeChat(int id) {
-        return BuildConfig.WECHAT_DONATE && id == R.string.donate_wechat;
-    }
-
     private boolean switchTheme() {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         String theme = sp.getString(THEME, THEME_LIGHT);
@@ -340,83 +302,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         dangerousColor = null;
         transparentColor = null;
         RecreateUtils.recreate(this);
-        return true;
-    }
-
-    private ComponentName getDonateWeChat() {
-        return getDonateComponent(PreventIntent.NAME_WECHAT, PreventIntent.CLASS_WECHAT);
-    }
-
-    private ComponentName getDonateAlipay() {
-        return getDonateComponent(PreventIntent.NAME_ALIPAY, PreventIntent.CLASS_ALIPAY);
-    }
-
-    private ComponentName getDonateComponent(String packageName, String className) {
-        ComponentName cn = new ComponentName(packageName, className);
-        try {
-            PackageManager pm = getPackageManager();
-            ActivityInfo ai = pm.getActivityInfo(cn, 0);
-            int enabled = pm.getComponentEnabledSetting(cn);
-            if (BuildConfig.DEBUG) {
-                UILog.d("exported: " + ai.exported + ", enabled: " + ai.enabled + ", component enabled: " + enabled);
-            }
-            if (!ai.exported) {
-                return null;
-            }
-            if (ai.enabled && enabled == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
-                return cn;
-            }
-            if (enabled == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
-                return cn;
-            }
-        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
-            UILog.d("cannot find " + packageName + "/" + className);
-        }
-        return null;
-    }
-
-    private boolean donateViaWeChat() {
-        ComponentName cn = getDonateWeChat();
-        if (cn == null) {
-            return false;
-        }
-        Intent intent = new Intent();
-        intent.setComponent(cn);
-        intent.putExtra("scene", 1);
-        intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT);
-        try {
-            startActivity(intent);
-        } catch (Throwable t) { // NOSONAR
-            // do nothing
-        }
-        return true;
-    }
-
-    private boolean donateViaAlipay() {
-        ComponentName cn = getDonateAlipay();
-        if (cn == null) {
-            return false;
-        }
-        Intent intent = new Intent();
-        intent.setComponent(cn);
-        intent.putExtra("app_id", "20000053");
-        Bundle mExtras = new Bundle();
-        mExtras.putString("bizData", BuildConfig.ALIPAY_ACCOUNT);
-        intent.putExtra("mExtras", mExtras);
-        try {
-            startActivity(intent);
-        } catch (Throwable t) { // NOSONAR
-            // do nothing
-        }
-        return true;
-    }
-
-    private boolean donateViaPayPal() {
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.PAYPAL_ACCOUNT)));
-        } catch (Throwable t) { // NOSONAR
-            // do nothing
-        }
         return true;
     }
 
@@ -527,6 +412,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             savePackages();
         } else if (id == R.string.settings) {
             startActivity(new Intent(this, SettingsActivity.class));
+        } else if (id == R.string.about) {
+            startActivity(new Intent(this, AboutActivity.class));
         }
         selections.clear();
         checkSelection();

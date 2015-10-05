@@ -15,9 +15,9 @@
     <string name="importance_perceptible">Wahrnehmbar</string>
     <string name="importance_service">Service</string>
     <string name="importance_visible">Sichtbar</string>
-    <string name="importance_gone">Gone (English)</string>
+    <string name="importance_gone">Gone</string>
     <string name="importance_foreground_service">Vordergrund Service</string>
-    <string name="importance_top_sleeping">Top Sleeping (English)</string>
+    <string name="importance_top_sleeping">Top Sleeping</string>
     <string name="importance_service_not_started">Service (Nicht gestartet)</string>
     <string name="app_info">App-Info</string>
     <string name="uninstall">Deinstallieren</string>
@@ -28,9 +28,6 @@
     <string name="query_hint_system">\"-s\" für Systemanwendungen</string>
     <string name="retrieving">Status wird überprüft, bitte warten. . .</string>
     <string name="no_prevents">Bitte konfiguriere die Blockier-Liste.</string>
-    <string name="donate_wechat">Spenden via WeChat</string>
-    <string name="donate_alipay">Spenden via Alipay</string>
-    <string name="donate_paypal">Spenden via PayPal</string>
     <string name="updated_prevents">Blockier-Liste auf %1$d aktualisiert</string>
     <string name="test_version">Dies ist keine Releaseversion und könnte dein Gerät unnutzbar machen. Falls du nichts testen willst, deinstalliere diese Version bitte und wechsle zu einer Releaseversion.</string>
     <string name="request_log">Systemlog</string>
@@ -46,5 +43,9 @@
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>
+    <string name="about">Über</string>
+    <string name="paypal">PayPal</string>
+    <string name="donate">Spenden</string>
+    <string name="feedback">Feedback</string>
 
 </resources>

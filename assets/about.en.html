@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
+<title>Prevent Running</title>
+</head>
+<body>
+<p>Android 3.1 introduces <a href="http://developer.android.com/about/versions/android-3.1.html#launchcontrols">Launch controls</a> on stopped applications. However, there are no such features on android 2.3, and some devices didn't implement it at all.</p>
+
+<p>The module hajacks several system api to prevent the broadcast being sent to the prevented packages. Furthermore, it applies to system packages too, specially, support google play services.</p>
+
+<p>Please note, this application prevents following actions:</p>
+
+<ul>
+<li>(when prevents) suicide in activity, which will restart service</li>
+<li>(when prevents) move task to background</li>
+<li>(when prevents) start home activity</li>
+</ul>
+
+<p><strong>WARNING</strong>: please don't prevents system pacakges nor daily packages. Otherwise, you may miss important information.</p>
+
+<p>"Prevent Running" should work from android 2.3 to 5.1. However, I mainly use 5.1.</p>
+
+<p>How to use:</p>
+
+<ol>
+<li>install "Prevent Running", activate it in "Xposed Installer", reboot.</li>
+<li>open "Prevent Running",  then add/remove application to/from prevent list.</li>
+<li>use android normally, press back or remove it from recent task to exit, and press home for pause.</li>
+</ol>
+
+<p>If you don't like "auto prevent" added packages, please prevent "Prevent Running".</p>
+
+<p>And "Prevent Running" would keep "cached" processes, of cource it cannot turn to "service".</p>
+
+<p>Special Search:</p>
+
+<ul>
+<li><code>-3</code> for third party apps</li>
+<li><code>-s</code> for system apps</li>
+<li><code>-e</code> for non-prevent apps</li>
+<li><code>-r</code> for running apps</li>
+<li><code>-g</code> for gapps, i.e. apps from google</li>
+<li><code>-sg</code> for system apps excluding gapps</li>
+</ul>
+
+<p>Project: <a href="https://github.com/liudongmiao/ForceStopGB">ForceStopGB - GitHub</a>, any donations are welcome.</p>
+</body>
+</html>

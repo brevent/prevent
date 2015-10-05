@@ -28,9 +28,6 @@
     <string name="query_hint_system">\"-s\"为系统应用</string>
     <string name="retrieving">正在获取数据，请稍候. . .</string>
     <string name="no_prevents">请配置“阻止列表”。</string>
-    <string name="donate_wechat">捐赠 - 微信</string>
-    <string name="donate_alipay">捐赠 - 支付宝</string>
-    <string name="donate_paypal">捐赠 - 贝宝</string>
     <string name="updated_prevents">成功更新阻止列表，共%1$d条</string>
     <string name="test_version">这是测试版本，可能导致您的机器无法运行。如果不想参加测试，请恢复至正式版本。</string>
     <string name="request_log">系统日志</string>
@@ -46,5 +43,9 @@
     <string name="no_license">您没有许可修改所有设置，请累积捐赠10元或以上，然后联系作者获取许可。</string>
     <string name="no_valid_license">您没有权限使用颁发给“%1$s”的许可，请点击“%2$s”重新获取。</string>
     <string name="apply">申请</string>
+    <string name="about">关于</string>
+    <string name="paypal">贝宝</string>
+    <string name="donate">捐赠</string>
+    <string name="feedback">反馈</string>
 
 </resources>
