@@ -5,18 +5,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.LicenseUtils;
+import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
  * Created by thom on 15/10/3.
@@ -28,13 +27,15 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        setTheme(PreventActivity.THEME_LIGHT.equals(sp.getString(PreventActivity.THEME, PreventActivity.THEME_LIGHT)) ? R.style.light : R.style.dark);
+        ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         //noinspection deprecation
         addPreferencesFromResource(R.xml.settings);
         //noinspection deprecation
         findPreference(KEY_FORCE_STOP_TIMEOUT).setOnPreferenceChangeListener(this);
+
+        ThemeUtils.fixSmartBar(this);
+
         // check license
         Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
         intent.putExtra(Intent.EXTRA_USER, LicenseUtils.getLicense(this));

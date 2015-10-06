@@ -1,10 +1,8 @@
 package me.piebridge.prevent.ui;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -14,7 +12,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -30,6 +27,7 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.LicenseUtils;
+import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
  * Created by thom on 15/10/3.
@@ -40,18 +38,11 @@ public class AboutActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        setTheme(PreventActivity.THEME_LIGHT.equals(sp.getString(PreventActivity.THEME, PreventActivity.THEME_LIGHT)) ? R.style.light : R.style.dark);
+        ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.about);
-        try {
-            ActionBar actionBar = getActionBar();
-            if (actionBar != null) {
-                actionBar.setActionBarViewCollapsable(true);
-            }
-        } catch (NoSuchMethodError e) { // NOSONAR
-            // do nothing
-        }
+        ThemeUtils.fixSmartBar(this);
+
         WebView webView = (WebView) findViewById(R.id.webview);
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);

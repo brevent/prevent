@@ -9,14 +9,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -35,7 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.robv.android.xposed.XposedBridge;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
@@ -52,6 +50,7 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
+import me.piebridge.prevent.ui.util.ThemeUtils;
 
 public class PreventActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
@@ -71,10 +70,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private static final int APPLICATIONS = 0;
     private static final int PREVENT_LIST = 1;
-
-    public static final String THEME = "theme";
-    public static final String THEME_LIGHT = "light";
-    public static final String THEME_DARK = "dark";
 
     private ProgressDialog dialog;
 
@@ -104,25 +99,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return transparentColor;
     }
 
-    private static boolean hasSmartBar() {
-        try {
-            Method method = Build.class.getMethod("hasSmartBar");
-            return (Boolean) method.invoke(null);
-        } catch (Exception e) { // NOSONAR
-            // do nothing
-        }
-        return false;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        setTheme(THEME_LIGHT.equals(sp.getString(THEME, THEME_LIGHT)) ? R.style.light : R.style.dark);
-        if (hasSmartBar()) {
-            getWindow().setUiOptions(ActivityInfo.UIOPTION_SPLIT_ACTION_BAR_WHEN_NARROW);
-        }
+        ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        ThemeUtils.fixSmartBar(this);
 
         mPager = (ViewPager) findViewById(R.id.pager);
         main = findViewById(R.id.main);
@@ -150,10 +132,20 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             ActionBar actionBar = getActionBar();
             if (actionBar != null) {
                 actions.setVisibility(View.GONE);
-                actionBar.setActionBarViewCollapsable(true);
             }
         } catch (NoSuchMethodError e) { // NOSONAR
             // do nothing
+        }
+
+        try {
+            Class<?> clazz = Class.forName("de.robv.android.xposed.XposedBridge", false, ClassLoader.getSystemClassLoader());
+            Field field = clazz.getDeclaredField("disableHooks");
+            field.setAccessible(true);
+            field.set(null, true);
+        } catch (ClassNotFoundException e) {
+            UILog.d("cannot find Xposed", e);
+        } catch (Throwable t) { // NOSONAR
+            UILog.d("cannot disable Xposed", t);
         }
 
         if (!BuildConfig.RELEASE && TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
@@ -291,13 +283,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private boolean switchTheme() {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        String theme = sp.getString(THEME, THEME_LIGHT);
-        if (THEME_LIGHT.equals(theme)) {
-            sp.edit().putString(THEME, THEME_DARK).apply();
-        } else {
-            sp.edit().putString(THEME, THEME_LIGHT).apply();
-        }
+        ThemeUtils.switchTheme(this);
         dangerousColor = null;
         transparentColor = null;
         RecreateUtils.recreate(this);

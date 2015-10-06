@@ -214,20 +214,20 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     }
 
     protected void onScreenOn() {
-        PreventLog.i("screen on");
+        PreventLog.d("screen on");
         screen = true;
         cancelCheckingIfNeeded();
     }
 
     protected void onScreenOff() {
-        PreventLog.i("screen off");
+        PreventLog.d("screen off");
         screen = false;
         cancelCheckingIfNeeded();
         checkLeavingPackages();
     }
 
     private void checkLeavingPackages() {
-        PreventLog.i("checking leaving packages");
+        PreventLog.d("checking leaving packages");
         long now = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime());
         Iterator<Map.Entry<String, Long>> iterator = leavingPackages.entrySet().iterator();
         while (iterator.hasNext()) {
