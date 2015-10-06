@@ -24,7 +24,6 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
  */
 public class SettingsActivity extends PreferenceActivity implements Preference.OnPreferenceChangeListener {
 
-
     public static final String KEY_FORCE_STOP_TIMEOUT = "force_stop_timeout";
 
     @Override
@@ -96,6 +95,5 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         }
         return true;
     }
-
 
 }

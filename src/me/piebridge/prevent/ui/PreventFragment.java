@@ -463,7 +463,7 @@ public abstract class PreventFragment extends ListFragment {
             appInfo.running = mActivity.getRunningProcesses().get(appInfo.packageName);
             appInfo.result = mActivity.getPreventPackages().get(appInfo.packageName);
             holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
-            if (isEquals(holder, appInfo)) {
+            if (PreventFragment.equals(holder, appInfo)) {
                 holder.summaryView.setText(formatRunning(holder.running));
                 return view;
             }
@@ -677,14 +677,10 @@ public abstract class PreventFragment extends ListFragment {
 
     }
 
-    private boolean isEquals(ViewHolder holder, AppInfo appInfo) {
-        return isEquals(appInfo.packageName, holder.packageName)
-                && isEquals(appInfo.running, holder.running)
-                && isEquals(appInfo.result, holder.result);
-    }
-
-    private static boolean isEquals(Object a, Object b) {
-        return (a == b) || (a != null && a.equals(b));
+    private static boolean equals(ViewHolder holder, AppInfo appInfo) { // NOSONAR
+        return PackageUtils.equals(appInfo.packageName, holder.packageName)
+                && PackageUtils.equals(appInfo.running, holder.running)
+                && PackageUtils.equals(appInfo.result, holder.result);
     }
 
     private CharSequence formatRunning(Set<Long> running) {

@@ -93,7 +93,7 @@ public class SystemReceiver extends ActivityReceiver {
         Map<String, String> users = new LinkedHashMap<String, String>();
         for (Account account : AccountManager.get(context).getAccounts()) {
             users.put(account.type, account.name);
-            if (user.equals(account.name)) {
+            if (PackageUtils.equals(account.name, user)) {
                 setResultCode(0x1);
                 return true;
             }
@@ -103,7 +103,7 @@ public class SystemReceiver extends ActivityReceiver {
             number = number.replace("-", "");
             number = number.replace(" ", "");
             users.put("line1Number", number);
-            if (user.equals(number)) {
+            if (PackageUtils.equals(number, user)) {
                 setResultCode(0x1);
                 return true;
             }

@@ -53,7 +53,7 @@ public class LicenseUtils {
                 }
             }
         }
-        return key;
+        return new byte[0];
     }
 
     private static RSAPublicKey getPublicKey(Context context) {
@@ -101,8 +101,12 @@ public class LicenseUtils {
     }
 
     private static String retrieveLicense(Context context) {
+        byte[] key = readKey(context);
+        if (key.length == 0) {
+            return null;
+        }
         RSAPublicKey publicKey = getPublicKey(context);
-        byte[] signature = new BigInteger(1, readKey(context)).modPow(publicKey.getPublicExponent(), publicKey.getModulus()).toByteArray();
+        byte[] signature = new BigInteger(1, key).modPow(publicKey.getPublicExponent(), publicKey.getModulus()).toByteArray();
         int size = signature.length;
         for (int i = 0; i < size; ++i) {
             if (signature[i] == 0x00) {
