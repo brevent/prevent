@@ -57,6 +57,7 @@ public final class SystemHook {
     public static final int FIRST_APPLICATION_UID = 10000;
 
     private static Context mContext;
+    private static boolean activated;
     private static ClassLoader mClassLoader;
     private static Map<String, Boolean> mPreventPackages;
 
@@ -524,6 +525,10 @@ public final class SystemHook {
         }
     }
 
+    public static boolean isActivated() {
+        return activated;
+    }
+
     private static class RetrievingTask implements Runnable {
         @Override
         public void run() {
@@ -539,6 +544,7 @@ public final class SystemHook {
             ActivityManagerServiceHook.setContext(mContext, mPreventPackages);
             IntentFilterHook.setContext(mContext, mPreventPackages);
             PreventLog.i("prevent running " + BuildConfig.VERSION_NAME + " activated");
+            activated = true;
 
             LogcatUtils.logcat(mContext);
         }
