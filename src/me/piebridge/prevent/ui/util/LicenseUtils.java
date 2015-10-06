@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.os.SystemClock;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -15,6 +16,10 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPublicKey;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.ui.UILog;
@@ -23,6 +28,8 @@ import me.piebridge.prevent.ui.UILog;
  * Created by thom on 15/10/5.
  */
 public class LicenseUtils {
+
+    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x1);
 
     private LicenseUtils() {
 
@@ -70,7 +77,30 @@ public class LicenseUtils {
         return null;
     }
 
-    public static String getLicense(Context context) {
+    public static String getLicense(final Context context) {
+        long start = 0;
+        if (!BuildConfig.RELEASE) {
+            start = SystemClock.elapsedRealtime();
+        }
+        Future<String> future = executor.submit(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return retrieveLicense(context);
+            }
+        });
+        try {
+            return future.get(0x1, TimeUnit.SECONDS);
+        } catch (Throwable t) { // NOSONAR
+            UILog.d("cannot get license", t);
+            return null;
+        } finally {
+            if (!BuildConfig.RELEASE) {
+                UILog.d("get license take " + (SystemClock.elapsedRealtime() - start) + "ms");
+            }
+        }
+    }
+
+    private static String retrieveLicense(Context context) {
         RSAPublicKey publicKey = getPublicKey(context);
         byte[] signature = new BigInteger(1, readKey(context)).modPow(publicKey.getPublicExponent(), publicKey.getModulus()).toByteArray();
         int size = signature.length;
