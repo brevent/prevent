@@ -16,6 +16,7 @@ import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
+import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
@@ -90,22 +91,8 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
         if (KEY_FORCE_STOP_TIMEOUT.equals(key)) {
-            String license = LicenseUtils.getLicense(this);
-            if (!TextUtils.isEmpty(license) || !BuildConfig.RELEASE) {
-                try {
-                    long timeout = Long.valueOf(String.valueOf(newValue));
-                    Intent intent = new Intent(PreventIntent.ACTION_UPDATE_TIMEOUT, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-                    intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-                    intent.putExtra(PreventIntent.EXTRA_TIMEOUT, timeout);
-                    intent.putExtra(Intent.EXTRA_USER, license);
-                    sendBroadcast(intent, PreventIntent.PERMISSION_SYSTEM);
-                } catch (NumberFormatException e) {
-                    UILog.d(String.valueOf(newValue) + " is not long", e);
-                }
-                return true;
-            } else {
-                return false;
-            }
+            UILog.d("update timeout to " + newValue);
+            return !TextUtils.isEmpty(LicenseUtils.getLicense(this)) && PreventUtils.updateTimeout(this, String.valueOf(newValue));
         }
         return true;
     }

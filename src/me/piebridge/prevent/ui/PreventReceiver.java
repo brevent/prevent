@@ -26,11 +26,7 @@ public class PreventReceiver extends BroadcastReceiver {
         } else if (PreventIntent.ACTION_UPDATE_TIMEOUT.equals(action)) {
             String timeout = PreferenceManager.getDefaultSharedPreferences(context).getString(SettingsActivity.KEY_FORCE_STOP_TIMEOUT, "-1");
             UILog.d("timeout: " + timeout);
-            try {
-                PreventUtils.updateTimeout(context, Long.valueOf(timeout));
-            } catch (NumberFormatException e) {
-                UILog.d(timeout + " is not long", e);
-            }
+            PreventUtils.updateTimeout(context, timeout);
         }
     }
 

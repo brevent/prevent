@@ -6,7 +6,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.telephony.TelephonyManager;
-import android.text.TextUtils;
 
 import org.json.JSONObject;
 
@@ -82,13 +81,8 @@ public class SystemReceiver extends ActivityReceiver {
             int size = (int) LogcatUtils.logcat(context);
             setResultCode(size);
         } else if (PreventIntent.ACTION_UPDATE_TIMEOUT.equals(action)) {
-            String user = intent.getStringExtra(Intent.EXTRA_USER);
-            if (TextUtils.isEmpty(user) || handleCheckLicense(context, intent)) {
-                timeout = intent.getLongExtra(PreventIntent.EXTRA_TIMEOUT, -1);
-                PreventLog.i("update timeout to " + timeout + "s");
-            } else {
-                PreventLog.e("cannot update timeout, current is " + timeout + "s");
-            }
+            timeout = intent.getLongExtra(PreventIntent.EXTRA_TIMEOUT, -1);
+            PreventLog.i("update timeout to " + timeout + "s");
         } else if (PreventIntent.ACTION_CHECK_LICENSE.equals(action)) {
             handleCheckLicense(context, intent);
         }

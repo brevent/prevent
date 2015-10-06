@@ -38,11 +38,19 @@ public class PreventUtils {
         context.sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new PreventListReceiver(), null, 0, null, null);
     }
 
-    public static void updateTimeout(Context context, long timeout) {
+    public static boolean updateTimeout(Context context, String value) {
+        long timeout;
+        try {
+            timeout = Long.valueOf(value);
+        } catch (NumberFormatException e) {
+            UILog.d(value + " is not long", e);
+            return false;
+        }
         Intent intent = new Intent(PreventIntent.ACTION_UPDATE_TIMEOUT, Uri.fromParts(PreventIntent.SCHEME, context.getPackageName(), null));
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
         intent.putExtra(PreventIntent.EXTRA_TIMEOUT, timeout);
         context.sendBroadcast(intent, PreventIntent.PERMISSION_SYSTEM);
+        return true;
     }
 
     private static class PreventListReceiver extends BroadcastReceiver {
