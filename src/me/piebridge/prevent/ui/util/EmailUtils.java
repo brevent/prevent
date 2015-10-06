@@ -1,4 +1,4 @@
-package me.piebridge.prevent.ui;
+package me.piebridge.prevent.ui.util;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -10,6 +10,7 @@ import java.util.Locale;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.ui.UILog;
 
 /**
  * Created by thom on 15/10/5.
