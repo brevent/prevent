@@ -19,6 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
@@ -37,7 +38,7 @@ public class SystemReceiver extends ActivityReceiver {
             PreventIntent.ACTION_GET_PACKAGES,
             PreventIntent.ACTION_GET_PROCESSES,
             PreventIntent.ACTION_UPDATE_PREVENT,
-            PreventIntent.ACTION_REQUEST_LOG,
+            PreventIntent.ACTION_SYSTEM_LOG,
             PreventIntent.ACTION_UPDATE_TIMEOUT,
             PreventIntent.ACTION_CHECK_LICENSE
     );
@@ -76,7 +77,7 @@ public class SystemReceiver extends ActivityReceiver {
             handleGetProcesses(context, action);
         } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
             handleUpdatePrevent(action, intent);
-        } else if (PreventIntent.ACTION_REQUEST_LOG.equals(action)) {
+        } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
             LogcatUtils.logcat();
             int size = (int) LogcatUtils.logcat(context);
             setResultCode(size);
@@ -147,15 +148,14 @@ public class SystemReceiver extends ActivityReceiver {
                 status.add(elapsed);
             }
         }
-        LogUtils.logRequest(action, null, running.size());
+        LogUtils.logRequestInfo(action, null, running.size());
         setResultData(toJSON(running));
         abortBroadcast();
     }
 
     private void handleGetPackages(String action) {
-        Map<String, Boolean> preventPackages = new HashMap<String, Boolean>(mPreventPackages);
-        Boolean canStopGms = GmsUtils.canStopGms();
-        if (!canStopGms) {
+        Map<String, Boolean> preventPackages = new TreeMap<String, Boolean>(mPreventPackages);
+        if (!GmsUtils.canStopGms()) {
             for (String packageName : GmsUtils.getGmsPackages()) {
                 if (Boolean.TRUE.equals(preventPackages.get(packageName))) {
                     preventPackages.put(packageName, false);
@@ -165,7 +165,7 @@ public class SystemReceiver extends ActivityReceiver {
         int size = preventPackages.size();
         setResultCode(size);
         setResultData(new JSONObject(preventPackages).toString());
-        LogUtils.logRequest(action, null, size);
+        LogUtils.logRequestInfo(action, null, size);
         abortBroadcast();
     }
 
@@ -183,7 +183,7 @@ public class SystemReceiver extends ActivityReceiver {
         }
         setResultCode(prevents.size());
         setResultData(new JSONObject(prevents).toString());
-        LogUtils.logRequest(action, null, prevents.size());
+        LogUtils.logRequestInfo(action, null, prevents.size());
         abortBroadcast();
     }
 

@@ -11,7 +11,7 @@ public final class PreventIntent {
     public static final String ACTION_GET_PACKAGES = NAMESPACE + "GET_PACKAGES";
     public static final String ACTION_GET_PROCESSES = NAMESPACE + "GET_PROCESSES";
     public static final String ACTION_UPDATE_PREVENT = NAMESPACE + "UPDATE_PREVENT";
-    public static final String ACTION_REQUEST_LOG = NAMESPACE + "REQUEST_LOG";
+    public static final String ACTION_SYSTEM_LOG = NAMESPACE + "SYSTEM_LOG";
     public static final String ACTION_UPDATE_TIMEOUT = NAMESPACE + "UPDATE_TIMEOUT";
     public static final String ACTION_CHECK_LICENSE = NAMESPACE + "CHECK_LICENSE";
 

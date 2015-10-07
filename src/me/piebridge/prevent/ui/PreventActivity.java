@@ -272,7 +272,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         if (getExternalCacheDir() != null) {
             Intent intent = new Intent();
             intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
-            intent.setAction(PreventIntent.ACTION_REQUEST_LOG);
+            intent.setAction(PreventIntent.ACTION_SYSTEM_LOG);
             intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
             UILog.i("sending request log broadcast");
             showProcessDialog(R.string.retrieving);
@@ -430,10 +430,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         dialog.show();
     }
 
-    private void showDisableDialog() {
+    private void showDisableDialog(String result) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
-        builder.setMessage(R.string.xposed_disabled);
+        if (result == null) {
+            builder.setMessage(R.string.xposed_disabled);
+        } else {
+            builder.setMessage(result);
+        }
         builder.setIcon(R.drawable.ic_launcher);
         builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
@@ -549,7 +553,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 showFragments();
             } else if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
                 handleGetPackages();
-            } else if (PreventIntent.ACTION_REQUEST_LOG.equals(action)) {
+            } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
                 handleRequestLog();
             } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
                 String packageName = PackageUtils.getPackageName(intent);
@@ -644,7 +648,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         private boolean handleGetPackages() {
             UILog.i("received get prevent packages broadcast");
-            String result = getResultData();
+            final String result = getResultData();
             if (result != null) {
                 handlePackages(result);
                 if (preventPackages != null) {
@@ -656,7 +660,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    showDisableDialog();
+                    showDisableDialog(result);
                 }
             });
             return false;
