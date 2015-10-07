@@ -33,6 +33,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -141,8 +142,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             Field field = clazz.getDeclaredField("disableHooks");
             field.setAccessible(true);
             field.set(null, true);
-        } catch (ClassNotFoundException e) {
-            UILog.d("cannot find Xposed", e);
+
+            disableXposed(clazz);
+        } catch (ClassNotFoundException e) { // NOSONAR
+            // do nothing
         } catch (Throwable t) { // NOSONAR
             UILog.d("cannot disable Xposed", t);
         }
@@ -151,6 +154,28 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             showTestDialog();
         } else {
             init();
+        }
+    }
+
+    private void disableXposed(Class<?> clazz) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
+        UILog.d("disabled xposed");
+        Field field = clazz.getDeclaredField("sHookedMethodCallbacks");
+        field.setAccessible(true);
+        Map sHookedMethodCallbacks = (Map) field.get(null);
+        Iterator iterator = sHookedMethodCallbacks.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            Member method = (Member) entry.getKey();
+            if (this.getClass().equals(method.getDeclaringClass())) {
+                Object callbacks = entry.getValue();
+                field = callbacks.getClass().getDeclaredField("elements");
+                field.setAccessible(true);
+                Object[] elements = (Object[]) field.get(callbacks);
+                Object doNothing = Class.forName("de.robv.android.xposed.XC_MethodReplacement", false, ClassLoader.getSystemClassLoader()).getField("DO_NOTHING").get(null);
+                for (int i = 0; i < elements.length; ++i) {
+                    elements[i] = doNothing;
+                }
+            }
         }
     }
 
