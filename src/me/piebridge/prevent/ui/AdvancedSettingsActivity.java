@@ -26,26 +26,34 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     public static final String KEY_FORCE_STOP_TIMEOUT = "force_stop_timeout";
 
+    private String license;
+
+    private Preference forceStopTimeout;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         //noinspection deprecation
         addPreferencesFromResource(R.xml.settings);
+
         //noinspection deprecation
-        findPreference(KEY_FORCE_STOP_TIMEOUT).setOnPreferenceChangeListener(this);
+        forceStopTimeout = findPreference(KEY_FORCE_STOP_TIMEOUT);
+        forceStopTimeout.setOnPreferenceChangeListener(this);
 
         ThemeUtils.fixSmartBar(this);
 
         // check license
+        license = LicenseUtils.getLicense(this);
         Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-        intent.putExtra(Intent.EXTRA_USER, LicenseUtils.getLicense(this));
+        intent.putExtra(Intent.EXTRA_USER, license);
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
         sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction()) && getResultCode() != 1) {
                     alert(getResultData());
+                    forceStopTimeout.setEnabled(false);
                 }
             }
         }, null, 0, null, null);
@@ -53,7 +61,6 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     private void alert(String accounts) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        String license = LicenseUtils.getLicense(this);
         final String content = "license: " + license + ", accounts: " + accounts;
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
         if (TextUtils.isEmpty(license)) {
@@ -91,8 +98,10 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         String key = preference.getKey();
         if (KEY_FORCE_STOP_TIMEOUT.equals(key)) {
             UILog.d("update timeout to " + newValue);
-            return !TextUtils.isEmpty(LicenseUtils.getLicense(this)) && PreventUtils.updateTimeout(this, String.valueOf(newValue));
+            PreventUtils.updateTimeout(this, String.valueOf(newValue));
         }
+        // tricky to fix for android 2.3
+        preference.setShouldDisableView(true);
         return true;
     }
 

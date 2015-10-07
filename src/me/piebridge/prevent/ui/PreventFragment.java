@@ -326,7 +326,16 @@ public abstract class PreventFragment extends ListFragment {
     }
 
     public void updateTimeIfNeeded() {
-        mAdapter.notifyDataSetChanged();
+        ListView l = getListView();
+        int start = l.getFirstVisiblePosition();
+        int end = l.getLastVisiblePosition();
+        for (int i = start; i <= end; ++i) {
+            View view = l.getChildAt(i);
+            if (view != null) {
+                ViewHolder holder = (ViewHolder) view.getTag();
+                holder.summaryView.setText(formatRunning(holder.running));
+            }
+        }
     }
 
     private static class Position {
@@ -463,10 +472,6 @@ public abstract class PreventFragment extends ListFragment {
             appInfo.running = mActivity.getRunningProcesses().get(appInfo.packageName);
             appInfo.result = mActivity.getPreventPackages().get(appInfo.packageName);
             holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
-            if (PreventFragment.equals(holder, appInfo)) {
-                holder.summaryView.setText(formatRunning(holder.running));
-                return view;
-            }
             holder.result = appInfo.result;
             holder.running = appInfo.running;
             holder.label = appInfo.name;
@@ -674,13 +679,6 @@ public abstract class PreventFragment extends ListFragment {
                 }
             }
         }
-
-    }
-
-    private static boolean equals(ViewHolder holder, AppInfo appInfo) { // NOSONAR
-        return PackageUtils.equals(appInfo.packageName, holder.packageName)
-                && PackageUtils.equals(appInfo.running, holder.running)
-                && PackageUtils.equals(appInfo.result, holder.result);
     }
 
     private CharSequence formatRunning(Set<Long> running) {

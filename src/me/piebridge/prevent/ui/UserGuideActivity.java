@@ -73,9 +73,11 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         } else {
             webView.loadUrl("file:///android_asset/about.en.html");
         }
-        checkView(R.id.alipay, getDonateAlipay());
-        checkView(R.id.wechat, getDonateWeChat());
-        if (!Locale.CHINA.equals(Locale.getDefault())) {
+        ComponentName donateAlipay = getDonateAlipay();
+        ComponentName donateWeChate = getDonateWeChat();
+        checkView(R.id.alipay, donateAlipay);
+        checkView(R.id.wechat, donateWeChate);
+        if (!Locale.CHINA.equals(Locale.getDefault()) || (donateAlipay == null && donateWeChate == null)) {
             setView(R.id.paypal, "com.paypal.android.p2pmobile");
         }
         donateView = findViewById(R.id.donate);
@@ -105,6 +107,10 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
 
     private void setView(int id, String packageName) {
         View donate = findViewById(id);
+        donate.setClickable(true);
+        donate.setOnClickListener(this);
+        donate.setVisibility(View.VISIBLE);
+
         PackageManager pm = getPackageManager();
         try {
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
@@ -117,9 +123,6 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             TextView text = (TextView) donate.findViewWithTag("text");
             text.setText(label);
 
-            donate.setClickable(true);
-            donate.setOnClickListener(this);
-            donate.setVisibility(View.VISIBLE);
         } catch (PackageManager.NameNotFoundException e) {
             UILog.d("cannot find package " + packageName, e);
         }
