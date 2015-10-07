@@ -22,7 +22,7 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
 /**
  * Created by thom on 15/10/3.
  */
-public class SettingsActivity extends PreferenceActivity implements Preference.OnPreferenceChangeListener {
+public class AdvancedSettingsActivity extends PreferenceActivity implements Preference.OnPreferenceChangeListener {
 
     public static final String KEY_FORCE_STOP_TIMEOUT = "force_stop_timeout";
 
@@ -80,7 +80,7 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                EmailUtils.sendEmail(SettingsActivity.this, content);
+                EmailUtils.sendEmail(AdvancedSettingsActivity.this, content);
             }
         });
         builder.create().show();

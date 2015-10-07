@@ -395,9 +395,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             }
             savePackages();
         } else if (id == R.string.advanced_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
+            startActivity(new Intent(this, AdvancedSettingsActivity.class));
         } else if (id == R.string.user_guide) {
-            startActivity(new Intent(this, AboutActivity.class));
+            startActivity(new Intent(this, UserGuideActivity.class));
         }
         selections.clear();
         checkSelection();

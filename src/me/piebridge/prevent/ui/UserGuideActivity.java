@@ -33,7 +33,7 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
 /**
  * Created by thom on 15/10/3.
  */
-public class AboutActivity extends Activity implements View.OnClickListener {
+public class UserGuideActivity extends Activity implements View.OnClickListener {
 
     private View donateView;
 
