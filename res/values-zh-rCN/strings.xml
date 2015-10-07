@@ -25,7 +25,6 @@
 
     <!-- main menu -->
     <string name="switch_theme">切换主题</string>
-    <string name="system_log">系统日志</string>
     <string name="advanced_settings">高级设置</string>
     <string name="user_guide">用户指南</string>
 
@@ -65,6 +64,8 @@
     <!-- user guide menu -->
     <string name="donate">捐赠</string>
     <string name="feedback">反馈</string>
+    <string name="version">版本</string>
+    <string name="report_bug">报告问题</string>
 
     <!-- donation -->
     <string name="paypal">贝宝</string>

@@ -546,7 +546,7 @@ public final class SystemHook {
             PreventLog.i("prevent running " + BuildConfig.VERSION_NAME + " activated");
             activated = true;
 
-            LogcatUtils.logcat(mContext);
+            LogcatUtils.logcat(mContext, "boot");
         }
 
         private void loadPrevent(Map<String, Boolean> preventPackages) {

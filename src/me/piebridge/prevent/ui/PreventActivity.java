@@ -275,7 +275,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             removeMenu.setVisible(false);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-        menu.add(Menu.NONE, R.string.system_log, Menu.NONE, R.string.system_log);
         menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
         menu.add(Menu.NONE, R.string.user_guide, Menu.NONE, R.string.user_guide);
         return super.onCreateOptionsMenu(menu);
@@ -286,24 +285,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         int id = item.getItemId();
         if (id == R.string.switch_theme) {
             return switchTheme();
-        } else if (id == R.string.system_log) {
-            return requestLog();
         } else {
             return onClick(id);
         }
-    }
-
-    private boolean requestLog() {
-        if (getExternalCacheDir() != null) {
-            Intent intent = new Intent();
-            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
-            intent.setAction(PreventIntent.ACTION_SYSTEM_LOG);
-            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-            UILog.i("sending request log broadcast");
-            showProcessDialog(R.string.retrieving);
-            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
-        }
-        return false;
     }
 
     private boolean switchTheme() {
@@ -578,8 +562,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 showFragments();
             } else if (PreventIntent.ACTION_GET_PACKAGES.equals(action)) {
                 handleGetPackages();
-            } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
-                handleRequestLog();
             } else if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
                 String packageName = PackageUtils.getPackageName(intent);
                 if (running != null) {
@@ -588,21 +570,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 if (preventPackages != null && Boolean.FALSE.equals(preventPackages.get(packageName))) {
                     preventPackages.put(packageName, true);
                 }
-            }
-        }
-
-        private void handleRequestLog() {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    dialog.dismiss();
-                }
-            });
-            File file = getExternalCacheDir();
-            int result = getResultCode();
-            if (file != null && result > 0) {
-                String path = file.getAbsolutePath();
-                Toast.makeText(getApplicationContext(), path, Toast.LENGTH_LONG).show();
             }
         }
 

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 
+import java.io.File;
 import java.util.Locale;
 
 import me.piebridge.forcestopgb.BuildConfig;
@@ -21,7 +22,7 @@ public class EmailUtils {
 
     }
 
-    public static void sendEmail(Context context, String content) {
+    public static String getSubject(Context context) {
         StringBuilder subject = new StringBuilder();
         subject.append(context.getString(R.string.app_name));
         subject.append(" ");
@@ -31,8 +32,12 @@ public class EmailUtils {
         subject.append("-");
         subject.append(Build.VERSION.RELEASE);
         subject.append(")");
+        return subject.toString();
+    }
+
+    public static void sendEmail(Context context, String content) {
         Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:liudongmiao@gmail.com"));
-        intent.putExtra(Intent.EXTRA_SUBJECT, subject.toString());
+        intent.putExtra(Intent.EXTRA_SUBJECT, getSubject(context));
         if (content != null) {
             intent.putExtra(Intent.EXTRA_TEXT, content);
         }
@@ -41,6 +46,17 @@ public class EmailUtils {
         } catch (ActivityNotFoundException e) {
             UILog.d("cannot send email", e);
         }
+    }
+
+    public static void sendZip(Context context, File path, String content) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setType("application/zip");
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(path));
+        intent.putExtra(Intent.EXTRA_SUBJECT, EmailUtils.getSubject(context));
+        intent.putExtra(Intent.EXTRA_TEXT, content);
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"liudongmiao@gmail.com"});
+        context.startActivity(intent);
     }
 
 }

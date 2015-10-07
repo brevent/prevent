@@ -78,9 +78,10 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
             handleUpdatePrevent(action, intent);
         } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
-            LogcatUtils.logcat();
-            int size = (int) LogcatUtils.logcat(context);
-            setResultCode(size);
+            LogcatUtils.logcat("*:v");
+            LogcatUtils.logcat(context, "system");
+            LogcatUtils.logcat("-s Prevent:v PreventUI:v");
+            setResultCode((int) LogcatUtils.logcat(context, "prevent"));
         } else if (PreventIntent.ACTION_UPDATE_TIMEOUT.equals(action)) {
             timeout = intent.getLongExtra(PreventIntent.EXTRA_TIMEOUT, -1);
             PreventLog.i("update timeout to " + timeout + "s");

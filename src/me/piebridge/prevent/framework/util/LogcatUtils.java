@@ -23,30 +23,31 @@ import me.piebridge.prevent.ui.PreventProvider;
 public class LogcatUtils {
 
     private static final String CACHE = "/data/system/prevent.log";
-    private static final String COMMAND = "/system/bin/logcat -d -v time -f " + CACHE + " *:v";
+    private static final String COMMAND = "/system/bin/logcat -d -v time -f " + CACHE;
 
     private LogcatUtils() {
 
     }
 
-    public static void logcat() {
+    public static void logcat(String log) {
         try {
-            PreventLog.d("will execute: " + COMMAND);
-            Runtime.getRuntime().exec(COMMAND);
-            PreventLog.d("execute complete: " + COMMAND);
+            String command = COMMAND + " " + log;
+            PreventLog.d("will execute: " + command);
+            Runtime.getRuntime().exec(command);
+            PreventLog.d("execute complete: " + command);
             Runtime.getRuntime().exec("/system/bin/sync");
         } catch (IOException e) {
             PreventLog.d("exec wrong", e);
         }
     }
 
-    public static long logcat(Context context) {
+    public static long logcat(Context context, String prefix) {
         File cache = new File(CACHE);
         if (cache.exists()) {
             long size = cache.length();
             PreventLog.d("log size: " + cache.length());
             try {
-                sendToUi(context, new BufferedInputStream(new FileInputStream(cache)));
+                sendToUi(context, new BufferedInputStream(new FileInputStream(cache)), prefix);
                 PreventLog.d("send to ui successfully");
             } catch (IOException e) {
                 PreventLog.d("cannot send log to ui", e);
@@ -59,14 +60,14 @@ public class LogcatUtils {
         }
     }
 
-    private static void sendToUi(Context context, InputStream is) throws IOException {
+    private static void sendToUi(Context context, InputStream is, String prefix) throws IOException {
         int length;
         byte[] buffer = new byte[0x300];
         ContentResolver contentResolver = context.getContentResolver();
         String path = new SimpleDateFormat("yyyyMMdd.HH.mm.ss'.txt'", Locale.US).format(new Date());
         while ((length = is.read(buffer)) != -1) {
             String line = Base64.encodeToString(buffer, 0, length, Base64.URL_SAFE | Base64.NO_WRAP);
-            Uri uri = PreventProvider.CONTENT_URI.buildUpon().appendQueryParameter("path", path)
+            Uri uri = PreventProvider.CONTENT_URI.buildUpon().appendQueryParameter("path", prefix + "." + path)
                     .appendQueryParameter("log", line).build();
             contentResolver.query(uri, null, null, null, null);
         }

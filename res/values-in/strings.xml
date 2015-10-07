@@ -25,7 +25,6 @@
 
     <!-- main menu -->
     <string name="switch_theme">Ubah tema</string>
-    <string name="system_log">Sistem log</string>
     <string name="advanced_settings">Setelan lanjutan</string>
     <string name="user_guide">User guide</string>
 
@@ -65,6 +64,8 @@
     <!-- user guide menu -->
     <string name="donate">Donasi</string>
     <string name="feedback">Feedback</string>
+    <string name="version">versi</string>
+    <string name="report_bug">Report Bug</string>
 
     <!-- donation -->
     <string name="paypal">PayPal</string>

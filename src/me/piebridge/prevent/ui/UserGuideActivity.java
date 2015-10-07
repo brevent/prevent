@@ -1,7 +1,13 @@
 package me.piebridge.prevent.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
@@ -21,13 +27,21 @@ import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Locale;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
+import me.piebridge.prevent.ui.util.QQUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
@@ -36,6 +50,10 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
 public class UserGuideActivity extends Activity implements View.OnClickListener {
 
     private View donateView;
+
+    private ProgressDialog dialog;
+
+    private BroadcastReceiver receiver;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -202,6 +220,8 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         menu.clear();
         menu.add(Menu.NONE, R.string.donate, Menu.NONE, R.string.donate);
         menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
+        menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);
+        menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -211,7 +231,13 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         if (id == R.string.donate) {
             donateView.setVisibility(View.VISIBLE);
         } else if (id == R.string.feedback) {
-            EmailUtils.sendEmail(this, getString(R.string.feedback));
+            if (!Locale.CHINA.equals(Locale.getDefault()) || !QQUtils.joinQQ(this)) {
+                EmailUtils.sendEmail(this, getString(R.string.feedback));
+            }
+        } else if (id == R.string.report_bug) {
+            return requestLog();
+        } else if (id == R.string.version) {
+            showVersionInfo();
         }
         return true;
     }
@@ -229,6 +255,33 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         });
     }
 
+    private void showProcessDialog(int resId) {
+        if (dialog == null) {
+            dialog = new ProgressDialog(this);
+        }
+        dialog.setTitle(R.string.app_name);
+        dialog.setIcon(R.drawable.ic_launcher);
+        dialog.setCancelable(false);
+        dialog.setMessage(getString(resId));
+        dialog.show();
+    }
+
+    private boolean requestLog() {
+        if (getExternalCacheDir() != null) {
+            Intent intent = new Intent();
+            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+            intent.setAction(PreventIntent.ACTION_SYSTEM_LOG);
+            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+            UILog.i("sending request log broadcast");
+            showProcessDialog(R.string.retrieving);
+            if (receiver == null) {
+                receiver = new HookReceiver();
+            }
+            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, null, 0, null, null);
+        }
+        return false;
+    }
+
     @Override
     public void onBackPressed() {
         if (donateView.getVisibility() == View.VISIBLE) {
@@ -236,6 +289,104 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         } else {
             super.onBackPressed();
         }
+    }
+
+    private class HookReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
+                handleRequestLog();
+            }
+        }
+
+        private void handleRequestLog() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    dialog.dismiss();
+                    reportBug();
+                }
+            });
+        }
+    }
+
+    private static Object getXposedVersion() {
+        try {
+            return Class.forName("de.robv.android.xposed.XposedBridge", false, ClassLoader.getSystemClassLoader()).getField("XPOSED_BRIDGE_VERSION").get(null);
+        } catch (Throwable t) { // NOSONAR
+            return null;
+        }
+    }
+
+    private String getVersionInfo(boolean showAppVersion) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Xposed: v");
+        sb.append(getXposedVersion());
+        sb.append("\n");
+        sb.append("Android: ");
+        sb.append(Locale.getDefault());
+        sb.append("-");
+        sb.append(Build.VERSION.RELEASE);
+        sb.append("\n");
+        if (showAppVersion) {
+            sb.append(getString(R.string.app_name));
+            sb.append(": ");
+            sb.append(BuildConfig.VERSION_NAME);
+            sb.append("\n");
+        }
+        sb.append(Build.FINGERPRINT);
+        return sb.toString();
+    }
+
+    private void showVersionInfo() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
+        builder.setMessage(getVersionInfo(false));
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setPositiveButton(getString(android.R.string.copy), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                ((android.text.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE)).setText(getVersionInfo(true));
+            }
+        });
+        builder.create().show();
+    }
+
+    private void reportBug() {
+        try {
+            File path = new File(getExternalFilesDir(null), "logs.zip");
+            final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
+
+            for (File file : getExternalCacheDir().listFiles()) {
+                zos.putNextEntry(new ZipEntry(file.getName()));
+                copyInputStream(zos, file);
+            }
+
+            @SuppressLint("SdCardPath")
+            File xposedLog = new File("/data/data/de.robv.android.xposed.installer/log/error.log");
+            if (xposedLog.isFile() && xposedLog.canRead()) {
+                zos.putNextEntry(new ZipEntry("xposed.log"));
+                copyInputStream(zos, xposedLog);
+            }
+
+            zos.close();
+            Runtime.getRuntime().exec("/system/bin/sync");
+            EmailUtils.sendZip(this, path, getVersionInfo(true));
+        } catch (IOException e) {
+            UILog.d("cannot report bug", e);
+        }
+    }
+
+    private void copyInputStream(ZipOutputStream zos, File file) throws IOException {
+        byte[] buffer = new byte[0x1000];
+        InputStream is = new FileInputStream(file);
+        int length;
+        while ((length = is.read(buffer)) > 0) {
+            zos.write(buffer, 0, length);
+        }
+        zos.flush();
+        is.close();
     }
 
 }

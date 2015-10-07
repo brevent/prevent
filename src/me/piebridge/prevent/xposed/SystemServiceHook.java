@@ -63,7 +63,7 @@ public class SystemServiceHook extends XC_MethodHook {
             }
             PreventLog.d("finish prevent hook (system)");
             systemHooked = true;
-            LogcatUtils.logcat();
+            LogcatUtils.logcat("*:v");
         }
     }
 
