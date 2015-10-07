@@ -199,7 +199,7 @@ public class SystemReceiver extends ActivityReceiver {
         StringBuilder sb = new StringBuilder();
         Iterator<Long> it = value.iterator();
         while (it.hasNext()) {
-            Number v = it.next();
+            Long v = it.next();
             if (v != null) {
                 sb.append(v);
                 if (it.hasNext()) {
