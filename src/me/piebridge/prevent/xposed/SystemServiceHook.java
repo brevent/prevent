@@ -123,7 +123,7 @@ public class SystemServiceHook extends XC_MethodHook {
             logLinkageError(method, e);
             Class<?> processRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
             if (sdk >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-                // sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
+                // sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22, sdk 23
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         processRecord, boolean.class, boolean.class, String.class,
                         hook);
@@ -151,7 +151,7 @@ public class SystemServiceHook extends XC_MethodHook {
             logLinkageError(method, e);
             Class<?> processRecord = Class.forName("com.android.server.am.ProcessRecord", false, classLoader);
             if (sdk >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                // sdk 14, sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
+                // sdk 14, sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22, sdk 23
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         processRecord, boolean.class, boolean.class,
                         hook);
@@ -173,7 +173,7 @@ public class SystemServiceHook extends XC_MethodHook {
             hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
-            // sdk 10, sdk 14, sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
+            // sdk 10, sdk 14, sdk 15, sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22, sdk 23
             XposedHelpers.findAndHookMethod(activityManagerService, method,
                     IBinder.class, boolean.class,
                     hook);
@@ -190,7 +190,7 @@ public class SystemServiceHook extends XC_MethodHook {
         } catch (LinkageError e) {
             logLinkageError(method, e);
             if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
-                // sdk 21, sdk 22
+                // sdk 21, sdk 22, sdk 23
                 Class<?> profilerInfo = Class.forName("android.app.ProfilerInfo", false, classLoader);
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         IApplicationThread.class, String.class, Intent.class, String.class, IBinder.class, String.class, int.class, int.class, profilerInfo, Bundle.class,
@@ -228,7 +228,7 @@ public class SystemServiceHook extends XC_MethodHook {
         } catch (LinkageError e) {
             logLinkageError(method, e);
             if (sdk >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                // sdk 22
+                // sdk 22, sdk 23
                 Class<?> taskRecord = Class.forName("com.android.server.am.TaskRecord", false, classLoader);
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         taskRecord, boolean.class,
@@ -258,6 +258,12 @@ public class SystemServiceHook extends XC_MethodHook {
         } catch (LinkageError e) {
             logLinkageError(method, e);
             Class<?> iServiceConnection = Class.forName("android.app.IServiceConnection", false, classLoader);
+            if (sdk >= Build.VERSION_CODES.M) {
+                // sdk 23
+                XposedHelpers.findAndHookMethod(activityManagerService, method,
+                        IApplicationThread.class, IBinder.class, Intent.class, String.class, iServiceConnection, int.class, String.class, int.class,
+                        hook);
+            } else
             if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
                 // sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
@@ -280,7 +286,12 @@ public class SystemServiceHook extends XC_MethodHook {
             hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
             logLinkageError(method, e);
-            if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (sdk >= Build.VERSION_CODES.M) {
+                // sdk 23
+                XposedHelpers.findAndHookMethod(activityManagerService, method,
+                        IApplicationThread.class, Intent.class, String.class, String.class, int.class,
+                        hook);
+            } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 // sdk 18, sdk 19, sdk 21, sdk 22
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         IApplicationThread.class, Intent.class, String.class, int.class,
@@ -303,7 +314,12 @@ public class SystemServiceHook extends XC_MethodHook {
         } catch (LinkageError e) {
             logLinkageError(method, e);
             Class<?> iIntentReceiver = Class.forName("android.content.IIntentReceiver", false, classLoader);
-            if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (sdk >= Build.VERSION_CODES.M) {
+                // sdk 23
+                XposedHelpers.findAndHookMethod(activityManagerService, method,
+                        IApplicationThread.class, Intent.class, String.class, iIntentReceiver, int.class, String.class, Bundle.class, String[].class, int.class, Bundle.class, boolean.class, boolean.class, int.class,
+                        hook);
+            } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 // sdk 18, sdk 19, sdk 21, sdk 22
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         IApplicationThread.class, Intent.class, String.class, iIntentReceiver, int.class, String.class, Bundle.class, String.class, int.class, boolean.class, boolean.class, int.class,
@@ -331,7 +347,7 @@ public class SystemServiceHook extends XC_MethodHook {
         } catch (LinkageError e) {
             logLinkageError(method, e);
             if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
-                // sdk 21, sdk 22
+                // sdk 21, sdk 22, sdk 23
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         String.class, ApplicationInfo.class, boolean.class, int.class, String.class, ComponentName.class, boolean.class, boolean.class, int.class, boolean.class, String.class, String.class, String[].class, Runnable.class,
                         hook);
@@ -361,8 +377,8 @@ public class SystemServiceHook extends XC_MethodHook {
                 continue;
             }
             String returnType = method.getReturnType().getSimpleName();
-            PreventLog.v("found " + hookClass.getSimpleName() + "." + methodName + ": " + method);
             if ((returnName == null || returnName.equals(returnType)) && (longestMethod == null || longestMethod.getParameterTypes().length < method.getParameterTypes().length)) {
+                PreventLog.v("found " + hookClass.getSimpleName() + "." + methodName + ": " + method);
                 longestMethod = method;
             }
         }
