@@ -1,19 +1,13 @@
 package me.piebridge.prevent.ui.util;
 
 import android.content.Context;
-import android.os.SystemClock;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
-import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -39,8 +33,6 @@ public class LicenseUtils {
                6,  -37,  -13,  -99,  123,  -41,   69,  120,  111, -106,   31, -124,   91,   51,   89,  -96,
              126,   20,  -75,  108, -107,   16,  127,   56,  -36,  -17,  -24,  -92,  -34,  -48,   65,   73,
     };
-
-    private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(0x1);
 
     private LicenseUtils() {
 
@@ -68,29 +60,6 @@ public class LicenseUtils {
     }
 
     public static String getLicense(final Context context) {
-        long start = 0;
-        if (!BuildConfig.RELEASE) {
-            start = SystemClock.elapsedRealtime();
-        }
-        Future<String> future = executor.submit(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return retrieveLicense(context);
-            }
-        });
-        try {
-            return future.get(0x1, TimeUnit.SECONDS);
-        } catch (Throwable t) { // NOSONAR
-            UILog.d("cannot get license", t);
-            return null;
-        } finally {
-            if (!BuildConfig.RELEASE) {
-                UILog.d("get license take " + (SystemClock.elapsedRealtime() - start) + "ms");
-            }
-        }
-    }
-
-    private static String retrieveLicense(Context context) {
         byte[] key = readKey(context);
         if (key.length == 0) {
             return null;
