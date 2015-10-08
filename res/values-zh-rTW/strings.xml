@@ -56,6 +56,7 @@
     <string name="force_stop_10min">10分鐘</string>
     <string name="force_stop_15min">15分鐘</string>
     <string name="force_stop_30min">30分鐘</string>
+    <string name="force_stop_1hour">1小時</string>
     <string name="destroy_processes">不要保留處理程序</string>
     <string name="destroy_processes_summary">使用者退出後強制停止程式。推薦關閉。</string>
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>

@@ -56,6 +56,7 @@
     <string name="force_stop_10min">10 menit</string>
     <string name="force_stop_15min">15 menit</string>
     <string name="force_stop_30min">30 menit</string>
+    <string name="force_stop_1hour">1 jam</string>
     <string name="destroy_processes">Don\'t keep processes</string>
     <string name="destroy_processes_summary">Force stop applications after the user destroys all activities. Recommend off.</string>
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
