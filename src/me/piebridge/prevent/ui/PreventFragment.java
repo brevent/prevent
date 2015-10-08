@@ -337,6 +337,7 @@ public abstract class PreventFragment extends ListFragment {
             ViewHolder holder = (ViewHolder) view.getTag();
             Set<Long> running = mActivity.getRunningProcesses().get(holder.packageName);
             holder.summaryView.setText(formatRunning(running));
+            holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
             Boolean result = mActivity.getPreventPackages().get(holder.packageName);
             if (result == null) {
                 holder.preventView.setVisibility(View.INVISIBLE);
