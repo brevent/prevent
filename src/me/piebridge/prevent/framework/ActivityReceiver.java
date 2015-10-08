@@ -261,6 +261,10 @@ abstract class ActivityReceiver extends BroadcastReceiver {
 
     public void onAppDied(Object processRecord) {
         String packageName = ProcessRecordUtils.getInfo(processRecord).packageName;
+        if (leavingPackages.containsKey(packageName)) {
+            LogUtils.logActivity("app died when user leaving", packageName, -1);
+            return;
+        }
         int count = countCounter(packageName);
         LogUtils.logActivity("app died", packageName, count);
         int pid = ProcessRecordUtils.getPid(processRecord);
