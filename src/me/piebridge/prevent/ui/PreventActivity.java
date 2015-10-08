@@ -2,7 +2,6 @@ package me.piebridge.prevent.ui;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -80,6 +79,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private Handler mHandler;
 
+    private Handler mainHandler;
+
     private final Object preventLock = new Object();
 
     private boolean initialized;
@@ -126,6 +127,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         HandlerThread thread = new HandlerThread("PreventUI");
         thread.start();
         mHandler = new Handler(thread.getLooper());
+        mainHandler = new Handler(getMainLooper());
+        mainHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateTimeIfNeeded();
+                mainHandler.postDelayed(this, 0x3e8);
+            }
+        }, 0x3e8);
 
         try {
             ActionBar actionBar = getActionBar();
@@ -531,10 +540,19 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         String tag = getTag(position);
         final PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
         if (fragment != null) {
+            fragment.updateTimeIfNeeded();
+        }
+    }
+
+    private void notifyDataSetChanged() {
+        int position = mPager.getCurrentItem();
+        String tag = getTag(position);
+        final PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
+        if (fragment != null) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    fragment.updateTimeIfNeeded();
+                    fragment.notifyDataSetChanged();
                 }
             });
         }
@@ -568,6 +586,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 if (preventPackages != null && Boolean.FALSE.equals(preventPackages.get(packageName))) {
                     preventPackages.put(packageName, true);
                 }
+                notifyDataSetChanged();
             }
         }
 
@@ -585,13 +604,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     }
                 });
             }
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    updateTimeIfNeeded();
-                    mHandler.postDelayed(this, 0x3e8);
-                }
-            }, 0x3e8);
         }
 
         private void handleGetProcesses() {
@@ -617,6 +629,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 }
                 running.clear();
                 running.putAll(processes);
+                notifyDataSetChanged();
             } catch (JSONException e) {
                 UILog.e("cannot convert to json", e);
             }

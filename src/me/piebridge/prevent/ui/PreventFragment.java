@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
@@ -56,7 +57,7 @@ import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 
-public abstract class PreventFragment extends ListFragment {
+public abstract class PreventFragment extends ListFragment implements AbsListView.OnScrollListener {
 
     private Adapter mAdapter;
     private PreventActivity mActivity;
@@ -69,6 +70,8 @@ public abstract class PreventFragment extends ListFragment {
     private static Map<String, Position> positions = new HashMap<String, Position>();
 
     private static Map<Integer, Integer> statusMap = new HashMap<Integer, Integer>();
+
+    private boolean scrolling;
 
     static {
         statusMap.put(RunningAppProcessInfo.IMPORTANCE_BACKGROUND, R.string.importance_background);
@@ -145,6 +148,22 @@ public abstract class PreventFragment extends ListFragment {
         });
         search.setHint(getQueryHint());
         return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        getListView().setOnScrollListener(this);
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+        scrolling = scrollState != SCROLL_STATE_IDLE;
+    }
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
     }
 
     @Override
@@ -326,25 +345,26 @@ public abstract class PreventFragment extends ListFragment {
     }
 
     public void updateTimeIfNeeded() {
+        if (scrolling || mAdapter == null) {
+            return;
+        }
         ListView l = getListView();
-        int start = l.getFirstVisiblePosition();
-        int end = l.getLastVisiblePosition();
-        for (int i = start; i <= end; ++i) {
+        int size = mAdapter.getCount();
+        for (int i = 0; i < size; ++i) {
             View view = l.getChildAt(i);
             if (view == null) {
                 continue;
             }
             ViewHolder holder = (ViewHolder) view.getTag();
-            Set<Long> running = mActivity.getRunningProcesses().get(holder.packageName);
-            holder.summaryView.setText(formatRunning(running));
-            holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
-            Boolean result = mActivity.getPreventPackages().get(holder.packageName);
-            if (result == null) {
-                holder.preventView.setVisibility(View.INVISIBLE);
-            } else {
-                holder.preventView.setVisibility(View.VISIBLE);
-                holder.preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
+            if (holder != null && holder.shouldUpdateTime) {
+                holder.summaryView.setText(formatRunning(holder.running));
             }
+        }
+    }
+
+    public void notifyDataSetChanged() {
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
         }
     }
 
@@ -363,7 +383,6 @@ public abstract class PreventFragment extends ListFragment {
         String name = "";
         String packageName;
         Set<Long> running;
-        Boolean result;
 
         public AppInfo(String packageName, String name, Set<Long> running) {
             super();
@@ -417,7 +436,7 @@ public abstract class PreventFragment extends ListFragment {
         Set<Long> running;
         RetrieveIconTask task;
         boolean canUninstall;
-        Boolean result;
+        boolean shouldUpdateTime;
     }
 
     private class Adapter extends ArrayAdapter<AppInfo> {
@@ -479,27 +498,24 @@ public abstract class PreventFragment extends ListFragment {
 
             ViewHolder holder = (ViewHolder) view.getTag();
             AppInfo appInfo = getItem(position);
-            appInfo.running = mActivity.getRunningProcesses().get(appInfo.packageName);
-            appInfo.result = mActivity.getPreventPackages().get(appInfo.packageName);
-            holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
-            holder.result = appInfo.result;
-            holder.running = appInfo.running;
             holder.label = appInfo.name;
             holder.packageName = appInfo.packageName;
             holder.nameView.setText(appInfo.name);
             holder.summaryView.setVisibility(View.GONE);
             holder.loadingView.setVisibility(View.VISIBLE);
+            holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
+            Boolean result = mActivity.getPreventPackages().get(appInfo.packageName);
             if (appInfo.isSystem()) {
                 view.setBackgroundColor(mActivity.getDangerousColor());
             } else {
                 view.setBackgroundColor(mActivity.getTransparentColor());
             }
             holder.canUninstall = ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) || ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0);
-            if (appInfo.result == null) {
+            if (result == null) {
                 holder.preventView.setVisibility(View.INVISIBLE);
             } else {
                 holder.preventView.setVisibility(View.VISIBLE);
-                holder.preventView.setImageResource(appInfo.result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
+                holder.preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
             }
             if (holder.task != null) {
                 holder.task.cancel(true);
@@ -742,6 +758,7 @@ public abstract class PreventFragment extends ListFragment {
             } catch (NameNotFoundException e) { // NOSONAR
                 // do nothing
             }
+            holder.running = mActivity.getRunningProcesses().get(appInfo.packageName);
             return holder;
         }
 
@@ -749,8 +766,9 @@ public abstract class PreventFragment extends ListFragment {
         protected void onPostExecute(ViewHolder holder) {
             holder.iconView.setImageDrawable(holder.icon);
             holder.loadingView.setVisibility(View.GONE);
-            holder.summaryView.setVisibility(View.VISIBLE);
             holder.summaryView.setText(formatRunning(holder.running));
+            holder.summaryView.setVisibility(View.VISIBLE);
+            holder.shouldUpdateTime = holder.running != null;
         }
     }
 

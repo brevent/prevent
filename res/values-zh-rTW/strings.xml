@@ -71,5 +71,6 @@
 
     <!-- donation -->
     <string name="paypal">PayPal</string>
+    <string name="licensed">已授權</string>
 
 </resources>

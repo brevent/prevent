@@ -324,6 +324,16 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
 
     private String getVersionInfo(boolean showAppVersion) {
         StringBuilder sb = new StringBuilder();
+        String licenseName;
+        if (showAppVersion) {
+            licenseName = LicenseUtils.getLicense(this);
+        } else {
+            licenseName = LicenseUtils.getLicenseName(this);
+        }
+        if (!TextUtils.isEmpty(licenseName)) {
+            sb.append(licenseName);
+            sb.append("\n");
+        }
         sb.append("Xposed: v");
         sb.append(getXposedVersion());
         sb.append("\n");

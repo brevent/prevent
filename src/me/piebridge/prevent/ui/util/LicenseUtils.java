@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 
+import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -78,7 +79,27 @@ public class LicenseUtils {
         if (key.length == 0) {
             return null;
         }
-        return getLicense(key);
+        String license = getLicense(key);
+        if (license != null) {
+            return license.split(",")[0];
+        } else {
+            return null;
+        }
+    }
+
+    public static String getLicenseName(final Context context) {
+        byte[] key = readKey(context);
+        if (key.length == 0) {
+            return null;
+        }
+        String license = getLicense(key);
+        if (license == null) {
+            return null;
+        } else if (license.contains(",")) {
+            return license.split(",", 0x2)[1];
+        } else {
+            return context.getString(R.string.licensed);
+        }
     }
 
     public static String getLicense(byte[] key) {

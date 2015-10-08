@@ -72,4 +72,6 @@
     <!-- donation -->
     <string name="paypal">PayPal</string>
 
+    <string name="licensed">Licensed</string>
+
 </resources>

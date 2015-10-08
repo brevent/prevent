@@ -72,4 +72,6 @@
     <!-- donation -->
     <string name="paypal">贝宝</string>
 
+    <string name="licensed">授权给尊贵的SVIP用户使用</string>
+
 </resources>
