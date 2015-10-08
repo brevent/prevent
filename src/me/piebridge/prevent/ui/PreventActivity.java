@@ -276,7 +276,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             removeMenu.setVisible(false);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-        menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
         menu.add(Menu.NONE, R.string.user_guide, Menu.NONE, R.string.user_guide);
         return super.onCreateOptionsMenu(menu);
     }
@@ -404,8 +403,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 preventPackages.remove(packageName);
             }
             savePackages();
-        } else if (id == R.string.advanced_settings) {
-            startActivity(new Intent(this, AdvancedSettingsActivity.class));
         } else if (id == R.string.user_guide) {
             startActivity(new Intent(this, UserGuideActivity.class));
         }

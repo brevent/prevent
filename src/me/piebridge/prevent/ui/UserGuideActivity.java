@@ -55,6 +55,8 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
 
     private BroadcastReceiver receiver;
 
+    private boolean clickedDonate = false;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         ThemeUtils.setTheme(this);
@@ -221,10 +223,13 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
-        menu.add(Menu.NONE, R.string.donate, Menu.NONE, R.string.donate);
+        if (donateView.getVisibility() == View.GONE) {
+            menu.add(Menu.NONE, R.string.donate, Menu.NONE, R.string.donate);
+        }
         menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
         menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);
         menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
+        menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -232,6 +237,7 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.string.donate) {
+            clickedDonate = true;
             donateView.setVisibility(View.VISIBLE);
         } else if (id == R.string.feedback) {
             if (!Locale.CHINA.equals(Locale.getDefault()) || !QQUtils.joinQQ(this)) {
@@ -241,6 +247,8 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             return requestLog();
         } else if (id == R.string.version) {
             showVersionInfo();
+        } else if (id == R.string.advanced_settings) {
+            startActivity(new Intent(this, AdvancedSettingsActivity.class));
         }
         return true;
     }
@@ -294,8 +302,9 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
 
     @Override
     public void onBackPressed() {
-        if (donateView.getVisibility() == View.VISIBLE) {
+        if (clickedDonate && donateView.getVisibility() == View.VISIBLE) {
             donateView.setVisibility(View.GONE);
+            clickedDonate = false;
         } else {
             super.onBackPressed();
         }
