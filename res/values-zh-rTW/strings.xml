@@ -25,7 +25,6 @@
 
     <!-- main menu -->
     <string name="switch_theme">切換主題</string>
-    <string name="advanced_settings">進階設定</string>
     <string name="user_guide">用戶指南</string>
 
     <!-- app status -->
@@ -52,13 +51,13 @@
     <string name="screen_off">螢幕關閉</string>
     <string name="force_stop_label">強制停止</string>
     <string name="force_stop_summary">閒置%1$s後</string>
-    <string name="force_stop_never">永不</string>
+    <string name="force_stop_never">永不(推薦)</string>
     <string name="force_stop_5min">5分鐘</string>
     <string name="force_stop_10min">10分鐘</string>
     <string name="force_stop_15min">15分鐘</string>
     <string name="force_stop_30min">30分鐘</string>
     <string name="destroy_processes">不要保留處理程序</string>
-    <string name="destroy_processes_summary">使用者退出後立刻刪除所有處理程序</string>
+    <string name="destroy_processes_summary">使用者退出後強制停止程式。推薦關閉。</string>
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>
@@ -68,6 +67,7 @@
     <string name="feedback">回饋</string>
     <string name="version">版本</string>
     <string name="report_bug">回報錯誤</string>
+    <string name="advanced_settings">進階設定</string>
 
     <!-- donation -->
     <string name="paypal">PayPal</string>

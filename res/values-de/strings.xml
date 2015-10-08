@@ -25,7 +25,6 @@
 
     <!-- main menu -->
     <string name="switch_theme">Schema wechseln</string>
-    <string name="advanced_settings">Erweiterte Einstellungen</string>
     <string name="user_guide">User guide</string>
 
     <!-- app status -->
@@ -52,22 +51,23 @@
     <string name="screen_off">Display wird ausgeschaltet</string>
     <string name="force_stop_label">Beenden erzwingen</string>
     <string name="force_stop_summary">Nach %1$s ohne Aktivität</string>
-    <string name="force_stop_never">Nie</string>
+    <string name="force_stop_never">Never (Recommend)</string>
     <string name="force_stop_5min">5 Minuten</string>
     <string name="force_stop_10min">10 Minuten</string>
     <string name="force_stop_15min">15 Minuten</string>
     <string name="force_stop_30min">30 Minuten</string>
     <string name="destroy_processes">Don\'t keep processes</string>
-    <string name="destroy_processes_summary">Destroy every process after the user destroys all activities</string>
+    <string name="destroy_processes_summary">Force stop applications after the user destroys all activities. Recommend off.</string>
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>
 
     <!-- user guide menu -->
     <string name="donate">Spenden</string>
-    <string name="feedback">Feedback</string>
     <string name="version">Version</string>
+    <string name="feedback">Feedback</string>
     <string name="report_bug">Report Bug</string>
+    <string name="advanced_settings">Erweiterte Einstellungen</string>
 
     <!-- donation -->
     <string name="paypal">PayPal</string>
