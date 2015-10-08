@@ -59,9 +59,9 @@
     <string name="force_stop_1hour">1小時</string>
     <string name="destroy_processes">不要保留處理程序</string>
     <string name="destroy_processes_summary">使用者退出後強制停止程式。推薦關閉。</string>
-    <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
-    <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
-    <string name="apply">apply</string>
+    <string name="no_license">您沒有許可修改這項設置，請累計捐贈10元或以上，然後聯繫作者獲取許可。</string>
+    <string name="no_valid_license">您沒有權限使用頒發給『%1$s』的許可，請點擊『%2$s』重新獲取。</string>
+    <string name="apply">申請</string>
 
     <!-- user guide menu -->
     <string name="donate">捐贈</string>

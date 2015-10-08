@@ -12,6 +12,9 @@ import android.preference.PreferenceActivity;
 import android.text.TextUtils;
 import android.util.Base64;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
@@ -28,9 +31,15 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     private String license;
 
+    private String accounts;
+
     private Preference forceStopTimeout;
 
     private Preference destroyProcesses;
+
+    private static Collection<String> KEYS_NEED_LICENSE = Arrays.asList(
+            PreventIntent.KEY_DESTROY_PROCESSES
+    );
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -56,15 +65,13 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction()) && getResultCode() != 1) {
-                    alert(getResultData());
-                    forceStopTimeout.setEnabled(false);
-                    destroyProcesses.setEnabled(false);
+                    accounts = getResultData();
                 }
             }
         }, null, 0, null, null);
     }
 
-    private void alert(String accounts) {
+    private void alert() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final String content = "license: " + license + ", accounts: " + accounts;
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
@@ -110,6 +117,10 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
+        if (!TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
+            alert();
+            return false;
+        }
         if (PreventIntent.KEY_FORCE_STOP_TIMEOUT.equals(key)) {
             UILog.d("update timeout to " + newValue);
             Bundle bundle = new Bundle();
