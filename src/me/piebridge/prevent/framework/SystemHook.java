@@ -86,6 +86,7 @@ public final class SystemHook {
     private static ScheduledThreadPoolExecutor restoreExecutor = new ScheduledThreadPoolExecutor(0x2);
     private static final Object RESTORE_LOCK = new Object();
     private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
+    private static boolean destroyProcesses;
 
     private SystemHook() {
 
@@ -182,7 +183,7 @@ public final class SystemHook {
         noSchemeFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         mContext.registerReceiver(systemReceiver, noSchemeFilter, null, handler);
 
-        Intent intent = new Intent(PreventIntent.ACTION_UPDATE_TIMEOUT);
+        Intent intent = new Intent(PreventIntent.ACTION_REGISTERED);
         intent.setPackage(BuildConfig.APPLICATION_ID);
         mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
         PreventLog.i("registered receiver");
@@ -527,6 +528,14 @@ public final class SystemHook {
 
     public static boolean isActivated() {
         return activated;
+    }
+
+    public static void setDestroyProcesses(boolean destroyProcesses) {
+        SystemHook.destroyProcesses = destroyProcesses;
+    }
+
+    public static boolean isDestroyProcesses() {
+        return destroyProcesses;
     }
 
     private static class RetrievingTask implements Runnable {

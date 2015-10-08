@@ -15,7 +15,7 @@
     <PreferenceCategory
         android:key="applications"
         android:title="@string/applications">
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="false"
             android:key="destroy_processes"
             android:summary="@string/destroy_processes_summary"

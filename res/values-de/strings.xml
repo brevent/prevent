@@ -57,6 +57,8 @@
     <string name="force_stop_10min">10 Minuten</string>
     <string name="force_stop_15min">15 Minuten</string>
     <string name="force_stop_30min">30 Minuten</string>
+    <string name="destroy_processes">Don\'t keep processes</string>
+    <string name="destroy_processes_summary">Destroy every process as soon as the user leaves activity</string>
     <string name="no_license">You don\'t have the license to modify settings, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>

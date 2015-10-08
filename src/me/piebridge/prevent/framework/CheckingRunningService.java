@@ -4,6 +4,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -34,6 +35,11 @@ abstract class CheckingRunningService implements Runnable {
         }
         PreventLog.d("checking services, packages: " + packageNames + ", whitelist: " + whiteList);
         Set<String> shouldStopPackageNames = new TreeSet<String>();
+        if (SystemHook.isDestroyProcesses()) {
+            shouldStopPackageNames.addAll(packageNames);
+            shouldStopPackageNames.removeAll(whiteList);
+            packageNames = Collections.emptyList();
+        }
         for (ActivityManager.RunningServiceInfo service : HookUtils.getServices(mContext)) {
             checkService(service, packageNames, whiteList, shouldStopPackageNames);
         }
@@ -70,7 +76,11 @@ abstract class CheckingRunningService implements Runnable {
 
     private void stopServiceIfNeeded(Set<String> shouldStopPackageNames) {
         for (String name : shouldStopPackageNames) {
-            PreventLog.i(name + " has running services, force stop it");
+            if (SystemHook.isDestroyProcesses()) {
+                PreventLog.i(name + " has running services, force stop it");
+            } else {
+                PreventLog.i("force stop " + name);
+            }
             SystemHook.forceStopPackage(name);
         }
     }

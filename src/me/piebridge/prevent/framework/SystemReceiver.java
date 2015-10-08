@@ -5,6 +5,7 @@ import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.telephony.TelephonyManager;
 
 import org.json.JSONObject;
@@ -39,7 +40,7 @@ public class SystemReceiver extends ActivityReceiver {
             PreventIntent.ACTION_GET_PROCESSES,
             PreventIntent.ACTION_UPDATE_PREVENT,
             PreventIntent.ACTION_SYSTEM_LOG,
-            PreventIntent.ACTION_UPDATE_TIMEOUT,
+            PreventIntent.ACTION_UPDATE_CONFIGURATION,
             PreventIntent.ACTION_CHECK_LICENSE
     );
 
@@ -82,11 +83,22 @@ public class SystemReceiver extends ActivityReceiver {
             LogcatUtils.logcat(context, "system");
             LogcatUtils.logcat("-s Prevent:v PreventUI:v");
             setResultCode((int) LogcatUtils.logcat(context, "prevent"));
-        } else if (PreventIntent.ACTION_UPDATE_TIMEOUT.equals(action)) {
-            timeout = intent.getLongExtra(PreventIntent.EXTRA_TIMEOUT, -1);
-            PreventLog.i("update timeout to " + timeout + "s");
+        } else if (PreventIntent.ACTION_UPDATE_CONFIGURATION.equals(action)) {
+            handleConfiguration(intent.getBundleExtra(PreventIntent.EXTRA_CONFIGURATION));
         } else if (PreventIntent.ACTION_CHECK_LICENSE.equals(action)) {
             handleCheckLicense(context, intent);
+        }
+    }
+
+    private void handleConfiguration(Bundle bundle) {
+        if (bundle.containsKey(PreventIntent.KEY_FORCE_STOP_TIMEOUT)) {
+            timeout = bundle.getLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT);
+            PreventLog.i("update timeout to " + timeout + "s");
+        }
+        if (bundle.containsKey(PreventIntent.KEY_DESTROY_PROCESSES)) {
+            boolean destroyProcesses = bundle.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES);
+            PreventLog.i("update destroy processes to " + destroyProcesses);
+            SystemHook.setDestroyProcesses(destroyProcesses);
         }
     }
 

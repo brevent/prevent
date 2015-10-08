@@ -24,11 +24,11 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
  */
 public class AdvancedSettingsActivity extends PreferenceActivity implements Preference.OnPreferenceChangeListener {
 
-    public static final String KEY_FORCE_STOP_TIMEOUT = "force_stop_timeout";
-
     private String license;
 
     private Preference forceStopTimeout;
+
+    private Preference destroyProcesses;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,11 +37,15 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         //noinspection deprecation
         addPreferencesFromResource(R.xml.settings);
 
+        ThemeUtils.fixSmartBar(this);
+
         //noinspection deprecation
-        forceStopTimeout = findPreference(KEY_FORCE_STOP_TIMEOUT);
+        forceStopTimeout = findPreference(PreventIntent.KEY_FORCE_STOP_TIMEOUT);
         forceStopTimeout.setOnPreferenceChangeListener(this);
 
-        ThemeUtils.fixSmartBar(this);
+        //noinspection deprecation
+        destroyProcesses = findPreference(PreventIntent.KEY_DESTROY_PROCESSES);
+        destroyProcesses.setOnPreferenceChangeListener(this);
 
         // check license
         license = LicenseUtils.getLicense(this);
@@ -54,6 +58,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
                 if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction()) && getResultCode() != 1) {
                     alert(getResultData());
                     forceStopTimeout.setEnabled(false);
+                    destroyProcesses.setEnabled(false);
                 }
             }
         }, null, 0, null, null);
@@ -96,9 +101,16 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
-        if (KEY_FORCE_STOP_TIMEOUT.equals(key)) {
+        if (PreventIntent.KEY_FORCE_STOP_TIMEOUT.equals(key)) {
             UILog.d("update timeout to " + newValue);
-            PreventUtils.updateTimeout(this, String.valueOf(newValue));
+            Bundle bundle = new Bundle();
+            bundle.putLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT, Long.valueOf(String.valueOf(newValue)));
+            PreventUtils.updateConfiguration(this, bundle);
+        } else if (PreventIntent.KEY_DESTROY_PROCESSES.equals(key)) {
+            UILog.d("update destroy processes to " + newValue);
+            Bundle bundle = new Bundle();
+            bundle.putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, (Boolean) newValue);
+            PreventUtils.updateConfiguration(this, bundle);
         }
         // tricky to fix for android 2.3
         preference.setShouldDisableView(true);

@@ -42,7 +42,7 @@
                 <data android:scheme="package" />
             </intent-filter>
             <intent-filter>
-                <action android:name="me.piebridge.prevent.UPDATE_TIMEOUT" />
+                <action android:name="me.piebridge.prevent.REGISTERED" />
             </intent-filter>
         </receiver>
 

@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -14,7 +15,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.R;
-
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 
@@ -38,19 +38,11 @@ public class PreventUtils {
         context.sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new PreventListReceiver(), null, 0, null, null);
     }
 
-    public static boolean updateTimeout(Context context, String value) {
-        long timeout;
-        try {
-            timeout = Long.valueOf(value);
-        } catch (NumberFormatException e) {
-            UILog.d(value + " is not long", e);
-            return false;
-        }
-        Intent intent = new Intent(PreventIntent.ACTION_UPDATE_TIMEOUT, Uri.fromParts(PreventIntent.SCHEME, context.getPackageName(), null));
+    public static void updateConfiguration(Context context, Bundle bundle) {
+        Intent intent = new Intent(PreventIntent.ACTION_UPDATE_CONFIGURATION, Uri.fromParts(PreventIntent.SCHEME, context.getPackageName(), null));
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-        intent.putExtra(PreventIntent.EXTRA_TIMEOUT, timeout);
+        intent.putExtra(PreventIntent.EXTRA_CONFIGURATION, bundle);
         context.sendBroadcast(intent, PreventIntent.PERMISSION_SYSTEM);
-        return true;
     }
 
     private static class PreventListReceiver extends BroadcastReceiver {
