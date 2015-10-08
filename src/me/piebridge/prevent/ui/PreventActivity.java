@@ -187,7 +187,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                retrievePrevents();
+                if (!paused) {
+                    retrievePrevents();
+                }
             }
         }, 0x100);
     }
@@ -199,13 +201,15 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    retrievePrevents();
+                    if (!paused) {
+                        retrievePrevents();
+                    }
                 }
             }, 0x400);
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (preventPackages == null) {
+                    if (preventPackages == null && !paused) {
                         showRetrieving();
                     }
                 }
@@ -421,6 +425,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void showProcessDialog(int resId) {
+        if (paused) {
+            return;
+        }
         if (dialog == null) {
             dialog = new ProgressDialog(this);
         }
@@ -733,8 +740,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         mainHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                updateTimeIfNeeded(null);
                 if (!paused) {
+                    updateTimeIfNeeded(null);
                     mainHandler.postDelayed(this, 0x3e8);
                 }
             }
