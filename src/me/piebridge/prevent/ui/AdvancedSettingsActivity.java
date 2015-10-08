@@ -37,8 +37,6 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         //noinspection deprecation
         addPreferencesFromResource(R.xml.settings);
 
-        ThemeUtils.fixSmartBar(this);
-
         //noinspection deprecation
         forceStopTimeout = findPreference(PreventIntent.KEY_FORCE_STOP_TIMEOUT);
         forceStopTimeout.setOnPreferenceChangeListener(this);
