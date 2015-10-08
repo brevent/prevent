@@ -2,6 +2,7 @@ package me.piebridge.prevent.ui;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -26,12 +27,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.util.ArrayList;
@@ -83,7 +82,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     private final Object preventLock = new Object();
 
-    private boolean inited;
+    private boolean initialized;
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -153,7 +152,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         if (!BuildConfig.RELEASE && TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             showTestDialog();
         } else {
-            init();
+            initialize();
         }
     }
 
@@ -179,7 +178,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
-    private void init() {
+    private void initialize() {
+        initialized = true;
         showProcessDialog(R.string.retrieving);
         mHandler.postDelayed(new Runnable() {
             @Override
@@ -187,13 +187,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 retrievePrevents();
             }
         }, 0x100);
-        inited = true;
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (inited && preventPackages == null) {
+        if (!initialized) {
+            // do nothing
+        } else if (preventPackages == null) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -208,7 +209,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     }
                 }
             }, 0x100);
-        } else if (preventPackages != null) {
+        } else {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -493,7 +494,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                init();
+                initialize();
             }
         });
         builder.create().show();
