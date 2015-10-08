@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.text.TextUtils;
+import android.util.Base64;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
@@ -17,6 +18,7 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
+import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
@@ -81,7 +83,6 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         builder.setNeutralButton(getString(android.R.string.copy), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
                 //noinspection deprecation
                 ((android.text.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE)).setText(content);
             }
@@ -89,8 +90,18 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         builder.setPositiveButton(R.string.apply, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
                 EmailUtils.sendEmail(AdvancedSettingsActivity.this, content);
+            }
+        });
+        builder.setNegativeButton(android.R.string.paste,new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String plain =  ((android.text.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE)).getText().toString();
+                byte[] key = Base64.decode(plain, Base64.DEFAULT);
+                if (!TextUtils.isEmpty(LicenseUtils.getLicense(key))) {
+                    LicenseUtils.saveLicense(AdvancedSettingsActivity.this, key);
+                    RecreateUtils.recreate(AdvancedSettingsActivity.this);
+                }
             }
         });
         builder.create().show();

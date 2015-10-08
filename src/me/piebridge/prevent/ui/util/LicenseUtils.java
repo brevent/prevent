@@ -4,6 +4,7 @@ import android.content.Context;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -39,21 +40,34 @@ public class LicenseUtils {
     }
 
     private static byte[] readKey(Context context) {
-        byte[] key = new byte[0x100];
+        byte[] key;
         for (File file : PreventListUtils.getExternalFilesDirs(context)) {
             if (file == null) {
                 continue;
             }
-            File path = new File(file, "license.key");
-            if (path.isFile() && path.canRead()) {
-                try {
-                    InputStream is = new FileInputStream(path);
-                    is.read(key);
-                    is.close();
-                    return key;
-                } catch (IOException e) {
-                    UILog.d("cannot get license", e);
-                }
+            key = readKey(file);
+            if (key.length > 0) {
+                return key;
+            }
+        }
+        key = readKey(context.getFilesDir());
+        if (key.length > 0) {
+            return key;
+        }
+        return new byte[0];
+    }
+
+    private static byte[] readKey(File file) {
+        byte[] key = new byte[0x100];
+        File path = new File(file, "license.key");
+        if (path.isFile() && path.canRead()) {
+            try {
+                InputStream is = new FileInputStream(path);
+                is.read(key);
+                is.close();
+                return key;
+            } catch (IOException e) {
+                UILog.d("cannot get license", e);
             }
         }
         return new byte[0];
@@ -64,6 +78,10 @@ public class LicenseUtils {
         if (key.length == 0) {
             return null;
         }
+        return getLicense(key);
+    }
+
+    public static String getLicense(byte[] key) {
         BigInteger exponent = BigInteger.valueOf(0x10001);
         BigInteger modulus = new BigInteger(1, MODULUS);
         byte[] signature = new BigInteger(1, key).modPow(exponent, modulus).toByteArray();
@@ -74,6 +92,17 @@ public class LicenseUtils {
             }
         }
         return null;
+    }
+
+    public static void saveLicense(Context context, byte[] key) {
+        try {
+            File path = new File(context.getFilesDir(), "license.key");
+            FileOutputStream fos = new FileOutputStream(path);
+            fos.write(key);
+            fos.close();
+        } catch (IOException e) {
+            UILog.d("cannot save license", e);
+        }
     }
 
 }
