@@ -344,7 +344,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         mAdapter.startTaskIfNeeded();
     }
 
-    public void updateTimeIfNeeded() {
+    public void updateTimeIfNeeded(String packageName) {
         if (scrolling || mAdapter == null) {
             return;
         }
@@ -352,11 +352,15 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         int size = mAdapter.getCount();
         for (int i = 0; i < size; ++i) {
             View view = l.getChildAt(i);
-            if (view == null) {
+            if (view == null || view.getTag() == null || view.getVisibility() != View.VISIBLE) {
                 continue;
             }
             ViewHolder holder = (ViewHolder) view.getTag();
-            if (holder != null && holder.shouldUpdateTime) {
+            if (PackageUtils.equals(packageName, holder.packageName)) {
+                holder.updatePreventView(mActivity);
+                holder.running = mActivity.getRunningProcesses().get(packageName);
+                holder.summaryView.setText(formatRunning(holder.running));
+            } else if (holder.running != null) {
                 holder.summaryView.setText(formatRunning(holder.running));
             }
         }
@@ -436,7 +440,16 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         Set<Long> running;
         RetrieveIconTask task;
         boolean canUninstall;
-        boolean shouldUpdateTime;
+
+        public void updatePreventView(PreventActivity activity) {
+            Boolean result = activity.getPreventPackages().get(packageName);
+            if (result == null) {
+                preventView.setVisibility(View.INVISIBLE);
+            } else {
+                preventView.setVisibility(View.VISIBLE);
+                preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
+            }
+        }
     }
 
     private class Adapter extends ArrayAdapter<AppInfo> {
@@ -499,24 +512,20 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             ViewHolder holder = (ViewHolder) view.getTag();
             AppInfo appInfo = getItem(position);
             holder.label = appInfo.name;
-            holder.packageName = appInfo.packageName;
             holder.nameView.setText(appInfo.name);
-            holder.summaryView.setVisibility(View.GONE);
-            holder.loadingView.setVisibility(View.VISIBLE);
+            if (!PackageUtils.equals(holder.packageName, appInfo.packageName)) {
+                holder.summaryView.setVisibility(View.GONE);
+                holder.loadingView.setVisibility(View.VISIBLE);
+            }
+            holder.packageName = appInfo.packageName;
             holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
-            Boolean result = mActivity.getPreventPackages().get(appInfo.packageName);
             if (appInfo.isSystem()) {
                 view.setBackgroundColor(mActivity.getDangerousColor());
             } else {
                 view.setBackgroundColor(mActivity.getTransparentColor());
             }
             holder.canUninstall = ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) || ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0);
-            if (result == null) {
-                holder.preventView.setVisibility(View.INVISIBLE);
-            } else {
-                holder.preventView.setVisibility(View.VISIBLE);
-                holder.preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
-            }
+            holder.updatePreventView(mActivity);
             if (holder.task != null) {
                 holder.task.cancel(true);
             }
@@ -765,10 +774,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         @Override
         protected void onPostExecute(ViewHolder holder) {
             holder.iconView.setImageDrawable(holder.icon);
-            holder.loadingView.setVisibility(View.GONE);
             holder.summaryView.setText(formatRunning(holder.running));
+            holder.loadingView.setVisibility(View.GONE);
             holder.summaryView.setVisibility(View.VISIBLE);
-            holder.shouldUpdateTime = holder.running != null;
         }
     }
 

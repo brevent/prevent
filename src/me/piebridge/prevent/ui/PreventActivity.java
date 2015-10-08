@@ -84,6 +84,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private final Object preventLock = new Object();
 
     private boolean initialized;
+    private boolean paused;
 
     public int getDangerousColor() {
         if (dangerousColor == null) {
@@ -128,13 +129,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         thread.start();
         mHandler = new Handler(thread.getLooper());
         mainHandler = new Handler(getMainLooper());
-        mainHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                updateTimeIfNeeded();
-                mainHandler.postDelayed(this, 0x3e8);
-            }
-        }, 0x3e8);
 
         try {
             ActionBar actionBar = getActionBar();
@@ -201,15 +195,13 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (!initialized) {
-            // do nothing
-        } else if (preventPackages == null) {
-            mHandler.post(new Runnable() {
+        if (initialized) {
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     retrievePrevents();
                 }
-            });
+            }, 0x400);
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -217,14 +209,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                         showRetrieving();
                     }
                 }
-            }, 0x100);
-        } else {
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    retrieveRunning();
-                }
-            }, 0x3e8);
+            }, 0x500);
         }
     }
 
@@ -535,12 +520,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
-    private void updateTimeIfNeeded() {
+    private void updateTimeIfNeeded(String packageName) {
         int position = mPager.getCurrentItem();
         String tag = getTag(position);
         final PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
         if (fragment != null) {
-            fragment.updateTimeIfNeeded();
+            fragment.updateTimeIfNeeded(packageName);
         }
     }
 
@@ -586,7 +571,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 if (preventPackages != null && Boolean.FALSE.equals(preventPackages.get(packageName))) {
                     preventPackages.put(packageName, true);
                 }
-                notifyDataSetChanged();
+                updateTimeIfNeeded(packageName);
             }
         }
 
@@ -616,7 +601,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         private void handleProcesses(String result) {
             try {
-                UILog.d("result: " + result);
                 JSONObject json = new JSONObject(result);
                 Map<String, Set<Long>> processes = new HashMap<String, Set<Long>>();
                 Iterator<String> it = json.keys();
@@ -745,12 +729,23 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
         filter.addDataScheme("package");
         registerReceiver(receiver, filter);
+        paused = false;
+        mainHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateTimeIfNeeded(null);
+                if (!paused) {
+                    mainHandler.postDelayed(this, 0x3e8);
+                }
+            }
+        }, 0x3e8);
     }
 
     @Override
     protected void onPause() {
         unregisterReceiver(receiver);
         super.onPause();
+        paused = true;
     }
 
     @Override
