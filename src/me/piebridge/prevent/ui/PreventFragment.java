@@ -331,9 +331,18 @@ public abstract class PreventFragment extends ListFragment {
         int end = l.getLastVisiblePosition();
         for (int i = start; i <= end; ++i) {
             View view = l.getChildAt(i);
-            if (view != null) {
-                ViewHolder holder = (ViewHolder) view.getTag();
-                holder.summaryView.setText(formatRunning(holder.running));
+            if (view == null) {
+                continue;
+            }
+            ViewHolder holder = (ViewHolder) view.getTag();
+            Set<Long> running = mActivity.getRunningProcesses().get(holder.packageName);
+            holder.summaryView.setText(formatRunning(running));
+            Boolean result = mActivity.getPreventPackages().get(holder.packageName);
+            if (result == null) {
+                holder.preventView.setVisibility(View.INVISIBLE);
+            } else {
+                holder.preventView.setVisibility(View.VISIBLE);
+                holder.preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
             }
         }
     }
