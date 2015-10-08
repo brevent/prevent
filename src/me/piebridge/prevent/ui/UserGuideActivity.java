@@ -67,9 +67,6 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         WebView webView = (WebView) findViewById(R.id.webview);
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            setScrollChangeListener(webView);
-        }
         if ("zh".equals(Locale.getDefault().getLanguage())) {
             webView.loadUrl("file:///android_asset/about.zh.html");
         } else {
@@ -226,8 +223,8 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         if (donateView.getVisibility() == View.GONE) {
             menu.add(Menu.NONE, R.string.donate, Menu.NONE, R.string.donate);
         }
-        menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
         menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);
+        menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
         menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
         menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
         return super.onCreateOptionsMenu(menu);
@@ -251,19 +248,6 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             startActivity(new Intent(this, AdvancedSettingsActivity.class));
         }
         return true;
-    }
-
-    private void setScrollChangeListener(final WebView webView) {
-        webView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
-            @Override
-            public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY > oldScrollY && scrollY >= (webView.getContentHeight() * 0x3ea / 0x400)) {
-                    donateView.setVisibility(View.VISIBLE);
-                } else if (scrollY < oldScrollY && scrollY == 0) {
-                    donateView.setVisibility(View.GONE);
-                }
-            }
-        });
     }
 
     private void showProcessDialog(int resId) {
