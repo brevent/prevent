@@ -270,7 +270,14 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
     }
 
     private boolean requestLog() {
-        if (getExternalCacheDir() != null) {
+        File dir = getExternalCacheDir();
+        if (dir != null) {
+            for (File file : dir.listFiles()) {
+                String name = file.getName();
+                if (name.startsWith("system.") || name.startsWith("prevent.")) {
+                    file.delete();
+                }
+            }
             Intent intent = new Intent();
             intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
             intent.setAction(PreventIntent.ACTION_SYSTEM_LOG);

@@ -79,10 +79,10 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
             handleUpdatePrevent(action, intent);
         } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
-            LogcatUtils.logcat("*:v");
-            LogcatUtils.logcat(context, "system");
             LogcatUtils.logcat("-s Prevent:v PreventUI:v");
-            setResultCode((int) LogcatUtils.logcat(context, "prevent"));
+            LogcatUtils.logcat(context, "prevent");
+            LogcatUtils.logcat("ContentResolver:s *:v");
+            LogcatUtils.logcat(context, "system");
         } else if (PreventIntent.ACTION_UPDATE_CONFIGURATION.equals(action)) {
             handleConfiguration(intent.getBundleExtra(PreventIntent.EXTRA_CONFIGURATION));
         } else if (PreventIntent.ACTION_CHECK_LICENSE.equals(action)) {
