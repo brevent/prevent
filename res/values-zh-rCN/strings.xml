@@ -60,7 +60,7 @@
     <string name="force_stop_1hour">1小时</string>
 
     <!-- request license -->
-    <string name="no_license">请累计打赏10元或以上，然后联系作者获取许可。</string>
+    <string name="no_license">请累计捐赠10元或以上，然后联系作者获取许可。</string>
     <string name="no_valid_license">您没有权限使用颁发给“%1$s”的许可，请重新获取。</string>
     <string name="email_request">邮件获取</string>
     <string name="copy_request">复制请求</string>
