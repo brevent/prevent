@@ -50,8 +50,8 @@
     <!-- advanced settings -->
     <string name="destroy_processes">Jangan simpan proses</string>
     <string name="destroy_processes_summary">Paksa berhenti aplikasi setelah pengguna meniadakan semua aktifitas. Disarankan off.</string>
-    <string name="force_stop_label">Force stop when screen is off</string>
-    <string name="force_stop_summary">After %1$s of inactivity with background apps</string>
+    <string name="force_stop_label">Force stop background apps</string>
+    <string name="force_stop_summary">After %1$s of inactivity with background apps and screen is off</string>
     <string name="force_stop_never">Jangan pernah (Disarankan)</string>
     <string name="force_stop_5min">5 menit</string>
     <string name="force_stop_10min">10 menit</string>

@@ -50,8 +50,8 @@
     <!-- advanced settings -->
     <string name="destroy_processes">不保留进程</string>
     <string name="destroy_processes_summary">用户退出后强行停止程序。推荐关闭。</string>
-    <string name="force_stop_label">屏幕关闭时强制停止</string>
-    <string name="force_stop_summary">后台程序无操作%1$s后</string>
+    <string name="force_stop_label">强制停止后台程序</string>
+    <string name="force_stop_summary">屏幕关闭且后台程序无操作%1$s后</string>
     <string name="force_stop_never">永不(推荐)</string>
     <string name="force_stop_5min">5分钟</string>
     <string name="force_stop_10min">10分钟</string>
