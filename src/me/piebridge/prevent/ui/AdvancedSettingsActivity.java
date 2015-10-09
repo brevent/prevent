@@ -38,7 +38,8 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     private Preference destroyProcesses;
 
     private static Collection<String> KEYS_NEED_LICENSE = Arrays.asList(
-            PreventIntent.KEY_DESTROY_PROCESSES
+            PreventIntent.KEY_DESTROY_PROCESSES,
+            PreventIntent.KEY_FORCE_STOP_TIMEOUT
     );
 
     @Override

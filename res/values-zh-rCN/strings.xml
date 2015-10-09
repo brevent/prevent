@@ -48,17 +48,16 @@
     <string name="uninstall">卸载</string>
 
     <!-- advanced settings -->
-    <string name="screen_off">屏幕关闭</string>
-    <string name="force_stop_label">强行停止</string>
-    <string name="force_stop_summary">无操作%1$s后</string>
+    <string name="destroy_processes">不保留进程</string>
+    <string name="destroy_processes_summary">用户退出后强行停止程序。推荐关闭。</string>
+    <string name="force_stop_label">屏幕关闭时强制停止</string>
+    <string name="force_stop_summary">后台程序无操作%1$s后</string>
     <string name="force_stop_never">永不(推荐)</string>
     <string name="force_stop_5min">5分钟</string>
     <string name="force_stop_10min">10分钟</string>
     <string name="force_stop_15min">15分钟</string>
     <string name="force_stop_30min">30分钟</string>
     <string name="force_stop_1hour">1小时</string>
-    <string name="destroy_processes">不保留进程</string>
-    <string name="destroy_processes_summary">用户退出后强行停止程序。推荐关闭。</string>
     <string name="no_license">您没有许可修改这项设置，请累计捐赠10元或以上，然后联系作者获取许可。</string>
     <string name="no_valid_license">您没有权限使用颁发给“%1$s”的许可，请点击“%2$s”重新获取。</string>
     <string name="apply">申请</string>
@@ -68,7 +67,7 @@
     <string name="version">版本</string>
     <string name="feedback">反馈</string>
     <string name="report_bug">报告问题</string>
-    <string name="advanced_settings">高级设置</string>
+    <string name="advanced_settings">强迫症设置</string>
 
     <!-- donation -->
     <string name="paypal">贝宝</string>

@@ -1,8 +1,15 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
-        android:key="screen_off_clean"
-        android:title="@string/screen_off">
+        android:key="applications"
+        android:title="@string/prevent_list">
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="destroy_processes"
+            android:summary="@string/destroy_processes_summary"
+            android:title="@string/destroy_processes" />
+
         <me.piebridge.prevent.ui.ListPreferenceSummary
             android:defaultValue="-1"
             android:entries="@array/force_stop_entries"
@@ -10,16 +17,6 @@
             android:key="force_stop_timeout"
             android:summary="@string/force_stop_summary"
             android:title="@string/force_stop_label" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="applications"
-        android:title="@string/applications">
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="destroy_processes"
-            android:summary="@string/destroy_processes_summary"
-            android:title="@string/destroy_processes" />
     </PreferenceCategory>
 
 </PreferenceScreen>

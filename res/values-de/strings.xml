@@ -48,17 +48,16 @@
     <string name="uninstall">Deinstallieren</string>
 
     <!-- advanced settings -->
-    <string name="screen_off">Display wird ausgeschaltet</string>
-    <string name="force_stop_label">Beenden erzwingen</string>
-    <string name="force_stop_summary">Nach %1$s ohne Aktivität</string>
+    <string name="destroy_processes">Don\'t keep processes</string>
+    <string name="destroy_processes_summary">Force stop applications after the user destroys all activities. Recommend off.</string>
+    <string name="force_stop_label">Force stop when screen is off</string>
+    <string name="force_stop_summary">After %1$s of inactivity with background apps</string>
     <string name="force_stop_never">Never (Recommend)</string>
     <string name="force_stop_5min">5 Minuten</string>
     <string name="force_stop_10min">10 Minuten</string>
     <string name="force_stop_15min">15 Minuten</string>
     <string name="force_stop_30min">30 Minuten</string>
     <string name="force_stop_1hour">1 Stunde</string>
-    <string name="destroy_processes">Don\'t keep processes</string>
-    <string name="destroy_processes_summary">Force stop applications after the user destroys all activities. Recommend off.</string>
     <string name="no_license">You don\'t have the license to modify this setting, please donate at least 3 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
     <string name="apply">apply</string>

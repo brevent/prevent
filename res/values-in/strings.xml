@@ -48,17 +48,16 @@
     <string name="uninstall">Hapus Pemasangan</string>
 
     <!-- advanced settings -->
-    <string name="screen_off">Layar mati</string>
-    <string name="force_stop_label">Paksa berhenti</string>
-    <string name="force_stop_summary">Setelah %1$s tanpa aktivitas</string>
+    <string name="destroy_processes">Jangan simpan proses</string>
+    <string name="destroy_processes_summary">Paksa berhenti aplikasi setelah pengguna meniadakan semua aktifitas. Disarankan off.</string>
+    <string name="force_stop_label">Force stop when screen is off</string>
+    <string name="force_stop_summary">After %1$s of inactivity with background apps</string>
     <string name="force_stop_never">Jangan pernah (Disarankan)</string>
     <string name="force_stop_5min">5 menit</string>
     <string name="force_stop_10min">10 menit</string>
     <string name="force_stop_15min">15 menit</string>
     <string name="force_stop_30min">30 menit</string>
     <string name="force_stop_1hour">1 jam</string>
-    <string name="destroy_processes">Jangan simpan proses</string>
-    <string name="destroy_processes_summary">Paksa berhenti aplikasi setelah pengguna meniadakan semua aktifitas. disarankan off.</string>
     <string name="no_license">Anda tidak memiliki lisensi untuk memodifikasi pengaturan ini, silahkan menyumbangkan setidaknya 3 usd, kemudian hubungi pengembang untuk mendapatkannya.</string>
     <string name="no_valid_license">Lisensi ini untuk \"%1$s\", kamu tidak punya izin untuk menggunakannya. Harap klik \"%2$s\" untuk mendapatkan yang baru.</string>
     <string name="apply">Terapkan</string>
