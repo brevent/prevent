@@ -25,7 +25,7 @@
 
     <!-- main menu -->
     <string name="switch_theme">Ubah tema</string>
-    <string name="user_guide">User guide</string>
+    <string name="user_guide">Bantuan pengguna</string>
 
     <!-- app status -->
     <string name="retrieving">Mengambil status, silahkan tunggu. . .</string>
@@ -37,9 +37,9 @@
     <string name="importance_perceptible">Terlihat</string>
     <string name="importance_service">Layanan</string>
     <string name="importance_visible">Nyata</string>
-    <string name="importance_gone">Gone</string>
+    <string name="importance_gone">Hilang</string>
     <string name="importance_foreground_service">Latar depan Layanan</string>
-    <string name="importance_top_sleeping">Top Sleeping</string>
+    <string name="importance_top_sleeping">Tidur tertinggi</string>
     <string name="importance_service_not_started">Layanan (Belum dimulai)</string>
 
     <!-- app menu -->
@@ -50,29 +50,29 @@
     <!-- advanced settings -->
     <string name="screen_off">Layar mati</string>
     <string name="force_stop_label">Paksa berhenti</string>
-    <string name="force_stop_summary">Nach %1$s ohne Aktivität</string>
-    <string name="force_stop_never">Never (Recommend)</string>
+    <string name="force_stop_summary">Setelah %1$s tanpa aktivitas</string>
+    <string name="force_stop_never">Jangan pernah (Disarankan)</string>
     <string name="force_stop_5min">5 menit</string>
     <string name="force_stop_10min">10 menit</string>
     <string name="force_stop_15min">15 menit</string>
     <string name="force_stop_30min">30 menit</string>
     <string name="force_stop_1hour">1 jam</string>
-    <string name="destroy_processes">Don\'t keep processes</string>
-    <string name="destroy_processes_summary">Force stop applications after the user destroys all activities. Recommend off.</string>
-    <string name="no_license">You don\'t have the license to modify this setting, please donate at least 3 usd, then contact the author to get one.</string>
-    <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
-    <string name="apply">apply</string>
+    <string name="destroy_processes">Jangan simpan proses</string>
+    <string name="destroy_processes_summary">Paksa berhenti aplikasi setelah pengguna meniadakan semua aktifitas. disarankan off.</string>
+    <string name="no_license">Anda tidak memiliki lisensi untuk memodifikasi pengaturan ini, silahkan menyumbangkan setidaknya 3 usd, kemudian hubungi pengembang untuk mendapatkannya.</string>
+    <string name="no_valid_license">Lisensi ini untuk \"%1$s\", kamu tidak punya izin untuk menggunakannya. Harap klik \"%2$s\" untuk mendapatkan yang baru.</string>
+    <string name="apply">Terapkan</string>
 
     <!-- user guide menu -->
     <string name="donate">Donasi</string>
-    <string name="version">versi</string>
-    <string name="feedback">Feedback</string>
-    <string name="report_bug">Report Bug</string>
+    <string name="version">Versi</string>
+    <string name="feedback">Umpan balik</string>
+    <string name="report_bug">laporkan Kesalahan</string>
     <string name="advanced_settings">Setelan lanjutan</string>
 
     <!-- donation -->
     <string name="paypal">PayPal</string>
 
-    <string name="licensed">Licensed</string>
+    <string name="licensed">Berlisensi</string>
 
 </resources>
