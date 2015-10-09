@@ -10,6 +10,8 @@ import android.util.AttributeSet;
  */
 public class ListPreferenceSummary extends ListPreference {
 
+    private OnPreferenceClickListener mOnClickListener;
+
     public ListPreferenceSummary(Context context) {
         super(context);
     }
@@ -28,6 +30,18 @@ public class ListPreferenceSummary extends ListPreference {
             return String.format(String.valueOf(super.getSummary()), entry);
         } else {
             return super.getSummary();
+        }
+    }
+
+    @Override
+    public void setOnPreferenceClickListener(OnPreferenceClickListener onPreferenceClickListener) {
+        mOnClickListener = onPreferenceClickListener;
+    }
+
+    @Override
+    public void onClick() {
+        if (mOnClickListener == null || !mOnClickListener.onPreferenceClick(this)) {
+            super.onClick();
         }
     }
 

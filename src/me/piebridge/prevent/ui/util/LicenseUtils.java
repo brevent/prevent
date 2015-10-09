@@ -1,6 +1,11 @@
 package me.piebridge.prevent.ui.util;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.text.TextUtils;
+import android.util.Base64;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.ui.UILog;
 
@@ -103,6 +109,9 @@ public class LicenseUtils {
     }
 
     public static String getLicense(byte[] key) {
+        if (key == null || key.length == 0) {
+            return null;
+        }
         BigInteger exponent = BigInteger.valueOf(0x10001);
         BigInteger modulus = new BigInteger(1, MODULUS);
         byte[] signature = new BigInteger(1, key).modPow(exponent, modulus).toByteArray();
@@ -126,6 +135,61 @@ public class LicenseUtils {
         } catch (IOException e) {
             UILog.d("cannot save license", e);
         }
+    }
+
+    public static boolean importLicenseFromClipboard(Activity activity) {
+        byte[] key = readKeyFromClipboard(activity);
+        if (!TextUtils.isEmpty(LicenseUtils.getLicense(key))) {
+            LicenseUtils.saveLicense(activity, key);
+            ((android.text.ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE)).setText(null);
+            return true;
+        }
+        return false;
+    }
+
+    private static byte[] readKeyFromClipboard(Activity activity) {
+        CharSequence plain = ((android.text.ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE)).getText();
+        if (TextUtils.isEmpty(plain)) {
+            return new byte[0];
+        }
+        try {
+            return Base64.decode(plain.toString(), Base64.DEFAULT);
+        } catch (IllegalArgumentException e) {
+            UILog.d("cannot decode as base64", e);
+            return new byte[0];
+        }
+    }
+
+    public static void requestLicense(final Context context, String license, String accounts) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        final String content = "license: " + license + ", accounts: " + accounts;
+        builder.setTitle(context.getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
+        if (TextUtils.isEmpty(license)) {
+            builder.setMessage(R.string.no_license);
+        } else {
+            builder.setMessage(context.getString(R.string.no_valid_license, license));
+        }
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                dialog.dismiss();
+            }
+        });
+        builder.setPositiveButton(R.string.email_request, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                EmailUtils.sendEmail(context, content);
+            }
+        });
+        builder.setNeutralButton(R.string.copy_request, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //noinspection deprecation
+                ((android.text.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE)).setText(content);
+            }
+        });
+        builder.create().show();
     }
 
 }

@@ -42,6 +42,7 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.QQUtils;
+import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
@@ -226,6 +227,7 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);
         menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
         menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
+        menu.add(Menu.NONE, R.string.request_license, Menu.NONE, R.string.request_license);
         menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
         return super.onCreateOptionsMenu(menu);
     }
@@ -246,8 +248,28 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             showVersionInfo();
         } else if (id == R.string.advanced_settings) {
             startActivity(new Intent(this, AdvancedSettingsActivity.class));
+        } else if (id == R.string.request_license) {
+            requestLicense();
         }
         return true;
+    }
+
+    private boolean requestLicense() {
+        if (LicenseUtils.importLicenseFromClipboard(this)) {
+            RecreateUtils.recreate(this);
+            return true;
+        }
+        Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+        sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction()) && getResultCode() != 1) {
+                    LicenseUtils.requestLicense(UserGuideActivity.this, null, getResultData());
+                }
+            }
+        }, null, 0, null, null);
+        return false;
     }
 
     private void showProcessDialog(int resId) {

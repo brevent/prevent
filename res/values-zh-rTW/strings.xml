@@ -58,19 +58,26 @@
     <string name="force_stop_15min">15分鐘</string>
     <string name="force_stop_30min">30分鐘</string>
     <string name="force_stop_1hour">1小時</string>
-    <string name="no_license">您沒有許可修改這項設置，請累計捐贈10元或以上，然後聯繫作者獲取許可。</string>
-    <string name="no_valid_license">您沒有權限使用頒發給『%1$s』的許可，請點擊『%2$s』重新獲取。</string>
-    <string name="apply">申請</string>
+
+    <!-- request license -->
+    <string name="no_license">請累計捐贈10元或以上，然後聯繫作者獲取許可。</string>
+    <string name="no_valid_license">您沒有權限使用頒發給『%1$s』的許可，請重新獲取。</string>
+    <string name="email_request">電郵獲取</string>
+    <string name="copy_request">複製請求</string>
 
     <!-- user guide menu -->
     <string name="donate">捐贈</string>
     <string name="feedback">回饋</string>
     <string name="version">版本</string>
     <string name="report_bug">回報錯誤</string>
+    <string name="request_license">导入授權</string>
     <string name="advanced_settings">進階設定</string>
 
     <!-- donation -->
+    <string name="donation">如果喜歡，請隨手捐贈</string>
     <string name="paypal">PayPal</string>
+
+    <!-- version -->
     <string name="licensed">已授權</string>
 
 </resources>

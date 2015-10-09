@@ -51,27 +51,33 @@
     <string name="destroy_processes">Don\'t keep processes</string>
     <string name="destroy_processes_summary">Force stop applications after the user destroys all activities. Recommend off.</string>
     <string name="force_stop_label">Force stop background apps</string>
-    <string name="force_stop_summary">After %1$s of inactivity with background apps and screen is off</string>
+    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
     <string name="force_stop_never">Never (Recommend)</string>
     <string name="force_stop_5min">5 minutes</string>
     <string name="force_stop_10min">10 minutes</string>
     <string name="force_stop_15min">15 minutes</string>
     <string name="force_stop_30min">30 minutes</string>
     <string name="force_stop_1hour">1 hour</string>
-    <string name="no_license">You don\'t have the license to modify this setting, please donate at least 3 usd, then contact the author to get one.</string>
-    <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please click \"%2$s\" for a new one.</string>
-    <string name="apply">apply</string>
+
+    <!-- request license -->
+    <string name="no_license">Please donate at least 2 usd, then contact the author to get license.</string>
+    <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please request for a new one.</string>
+    <string name="email_request">Request via Email</string>
+    <string name="copy_request">Copy request content</string>
 
     <!-- user guide menu -->
     <string name="donate">Donate</string>
     <string name="version">Version</string>
     <string name="feedback">Feedback</string>
     <string name="report_bug">Report Bug</string>
+    <string name="request_license">Request license</string>
     <string name="advanced_settings">Advanced Settings</string>
 
     <!-- donation -->
+    <string name="donation">Feel free to donate if you like.</string>
     <string name="paypal">PayPal</string>
 
+    <!-- version -->
     <string name="licensed">Licensed</string>
 
 </resources>
