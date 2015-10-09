@@ -107,9 +107,11 @@ public class LicenseUtils {
         BigInteger modulus = new BigInteger(1, MODULUS);
         byte[] signature = new BigInteger(1, key).modPow(exponent, modulus).toByteArray();
         int size = signature.length;
-        for (int i = 0; i < size; ++i) {
+        // PKCS#1 v1.5
+        for (int i = 0xa; i < size; ++i) {
             if (signature[i] == 0x00) {
-                return new String(signature, i + 1, signature.length - i - 1);
+                int offset = i + 1;
+                return new String(signature, offset, size - offset);
             }
         }
         return null;
