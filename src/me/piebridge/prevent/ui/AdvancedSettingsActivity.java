@@ -1,5 +1,6 @@
 package me.piebridge.prevent.ui;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +29,8 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     private String license;
 
     private String accounts;
+
+    private AlertDialog dialog;
 
     private Preference forceStopTimeout;
 
@@ -51,7 +55,6 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         //noinspection deprecation
         destroyProcesses = findPreference(PreventIntent.KEY_DESTROY_PROCESSES);
         destroyProcesses.setOnPreferenceChangeListener(this);
-        destroyProcesses.setOnPreferenceClickListener(this);
 
         // check license
         license = LicenseUtils.getLicense(this);
@@ -69,10 +72,22 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     }
 
     @Override
-    protected void onRestart() {
-        super.onRestart();
+    protected void onResume() {
+        super.onResume();
+        checkLicense();
+    }
+
+    private boolean checkLicense() {
         if (LicenseUtils.importLicenseFromClipboard(this)) {
+            Toast.makeText(this, R.string.licensed, Toast.LENGTH_LONG).show();
+            if (dialog != null) {
+                dialog.dismiss();
+                dialog = null;
+            }
             RecreateUtils.recreate(this);
+            return true;
+        } else {
+            return false;
         }
     }
 

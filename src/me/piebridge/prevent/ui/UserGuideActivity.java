@@ -26,6 +26,7 @@ import android.view.View;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,7 +53,10 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
 
     private View donateView;
 
+    private AlertDialog request;
+
     private ProgressDialog dialog;
+
 
     private BroadcastReceiver receiver;
 
@@ -84,6 +88,12 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             donateView.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkLicense();
     }
 
     private void checkView(int id, ComponentName component) {
@@ -227,7 +237,9 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);
         menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
         menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
-        menu.add(Menu.NONE, R.string.request_license, Menu.NONE, R.string.request_license);
+        if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
+            menu.add(Menu.NONE, R.string.request_license, Menu.NONE, R.string.request_license);
+        }
         menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
         return super.onCreateOptionsMenu(menu);
     }
@@ -254,22 +266,33 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         return true;
     }
 
-    private boolean requestLicense() {
+    private boolean checkLicense() {
         if (LicenseUtils.importLicenseFromClipboard(this)) {
+            Toast.makeText(this, R.string.licensed, Toast.LENGTH_LONG).show();
+            if (request != null) {
+                request.dismiss();
+                request = null;
+            }
             RecreateUtils.recreate(this);
             return true;
+        } else {
+            return false;
         }
-        Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
-        sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction()) && getResultCode() != 1) {
-                    LicenseUtils.requestLicense(UserGuideActivity.this, null, getResultData());
+    }
+
+    private void requestLicense() {
+        if (!checkLicense()) {
+            Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction()) && getResultCode() != 1) {
+                        request = LicenseUtils.requestLicense(UserGuideActivity.this, null, getResultData());
+                    }
                 }
-            }
-        }, null, 0, null, null);
-        return false;
+            }, null, 0, null, null);
+        }
     }
 
     private void showProcessDialog(int resId) {

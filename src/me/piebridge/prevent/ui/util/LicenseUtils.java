@@ -23,6 +23,8 @@ import me.piebridge.prevent.ui.UILog;
  */
 public class LicenseUtils {
 
+    private static final String LICENSE = "license.key";
+
     private static final byte[] MODULUS = {
              -93, -117,  -85,   56,  -65,   -8,  -86,   59,   52,   43,  -50,  -47,   64,   51,   89, -116,
               95,  120,  -85,  -82,  -60,  -78,   65,   80,   18,   78, -109,   61,  106,  -28,  112,   76,
@@ -66,7 +68,7 @@ public class LicenseUtils {
 
     private static byte[] readKey(File file) {
         byte[] key = new byte[0x100];
-        File path = new File(file, "license.key");
+        File path = new File(file, LICENSE);
         if (path.isFile() && path.canRead()) {
             try {
                 InputStream is = new FileInputStream(path);
@@ -128,7 +130,7 @@ public class LicenseUtils {
 
     public static void saveLicense(Context context, byte[] key) {
         try {
-            File path = new File(context.getFilesDir(), "license.key");
+            File path = new File(context.getFilesDir(), LICENSE);
             FileOutputStream fos = new FileOutputStream(path);
             fos.write(key);
             fos.close();
@@ -160,7 +162,7 @@ public class LicenseUtils {
         }
     }
 
-    public static void requestLicense(final Context context, String license, String accounts) {
+    public static AlertDialog requestLicense(final Context context, String license, String accounts) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         final String content = "license: " + license + ", accounts: " + accounts;
         builder.setTitle(context.getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
@@ -179,17 +181,38 @@ public class LicenseUtils {
         builder.setPositiveButton(R.string.email_request, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                deleteLicenseIfNeeded(context);
                 EmailUtils.sendEmail(context, content);
             }
         });
         builder.setNeutralButton(R.string.copy_request, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                deleteLicenseIfNeeded(context);
                 //noinspection deprecation
                 ((android.text.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE)).setText(content);
             }
         });
-        builder.create().show();
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        return dialog;
+    }
+
+    private static void deleteLicenseIfNeeded(Context context) {
+        deleteFileIfNeeded(context.getFilesDir());
+        for (File dir : PreventListUtils.getExternalFilesDirs(context)) {
+            deleteFileIfNeeded(dir);
+        }
+    }
+
+    private static boolean deleteFileIfNeeded(File dir) {
+        if (dir != null) {
+            File file = new File(dir, LICENSE);
+            if (file.isFile()) {
+                return file.delete();
+            }
+        }
+        return false;
     }
 
 }

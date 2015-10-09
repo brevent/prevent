@@ -66,7 +66,7 @@
     <string name="copy_request">复制请求</string>
 
     <!-- user guide menu -->
-    <string name="donate">打赏</string>
+    <string name="donate">捐赠</string>
     <string name="version">版本</string>
     <string name="feedback">反馈</string>
     <string name="report_bug">报告问题</string>
@@ -74,7 +74,7 @@
     <string name="advanced_settings">强迫症设置</string>
 
     <!-- donation -->
-    <string name="donation">打个赏呗</string>
+    <string name="donation">如果喜欢，请随意捐赠</string>
     <string name="paypal">贝宝</string>
 
     <!-- version -->
