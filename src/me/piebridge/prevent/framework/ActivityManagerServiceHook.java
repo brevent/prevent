@@ -108,7 +108,7 @@ public class ActivityManagerServiceHook {
         if (GmsUtils.isGms(packageName)) {
             return hookGmsService(hostingName, hostingType, packageName, sender);
         }
-        if (sender != null && cannotPrevent(sender, packageName)) {
+        if ((sender != null && cannotPrevent(sender, packageName)) || SafeActionUtils.cannotPrevent(mContext, hostingName)) {
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;

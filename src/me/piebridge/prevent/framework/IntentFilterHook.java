@@ -160,7 +160,7 @@ public class IntentFilterHook {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         }
-        if (isSafeServiceAction(action)) {
+        if (isSafeServiceAction(action) || SafeActionUtils.isSafeAction(packageName, action)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
         } else if (!SystemHook.isSystemPackage(packageName) && !isSystemSender(sender)) {
