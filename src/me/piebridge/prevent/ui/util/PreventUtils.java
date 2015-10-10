@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,7 +13,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 
@@ -66,10 +64,7 @@ public class PreventUtils {
                 }
                 int size = getResultCode();
                 if (prevents.size() == size) {
-                    UILog.i("update prevents: " + prevents.size());
                     PreventListUtils.save(context, prevents);
-                    String message = context.getString(R.string.updated_prevents, prevents.size());
-                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
                 } else {
                     UILog.e("update prevents: " + prevents.size() + " != " + size);
                 }

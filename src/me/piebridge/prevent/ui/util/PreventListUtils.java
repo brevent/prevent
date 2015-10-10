@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 
@@ -46,6 +48,9 @@ public final class PreventListUtils {
 
     public static synchronized void save(Context context, Set<String> packages) {
         save(PREVENT, packages);
+        UILog.i("update prevents: " + packages.size());
+        String message = context.getString(R.string.updated_prevents, packages.size());
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         boolean backup = false;
         try {
