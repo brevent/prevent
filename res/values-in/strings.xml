@@ -50,10 +50,10 @@
     <!-- advanced settings -->
     <string name="destroy_processes">Jangan simpan proses</string>
     <string name="destroy_processes_summary">Paksa berhenti aplikasi setelah pengguna meniadakan semua aktifitas. Disarankan off.</string>
-    <string name="backup">Backup</string>
-    <string name="backup_prevent_list">Back up prevent list to external storage.</string>
-    <string name="force_stop_label">Force stop background apps</string>
-    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps.</string>
+    <string name="backup">Cadangkan</string>
+    <string name="backup_prevent_list">Cadangkan daftar pencegahan ke penyimpanan eksternal.</string>
+    <string name="force_stop_label">Paksa berhenti aplikasi latar belakang</string>
+    <string name="force_stop_summary">Layar mati, dan setelah %1$s ketidakaktifan dengan aplikasi latar belakang.</string>
     <string name="force_stop_never">Jangan pernah (Disarankan)</string>
     <string name="force_stop_5min">5 menit</string>
     <string name="force_stop_10min">10 menit</string>
@@ -62,21 +62,21 @@
     <string name="force_stop_1hour">1 jam</string>
 
     <!-- request license -->
-    <string name="no_license">Silahkan menyumbangkan setidaknya 2 usd, kemudian hubungi pengembang untuk mendapatk annya.</string>
-    <string name="no_valid_license">Lisensi ini untuk \"%1$s\", kamu tidak punya izin untuk menggunakannya. Please request a new one.</string>
-    <string name="email_request">Request via Email</string>
-    <string name="copy_request">Copy request content</string>
+    <string name="no_license">Silahkan menyumbangkan setidaknya 2 usd, kemudian hubungi pengembang untuk mendapatkannya.</string>
+    <string name="no_valid_license">Lisensi ini untuk \"%1$s\", kamu tidak punya izin untuk menggunakannya. Harap minta yang baru.</string>
+    <string name="email_request">Minta via Email</string>
+    <string name="copy_request">Salin permintaan konten</string>
 
     <!-- user guide menu -->
     <string name="donate">Donasi</string>
     <string name="version">Versi</string>
     <string name="feedback">Umpan balik</string>
-    <string name="report_bug">laporkan Kesalahan</string>
-    <string name="request_license">Request license</string>
+    <string name="report_bug">Laporkan kesalahan</string>
+    <string name="request_license">Minta lisensi</string>
     <string name="advanced_settings">Setelan lanjutan</string>
 
     <!-- donation -->
-    <string name="donation">Feel free to donate if you like.</string>
+    <string name="donation">Jangan ragu untuk donasi jika kamu suka.</string>
     <string name="paypal">PayPal</string>
 
     <!-- version -->
