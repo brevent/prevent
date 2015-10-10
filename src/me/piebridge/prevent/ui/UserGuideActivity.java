@@ -78,15 +78,19 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             webView.loadUrl("file:///android_asset/about.en.html");
         }
         ComponentName donateAlipay = getDonateAlipay();
-        ComponentName donateWeChate = getDonateWeChat();
+        ComponentName donateWeChat = getDonateWeChat();
         checkView(R.id.alipay, donateAlipay);
-        checkView(R.id.wechat, donateWeChate);
-        if (!Locale.CHINA.equals(Locale.getDefault()) || (donateAlipay == null && donateWeChate == null)) {
+        checkView(R.id.wechat, donateWeChat);
+        if (Locale.CHINA.equals(Locale.getDefault()) && (donateAlipay != null || donateWeChat != null)) {
+            findViewById(R.id.paypal).setVisibility(View.GONE);
+        } else {
             setView(R.id.paypal, "com.paypal.android.p2pmobile");
         }
         donateView = findViewById(R.id.donate);
         if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             donateView.setVisibility(View.VISIBLE);
+        } else {
+            donateView.setVisibility(View.GONE);
         }
     }
 
@@ -99,11 +103,13 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
     private void checkView(int id, ComponentName component) {
         if (component != null) {
             setView(id, component.getPackageName());
+        } else {
+            findViewById(id).setVisibility(View.GONE);
         }
     }
 
     private int getHeaderIconWidth() {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0x30, getResources().getDisplayMetrics());
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0x20, getResources().getDisplayMetrics());
     }
 
     private Drawable cropDrawable(Drawable icon) {

@@ -3,10 +3,10 @@
     android:id="@+id/donate"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="10dp"
+    android:layout_margin="4dp"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:visibility="gone">
+    android:visibility="visible">
 
     <TextView
         android:layout_width="wrap_content"
@@ -14,12 +14,12 @@
         android:layout_gravity="center"
         android:gravity="center_horizontal"
         android:text="@string/donation"
-        android:textAppearance="@style/medium" />
+        android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_margin="4dp"
         android:gravity="center_horizontal"
         android:orientation="horizontal">
 
@@ -30,11 +30,11 @@
             android:layout_gravity="center"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_gravity="center"
                 android:layout_margin="2dp"
                 android:contentDescription="@android:string/unknownName"
@@ -46,7 +46,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:tag="text"
-                android:text="@android:string/unknownName" />
+                android:text="@android:string/unknownName"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
         </LinearLayout>
 
         <LinearLayout
@@ -56,11 +57,11 @@
             android:layout_gravity="center"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_gravity="center"
                 android:layout_margin="2dp"
                 android:contentDescription="@android:string/unknownName"
@@ -72,7 +73,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:tag="text"
-                android:text="@android:string/unknownName" />
+                android:text="@android:string/unknownName"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
         </LinearLayout>
 
         <LinearLayout
@@ -82,11 +84,11 @@
             android:layout_gravity="center"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_gravity="center"
                 android:layout_margin="2dp"
                 android:contentDescription="@string/paypal"
@@ -98,7 +100,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:tag="text"
-                android:text="@string/paypal" />
+                android:text="@string/paypal"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
         </LinearLayout>
 
     </LinearLayout>

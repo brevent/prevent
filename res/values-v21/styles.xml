@@ -9,6 +9,4 @@
         <item name="color_dangerous">@color/color_dangerous_light</item>
     </style>
 
-    <style name="medium" parent="@android:style/TextAppearance.Material.Medium" />
-
 </resources>
