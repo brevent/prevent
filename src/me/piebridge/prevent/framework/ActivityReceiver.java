@@ -227,27 +227,56 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     }
 
     private void checkLeavingPackages() {
+        if (timeout < 0) {
+            return;
+        }
         PreventLog.d("checking leaving packages");
         long now = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime());
-        Iterator<Map.Entry<String, Long>> iterator = leavingPackages.entrySet().iterator();
+        Iterator<Map.Entry<String, Boolean>> iterator = mPreventPackages.entrySet().iterator();
+        Set<String> stopPackages = new HashSet<String>();
+        boolean needCheckMore = false;
         while (iterator.hasNext()) {
-            Map.Entry<String, Long> entry = iterator.next();
-            long elapsed = now - entry.getValue();
-            if (timeout <= 0 || elapsed < timeout) {
+            Map.Entry<String, Boolean> entry = iterator.next();
+            String packageName = entry.getKey();
+            Boolean prevent = entry.getValue();
+            if (Boolean.TRUE.equals(prevent)) {
+                leavingPackages.remove(packageName);
+            }
+            if (!Boolean.FALSE.equals(prevent)) {
                 continue;
             }
-            String packageName = entry.getKey();
-            if (mPreventPackages.containsKey(packageName)) {
-                if (!screen) {
-                    PreventLog.i("leaving package " + packageName + " for " + elapsed + " seconds, force stop it");
-                    HideApiUtils.forceStopPackage(mContext, packageName);
-                    iterator.remove();
-                }
+            long elapsed;
+            Long lastRunning = leavingPackages.get(packageName);
+            if (lastRunning != null) {
+                elapsed = now - lastRunning;
             } else {
-                PreventLog.d("leaving package " + packageName + " for " + elapsed + " seconds, ignore it");
+                elapsed = timeout - countCounter(packageName);
+            }
+            if (elapsed >= timeout) {
+                PreventLog.i("leaving package " + packageName + " for " + elapsed + " seconds");
+                stopPackages.add(packageName);
+            } else {
+                needCheckMore = true;
             }
         }
-        if (!screen && !leavingPackages.isEmpty()) {
+        forceStopPackages(stopPackages);
+        if (needCheckMore) {
+            checkLeavingPackagesIfNeeded();
+        }
+    }
+
+    private void forceStopPackages(Set<String> stopPackages) {
+        for (String packageName : stopPackages) {
+            if (screen) {
+                break;
+            }
+            HideApiUtils.forceStopPackage(mContext, packageName);
+            leavingPackages.remove(packageName);
+        }
+    }
+
+    private void checkLeavingPackagesIfNeeded() {
+        if (!screen) {
             leavingFuture = singleExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
