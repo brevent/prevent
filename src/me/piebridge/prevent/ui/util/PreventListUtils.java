@@ -54,12 +54,15 @@ public final class PreventListUtils {
             UILog.d("invalid value for " + PreventIntent.BACKUP_PREVENT_LIST, e);
             sp.edit().putBoolean(PreventIntent.BACKUP_PREVENT_LIST, false).apply();
         }
-        if (!backup) {
-            return;
-        }
-        for (File file : getExternalFilesDirs(context)) {
-            if (file != null) {
-                save(new File(file, "prevent.list").getAbsolutePath(), packages);
+        for (File dir : getExternalFilesDirs(context)) {
+            if (dir == null) {
+                continue;
+            }
+            File file = new File(dir, "prevent.list");
+            if (backup) {
+                save(file.getAbsolutePath(), packages);
+            } else if (file.exists()) {
+                file.delete();
             }
         }
     }
