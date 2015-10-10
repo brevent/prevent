@@ -34,6 +34,7 @@ public final class PreventIntent {
 
     public static final String KEY_FORCE_STOP_TIMEOUT = "force_stop_timeout";
     public static final String KEY_DESTROY_PROCESSES = "destroy_processes";
+    public static final String BACKUP_PREVENT_LIST = "backup_prevent_list";
 
     private PreventIntent() {
 

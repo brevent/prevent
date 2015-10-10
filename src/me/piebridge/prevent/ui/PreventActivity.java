@@ -46,6 +46,7 @@ import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.LicenseUtils;
+import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
@@ -686,6 +687,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     }
                     preventPackages.putAll(prevents);
                 }
+                PreventListUtils.saveIfNeeded(PreventActivity.this, prevents.keySet());
             } catch (JSONException e) {
                 UILog.e("cannot convert to json", e);
             }

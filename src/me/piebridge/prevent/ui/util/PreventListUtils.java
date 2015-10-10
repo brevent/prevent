@@ -1,8 +1,10 @@
 package me.piebridge.prevent.ui.util;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,6 +16,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 
 public final class PreventListUtils {
@@ -43,6 +46,17 @@ public final class PreventListUtils {
 
     public static synchronized void save(Context context, Set<String> packages) {
         save(PREVENT, packages);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean backup = false;
+        try {
+            backup = sp.getBoolean(PreventIntent.BACKUP_PREVENT_LIST, false);
+        } catch (ClassCastException e) {
+            UILog.d("invalid value for " + PreventIntent.BACKUP_PREVENT_LIST, e);
+            sp.edit().putBoolean(PreventIntent.BACKUP_PREVENT_LIST, false).apply();
+        }
+        if (!backup) {
+            return;
+        }
         for (File file : getExternalFilesDirs(context)) {
             if (file != null) {
                 save(new File(file, "prevent.list").getAbsolutePath(), packages);
@@ -50,7 +64,13 @@ public final class PreventListUtils {
         }
     }
 
-    private static synchronized void save(String path, Set<String> packages) {
+    public static void saveIfNeeded(Context context, Set<String> packages) {
+        if (!new File(PREVENT).exists()) {
+            save(context, packages);
+        }
+    }
+
+    private static void save(String path, Set<String> packages) {
         File lock = new File(path + ".lock");
         File conf = lock.getParentFile();
         if (conf.isFile()) {

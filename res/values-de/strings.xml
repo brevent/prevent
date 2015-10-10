@@ -62,6 +62,8 @@
     <!-- request license -->
     <string name="no_license">Please donate at least 2 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please request for a new one.</string>
+    <string name="backup">Backup</string>
+    <string name="backup_prevent_list">Back up prevent list to external storage.</string>
     <string name="email_request">Request via Email</string>
     <string name="copy_request">Copy request content</string>
 

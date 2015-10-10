@@ -50,6 +50,8 @@
     <!-- advanced settings -->
     <string name="destroy_processes">Jangan simpan proses</string>
     <string name="destroy_processes_summary">Paksa berhenti aplikasi setelah pengguna meniadakan semua aktifitas. Disarankan off.</string>
+    <string name="backup">Backup</string>
+    <string name="backup_prevent_list">Back up prevent list to external storage.</string>
     <string name="force_stop_label">Force stop background apps</string>
     <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
     <string name="force_stop_never">Jangan pernah (Disarankan)</string>

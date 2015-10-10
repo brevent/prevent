@@ -32,14 +32,14 @@ public class PreventReceiver extends BroadcastReceiver {
                 timeout = Long.parseLong(sp.getString(PreventIntent.KEY_FORCE_STOP_TIMEOUT, "-1"));
             } catch (NumberFormatException e) {
                 UILog.d("invalid value for " + PreventIntent.KEY_FORCE_STOP_TIMEOUT, e);
-                sp.edit().putString(PreventIntent.KEY_FORCE_STOP_TIMEOUT, "-1").commit();
+                sp.edit().putString(PreventIntent.KEY_FORCE_STOP_TIMEOUT, "-1").apply();
             }
             boolean destroyProcesses = false;
             try {
                 destroyProcesses = sp.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES, false);
             } catch (ClassCastException e) {
                 UILog.d("invalid value for " + PreventIntent.KEY_DESTROY_PROCESSES, e);
-                sp.edit().putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, false).commit();
+                sp.edit().putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, false).apply();
             }
             Bundle bundle = new Bundle();
             bundle.putLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT, timeout);

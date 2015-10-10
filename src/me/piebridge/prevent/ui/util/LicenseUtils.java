@@ -141,7 +141,7 @@ public class LicenseUtils {
 
     public static boolean importLicenseFromClipboard(Activity activity) {
         byte[] key = readKeyFromClipboard(activity);
-        if (!TextUtils.isEmpty(LicenseUtils.getLicense(key))) {
+        if (key.length > 0 && !TextUtils.isEmpty(LicenseUtils.getLicense(key))) {
             LicenseUtils.saveLicense(activity, key);
             ((android.text.ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE)).setText(null);
             return true;
