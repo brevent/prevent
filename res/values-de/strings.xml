@@ -50,8 +50,10 @@
     <!-- advanced settings -->
     <string name="destroy_processes">Don\'t keep processes</string>
     <string name="destroy_processes_summary">Force stop applications after the user destroys all activities. Recommend off.</string>
+    <string name="backup">Backup</string>
+    <string name="backup_prevent_list">Back up prevent list to external storage.</string>
     <string name="force_stop_label">Force stop background apps</string>
-    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
+    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps.</string>
     <string name="force_stop_never">Never (Recommend)</string>
     <string name="force_stop_5min">5 Minuten</string>
     <string name="force_stop_10min">10 Minuten</string>
@@ -62,8 +64,6 @@
     <!-- request license -->
     <string name="no_license">Please donate at least 2 usd, then contact the author to get one.</string>
     <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please request for a new one.</string>
-    <string name="backup">Backup</string>
-    <string name="backup_prevent_list">Back up prevent list to external storage.</string>
     <string name="email_request">Request via Email</string>
     <string name="copy_request">Copy request content</string>
 

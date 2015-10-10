@@ -51,9 +51,9 @@
     <string name="destroy_processes">不要保留處理程式</string>
     <string name="destroy_processes_summary">使用者退出後強制停止程式。推薦關閉。</string>
     <string name="backup">備份</string>
-    <string name="backup_prevent_list">將阻止列表備份到外部記憶體</string>
+    <string name="backup_prevent_list">將阻止列表備份到外部記憶體。</string>
     <string name="force_stop_label">強制停止背景程式</string>
-    <string name="force_stop_summary">螢幕關閉且背景程式閒置%1$s後</string>
+    <string name="force_stop_summary">螢幕關閉且背景程式閒置%1$s後。</string>
     <string name="force_stop_never">永不(推薦)</string>
     <string name="force_stop_5min">5分鐘</string>
     <string name="force_stop_10min">10分鐘</string>

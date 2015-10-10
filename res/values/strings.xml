@@ -53,7 +53,7 @@
     <string name="backup">Backup</string>
     <string name="backup_prevent_list">Back up prevent list to external storage.</string>
     <string name="force_stop_label">Force stop background apps</string>
-    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
+    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps.</string>
     <string name="force_stop_never">Never (Recommend)</string>
     <string name="force_stop_5min">5 minutes</string>
     <string name="force_stop_10min">10 minutes</string>
