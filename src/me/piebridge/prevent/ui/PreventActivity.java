@@ -30,8 +30,6 @@ import android.widget.Button;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Member;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -140,48 +138,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             // do nothing
         }
 
-        try {
-            Class<?> clazz = Class.forName("de.robv.android.xposed.XposedBridge", false, ClassLoader.getSystemClassLoader());
-            Field field = clazz.getDeclaredField("disableHooks");
-            field.setAccessible(true);
-            field.set(null, true);
-
-            disableXposed(clazz);
-        } catch (ClassNotFoundException e) { // NOSONAR
-            // do nothing
-        } catch (Throwable t) { // NOSONAR
-            UILog.d("cannot disable Xposed", t);
-        }
-
         if (!BuildConfig.RELEASE && TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             showTestDialog();
         } else {
             initialize();
         }
     }
-
-    private void disableXposed(Class<?> clazz) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
-        UILog.d("disabled xposed");
-        Field field = clazz.getDeclaredField("sHookedMethodCallbacks");
-        field.setAccessible(true);
-        Map sHookedMethodCallbacks = (Map) field.get(null);
-        Iterator iterator = sHookedMethodCallbacks.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            Member method = (Member) entry.getKey();
-            if (this.getClass().equals(method.getDeclaringClass())) {
-                Object callbacks = entry.getValue();
-                field = callbacks.getClass().getDeclaredField("elements");
-                field.setAccessible(true);
-                Object[] elements = (Object[]) field.get(callbacks);
-                Object doNothing = Class.forName("de.robv.android.xposed.XC_MethodReplacement", false, ClassLoader.getSystemClassLoader()).getField("DO_NOTHING").get(null);
-                for (int i = 0; i < elements.length; ++i) {
-                    elements[i] = doNothing;
-                }
-            }
-        }
-    }
-
     private void initialize() {
         initialized = true;
         showProcessDialog(R.string.retrieving);
