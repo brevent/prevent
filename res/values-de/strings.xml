@@ -31,6 +31,7 @@
     <string name="retrieving">Status wird überprüft, bitte warten. . .</string>
     <string name="loading">Lädt. . .</string>
     <string name="not_running">(nicht gestartet)</string>
+    <!-- http://developer.android.com/reference/android/app/ActivityManager.RunningAppProcessInfo.html#constants -->
     <string name="importance_background">Hintergrund</string>
     <string name="importance_foreground">Vordergrund</string>
     <string name="importance_empty">Leer</string>
@@ -39,7 +40,7 @@
     <string name="importance_visible">Sichtbar</string>
     <string name="importance_gone">Gestoppt</string>
     <string name="importance_foreground_service">Vordergrund-Service</string>
-    <string name="importance_top_sleeping">Top Sleeping</string>
+    <string name="importance_top_sleeping">Vordergrund-Schlafend</string>
     <string name="importance_service_not_started">Service (Nicht gestartet)</string>
 
     <!-- app menu -->

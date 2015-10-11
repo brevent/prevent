@@ -31,6 +31,7 @@
     <string name="retrieving">Retrieving status, please wait. . .</string>
     <string name="loading">Loading. . .</string>
     <string name="not_running">(not running)</string>
+    <!-- http://developer.android.com/reference/android/app/ActivityManager.RunningAppProcessInfo.html#constants -->
     <string name="importance_background">Background</string>
     <string name="importance_foreground">Foreground</string>
     <string name="importance_empty">Empty</string>

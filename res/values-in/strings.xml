@@ -31,6 +31,7 @@
     <string name="retrieving">Mengambil status, silahkan tunggu. . .</string>
     <string name="loading">Memuat. . .</string>
     <string name="not_running">(tidak berjalan)</string>
+    <!-- http://developer.android.com/reference/android/app/ActivityManager.RunningAppProcessInfo.html#constants -->
     <string name="importance_background">Latar belakang</string>
     <string name="importance_foreground">Latar depan</string>
     <string name="importance_empty">Kosong</string>
