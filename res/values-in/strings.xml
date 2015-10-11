@@ -64,8 +64,8 @@
     <!-- request license -->
     <string name="no_license">Silahkan menyumbangkan setidaknya 2 usd, kemudian hubungi pengembang untuk mendapatkannya.</string>
     <string name="no_valid_license">Lisensi ini untuk \"%1$s\", kamu tidak punya izin untuk menggunakannya. Harap minta yang baru.</string>
-    <string name="email_request">Minta via Email</string>
-    <string name="copy_request">Salin permintaan konten</string>
+    <string name="email_request">Email</string>
+    <string name="copy_request">@android:string/copy</string>
 
     <!-- user guide menu -->
     <string name="donate">Donasi</string>
