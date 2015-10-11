@@ -49,11 +49,11 @@
 
     <!-- advanced settings -->
     <string name="destroy_processes">Prozesse nicht speichern</string>
-    <string name="destroy_processes_summary">Force stop applications after the user destroys all activities. Recommend off.</string>
+    <string name="destroy_processes_summary">Force stop applications after the user destroys all activities (recommend off)</string>
     <string name="backup">Sicherung</string>
-    <string name="backup_prevent_list">Blockier-Liste auf Externer Speicher sichern.</string>
+    <string name="backup_prevent_list">Blockier-Liste auf Externer Speicher sichern</string>
     <string name="force_stop_label">Force stop background apps</string>
-    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps.</string>
+    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
     <string name="force_stop_never">Never (Recommend)</string>
     <string name="force_stop_5min">5 Minuten</string>
     <string name="force_stop_10min">10 Minuten</string>

@@ -49,12 +49,12 @@
 
     <!-- advanced settings -->
     <string name="destroy_processes">不保留进程</string>
-    <string name="destroy_processes_summary">用户退出后强行停止程序。推荐关闭。</string>
+    <string name="destroy_processes_summary">用户退出后强行停止程序（推荐关闭）</string>
     <string name="backup">备份</string>
-    <string name="backup_prevent_list">将阻止列表备份到外部存储。</string>
+    <string name="backup_prevent_list">将阻止列表备份到外部存储</string>
     <string name="force_stop_label">强行停止后台程序</string>
-    <string name="force_stop_summary">屏幕关闭且后台程序无操作%1$s后。</string>
-    <string name="force_stop_never">永不(推荐)</string>
+    <string name="force_stop_summary">屏幕关闭且后台程序无操作%1$s后</string>
+    <string name="force_stop_never">永不（推荐）</string>
     <string name="force_stop_5min">5分钟</string>
     <string name="force_stop_10min">10分钟</string>
     <string name="force_stop_15min">15分钟</string>
