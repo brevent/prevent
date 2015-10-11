@@ -78,7 +78,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/paypal"
+            android:id="@+id/play"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -91,8 +91,8 @@
                 android:layout_height="32dp"
                 android:layout_gravity="center"
                 android:layout_margin="2dp"
-                android:contentDescription="@string/paypal"
-                android:src="@drawable/paypal"
+                android:contentDescription="@android:string/unknownName"
+                android:src="@drawable/ic_launcher"
                 android:tag="image" />
 
             <TextView
@@ -100,7 +100,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:tag="text"
-                android:text="@string/paypal"
+                android:text="@android:string/unknownName"
                 android:textAppearance="?android:attr/textAppearanceSmall" />
         </LinearLayout>
 

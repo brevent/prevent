@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 
+import me.piebridge.billing.DonateUtils;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.ui.UILog;
@@ -24,6 +25,8 @@ import me.piebridge.prevent.ui.UILog;
 public class LicenseUtils {
 
     private static final String LICENSE = "license.key";
+
+    private static boolean inAppLicensed = false;
 
     private static final byte[] MODULUS = {
              -93, -117,  -85,   56,  -65,   -8,  -86,   59,   52,   43,  -50,  -47,   64,   51,   89, -116,
@@ -83,6 +86,9 @@ public class LicenseUtils {
     }
 
     public static String getLicense(final Context context) {
+        if (isInAppLicensed()) {
+            return DonateUtils.ITEM_ID;
+        }
         byte[] key = readKey(context);
         if (key.length == 0) {
             return null;
@@ -96,6 +102,9 @@ public class LicenseUtils {
     }
 
     public static String getLicenseName(final Context context) {
+        if (isInAppLicensed()) {
+            return context.getString(R.string.licensed);
+        }
         byte[] key = readKey(context);
         if (key.length == 0) {
             return null;
@@ -106,11 +115,14 @@ public class LicenseUtils {
         } else if (license.contains(",")) {
             return license.split(",", 0x2)[1];
         } else {
-            return context.getString(R.string.licensed);
+            return DonateUtils.ITEM_ID;
         }
     }
 
-    public static String getLicense(byte[] key) {
+    private static String getLicense(byte[] key) {
+        if (isInAppLicensed()) {
+            return DonateUtils.ITEM_ID;
+        }
         if (key == null || key.length == 0) {
             return null;
         }
@@ -157,7 +169,7 @@ public class LicenseUtils {
         try {
             return Base64.decode(plain.toString(), Base64.DEFAULT);
         } catch (IllegalArgumentException e) {
-            UILog.d("cannot decode as base64", e);
+            UILog.d("cannot decode as base64: " + plain, e);
             return new byte[0];
         }
     }
@@ -213,6 +225,14 @@ public class LicenseUtils {
             }
         }
         return false;
+    }
+
+    public static void setInAppLicensed() {
+        inAppLicensed = true;
+    }
+
+    public static boolean isInAppLicensed() {
+        return inAppLicensed;
     }
 
 }

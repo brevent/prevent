@@ -651,7 +651,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 }
                 PreventListUtils.saveIfNeeded(PreventActivity.this, prevents.keySet());
             } catch (JSONException e) {
-                UILog.e("cannot convert to json", e);
+                UILog.e("cannot convert to json: " + result, e);
             }
         }
     }

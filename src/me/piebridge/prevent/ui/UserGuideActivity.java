@@ -1,7 +1,6 @@
 package me.piebridge.prevent.ui;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -12,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -28,6 +28,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.vending.billing.IInAppBillingService;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,6 +39,7 @@ import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import me.piebridge.billing.DonateActivity;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
@@ -49,14 +52,13 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
 /**
  * Created by thom on 15/10/3.
  */
-public class UserGuideActivity extends Activity implements View.OnClickListener {
+public class UserGuideActivity extends DonateActivity implements View.OnClickListener {
 
     private View donateView;
 
     private AlertDialog request;
 
     private ProgressDialog dialog;
-
 
     private BroadcastReceiver receiver;
 
@@ -81,17 +83,14 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         ComponentName donateWeChat = getDonateWeChat();
         checkView(R.id.alipay, donateAlipay);
         checkView(R.id.wechat, donateWeChat);
-        if (Locale.CHINA.equals(Locale.getDefault()) && (donateAlipay != null || donateWeChat != null)) {
-            findViewById(R.id.paypal).setVisibility(View.GONE);
-        } else {
-            setView(R.id.paypal, "com.paypal.android.p2pmobile");
-        }
+        setView(R.id.play, "com.android.vending");
         donateView = findViewById(R.id.donate);
         if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             donateView.setVisibility(View.VISIBLE);
         } else {
             donateView.setVisibility(View.GONE);
         }
+        checkDonate();
     }
 
     @Override
@@ -130,7 +129,17 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         PackageManager pm = getPackageManager();
         try {
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
-            CharSequence label = pm.getApplicationLabel(info);
+            CharSequence label = null;
+            if ("com.android.vending".equals(packageName)) {
+                Resources resources = pm.getResourcesForApplication(info);
+                int appName = resources.getIdentifier("app_name", "string", packageName);
+                if (appName > 0) {
+                    label = resources.getText(appName);
+                }
+            }
+            if (TextUtils.isEmpty(label)) {
+                label = pm.getApplicationLabel(info);
+            }
 
             ImageView image = (ImageView) donate.findViewWithTag("image");
             image.setContentDescription(label);
@@ -140,6 +149,7 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             text.setText(label);
 
         } catch (PackageManager.NameNotFoundException e) {
+            donate.setVisibility(View.GONE);
             UILog.d("cannot find package " + packageName, e);
         }
     }
@@ -213,15 +223,6 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         return true;
     }
 
-    private boolean donateViaPayPal() {
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.PAYPAL_ACCOUNT)));
-        } catch (Throwable t) { // NOSONAR
-            // do nothing
-        }
-        return true;
-    }
-
     @Override
     public void onClick(View v) {
         int id = v.getId();
@@ -229,8 +230,8 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             donateViaWeChat();
         } else if (id == R.id.alipay) {
             donateViaAlipay();
-        } else if (id == R.id.paypal) {
-            donateViaPayPal();
+        } else if (id == R.id.play) {
+            donateViaPlay();
         }
     }
 
@@ -343,6 +344,19 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public void onUnavailable(IInAppBillingService service) {
+        findViewById(R.id.play).setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onDonated(IInAppBillingService service) {
+        LicenseUtils.setInAppLicensed();
+        invalidateOptionsMenu();
+        donateView.setVisibility(View.GONE);
+        findViewById(R.id.play).setVisibility(View.GONE);
     }
 
     private class HookReceiver extends BroadcastReceiver {

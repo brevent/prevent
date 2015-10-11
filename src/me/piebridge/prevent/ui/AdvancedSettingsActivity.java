@@ -94,7 +94,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
-        if (!TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
+        if (!LicenseUtils.isInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
             LicenseUtils.requestLicense(this, license, accounts);
             return false;
         }
@@ -117,7 +117,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
-        if (!TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
+        if (!LicenseUtils.isInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
             LicenseUtils.requestLicense(this, license, accounts);
             return true;
         } else {

@@ -17,12 +17,8 @@ public class UILog {
         Log.d(TAG, msg);
     }
 
-    public static void e(String msg, Throwable t) {
-        Log.e(TAG, msg, t);
-    }
-
-    public static void d(String msg, Throwable t) {
-        Log.d(TAG, msg, t);
+    public static void d(String msg, Throwable t) { // NOSONAR
+        Log.d(TAG, msg);
     }
 
     public static void i(String msg) {
@@ -32,4 +28,9 @@ public class UILog {
     public static void e(String msg) {
         Log.e(TAG, msg);
     }
+
+    public static void e(String msg, Throwable t) {
+        Log.e(TAG, msg, t);
+    }
+
 }
