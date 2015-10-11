@@ -37,8 +37,8 @@
     <string name="importance_perceptible">Wahrnehmbar</string>
     <string name="importance_service">Service</string>
     <string name="importance_visible">Sichtbar</string>
-    <string name="importance_gone">Kein</string>
-    <string name="importance_foreground_service">Vordergrund Service</string>
+    <string name="importance_gone">Gestoppt</string>
+    <string name="importance_foreground_service">Vordergrund-Service</string>
     <string name="importance_top_sleeping">Top Sleeping</string>
     <string name="importance_service_not_started">Service (Nicht gestartet)</string>
 
@@ -49,21 +49,21 @@
 
     <!-- advanced settings -->
     <string name="destroy_processes">Prozesse nicht speichern</string>
-    <string name="destroy_processes_summary">Force stop applications after the user destroys all activities (recommend off)</string>
+    <string name="destroy_processes_summary">Beenden der Anwendung erzwingen, sobald der Benutzer alle Activities beendet hat (nicht empfohlen)</string>
     <string name="backup">Sicherung</string>
-    <string name="backup_prevent_list">Blockier-Liste auf Externer Speicher sichern</string>
-    <string name="force_stop_label">Force stop background apps</string>
-    <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
-    <string name="force_stop_never">Never (Recommend)</string>
-    <string name="force_stop_5min">5 Minuten</string>
-    <string name="force_stop_10min">10 Minuten</string>
-    <string name="force_stop_15min">15 Minuten</string>
-    <string name="force_stop_30min">30 Minuten</string>
-    <string name="force_stop_1hour">1 Stunde</string>
+    <string name="backup_prevent_list">Blockier-Liste auf externen Speicher sichern</string>
+    <string name="force_stop_label">Beenden von Hintergrund-Apps erzwingen</string>
+    <string name="force_stop_summary">%1$s nach Bildschirm aus und Inaktivität der Hintergrund-Apps</string>
+    <string name="force_stop_never">Nie (Empfohlen)</string>
+    <string name="force_stop_5min">5 Minuten</string>
+    <string name="force_stop_10min">10 Minuten</string>
+    <string name="force_stop_15min">15 Minuten</string>
+    <string name="force_stop_30min">30 Minuten</string>
+    <string name="force_stop_1hour">1 Stunde</string>
 
     <!-- request license -->
-    <string name="no_license">Please donate at least 2 usd, then contact the author to get one.</string>
-    <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please request for a new one.</string>
+    <string name="no_license">Bitte spende mindestens 2 USD und kontaktiere dann den Entwickler, um eine Lizenz zu erhalten.</string>
+    <string name="no_valid_license">Diese Lizenz gehört \"%1$s\", du hast keine Berechtigung, sie zu benutzen. Forder bitte eine neue an.</string>
     <string name="email_request">E-Mail</string>
     <string name="copy_request">@android:string/copy</string>
 
@@ -71,15 +71,15 @@
     <string name="donate">Spenden</string>
     <string name="version">Version</string>
     <string name="feedback">Feedback</string>
-    <string name="report_bug">Report Bug</string>
-    <string name="request_license">Request license</string>
+    <string name="report_bug">Fehler melden</string>
+    <string name="request_license">Lizenz anfordern</string>
     <string name="advanced_settings">Erweiterte Einstellungen</string>
 
     <!-- donation -->
-    <string name="donation">Feel free to donate if you like.</string>
+    <string name="donation">Spenden sind gern gesehen, wenn du magst.</string>
     <string name="paypal">PayPal</string>
 
     <!-- version -->
-    <string name="licensed">Licensed</string>
+    <string name="licensed">Lizenziert</string>
 
 </resources>
