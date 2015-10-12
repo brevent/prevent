@@ -127,6 +127,10 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         PackageManager pm = getPackageManager();
         try {
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
+            if (!info.enabled) {
+                donate.setVisibility(View.GONE);
+                return false;
+            }
             CharSequence label = null;
             if ("com.android.vending".equals(packageName)) {
                 Resources resources = pm.getResourcesForApplication(info);
