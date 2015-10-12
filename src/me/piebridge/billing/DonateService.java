@@ -3,12 +3,14 @@ package me.piebridge.billing;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
 
 import com.android.vending.billing.IInAppBillingService;
 
-import java.util.Collection;
+import java.util.List;
 
 import me.piebridge.prevent.ui.UILog;
 
@@ -19,31 +21,36 @@ public class DonateService implements ServiceConnection {
 
     private IInAppBillingService mService;
 
+    private Handler mHandler;
+
     private final DonateActivity mDonateActivity;
 
     public DonateService(DonateActivity donateActivity) {
         mDonateActivity = donateActivity;
+        HandlerThread thread = new HandlerThread("DonateService");
+        thread.start();
+        mHandler = new Handler(thread.getLooper());
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         mService = IInAppBillingService.Stub.asInterface(service);
-        if (!isBillingSupported()) {
-            onUnavailable(mService);
-        } else if (isDonated()) {
-            onDonated(mService);
-        } else {
-            onAvailable(mService);
-        }
-        mDonateActivity.unbindService(this);
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (!isBillingSupported()) {
+                    UILog.e("billing is not supported");
+                    onUnavailable(mService);
+                } else {
+                    onAvailable(mService);
+                }
+                mDonateActivity.unbindService(DonateService.this);
+            }
+        });
     }
 
     protected void onAvailable(IInAppBillingService service) {
         mDonateActivity.onAvailable(service);
-    }
-
-    protected void onDonated(IInAppBillingService service) {
-        mDonateActivity.onDonated(service);
     }
 
     protected void onUnavailable(IInAppBillingService service) {
@@ -55,7 +62,7 @@ public class DonateService implements ServiceConnection {
         mService = null;
     }
 
-    private boolean isBillingSupported() {
+    protected boolean isBillingSupported() {
         try {
             return mService.isBillingSupported(DonateUtils.API_VERSION, mDonateActivity.getPackageName(), DonateUtils.ITEM_TYPE) == 0;
         } catch (RemoteException e) {
@@ -67,22 +74,32 @@ public class DonateService implements ServiceConnection {
     protected boolean isDonated() {
         try {
             Bundle bundle = mService.getPurchases(DonateUtils.API_VERSION, mDonateActivity.getPackageName(), DonateUtils.ITEM_TYPE, null);
-            return bundle != null && bundle.getInt("RESPONSE_CODE") == 0 && isPurchased(bundle.getStringArrayList("INAPP_DATA_SIGNATURE_LIST"));
+            return bundle != null && bundle.getInt("RESPONSE_CODE") == 0 && isPurchased(bundle);
         } catch (RemoteException e) {
             UILog.d("cannot get purchases", e);
             return false;
         }
     }
 
-    private boolean isPurchased(Collection<String> signatures) {
-        if (signatures == null) {
+    protected boolean isPurchased(Bundle bundle) {
+        List<String> dataList = bundle.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
+        List<String> signatureList = bundle.getStringArrayList("INAPP_DATA_SIGNATURE_LIST");
+
+        if (DonateUtils.isEmpty(dataList) || DonateUtils.isEmpty(signatureList)) {
             return false;
         }
-        for (String signature : signatures) {
-            if (DonateUtils.isSignature(signature)) {
+
+        int size = dataList.size();
+        if (size > signatureList.size()) {
+            size = signatureList.size();
+        }
+
+        for (int i = 0; i < size; ++i) {
+            if (DonateUtils.verify(dataList.get(i), signatureList.get(i))) {
                 return true;
             }
         }
+
         return false;
     }
 

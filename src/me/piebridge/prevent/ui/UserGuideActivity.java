@@ -83,14 +83,16 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         ComponentName donateWeChat = getDonateWeChat();
         checkView(R.id.alipay, donateAlipay);
         checkView(R.id.wechat, donateWeChat);
-        setView(R.id.play, "com.android.vending");
+        if (setView(R.id.play, "com.android.vending")) {
+            onUnavailable();
+            checkDonate();
+        }
         donateView = findViewById(R.id.donate);
         if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             donateView.setVisibility(View.VISIBLE);
         } else {
             donateView.setVisibility(View.GONE);
         }
-        checkDonate();
     }
 
     @Override
@@ -120,12 +122,8 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         return icon;
     }
 
-    private void setView(int id, String packageName) {
+    private boolean setView(int id, String packageName) {
         View donate = findViewById(id);
-        donate.setClickable(true);
-        donate.setOnClickListener(this);
-        donate.setVisibility(View.VISIBLE);
-
         PackageManager pm = getPackageManager();
         try {
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
@@ -148,9 +146,14 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             TextView text = (TextView) donate.findViewWithTag("text");
             text.setText(label);
 
+            donate.setClickable(true);
+            donate.setOnClickListener(this);
+            donate.setVisibility(View.VISIBLE);
+            return true;
         } catch (PackageManager.NameNotFoundException e) {
             donate.setVisibility(View.GONE);
             UILog.d("cannot find package " + packageName, e);
+            return false;
         }
     }
 
@@ -347,12 +350,17 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     }
 
     @Override
-    public void onUnavailable(IInAppBillingService service) {
+    public void onUnavailable() {
         findViewById(R.id.play).setVisibility(View.GONE);
     }
 
     @Override
-    public void onDonated(IInAppBillingService service) {
+    public void onAvailable() {
+        findViewById(R.id.play).setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onDonated() {
         LicenseUtils.setInAppLicensed();
         invalidateOptionsMenu();
         donateView.setVisibility(View.GONE);
