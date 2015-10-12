@@ -38,6 +38,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.lang.ref.WeakReference;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -756,18 +757,23 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     }
 
     private class RetrieveIconTask extends AsyncTask<Object, Void, ViewHolder> {
-        final PackageManager pm = mActivity.getPackageManager();
+
+        WeakReference<PreventActivity> wr = new WeakReference<PreventActivity>(mActivity);
 
         @Override
         protected ViewHolder doInBackground(Object... params) {
             ViewHolder holder = (ViewHolder) params[0];
+            PreventActivity pa = wr.get();
+            if (pa == null) {
+                return holder;
+            }
             AppInfo appInfo = (AppInfo) params[1];
             try {
-                holder.icon = pm.getApplicationIcon(appInfo.packageName);
+                holder.icon = pa.getPackageManager().getApplicationIcon(appInfo.packageName);
             } catch (NameNotFoundException e) { // NOSONAR
                 // do nothing
             }
-            holder.running = mActivity.getRunningProcesses().get(appInfo.packageName);
+            holder.running = pa.getRunningProcesses().get(appInfo.packageName);
             return holder;
         }
 

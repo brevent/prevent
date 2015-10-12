@@ -84,7 +84,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         checkView(R.id.alipay, donateAlipay);
         checkView(R.id.wechat, donateWeChat);
         if (setView(R.id.play, "com.android.vending")) {
-            onUnavailable();
+            findViewById(R.id.play).setVisibility(View.GONE);
             checkDonate();
         }
         donateView = findViewById(R.id.donate);
@@ -351,6 +351,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
 
     @Override
     public void onUnavailable() {
+        Toast.makeText(this, "google play billing is not supported", Toast.LENGTH_LONG).show();
         findViewById(R.id.play).setVisibility(View.GONE);
     }
 

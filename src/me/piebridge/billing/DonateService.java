@@ -21,12 +21,15 @@ public class DonateService implements ServiceConnection {
 
     private IInAppBillingService mService;
 
-    private Handler mHandler;
+    private final Handler mHandler;
+
+    private final String mPackageName;
 
     private final DonateActivity mDonateActivity;
 
     public DonateService(DonateActivity donateActivity) {
         mDonateActivity = donateActivity;
+        mPackageName = donateActivity.getPackageName();
         HandlerThread thread = new HandlerThread("DonateService");
         thread.start();
         mHandler = new Handler(thread.getLooper());
@@ -64,7 +67,7 @@ public class DonateService implements ServiceConnection {
 
     protected boolean isBillingSupported() {
         try {
-            return mService.isBillingSupported(DonateUtils.API_VERSION, mDonateActivity.getPackageName(), DonateUtils.ITEM_TYPE) == 0;
+            return mService.isBillingSupported(DonateUtils.API_VERSION, mPackageName, DonateUtils.ITEM_TYPE) == 0;
         } catch (RemoteException e) {
             UILog.d("cannot checking billing supported", e);
             return false;
@@ -73,7 +76,7 @@ public class DonateService implements ServiceConnection {
 
     protected boolean isDonated() {
         try {
-            Bundle bundle = mService.getPurchases(DonateUtils.API_VERSION, mDonateActivity.getPackageName(), DonateUtils.ITEM_TYPE, null);
+            Bundle bundle = mService.getPurchases(DonateUtils.API_VERSION, mPackageName, DonateUtils.ITEM_TYPE, null);
             return bundle != null && bundle.getInt("RESPONSE_CODE") == 0 && isPurchased(bundle);
         } catch (RemoteException e) {
             UILog.d("cannot get purchases", e);
