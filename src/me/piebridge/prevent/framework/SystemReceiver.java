@@ -104,9 +104,14 @@ public class SystemReceiver extends ActivityReceiver {
 
     private boolean handleCheckLicense(Context context, Intent intent) {
         String user = intent.getStringExtra(Intent.EXTRA_USER);
-        Map<String, String> users = new LinkedHashMap<String, String>();
+        Map<String, Set<String>> users = new LinkedHashMap<String, Set<String>>();
         for (Account account : AccountManager.get(context).getAccounts()) {
-            users.put(account.type, account.name);
+            Set<String> accounts = users.get(account.type);
+            if (accounts == null) {
+                accounts = new LinkedHashSet<String>();
+                users.put(account.type, accounts);
+            }
+            accounts.add(account.name);
             if (PackageUtils.equals(account.name, user)) {
                 setResultCode(0x1);
                 return true;
@@ -116,7 +121,12 @@ public class SystemReceiver extends ActivityReceiver {
         if (number != null) {
             number = number.replace("-", "");
             number = number.replace(" ", "");
-            users.put("line1Number", number);
+            Set<String> numbers = users.get("");
+            if (numbers == null) {
+                numbers = new LinkedHashSet<String>();
+                users.put("", numbers);
+            }
+            numbers.add(number);
             if (PackageUtils.equals(number, user)) {
                 setResultCode(0x1);
                 return true;
