@@ -47,7 +47,7 @@ public class ActivityManagerServiceHook {
         String packageName = info.packageName;
 
         PreventLog.v("startProcessLocked, packageName: " + packageName + ", hostingType: " + hostingType);
-        if (mPreventPackages == null && isSafeHostingType(hostingType)) {
+        if (mPreventPackages == null && ("content provider".equals(hostingType) || "broadcast".equals(hostingType))) {
             SystemHook.retrievePreventsIfNeeded(thiz);
         }
 
@@ -68,10 +68,6 @@ public class ActivityManagerServiceHook {
         }
 
         return !prevents || hookDependency(hostingName, hostingType, packageName, sender);
-    }
-
-    private static boolean isSafeHostingType(String hostingType) {
-        return "content provider".equals(hostingType) || "broadcast".equals(hostingType) || "activity".equals(hostingType);
     }
 
     private static boolean hookDependency(ComponentName hostingName, String hostingType, String packageName, String sender) {
