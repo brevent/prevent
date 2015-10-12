@@ -21,6 +21,8 @@
 -keepnames class android.support.** { *; }
 # -keepnames class me.piebridge.** { *; }
 
+-keepnames class com.android.vending.billing.** { *; }
+
 -keep class me.piebridge.prevent.xposed.XposedMod { public *; }
 
 -keep class me.piebridge.prevent.common.PackageUtils { boolean canPrevent(android.content.pm.PackageManager,android.content.pm.ApplicationInfo); }
