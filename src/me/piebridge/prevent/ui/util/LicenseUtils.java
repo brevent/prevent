@@ -129,20 +129,19 @@ public class LicenseUtils {
         BigInteger exponent = BigInteger.valueOf(0x10001);
         BigInteger modulus = new BigInteger(1, MODULUS);
         byte[] signature = new BigInteger(1, key).modPow(exponent, modulus).toByteArray();
-        // PKCS#1 v1.5
-        if (signature.length < 0xa || signature[0] != 0x00 || signature[1] != 0x01) {
-            return null;
-        }
         return decodeLicense(signature);
     }
 
     private static String decodeLicense(byte[] signature) {
         int size = signature.length;
-        for (int i = 0x2; i < size; ++i) {
-            if (i >= 0xa && signature[i] == 0x00) {
+        if (signature[0] != 1) {
+            return null;
+        }
+        for (int i = 0x1; i < size; ++i) {
+            if (signature[i] == 0 && i > 0x8) {
                 int offset = i + 1;
                 return new String(signature, offset, size - offset);
-            } else if (signature[i] != 0xff) {
+            } else if (signature[i] != -1) {
                 return null;
             }
         }
