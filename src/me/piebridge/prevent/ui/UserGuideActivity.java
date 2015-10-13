@@ -44,6 +44,7 @@ import me.piebridge.billing.DonateActivity;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.DeprecatedUtils;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.QQUtils;
@@ -461,7 +462,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         builder.setPositiveButton(getString(android.R.string.copy), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ((android.text.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE)).setText(getVersionInfo(true));
+                DeprecatedUtils.setClipboard(getBaseContext(), getVersionInfo(true));
             }
         });
         builder.create().show();

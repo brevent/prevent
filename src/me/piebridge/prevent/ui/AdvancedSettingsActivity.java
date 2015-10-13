@@ -16,6 +16,7 @@ import java.util.Collection;
 
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.DeprecatedUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
@@ -44,16 +45,13 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     public void onCreate(Bundle savedInstanceState) {
         ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
-        //noinspection deprecation
-        addPreferencesFromResource(R.xml.settings);
+        DeprecatedUtils.addPreferencesFromResource(this, R.xml.settings);
 
-        //noinspection deprecation
-        forceStopTimeout = findPreference(PreventIntent.KEY_FORCE_STOP_TIMEOUT);
+        forceStopTimeout = DeprecatedUtils.findPreference(this, PreventIntent.KEY_FORCE_STOP_TIMEOUT);
         forceStopTimeout.setOnPreferenceChangeListener(this);
         forceStopTimeout.setOnPreferenceClickListener(this);
 
-        //noinspection deprecation
-        destroyProcesses = findPreference(PreventIntent.KEY_DESTROY_PROCESSES);
+        destroyProcesses = DeprecatedUtils.findPreference(this, PreventIntent.KEY_DESTROY_PROCESSES);
         destroyProcesses.setOnPreferenceChangeListener(this);
 
         // check license

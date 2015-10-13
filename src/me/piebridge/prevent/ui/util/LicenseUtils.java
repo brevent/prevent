@@ -163,14 +163,14 @@ public class LicenseUtils {
         byte[] key = readKeyFromClipboard(activity);
         if (key.length > 0 && !TextUtils.isEmpty(LicenseUtils.getLicense(key))) {
             LicenseUtils.saveLicense(activity, key);
-            ((android.text.ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE)).setText(null);
+            DeprecatedUtils.setClipboard(activity, null);
             return true;
         }
         return false;
     }
 
     private static byte[] readKeyFromClipboard(Activity activity) {
-        CharSequence plain = ((android.text.ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE)).getText();
+        CharSequence plain = DeprecatedUtils.getClipboard(activity);
         if (TextUtils.isEmpty(plain)) {
             return new byte[0];
         }
@@ -209,8 +209,7 @@ public class LicenseUtils {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 deleteLicenseIfNeeded(context);
-                //noinspection deprecation
-                ((android.text.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE)).setText(content);
+                DeprecatedUtils.setClipboard(context, content);
             }
         });
         AlertDialog dialog = builder.create();
