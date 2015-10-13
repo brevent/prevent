@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -88,9 +89,14 @@ public abstract class DonateActivity extends Activity implements DonateListener 
         bindService(serviceIntent, new DonateService(this) {
             @Override
             protected void onAvailable(IInAppBillingService service) {
-                if (checkDonate(service)) {
+                if (!BuildConfig.DEBUG || checkDonate(service)) {
                     donate(service);
                 }
+            }
+
+            @Override
+            protected boolean isBillingSupported() {
+                return true;
             }
         }, Context.BIND_AUTO_CREATE);
     }

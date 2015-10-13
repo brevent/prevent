@@ -23,12 +23,13 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebView;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.android.vending.billing.IInAppBillingService;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,6 +60,8 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     private AlertDialog request;
 
     private ProgressDialog dialog;
+
+    private ProgressDialog donateDialog;
 
     private BroadcastReceiver receiver;
 
@@ -99,6 +102,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     protected void onResume() {
         super.onResume();
         checkLicense();
+        hideDonateDialog();
     }
 
     private void checkView(int id, ComponentName component) {
@@ -109,12 +113,12 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
     }
 
-    private int getHeaderIconWidth() {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0x20, getResources().getDisplayMetrics());
+    private int getPixel(int dp) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
 
     private Drawable cropDrawable(Drawable icon) {
-        int width = getHeaderIconWidth();
+        int width = getPixel(0x20);
         if (icon.getMinimumWidth() > width && icon instanceof BitmapDrawable) {
             Bitmap bitmap = Bitmap.createScaledBitmap(((BitmapDrawable) icon).getBitmap(), width, width, false);
             return new BitmapDrawable(getResources(), bitmap);
@@ -199,6 +203,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         if (cn == null) {
             return false;
         }
+        showDonateDialog();
         Intent intent = new Intent();
         intent.setComponent(cn);
         intent.putExtra("scene", 1);
@@ -206,7 +211,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         try {
             startActivity(intent);
         } catch (Throwable t) { // NOSONAR
-            // do nothing
+            hideDonateDialog();
         }
         return true;
     }
@@ -216,6 +221,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         if (cn == null) {
             return false;
         }
+        showDonateDialog();
         Intent intent = new Intent();
         intent.setComponent(cn);
         intent.putExtra("app_id", "20000053");
@@ -225,7 +231,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         try {
             startActivity(intent);
         } catch (Throwable t) { // NOSONAR
-            // do nothing
+            hideDonateDialog();
         }
         return true;
     }
@@ -320,6 +326,24 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         dialog.show();
     }
 
+    private void showDonateDialog() {
+        RelativeLayout layout = new RelativeLayout(this);
+        int pixel = getPixel(0x30);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(pixel, pixel);
+        params.addRule(RelativeLayout.CENTER_IN_PARENT);
+        layout.addView(new ProgressBar(this), params);
+        donateDialog = ProgressDialog.show(this, null, null);
+        donateDialog.setContentView(layout);
+        donateDialog.getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, pixel * 0x4);
+    }
+
+    private void hideDonateDialog() {
+        if (donateDialog != null) {
+            donateDialog.dismiss();
+            donateDialog = null;
+        }
+    }
+
     private boolean requestLog() {
         File dir = getExternalCacheDir();
         if (dir != null) {
@@ -355,7 +379,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
 
     @Override
     public void onUnavailable() {
-        Toast.makeText(this, "google play billing is not supported", Toast.LENGTH_LONG).show();
         findViewById(R.id.play).setVisibility(View.GONE);
     }
 

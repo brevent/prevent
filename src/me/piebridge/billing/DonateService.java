@@ -10,6 +10,7 @@ import android.os.RemoteException;
 
 import com.android.vending.billing.IInAppBillingService;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import me.piebridge.prevent.ui.UILog;
@@ -25,11 +26,11 @@ public class DonateService implements ServiceConnection {
 
     private final String mPackageName;
 
-    private final DonateActivity mDonateActivity;
+    private final WeakReference<DonateActivity> wr;
 
     public DonateService(DonateActivity donateActivity) {
-        mDonateActivity = donateActivity;
         mPackageName = donateActivity.getPackageName();
+        wr = new WeakReference<DonateActivity>(donateActivity);
         HandlerThread thread = new HandlerThread("DonateService");
         thread.start();
         mHandler = new Handler(thread.getLooper());
@@ -47,17 +48,30 @@ public class DonateService implements ServiceConnection {
                 } else {
                     onAvailable(mService);
                 }
-                mDonateActivity.unbindService(DonateService.this);
+                unBindService();
             }
         });
     }
 
+    private void unBindService() {
+        DonateActivity donateActivity = wr.get();
+        if (donateActivity != null) {
+            donateActivity.unbindService(this);
+        }
+    }
+
     protected void onAvailable(IInAppBillingService service) {
-        mDonateActivity.onAvailable(service);
+        DonateActivity donateActivity = wr.get();
+        if (donateActivity != null) {
+            donateActivity.onAvailable(service);
+        }
     }
 
     protected void onUnavailable(IInAppBillingService service) {
-        mDonateActivity.onUnavailable(service);
+        DonateActivity donateActivity = wr.get();
+        if (donateActivity != null) {
+            donateActivity.onUnavailable(service);
+        }
     }
 
     @Override
