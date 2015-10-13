@@ -30,6 +30,7 @@ import android.widget.Button;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,6 +48,7 @@ import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
+import me.piebridge.prevent.xposed.XposedUtils;
 
 public class PreventActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
@@ -100,6 +102,15 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        try {
+            Class<?> clazz = Class.forName("de.robv.android.xposed.XposedBridge", false, ClassLoader.getSystemClassLoader());
+            Field field = clazz.getDeclaredField("disableHooks");
+            field.setAccessible(true);
+            field.set(null, true);
+            XposedUtils.disableXposed(clazz);
+        } catch (Throwable t) { // NOSONAR
+            // do nothing
+        }
         ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
