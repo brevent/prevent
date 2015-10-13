@@ -86,7 +86,7 @@ public class LicenseUtils {
     }
 
     public static String getLicense(final Context context) {
-        if (isInAppLicensed()) {
+        if (inAppLicensed) {
             return DonateUtils.ITEM_ID;
         }
         byte[] key = readKey(context);
@@ -102,8 +102,8 @@ public class LicenseUtils {
     }
 
     public static String getLicenseName(final Context context) {
-        if (isInAppLicensed()) {
-            return context.getString(R.string.licensed);
+        if (inAppLicensed) {
+            return DonateUtils.ITEM_ID;
         }
         byte[] key = readKey(context);
         if (key.length == 0) {
@@ -115,12 +115,12 @@ public class LicenseUtils {
         } else if (license.contains(",")) {
             return license.split(",", 0x2)[1];
         } else {
-            return DonateUtils.ITEM_ID;
+            return context.getString(R.string.licensed);
         }
     }
 
     private static String getLicense(byte[] key) {
-        if (isInAppLicensed()) {
+        if (inAppLicensed) {
             return DonateUtils.ITEM_ID;
         }
         if (key == null || key.length == 0) {
