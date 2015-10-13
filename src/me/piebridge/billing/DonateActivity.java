@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
 
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -31,6 +33,8 @@ public abstract class DonateActivity extends Activity implements DonateListener 
             String signature = intent.getStringExtra("INAPP_DATA_SIGNATURE");
             if (DonateUtils.verify(data, signature)) {
                 onDonated(null);
+            } else {
+                Toast.makeText(this, R.string.play_verify_error, Toast.LENGTH_LONG).show();
             }
         }
     }

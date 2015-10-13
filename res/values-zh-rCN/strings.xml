@@ -81,4 +81,7 @@
     <!-- version -->
     <string name="licensed">授权给尊贵的SVIP用户使用</string>
 
+    <!-- google play in-app billing -->
+    <string name="play_verify_error">无法验证您的购买，请不要破解 Google Play 应用内结算。</string>
+
 </resources>

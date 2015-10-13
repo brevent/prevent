@@ -82,4 +82,7 @@
     <!-- version -->
     <string name="licensed">Berlisensi</string>
 
+    <!-- google play in-app billing -->
+    <string name="play_verify_error">Kegagalan untuk memverifikasi pembelian Anda, jangan retak Google Play In-app Billing.</string>
+
 </resources>

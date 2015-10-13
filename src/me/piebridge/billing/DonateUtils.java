@@ -1,12 +1,13 @@
 package me.piebridge.billing;
 
+import android.text.TextUtils;
 import android.util.Base64;
 
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.spec.X509EncodedKeySpec;
+import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Collection;
 
 import me.piebridge.prevent.ui.UILog;
@@ -24,15 +25,24 @@ public class DonateUtils {
 
     public static final String ITEM_TYPE = "inapp";
 
-    private static final String KEY = "" +
-            "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzy78MWtWig+zBO06aNX4U8IV/rIDJVAB" +
-            "lWAJxDnGy/I0R5OkJlyISwPLoSdVGFe7cSq3xR+i8hTtuhZQjtFiCORtUE3MVI++SHjMSbqU+Ya6" +
-            "iqpUhFtankvU/vaozofB3pXvoPsYsPB/FAAD+Tou1LQ2x1X2+oX63X6Rwh9mNuxYxh7WIGT6bL71" +
-            "waaBQmzf6KSVlL9kzCvJBJ1d/29olHRqnarozfrJW5RP0iUlSN9Ca0ZDoutvCCHxx6s63zh53FxJ" +
-            "AtelMYQXma3/O7D/yXT1pXbwJOHTgXVjYZKADKxXgc6ptfoLPM5k5m1Jl03MI57F3cLMLj+X/1SD" +
-            "D2KTKwIDAQAB";
-
-    private static PublicKey publicKey = generatePublicKey();
+    private static final byte[] MODULUS = {
+             -49,   46,   -4,   49,  107,   86, -118,   15,  -77,    4,  -19,   58,  104,  -43,   -8,   83,
+             -62,   21,   -2,  -78,    3,   37,   80,    1, -107,   96,    9,  -60,   57,  -58,  -53,  -14,
+              52,   71, -109,  -92,   38,   92, -120,   75,    3,  -53,  -95,   39,   85,   24,   87,  -69,
+             113,   42,  -73,  -59,   31,  -94,  -14,   20,  -19,  -70,   22,   80, -114,  -47,   98,    8,
+             -28,  109,   80,   77,  -52,   84, -113,  -66,   72,  120,  -52,   73,  -70, -108,   -7, -122,
+             -70, -118,  -86,   84, -124,   91,   90,  -98,   75,  -44,   -2,  -10,  -88,  -50, -121,  -63,
+             -34, -107,  -17,  -96,   -5,   24,  -80,  -16,  127,   20,    0,    3,   -7,   58,   46,  -44,
+             -76,   54,  -57,   85,  -10,   -6, -123,   -6,  -35,  126, -111,  -62,   31,  102,   54,  -20,
+              88,  -58,   30,  -42,   32,  100,   -6,  108,  -66,  -11,  -63,  -90, -127,   66,  108,  -33,
+             -24,  -92, -107, -108,  -65,  100,  -52,   43,  -55,    4,  -99,   93,   -1,  111,  104, -108,
+             116,  106,  -99,  -86,  -24,  -51,   -6,  -55,   91, -108,   79,  -46,   37,   37,   72,  -33,
+              66,  107,   70,   67,  -94,  -21,  111,    8,   33,  -15,  -57,  -85,   58,  -33,   56,  121,
+             -36,   92,   73,    2,  -41,  -91,   49, -124,   23, -103,  -83,   -1,   59,  -80,   -1,  -55,
+             116,  -11,  -91,  118,  -16,   36,  -31,  -45, -127,  117,   99,   97, -110, -128,   12,  -84,
+              87, -127,  -50,  -87,  -75,   -6,   11,   60,  -50,  100,  -26,  109,   73, -105,   77,  -52,
+              35,  -98,  -59,  -35,  -62,  -52,   46,   63, -105,   -1,   84, -125,   15,   98, -109,   43,
+    };
 
     private DonateUtils() {
 
@@ -43,27 +53,50 @@ public class DonateUtils {
     }
 
     public static boolean verify(String data, String signature) {
-        Signature sig;
+        if (TextUtils.isEmpty(data) || TextUtils.isEmpty(signature)) {
+            return false;
+        }
+        BigInteger exponent = BigInteger.valueOf(0x10001);
+        BigInteger modulus = new BigInteger(1, MODULUS);
         try {
-            sig = Signature.getInstance("SHA1withRSA");
-            sig.initVerify(publicKey);
-            sig.update(data.getBytes());
-            return sig.verify(Base64.decode(signature, Base64.DEFAULT));
+            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+            sha1.update(data.getBytes());
+            byte[] plain = getSignature(sha1.digest());
+            byte[] key = Base64.decode(signature, Base64.DEFAULT);
+            byte[] sign = new BigInteger(1, key).modPow(exponent, modulus).toByteArray();
+            return Arrays.equals(plain, sign);
+        } catch (IllegalArgumentException e) {
+            UILog.e("illegal argument exception", e);
         } catch (GeneralSecurityException e) {
             UILog.e("security exception", e);
         }
         return false;
     }
 
-    private static PublicKey generatePublicKey() {
-        try {
-            byte[] decodedKey = Base64.decode(KEY, Base64.DEFAULT);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            return keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
-        } catch (GeneralSecurityException e) {
-            UILog.e("cannot generate public key", e);
-            return null;
+    private static byte[] getSignature(byte[] sha) {
+        ByteArrayOutputStream signature = new ByteArrayOutputStream(0xff);
+        signature.write(0x01);
+        for (int i = 0; i < 0xda; ++i) {
+            signature.write(0xff);
         }
+        signature.write(0x00);
+        signature.write(0x30);
+        signature.write(0x21);
+        signature.write(0x30);
+        signature.write(0x09);
+        signature.write(0x06);
+        signature.write(0x05);
+        signature.write(0x2b);
+        signature.write(0x0e);
+        signature.write(0x03);
+        signature.write(0x02);
+        signature.write(0x1a);
+        signature.write(0x05);
+        signature.write(0x00);
+        signature.write(0x04);
+        signature.write(0x14);
+        signature.write(sha, 0, sha.length);
+        return signature.toByteArray();
     }
 
 }
