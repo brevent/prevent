@@ -55,8 +55,12 @@ public class DonateService implements ServiceConnection {
 
     private void unBindService() {
         DonateActivity donateActivity = wr.get();
-        if (donateActivity != null) {
-            donateActivity.unbindService(this);
+        if (donateActivity != null && mService != null) {
+            try {
+                donateActivity.unbindService(this);
+            } catch (IllegalArgumentException e) {
+                UILog.d("Service not registered?", e);
+            }
         }
     }
 

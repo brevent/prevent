@@ -70,13 +70,14 @@ public abstract class DonateActivity extends Activity implements DonateListener 
         return false;
     }
 
-    private void donate(IInAppBillingService service) {
+    private boolean donate(IInAppBillingService service) {
         try {
             Bundle bundle = service.getBuyIntent(DonateUtils.API_VERSION, getPackageName(), DonateUtils.ITEM_ID,
                     DonateUtils.ITEM_TYPE, DonateUtils.ITEM_ID);
             PendingIntent intent = bundle.getParcelable("BUY_INTENT");
             if (intent != null) {
                 startIntentSenderForResult(intent.getIntentSender(), DonateUtils.REQUEST_CODE, new Intent(), 0, 0, 0);
+                return true;
             } else {
                 UILog.e("cannot get buy intent");
             }
@@ -85,6 +86,7 @@ public abstract class DonateActivity extends Activity implements DonateListener 
         } catch (IntentSender.SendIntentException e) {
             UILog.d("cannot start buy intent", e);
         }
+        return false;
     }
 
     protected void donateViaPlay() {
@@ -93,8 +95,12 @@ public abstract class DonateActivity extends Activity implements DonateListener 
         bindService(serviceIntent, new DonateService(this) {
             @Override
             protected void onAvailable(IInAppBillingService service) {
+                boolean donating = false;
                 if (!BuildConfig.DEBUG || checkDonate(service)) {
-                    donate(service);
+                    donating = donate(service);
+                }
+                if (!donating) {
+                    onDonateFailedOnUi();
                 }
             }
 
@@ -103,6 +109,15 @@ public abstract class DonateActivity extends Activity implements DonateListener 
                 return true;
             }
         }, Context.BIND_AUTO_CREATE);
+    }
+
+    private void onDonateFailedOnUi() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                onDonateFailed();
+            }
+        });
     }
 
     protected void checkDonate() {
@@ -159,6 +174,10 @@ public abstract class DonateActivity extends Activity implements DonateListener 
     }
 
     protected void onDonated() {
+
+    }
+
+    protected void onDonateFailed() {
 
     }
 

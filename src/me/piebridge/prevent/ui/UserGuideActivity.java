@@ -245,8 +245,14 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         } else if (id == R.id.alipay) {
             donateViaAlipay();
         } else if (id == R.id.play) {
+            showDonateDialog();
             donateViaPlay();
         }
+    }
+
+    @Override
+    public void onDonateFailed() {
+        hideDonateDialog();
     }
 
     @Override
