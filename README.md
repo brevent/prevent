@@ -50,7 +50,7 @@ And "`Prevent Running`" would keep non-"service" processes, of cource it cannot 
 
 ### background
 
-This process process contains background code that is expendable.
+This process contains background code that is expendable.
 
 ### empty
 
@@ -104,9 +104,9 @@ Project: [ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB). If 
 - 除`谷歌服务`外的系统服务，或者支付宝的支付服务；
 - 其它可能的用户行为引起的启动。
 
-**注意**: 当`谷歌服务`在阻止列表时，只有`谷歌家族应用`和第三方的`GCM`应用可以使用。同时，当有任何一个`谷歌家族应用`没有退出时，都不会退出`谷歌服务`。
+**注意**：当`谷歌服务`在阻止列表时，只有`谷歌家族应用`和第三方的`GCM`应用可以使用。同时，当有任何一个`谷歌家族应用`没有退出时，都不会退出`谷歌服务`。
 
-当用户退出以后，如果有服务，将会被强行停止，否则进程等待回收。
+当用户退出6秒以后，如果有服务，将会被强行停止，否则进程等待回收。
 有些用户无法或不愿分清HOME与返回键区别，可以黑屏以后自动关闭进程，但是这项功能默认关闭。
 本人建议(并且程序默认)保留其它类型进程，如果强迫症实在不想保留进程，请捐赠以后获取许可，然后开启相关设置(强迫症是病，得花钱治)。
 
@@ -118,7 +118,7 @@ Project: [ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB). If 
 
 **警告**：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。“`阻止运行`”不会显示和系统同一签名的系统应用，也不会显示系统内置的启动器。
 
-**警告**: 请不要阻止“`Xposed Installer`”，否则模块更新时，无法更新模块路径，导致重启以后无法加载模块。
+**警告**：请不要阻止“`Xposed Installer`”，否则模块更新时，无法更新模块路径，导致重启以后无法加载模块。
 
 这个模块支持安卓2.3到5.1，个人主要在5.1上测试。(2.3请安装本人移植的xposed框架。）
 
@@ -142,6 +142,10 @@ Project: [ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB). If 
 - `-sg` 除谷歌家族外的系统程序
 
 ## [进程级别](http://developer.android.com/intl/zh-tw/reference/android/app/ActivityManager.RunningAppProcessInfo.html#constants)
+
+### 后台(background)
+
+可被回收的后台进程。(译者注：或译缓存的后台进程，不需要主动清理。)
 
 ### 空(empty)
 
@@ -177,4 +181,4 @@ Project: [ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB). If 
 
 ## 项目
 
-“`阻止运行`”开源，项目地址：[https://github.com/liudongmiao/ForceStopGB](https://github.com/liudongmiao/ForceStopGB)。如果喜欢，请随意捐赠。
+“`阻止运行`”开源，项目地址：[ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB)。如果喜欢，请随意捐赠。

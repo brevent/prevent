@@ -25,9 +25,9 @@ code { font-size: larger }
 <li>其它可能的用户行为引起的启动。</li>
 </ul>
 
-<p><strong>注意</strong>: 当<code>谷歌服务</code>在阻止列表时，只有<code>谷歌家族应用</code>和第三方的<code>GCM</code>应用可以使用。同时，当有任何一个<code>谷歌家族应用</code>没有退出时，都不会退出<code>谷歌服务</code>。</p>
+<p><strong>注意</strong>：当<code>谷歌服务</code>在阻止列表时，只有<code>谷歌家族应用</code>和第三方的<code>GCM</code>应用可以使用。同时，当有任何一个<code>谷歌家族应用</code>没有退出时，都不会退出<code>谷歌服务</code>。</p>
 
-<p>当用户退出以后，如果有服务，将会被强行停止，否则进程等待回收。
+<p>当用户退出6秒以后，如果有服务，将会被强行停止，否则进程等待回收。
 有些用户无法或不愿分清HOME与返回键区别，可以黑屏以后自动关闭进程，但是这项功能默认关闭。
 本人建议(并且程序默认)保留其它类型进程，如果强迫症实在不想保留进程，请捐赠以后获取许可，然后开启相关设置(强迫症是病，得花钱治)。</p>
 
@@ -41,7 +41,7 @@ code { font-size: larger }
 
 <p><strong>警告</strong>：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。“<code>阻止运行</code>”不会显示和系统同一签名的系统应用，也不会显示系统内置的启动器。</p>
 
-<p><strong>警告</strong>: 请不要阻止“<code>Xposed Installer</code>”，否则模块更新时，无法更新模块路径，导致重启以后无法加载模块。</p>
+<p><strong>警告</strong>：请不要阻止“<code>Xposed Installer</code>”，否则模块更新时，无法更新模块路径，导致重启以后无法加载模块。</p>
 
 <p>这个模块支持安卓2.3到5.1，个人主要在5.1上测试。(2.3请安装本人移植的xposed框架。）</p>
 
@@ -69,6 +69,10 @@ code { font-size: larger }
 </ul>
 
 <h2><a href="http://developer.android.com/intl/zh-tw/reference/android/app/ActivityManager.RunningAppProcessInfo.html#constants">进程级别</a></h2>
+
+<h3>后台(background)</h3>
+
+<p>可被回收的后台进程。(译者注：或译缓存的后台进程，不需要主动清理。)</p>
 
 <h3>空(empty)</h3>
 
@@ -104,6 +108,6 @@ code { font-size: larger }
 
 <h2>项目</h2>
 
-<p>“<code>阻止运行</code>”开源，项目地址：<a href="https://github.com/liudongmiao/ForceStopGB">https://github.com/liudongmiao/ForceStopGB</a>。如果喜欢，请随意捐赠。</p>
+<p>“<code>阻止运行</code>”开源，项目地址：<a href="https://github.com/liudongmiao/ForceStopGB">ForceStopGB - GitHub</a>。如果喜欢，请随意捐赠。</p>
 </body>
 </html>
