@@ -1,5 +1,7 @@
 package me.piebridge.prevent.xposed;
 
+import android.os.Build;
+
 import java.lang.reflect.Field;
 import java.util.Map;
 
@@ -12,12 +14,16 @@ public class XposedUtils {
 
     }
 
+    public static boolean canDisableXposed() {
+        return !("samsung".equals(Build.BRAND) && System.getProperty("java.vm.version", "1").startsWith("2"));
+    }
+
     public static void disableXposed(Class<?> clazz) {
         try {
             Field field = clazz.getDeclaredField("sHookedMethodCallbacks");
             field.setAccessible(true);
             Map sHookedMethodCallbacks = (Map) field.get(null);
-            Object doNothing = Class.forName("de.robv.android.xposed.XC_MethodReplacement", false, ClassLoader.getSystemClassLoader()).getField("DO_NOTHING").get(null);
+            Object doNothing = Class.forName("de.robv.android.xposed.XC_MethodReplacement", false, clazz.getClassLoader()).getField("DO_NOTHING").get(null);
             for (Object callbacks : sHookedMethodCallbacks.values()) {
                 field = callbacks.getClass().getDeclaredField("elements");
                 field.setAccessible(true);
