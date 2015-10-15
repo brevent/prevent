@@ -56,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
+import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 
 public abstract class PreventFragment extends ListFragment implements AbsListView.OnScrollListener {
@@ -564,7 +565,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             @Override
             protected FilterResults performFiltering(CharSequence prefix) {
                 FilterResults results = new FilterResults();
-                String query = null;
+                String query;
                 if (TextUtils.isEmpty(prefix)) {
                     query = getDefaultQuery();
                 } else {
@@ -792,9 +793,11 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         protected Set<String> getPackageNames(PreventActivity activity) {
             Set<String> names = new HashSet<String>();
             PackageManager pm = activity.getPackageManager();
+            String licenseName = LicenseUtils.getRawLicenseName(activity);
+            boolean preventAll = licenseName != null && licenseName.startsWith("PA");
             for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
                 ApplicationInfo appInfo = pkgInfo.applicationInfo;
-                if (PackageUtils.canPrevent(pm, appInfo)) {
+                if (preventAll || PackageUtils.canPrevent(pm, appInfo)) {
                     names.add(appInfo.packageName);
                 }
             }
@@ -821,13 +824,10 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             PackageManager pm = activity.getPackageManager();
             Set<String> removes = new HashSet<String>();
             for (String packageName : activity.getPreventPackages().keySet()) {
-                ApplicationInfo appInfo;
                 try {
-                    appInfo = pm.getApplicationInfo(packageName, 0);
-                    if (PackageUtils.canPrevent(pm, appInfo)) {
-                        names.add(packageName);
-                        continue;
-                    }
+                    pm.getApplicationInfo(packageName, 0);
+                    names.add(packageName);
+                    continue;
                 } catch (PackageManager.NameNotFoundException e) { // NOSONAR
                     // do nothing
                 }

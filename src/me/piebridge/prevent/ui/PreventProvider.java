@@ -7,8 +7,6 @@ import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
@@ -21,10 +19,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Set;
 
-import me.piebridge.prevent.common.PackageUtils;
-import me.piebridge.prevent.ui.util.PreventListUtils;
-
 import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.ui.util.PreventListUtils;
 
 /**
  * Created by thom on 15/7/18.
@@ -48,18 +44,9 @@ public class PreventProvider extends ContentProvider {
         }
         String[] columns = {COLUMN_PACKAGE};
         MatrixCursor cursor = new MatrixCursor(columns);
-        PackageManager pm = getContext().getPackageManager();
         Set<String> packages = PreventListUtils.load(getContext());
         for (String packageName : packages) {
-            try {
-                ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
-                if (PackageUtils.canPrevent(pm, appInfo)) {
-                    cursor.addRow(new String[]{packageName});
-                }
-            } catch (PackageManager.NameNotFoundException e) {  // NOSONAR
-                cursor.addRow(new String[]{packageName});
-                UILog.d("cannot find package " + packageName + ", is it on sdcard?");
-            }
+            cursor.addRow(new String[]{packageName});
         }
         if (packages.isEmpty()) {
             notifyNoPrevents(getContext());

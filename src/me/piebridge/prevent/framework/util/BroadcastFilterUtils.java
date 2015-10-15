@@ -14,7 +14,6 @@ import me.piebridge.prevent.framework.SystemHook;
 public class BroadcastFilterUtils {
 
     private static Class<?> BroadcastFilter;
-    private static Class<?> ReceiverList;
     private static Field BroadcastFilter$receiverList;
     private static Field ReceiverList$app;
     private static Field ReceiverList$receiver;
@@ -35,11 +34,11 @@ public class BroadcastFilterUtils {
             BroadcastFilter$receiverList = BroadcastFilter.getDeclaredField("receiverList");
             BroadcastFilter$receiverList.setAccessible(true);
 
-            ReceiverList = Class.forName("com.android.server.am.ReceiverList", false, classLoader);
-            ReceiverList$app = ReceiverList.getDeclaredField("app");
+            Class<?> receiverList = Class.forName("com.android.server.am.ReceiverList", false, classLoader);
+            ReceiverList$app = receiverList.getDeclaredField("app");
             ReceiverList$app.setAccessible(true);
 
-            ReceiverList$receiver = ReceiverList.getDeclaredField("receiver");
+            ReceiverList$receiver = receiverList.getDeclaredField("receiver");
             ReceiverList$receiver.setAccessible(true);
         } catch (ClassNotFoundException e) {
             PreventLog.e("cannot find classes for BroadcastFilterUtils", e);

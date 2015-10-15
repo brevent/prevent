@@ -11,8 +11,8 @@ import android.preference.PreferenceActivity;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
@@ -33,11 +33,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     private AlertDialog dialog;
 
-    private Preference forceStopTimeout;
-
-    private Preference destroyProcesses;
-
-    private static Collection<String> KEYS_NEED_LICENSE = Arrays.asList(
+    private static Collection<String> KEYS_NEED_LICENSE = Collections.singletonList(
             PreventIntent.KEY_DESTROY_PROCESSES
     );
 
@@ -47,11 +43,11 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         super.onCreate(savedInstanceState);
         DeprecatedUtils.addPreferencesFromResource(this, R.xml.settings);
 
-        forceStopTimeout = DeprecatedUtils.findPreference(this, PreventIntent.KEY_FORCE_STOP_TIMEOUT);
+        Preference forceStopTimeout = DeprecatedUtils.findPreference(this, PreventIntent.KEY_FORCE_STOP_TIMEOUT);
         forceStopTimeout.setOnPreferenceChangeListener(this);
         forceStopTimeout.setOnPreferenceClickListener(this);
 
-        destroyProcesses = DeprecatedUtils.findPreference(this, PreventIntent.KEY_DESTROY_PROCESSES);
+        Preference destroyProcesses = DeprecatedUtils.findPreference(this, PreventIntent.KEY_DESTROY_PROCESSES);
         destroyProcesses.setOnPreferenceChangeListener(this);
 
         // check license

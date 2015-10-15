@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Handler;
@@ -489,20 +488,7 @@ public final class SystemHook {
     }
 
     public static boolean cannotPrevent(String packageName) {
-        if (packageName == null) {
-            return false;
-        }
-        if (isFramework(packageName)) {
-            return true;
-        }
-        try {
-            PackageManager pm = mContext.getPackageManager();
-            ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
-            return !PackageUtils.canPrevent(pm, info);
-        } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find package: " + packageName, e);
-            return false;
-        }
+        return packageName != null && isFramework(packageName);
     }
 
     public static boolean isFramework(String packageName) {

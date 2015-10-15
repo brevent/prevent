@@ -32,12 +32,11 @@ public class AccountWatcher implements OnAccountsUpdateListener {
 
     private static final String NAMESPACE_ANDROID = "http://schemas.android.com/apk/res/android";
     private final Context mContext;
-    private final AccountManager accountManager;
     private final Collection<Account> mEnabledAccounts = new ArrayList<Account>();
 
     public AccountWatcher(Context context) {
         mContext = context;
-        accountManager = AccountManager.get(context);
+        AccountManager accountManager = AccountManager.get(context);
         accountManager.addOnAccountsUpdatedListener(this, initHandler(), true);
     }
 

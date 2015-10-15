@@ -105,6 +105,10 @@ public class LicenseUtils {
         if (inAppLicensed) {
             return DonateUtils.ITEM_ID;
         }
+        return getRawLicenseName(context);
+    }
+
+    public static String getRawLicenseName(final Context context) {
         byte[] key = readKey(context);
         if (key.length == 0) {
             return null;
