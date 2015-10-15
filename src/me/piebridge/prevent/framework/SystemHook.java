@@ -488,23 +488,6 @@ public final class SystemHook {
         return restoreFuture != null && restoreFuture.getDelay(TimeUnit.SECONDS) > 0;
     }
 
-    public static boolean cannotPrevent(String packageName) {
-        if (packageName == null) {
-            return false;
-        }
-        if (isFramework(packageName)) {
-            return true;
-        }
-        try {
-            PackageManager pm = mContext.getPackageManager();
-            ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
-            return !PackageUtils.canPrevent(pm, info);
-        } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find package: " + packageName, e);
-            return false;
-        }
-    }
-
     public static boolean isFramework(String packageName) {
         return "android".equals(packageName);
     }

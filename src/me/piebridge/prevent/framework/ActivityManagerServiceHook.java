@@ -14,6 +14,7 @@ import java.util.Map;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.AccountWatcher;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
@@ -28,6 +29,7 @@ public class ActivityManagerServiceHook {
     private static Map<String, Boolean> mPreventPackages;
     // normally, there is only one
     private static Collection<String> settingsPackages = new HashSet<String>();
+    private static Collection<String> importantSystemPackages = new HashSet<String>();
     private static AccountWatcher mAccountWatcher;
 
     private ActivityManagerServiceHook() {
@@ -159,7 +161,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean cannotPrevent(String sender, String packageName) {
-        if (SystemHook.cannotPrevent(sender)) {
+        if (cannotPrevent(sender)) {
             // the sender cannot be prevent
             return true;
         } else if (mContext.getPackageManager().getLaunchIntentForPackage(sender) == null) {
@@ -170,6 +172,30 @@ public class ActivityManagerServiceHook {
             return true;
         }
         return false;
+    }
+
+    public static boolean cannotPrevent(String packageName) {
+        if (packageName == null) {
+            return false;
+        }
+        if (importantSystemPackages.contains(packageName)) {
+            return true;
+        }
+        if (SystemHook.isFramework(packageName)) {
+            return true;
+        }
+        try {
+            PackageManager pm = mContext.getPackageManager();
+            ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
+            boolean result = !PackageUtils.canPrevent(pm, info);
+            if (result && PackageUtils.isSystemPackage(info.flags)) {
+                importantSystemPackages.add(packageName);
+            }
+            return result;
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package: " + packageName, e);
+            return false;
+        }
     }
 
     private static boolean hookSyncService(ComponentName hostingName, String hostingType, String packageName, String sender) {
