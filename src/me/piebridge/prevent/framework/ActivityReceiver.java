@@ -1,7 +1,14 @@
 package me.piebridge.prevent.framework;
 
+import android.app.INotificationManager;
+import android.app.Notification;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.os.SystemClock;
 
 import java.util.HashMap;
@@ -269,9 +276,29 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             if (screen) {
                 break;
             }
-            HideApiUtils.forceStopPackage(mContext, packageName);
-            leavingPackages.remove(packageName);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || canStopPackage(packageName)) {
+                HideApiUtils.forceStopPackage(mContext, packageName);
+                leavingPackages.remove(packageName);
+            }
         }
+    }
+
+    private boolean canStopPackage(String packageName) {
+        INotificationManager sINM = INotificationManager.Stub.asInterface(ServiceManager.getService(Context.NOTIFICATION_SERVICE));
+        try {
+            ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(packageName, 0);
+            int priority = sINM.getPackagePriority(packageName, info.uid);
+            if (priority == Notification.PRIORITY_MAX) {
+                PreventLog.d(packageName + " has high priority " + priority + ", cannot stop");
+                return false;
+            }
+            PreventLog.v("package " + packageName + ", priority: " + priority);
+        } catch (RemoteException e) {
+            PreventLog.d("cannot get package priority for " + packageName, e);
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package " + packageName, e);
+        }
+        return true;
     }
 
     private void checkLeavingPackagesIfNeeded() {
