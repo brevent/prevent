@@ -7,7 +7,6 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-import java.util.Arrays;
 import java.util.Collection;
 
 import me.piebridge.prevent.ui.UILog;
@@ -64,7 +63,7 @@ public class DonateUtils {
             byte[] plain = getSignature(sha1.digest());
             byte[] key = Base64.decode(signature, Base64.DEFAULT);
             byte[] sign = new BigInteger(1, key).modPow(exponent, modulus).toByteArray();
-            return Arrays.equals(plain, sign);
+            return equals(plain, sign);
         } catch (IllegalArgumentException e) {
             UILog.e("illegal argument exception", e);
         } catch (GeneralSecurityException e) {
@@ -73,30 +72,33 @@ public class DonateUtils {
         return false;
     }
 
-    private static byte[] getSignature(byte[] sha) {
+    private static byte[] getSignature(byte[] sha1) {
+        // rfc3447, sha-1
+        byte[] algorithm = {0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14};
         ByteArrayOutputStream signature = new ByteArrayOutputStream(0xff);
         signature.write(0x01);
+        // 0xff - 2 - algorithm - sha1
         for (int i = 0; i < 0xda; ++i) {
             signature.write(0xff);
         }
         signature.write(0x00);
-        signature.write(0x30);
-        signature.write(0x21);
-        signature.write(0x30);
-        signature.write(0x09);
-        signature.write(0x06);
-        signature.write(0x05);
-        signature.write(0x2b);
-        signature.write(0x0e);
-        signature.write(0x03);
-        signature.write(0x02);
-        signature.write(0x1a);
-        signature.write(0x05);
-        signature.write(0x00);
-        signature.write(0x04);
-        signature.write(0x14);
-        signature.write(sha, 0, sha.length);
+        signature.write(algorithm, 0, algorithm.length);
+        signature.write(sha1, 0, sha1.length);
         return signature.toByteArray();
+    }
+
+    private static boolean equals(byte[] a, byte[] b) { // NOSONAR
+        int length = a.length;
+        if (length != b.length) {
+            return false;
+        }
+
+        for (int i = 0; i < length; ++i) {
+            if (a[i] != b[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
