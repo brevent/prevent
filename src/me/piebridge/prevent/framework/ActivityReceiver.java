@@ -76,16 +76,28 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         } catch (Throwable t) { // NOSONAR
             PreventLog.e("cannot get uid for " + pid, t);
         }
-        String processName = SystemHook.getProcessName(pid);
+        String processName = getProcessName(uid, pid, packageName);
         if (isNormalProcessName(processName, packageName)) {
             return true;
         }
+        PreventLog.v("pid: " + pid + ", package: " + packageName + ", process: " + processName);
         Set<String> abnormalPackages = abnormalProcesses.get(processName);
         return abnormalPackages != null && abnormalPackages.contains(packageName);
     }
 
+    private String getProcessName(int uid, int pid, String packageName) {
+        String[] packages = mContext.getPackageManager().getPackagesForUid(uid);
+        if (packages != null && packages.length == 1) {
+            return packageName;
+        } else {
+            return SystemHook.getProcessName(pid);
+        }
+    }
+
     private boolean isNormalProcessName(String processName, String packageName) {
-        return (processName != null) && (processName.equals(packageName) || processName.startsWith(packageName + ":"));
+        return (processName != null) && (processName.equals(packageName)
+                || processName.startsWith(packageName + ":")
+                || "<pre-initialized>".equals(processName));
     }
 
     private void setAbnormalProcessIfNeeded(String processName, String packageName) {
