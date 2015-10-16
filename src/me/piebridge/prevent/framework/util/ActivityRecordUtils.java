@@ -23,7 +23,7 @@ public class ActivityRecordUtils {
     }
 
     public static boolean isActivityRecord(Object object) {
-        return object != null && "ActivityRecord".equals(object.getClass().getSimpleName());
+        return object != null && object.getClass().getSimpleName().endsWith("ActivityRecord");
     }
 
     private static Object getField(Object target, String name) {
