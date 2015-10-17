@@ -92,7 +92,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             checkDonate();
         }
         donateView = findViewById(R.id.donate);
-        if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
+        if (BuildConfig.DONATE && TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             donateView.setVisibility(View.VISIBLE);
         } else {
             donateView.setVisibility(View.GONE);
@@ -102,8 +102,10 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     @Override
     protected void onResume() {
         super.onResume();
-        checkLicense();
-        hideDonateDialog();
+        if (BuildConfig.DONATE) {
+            checkLicense();
+            hideDonateDialog();
+        }
     }
 
     private void checkView(int id, ComponentName component) {
@@ -262,10 +264,12 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             menu.add(Menu.NONE, R.string.donate, Menu.NONE, R.string.donate);
         }
         menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);
-        menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
-        menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
-        if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
-            menu.add(Menu.NONE, R.string.request_license, Menu.NONE, R.string.request_license);
+        if (BuildConfig.DONATE) {
+            menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
+            menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
+            if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
+                menu.add(Menu.NONE, R.string.request_license, Menu.NONE, R.string.request_license);
+            }
         }
         menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
         return super.onCreateOptionsMenu(menu);
@@ -397,7 +401,9 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     @Override
     public void onDonated() {
         LicenseUtils.setInAppLicensed();
-        invalidateOptionsMenu();
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+            invalidateOptionsMenu();
+        }
         donateView.setVisibility(View.GONE);
         findViewById(R.id.play).setVisibility(View.GONE);
     }
@@ -433,7 +439,9 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     private String getVersionInfo(boolean showAppVersion) {
         StringBuilder sb = new StringBuilder();
         String licenseName;
-        if (showAppVersion) {
+        if (BuildConfig.DONATE) {
+            licenseName = null;
+        } else if (showAppVersion) {
             licenseName = LicenseUtils.getLicense(this);
         } else {
             licenseName = LicenseUtils.getLicenseName(this);

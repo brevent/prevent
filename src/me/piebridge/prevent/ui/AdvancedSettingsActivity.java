@@ -14,6 +14,7 @@ import android.widget.Toast;
 import java.util.Collection;
 import java.util.Collections;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.DeprecatedUtils;
@@ -51,6 +52,12 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         destroyProcesses.setOnPreferenceChangeListener(this);
 
         // check license
+        if (BuildConfig.DONATE) {
+            checkAccounts();
+        }
+    }
+
+    private void checkAccounts() {
         license = LicenseUtils.getLicense(this);
         Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
         intent.putExtra(Intent.EXTRA_USER, license);
@@ -68,7 +75,9 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     protected void onResume() {
         super.onResume();
-        checkLicense();
+        if (BuildConfig.DONATE) {
+            checkLicense();
+        }
     }
 
     private boolean checkLicense() {
@@ -88,7 +97,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
-        if (!LicenseUtils.isInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
+        if (BuildConfig.DONATE && !LicenseUtils.isInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
             LicenseUtils.requestLicense(this, license, accounts);
             return false;
         }
@@ -111,7 +120,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
-        if (!LicenseUtils.isInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
+        if (BuildConfig.DONATE && !LicenseUtils.isInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
             LicenseUtils.requestLicense(this, license, accounts);
             return true;
         } else {

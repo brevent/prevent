@@ -72,11 +72,6 @@ public class LogUtils {
         return sb.toString();
     }
 
-    public static void logRequest(String action, String packageName, int count) {
-        String log = buildLogRequest(action, packageName, count);
-        PreventLog.d(log);
-    }
-
     public static void logRequestInfo(String action, String packageName, int count) {
         String log = buildLogRequest(action, packageName, count);
         PreventLog.i(log);

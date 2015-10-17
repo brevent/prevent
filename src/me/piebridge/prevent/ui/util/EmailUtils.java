@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.text.TextUtils;
 
 import java.io.File;
 import java.util.Locale;
@@ -36,7 +37,10 @@ public class EmailUtils {
     }
 
     public static void sendEmail(Context context, String content) {
-        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:liudongmiao@gmail.com"));
+        if (TextUtils.isEmpty(BuildConfig.EMAIL)) {
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + BuildConfig.EMAIL));
         intent.putExtra(Intent.EXTRA_SUBJECT, getSubject(context));
         if (content != null) {
             intent.putExtra(Intent.EXTRA_TEXT, content);
@@ -49,13 +53,16 @@ public class EmailUtils {
     }
 
     public static void sendZip(Context context, File path, String content) {
+        if (TextUtils.isEmpty(BuildConfig.EMAIL)) {
+            return;
+        }
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.setType("application/zip");
         intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(path));
         intent.putExtra(Intent.EXTRA_SUBJECT, EmailUtils.getSubject(context));
         intent.putExtra(Intent.EXTRA_TEXT, content);
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"liudongmiao@gmail.com"});
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{BuildConfig.EMAIL});
         context.startActivity(intent);
     }
 

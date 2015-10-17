@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
@@ -430,7 +431,6 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     }
 
     private static class ViewHolder {
-        String label;
         String packageName;
         CheckBox checkView;
         ImageView iconView;
@@ -513,7 +513,6 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
             ViewHolder holder = (ViewHolder) view.getTag();
             AppInfo appInfo = getItem(position);
-            holder.label = appInfo.name;
             holder.nameView.setText(appInfo.name);
             if (!PackageUtils.equals(holder.packageName, appInfo.packageName)) {
                 holder.summaryView.setVisibility(View.GONE);
@@ -793,8 +792,13 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         protected Set<String> getPackageNames(PreventActivity activity) {
             Set<String> names = new HashSet<String>();
             PackageManager pm = activity.getPackageManager();
-            String licenseName = LicenseUtils.getRawLicenseName(activity);
-            boolean preventAll = licenseName != null && licenseName.startsWith("PA");
+            boolean preventAll;
+            if (BuildConfig.DONATE) {
+                String licenseName = LicenseUtils.getRawLicenseName(activity);
+                preventAll = licenseName != null && licenseName.startsWith("PA");
+            } else {
+                preventAll = false;
+            }
             for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
                 ApplicationInfo appInfo = pkgInfo.applicationInfo;
                 if (preventAll || PackageUtils.canPrevent(pm, appInfo)) {

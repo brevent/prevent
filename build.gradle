@@ -8,7 +8,7 @@ buildscript {
     }
 }
 
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
@@ -17,11 +17,14 @@ android {
     defaultConfig {
         versionCode Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())
         versionName 'git describe --tags'.execute().text.trim().substring(1)
-        buildConfigField "boolean", "RELEASE", (versionName.contains("alpha") || versionName.contains("beta")) ? "false" : "true"
+        buildConfigField "boolean", "RELEASE", "false"
+        buildConfigField "boolean", "DONATE", "false"
         buildConfigField "boolean", "WECHAT_DONATE", "false"
         buildConfigField "boolean", "ALIPAY_DONATE", "false"
         buildConfigField "String", "WECHAT_ACCOUNT", "null"
         buildConfigField "String", "ALIPAY_ACCOUNT", "null"
+        buildConfigField "String", "EMAIL", "null"
+        buildConfigField "String", "QUN", "null"
     }
 
     buildTypes {
@@ -65,11 +68,6 @@ android {
                 signingConfig signingConfigs.release
             }
         }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
     }
 }
 
