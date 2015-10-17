@@ -729,7 +729,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     }
 
     private CharSequence doFormatRunning(Set<Long> running) {
-        Set<String> sets = new LinkedHashSet<>();
+        Set<String> sets = new LinkedHashSet<String>();
         for (Long i : running) {
             Integer v = statusMap.get(i.intValue());
             if (v == null) {
