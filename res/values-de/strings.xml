@@ -47,6 +47,7 @@
     <string name="app_info">App-Info</string>
     <string name="open">Öffnen</string>
     <string name="uninstall">Deinstallieren</string>
+    <string name="app_notifications">App-Benachrichtigungen</string>
 
     <!-- advanced settings -->
     <string name="destroy_processes">Prozesse nicht speichern</string>

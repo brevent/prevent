@@ -276,21 +276,21 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             if (screen) {
                 break;
             }
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || canStopPackage(packageName)) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || !hasHighPriority(packageName)) {
                 HideApiUtils.forceStopPackage(mContext, packageName);
                 leavingPackages.remove(packageName);
             }
         }
     }
 
-    private boolean canStopPackage(String packageName) {
+    protected boolean hasHighPriority(String packageName) {
         INotificationManager sINM = INotificationManager.Stub.asInterface(ServiceManager.getService(Context.NOTIFICATION_SERVICE));
         try {
             ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(packageName, 0);
             int priority = sINM.getPackagePriority(packageName, info.uid);
             if (priority == Notification.PRIORITY_MAX) {
                 PreventLog.d(packageName + " has high priority " + priority + ", cannot stop");
-                return false;
+                return true;
             }
             PreventLog.v("package " + packageName + ", priority: " + priority);
         } catch (RemoteException e) {
@@ -298,7 +298,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         } catch (PackageManager.NameNotFoundException e) {
             PreventLog.d("cannot find package " + packageName, e);
         }
-        return true;
+        return false;
     }
 
     private void checkLeavingPackagesIfNeeded() {

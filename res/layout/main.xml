@@ -30,7 +30,7 @@
             android:layout_width="0dp"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:drawableLeft="@drawable/ic_menu_block"
+            android:drawableLeft="@drawable/ic_menu_prevent"
             android:text="@string/prevent" />
 
         <Button
@@ -38,7 +38,7 @@
             android:layout_width="0dp"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:drawableLeft="@drawable/ic_menu_star"
+            android:drawableLeft="@drawable/ic_menu_recover"
             android:text="@string/remove" />
     </LinearLayout>
 

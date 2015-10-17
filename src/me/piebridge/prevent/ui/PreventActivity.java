@@ -243,11 +243,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         menu.clear();
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
             preventMenu = menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
-            preventMenu.setIcon(R.drawable.ic_menu_block);
+            preventMenu.setIcon(R.drawable.ic_menu_prevent);
             preventMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
             preventMenu.setVisible(false);
             removeMenu = menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
-            removeMenu.setIcon(R.drawable.ic_menu_star);
+            removeMenu.setIcon(R.drawable.ic_menu_recover);
             removeMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
             removeMenu.setVisible(false);
         }

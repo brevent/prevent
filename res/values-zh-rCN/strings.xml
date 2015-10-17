@@ -46,6 +46,7 @@
     <string name="app_info">程序信息</string>
     <string name="open">打开</string>
     <string name="uninstall">卸载</string>
+    <string name="app_notifications">应用通知</string>
 
     <!-- advanced settings -->
     <string name="destroy_processes">不保留进程</string>

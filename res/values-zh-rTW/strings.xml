@@ -46,6 +46,7 @@
     <string name="app_info">程式資訊</string>
     <string name="open">開啟</string>
     <string name="uninstall">解除安裝</string>
+    <string name="app_notifications">程式通知</string>
 
     <!-- advanced settings -->
     <string name="destroy_processes">不要保留處理程式</string>

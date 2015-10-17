@@ -5,6 +5,7 @@ import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 
@@ -168,7 +169,11 @@ public class SystemReceiver extends ActivityReceiver {
                 if (elapsed % 0xa == 0) {
                     elapsed += 1;
                 }
-                status.add(elapsed);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && hasHighPriority(packageName)) {
+                    status.add(-elapsed);
+                } else {
+                    status.add(elapsed);
+                }
             }
         }
         LogUtils.logRequestInfo(action, null, running.size());

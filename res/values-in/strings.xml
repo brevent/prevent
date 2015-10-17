@@ -47,6 +47,7 @@
     <string name="app_info">Info Aplikasi</string>
     <string name="open">Buka</string>
     <string name="uninstall">Hapus Pemasangan</string>
+    <string name="app_notifications">Pemberitahuan aplikasi</string>
 
     <!-- advanced settings -->
     <string name="destroy_processes">Jangan simpan proses</string>

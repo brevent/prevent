@@ -1,7 +1,7 @@
 package me.piebridge.prevent.ui;
 
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -12,13 +12,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.v4.app.ListFragment;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.text.format.DateUtils;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -44,14 +44,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
@@ -59,6 +56,7 @@ import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
+import me.piebridge.prevent.ui.util.StatusUtils;
 
 public abstract class PreventFragment extends ListFragment implements AbsListView.OnScrollListener {
 
@@ -72,22 +70,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     private static final int HEADER_ICON_WIDTH = 48;
     private static Map<String, Position> positions = new HashMap<String, Position>();
 
-    private static Map<Integer, Integer> statusMap = new HashMap<Integer, Integer>();
-
     private boolean scrolling;
-
-    static {
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_BACKGROUND, R.string.importance_background);
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_EMPTY, R.string.importance_empty);
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_GONE, R.string.importance_gone);
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_FOREGROUND, R.string.importance_foreground);
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE, R.string.importance_foreground_service);
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING, R.string.importance_top_sleeping);
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE, R.string.importance_perceptible);
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_SERVICE, R.string.importance_service);
-        statusMap.put(RunningAppProcessInfo.IMPORTANCE_VISIBLE, R.string.importance_visible);
-        statusMap.put(-RunningAppProcessInfo.IMPORTANCE_SERVICE, R.string.importance_service_not_started);
-    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -210,6 +193,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         if (holder.canUninstall) {
             menu.add(Menu.NONE, R.string.uninstall, Menu.NONE, R.string.uninstall);
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            menu.add(Menu.NONE, R.string.app_notifications, Menu.NONE, R.string.app_notifications);
+        }
     }
 
     private void setHeaderIcon(ContextMenu menu, Drawable icon) {
@@ -232,24 +218,44 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     }
 
     private boolean onContextItemSelected(ViewHolder holder, String packageName, int id) {
-        switch (id) {
-            case R.string.app_info:
-            case R.string.uninstall:
-                return startActivity(id, packageName);
-            case R.string.open:
-                return startPackage(packageName);
-            case R.string.remove:
-            case R.string.prevent:
-                return updatePrevent(id, holder, packageName);
-            default:
-                return false;
+        if (id == R.string.app_info || id == R.string.uninstall) {
+            startActivity(id, packageName);
+        } else if (id == R.string.app_notifications) {
+            startNotification(packageName);
+        } else if (id == R.string.remove || id == R.string.prevent) {
+            updatePrevent(id, holder, packageName);
+        } else if (id == R.string.open) {
+            startPackage(packageName);
+        }
+        return true;
+    }
+
+    private boolean startNotification(String packageName) {
+        ApplicationInfo info;
+        try {
+            info = mActivity.getPackageManager().getApplicationInfo(packageName, 0);
+        } catch (NameNotFoundException e) {
+            UILog.d("cannot find package " + packageName, e);
+            return false;
+        }
+        int uid = info.uid;
+        Intent intent = new Intent("android.settings.APP_NOTIFICATION_SETTINGS")
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .putExtra("app_package", packageName)
+                .putExtra("app_uid", uid);
+        try {
+            mActivity.startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException e) {
+            UILog.d("cannot start notification for " + packageName, e);
+            return false;
         }
     }
 
     private boolean startActivity(int id, String packageName) {
         String action;
         if (id == R.string.app_info) {
-            action = android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS;
+            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS;
         } else if (id == R.string.uninstall) {
             action = Intent.ACTION_DELETE;
         } else {
@@ -270,7 +276,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     private boolean updatePrevent(int id, ViewHolder holder, String packageName) {
         if (id == R.string.prevent) {
             holder.preventView.setVisibility(View.VISIBLE);
-            holder.preventView.setImageResource(holder.running != null ? R.drawable.ic_menu_stop : R.drawable.ic_menu_block);
+            holder.preventView.setImageResource(StatusUtils.getDrawable(holder.running));
             mActivity.changePrevent(packageName, true);
         } else if (id == R.string.remove) {
             holder.preventView.setVisibility(View.GONE);
@@ -362,9 +368,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             if (PackageUtils.equals(packageName, holder.packageName)) {
                 holder.updatePreventView(mActivity);
                 holder.running = mActivity.getRunningProcesses().get(packageName);
-                holder.summaryView.setText(formatRunning(holder.running));
+                holder.summaryView.setText(StatusUtils.formatRunning(mActivity, holder.running));
             } else if (holder.running != null) {
-                holder.summaryView.setText(formatRunning(holder.running));
+                holder.summaryView.setText(StatusUtils.formatRunning(mActivity, holder.running));
             }
         }
     }
@@ -449,7 +455,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 preventView.setVisibility(View.INVISIBLE);
             } else {
                 preventView.setVisibility(View.VISIBLE);
-                preventView.setImageResource(result ? R.drawable.ic_menu_block : R.drawable.ic_menu_stop);
+                preventView.setImageResource(StatusUtils.getDrawable(activity.getRunningProcesses().get(packageName)));
             }
         }
     }
@@ -717,45 +723,6 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         }
     }
 
-    private CharSequence formatRunning(Set<Long> running) {
-        if (running == null) {
-            return mActivity.getString(R.string.not_running);
-        } else {
-            if (running.contains((long) RunningAppProcessInfo.IMPORTANCE_SERVICE) && running.contains((long) -RunningAppProcessInfo.IMPORTANCE_SERVICE)) {
-                running.remove((long) -RunningAppProcessInfo.IMPORTANCE_SERVICE);
-            }
-            return doFormatRunning(running);
-        }
-    }
-
-    private CharSequence doFormatRunning(Set<Long> running) {
-        Set<String> sets = new LinkedHashSet<String>();
-        for (Long i : running) {
-            Integer v = statusMap.get(i.intValue());
-            if (v == null) {
-                long elapsed = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime()) - i;
-                sets.add(DateUtils.formatElapsedTime(elapsed));
-            } else {
-                sets.add(mActivity.getString(v));
-            }
-        }
-        return toString(sets);
-    }
-
-    private CharSequence toString(Set<String> sets) {
-        StringBuilder buffer = new StringBuilder();
-        Iterator<?> it = sets.iterator();
-        while (it.hasNext()) {
-            buffer.append(it.next());
-            if (it.hasNext()) {
-                buffer.append(", ");
-            } else {
-                break;
-            }
-        }
-        return buffer.toString();
-    }
-
     private class RetrieveIconTask extends AsyncTask<Object, Void, ViewHolder> {
 
         WeakReference<PreventActivity> wr = new WeakReference<PreventActivity>(mActivity);
@@ -780,7 +747,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         @Override
         protected void onPostExecute(ViewHolder holder) {
             holder.iconView.setImageDrawable(holder.icon);
-            holder.summaryView.setText(formatRunning(holder.running));
+            holder.summaryView.setText(StatusUtils.formatRunning(mActivity, holder.running));
             holder.loadingView.setVisibility(View.GONE);
             holder.summaryView.setVisibility(View.VISIBLE);
         }
