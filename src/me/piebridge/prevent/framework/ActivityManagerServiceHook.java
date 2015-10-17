@@ -163,7 +163,7 @@ public class ActivityManagerServiceHook {
     private static boolean cannotPrevent(String sender, String packageName) {
         if (SystemHook.isFramework(packageName)) {
             return true;
-        } else if (sender != null && cannotPrevent(sender)) {
+        } else if (cannotPrevent(sender)) {
             // the sender cannot be prevent
             return true;
         } else if (mContext.getPackageManager().getLaunchIntentForPackage(sender) == null) {
@@ -176,7 +176,7 @@ public class ActivityManagerServiceHook {
         return false;
     }
 
-    public static boolean cannotPrevent(String packageName) {
+    private static boolean cannotPrevent(String packageName) {
         if (importantSystemPackages.contains(packageName)) {
             return true;
         }
