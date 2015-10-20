@@ -73,6 +73,8 @@ public final class SystemHook {
 
     private static ScheduledThreadPoolExecutor forceStopExecutor = new ScheduledThreadPoolExecutor(0x1);
 
+    private static ScheduledThreadPoolExecutor moveBackExecutor = new ScheduledThreadPoolExecutor(0x2);
+
     private static ScheduledFuture<?> checkingFuture;
     private static ScheduledFuture<?> killingFuture;
     private static Map<String, ScheduledFuture<?>> serviceFutures = new HashMap<String, ScheduledFuture<?>>();
@@ -467,14 +469,19 @@ public final class SystemHook {
         }
     }
 
-    public static void onMoveActivityToBack(Object activityRecord) {
-        String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+    public static void onMoveActivityToBack(final Object activityRecord) {
+        final String packageName = ActivityRecordUtils.getPackageName(activityRecord);
         PreventLog.v("move activity to back, package: " + packageName + ", current: " + currentPackageName);
-        if (PackageUtils.equals(packageName, currentPackageName)) {
-            PreventLog.d(packageName + " move activity to back, but not in back");
-        } else if (systemReceiver != null) {
-            systemReceiver.onDestroyActivity("move activity to back", packageName);
-        }
+        moveBackExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                if (PackageUtils.equals(packageName, currentPackageName)) {
+                    PreventLog.d(packageName + " move activity to back, but not in back");
+                } else if (systemReceiver != null) {
+                    systemReceiver.onDestroyActivity("move activity to back", packageName);
+                }
+            }
+        }, TIME_CHECK_DISALLOW, TimeUnit.SECONDS);
     }
 
     public static void onAppDied(Object processRecord) {
