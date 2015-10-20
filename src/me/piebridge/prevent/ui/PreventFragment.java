@@ -276,7 +276,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     private boolean updatePrevent(int id, ViewHolder holder, String packageName) {
         if (id == R.string.prevent) {
             holder.preventView.setVisibility(View.VISIBLE);
-            holder.preventView.setImageResource(StatusUtils.getDrawable(holder.running));
+            holder.preventView.setImageResource(StatusUtils.getDrawable(holder.running, false));
             mActivity.changePrevent(packageName, true);
         } else if (id == R.string.remove) {
             holder.preventView.setVisibility(View.GONE);
@@ -455,7 +455,8 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 preventView.setVisibility(View.INVISIBLE);
             } else {
                 preventView.setVisibility(View.VISIBLE);
-                preventView.setImageResource(StatusUtils.getDrawable(activity.getRunningProcesses().get(packageName)));
+                running = activity.getRunningProcesses().get(packageName);
+                preventView.setImageResource(StatusUtils.getDrawable(running, result));
             }
         }
     }

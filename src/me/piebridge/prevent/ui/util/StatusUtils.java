@@ -78,7 +78,7 @@ public class StatusUtils {
     }
 
 
-    private static boolean isStar(Set<Long> running) {
+    private static boolean isPriority(Set<Long> running) {
         for (Long i : running) {
             Integer v = statusMap.get(i.intValue());
             if (v == null) {
@@ -88,12 +88,14 @@ public class StatusUtils {
         return false;
     }
 
-    public static int getDrawable(Set<Long> running) {
+    public static int getDrawable(Set<Long> running, boolean prevent) {
         if (running == null) {
             return R.drawable.ic_menu_block;
         }
-        if (isStar(running)) {
+        if (isPriority(running)) {
             return R.drawable.ic_menu_star;
+        } else if (prevent) {
+            return R.drawable.ic_menu_block;
         } else {
             return R.drawable.ic_menu_stop;
         }
