@@ -83,10 +83,8 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         } else {
             webView.loadUrl("file:///android_asset/about.en.html");
         }
-        ComponentName donateAlipay = getDonateAlipay();
-        ComponentName donateWeChat = getDonateWeChat();
-        checkView(R.id.alipay, donateAlipay);
-        checkView(R.id.wechat, donateWeChat);
+        setView(R.id.alipay, "com.eg.android.AlipayGphone");
+        findViewById(R.id.wechat).setVisibility(View.GONE);
         if (setView(R.id.play, "com.android.vending")) {
             findViewById(R.id.play).setVisibility(View.GONE);
             checkDonate();
@@ -105,14 +103,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         if (BuildConfig.DONATE) {
             checkLicense();
             hideDonateDialog();
-        }
-    }
-
-    private void checkView(int id, ComponentName component) {
-        if (component != null) {
-            setView(id, component.getPackageName());
-        } else {
-            findViewById(id).setVisibility(View.GONE);
         }
     }
 
@@ -168,69 +158,16 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
     }
 
-
-    private ComponentName getDonateWeChat() {
-        return getDonateComponent(PreventIntent.NAME_WECHAT, PreventIntent.CLASS_WECHAT);
-    }
-
-    private ComponentName getDonateAlipay() {
-        return getDonateComponent(PreventIntent.NAME_ALIPAY, PreventIntent.CLASS_ALIPAY);
-    }
-
-    private ComponentName getDonateComponent(String packageName, String className) {
-        ComponentName cn = new ComponentName(packageName, className);
-        try {
-            PackageManager pm = getPackageManager();
-            ActivityInfo ai = pm.getActivityInfo(cn, 0);
-            int enabled = pm.getComponentEnabledSetting(cn);
-            if (BuildConfig.DEBUG) {
-                UILog.d("exported: " + ai.exported + ", enabled: " + ai.enabled + ", component enabled: " + enabled);
-            }
-            if (!ai.exported) {
-                return null;
-            }
-            if (ai.enabled && enabled == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
-                return cn;
-            }
-            if (enabled == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
-                return cn;
-            }
-        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
-            UILog.d("cannot find " + packageName + "/" + className);
-        }
-        return null;
-    }
-
     private boolean donateViaWeChat() {
-        ComponentName cn = getDonateWeChat();
-        if (cn == null) {
-            return false;
-        }
-        showDonateDialog();
-        Intent intent = new Intent();
-        intent.setComponent(cn);
-        intent.putExtra("scene", 1);
-        intent.putExtra("receiver_name", BuildConfig.WECHAT_ACCOUNT);
-        try {
-            startActivity(intent);
-        } catch (Throwable t) { // NOSONAR
-            hideDonateDialog();
-        }
-        return true;
+        // TODO
+        return false;
     }
 
     private boolean donateViaAlipay() {
-        ComponentName cn = getDonateAlipay();
-        if (cn == null) {
-            return false;
-        }
         showDonateDialog();
         Intent intent = new Intent();
-        intent.setComponent(cn);
-        intent.putExtra("app_id", "20000053");
-        Bundle mExtras = new Bundle();
-        mExtras.putString("bizData", BuildConfig.ALIPAY_ACCOUNT);
-        intent.putExtra("mExtras", mExtras);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setData(Uri.parse(BuildConfig.DONATE_ALIPAY));
         try {
             startActivity(intent);
         } catch (Throwable t) { // NOSONAR

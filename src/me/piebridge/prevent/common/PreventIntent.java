@@ -26,12 +26,6 @@ public final class PreventIntent {
     public static final String PERMISSION_MANAGER = NAMESPACE + "permission.MANAGER";
     public static final String PERMISSION_SYSTEM = "android.permission.SHUTDOWN";
 
-    public static final String NAME_ALIPAY = "com.eg.android.AlipayGphone";
-    public static final String CLASS_ALIPAY = "com.alipay.mobile.mob.components.account.AccountCodeActivity_";
-
-    public static final String NAME_WECHAT = "com.tencent.mm";
-    public static final String CLASS_WECHAT = "com.tencent.mm.plugin.remittance.ui.RemittanceAdapterUI";
-
     public static final String KEY_FORCE_STOP_TIMEOUT = "force_stop_timeout";
     public static final String KEY_DESTROY_PROCESSES = "destroy_processes";
     public static final String BACKUP_PREVENT_LIST = "backup_prevent_list";

@@ -58,9 +58,6 @@ public class SystemServiceHook extends XC_MethodHook {
             hookActivity(classLoader);
             hookIntentFilter(classLoader);
             hookIntentIfNeeded(classLoader);
-            if (BuildConfig.ALIPAY_DONATE || BuildConfig.WECHAT_DONATE) {
-                exportActivityIfNeeded();
-            }
             PreventLog.d("finish prevent hook (system)");
             systemHooked = true;
             LogcatUtils.logcat("*:v");
@@ -263,8 +260,7 @@ public class SystemServiceHook extends XC_MethodHook {
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         IApplicationThread.class, IBinder.class, Intent.class, String.class, iServiceConnection, int.class, String.class, int.class,
                         hook);
-            } else
-            if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
+            } else if (sdk >= Build.VERSION_CODES.JELLY_BEAN) {
                 // sdk 16, sdk 17, sdk 18, sdk 19, sdk 21, sdk 22
                 XposedHelpers.findAndHookMethod(activityManagerService, method,
                         IApplicationThread.class, IBinder.class, Intent.class, String.class, iServiceConnection, int.class, int.class,
@@ -411,10 +407,6 @@ public class SystemServiceHook extends XC_MethodHook {
             PreventLog.d("cannot invoke getRecordForAppLocked", e);
         }
         return null;
-    }
-
-    private static void exportActivityIfNeeded() {
-        hookLongestMethod(PackageParser.class, "parseActivity", new ExportedActivityHook());
     }
 
     private static void hookActivity(ClassLoader classLoader) throws ClassNotFoundException {
@@ -580,23 +572,6 @@ public class SystemServiceHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             ActivityManagerServiceHook.hookAfterCleanUpRemovedTaskLocked(param.args);
-        }
-    }
-
-    public static class ExportedActivityHook extends XC_MethodHook {
-        @Override
-        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            PackageParser.Activity result = (PackageParser.Activity) param.getResult();
-            if (result == null) {
-                return;
-            }
-            ActivityInfo info = result.info;
-            if (BuildConfig.ALIPAY_DONATE && PreventIntent.NAME_ALIPAY.equals(info.packageName) && PreventIntent.CLASS_ALIPAY.equals(info.name)) {
-                info.exported = true;
-            }
-            if (BuildConfig.WECHAT_DONATE && PreventIntent.NAME_WECHAT.equals(info.packageName) && PreventIntent.CLASS_WECHAT.equals(info.name)) {
-                info.exported = true;
-            }
         }
     }
 

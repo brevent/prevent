@@ -19,10 +19,8 @@ android {
         versionName 'git describe --tags'.execute().text.trim().substring(1)
         buildConfigField "boolean", "RELEASE", "false"
         buildConfigField "boolean", "DONATE", "false"
-        buildConfigField "boolean", "WECHAT_DONATE", "false"
-        buildConfigField "boolean", "ALIPAY_DONATE", "false"
-        buildConfigField "String", "WECHAT_ACCOUNT", "null"
-        buildConfigField "String", "ALIPAY_ACCOUNT", "null"
+        buildConfigField "String", "DONATE_ALIPAY", "null"
+        buildConfigField "String", "DONATE_WECHAT", "null"
         buildConfigField "String", "EMAIL", "null"
         buildConfigField "String", "QUN", "null"
     }
