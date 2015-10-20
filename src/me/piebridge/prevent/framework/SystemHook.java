@@ -471,17 +471,18 @@ public final class SystemHook {
 
     public static void onMoveActivityToBack(final Object activityRecord) {
         final String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+        systemReceiver.removeLeavingPackage(packageName);
         PreventLog.v("move activity to back, package: " + packageName + ", current: " + currentPackageName);
         moveBackExecutor.schedule(new Runnable() {
             @Override
             public void run() {
                 if (PackageUtils.equals(packageName, currentPackageName)) {
                     PreventLog.d(packageName + " move activity to back, but not in back");
-                } else if (systemReceiver != null) {
+                } else if (systemReceiver != null && !systemReceiver.getLeavingPackages().containsKey(packageName)) {
                     systemReceiver.onDestroyActivity("move activity to back", packageName);
                 }
             }
-        }, TIME_CHECK_DISALLOW, TimeUnit.SECONDS);
+        }, 0x200, TimeUnit.MILLISECONDS);
     }
 
     public static void onAppDied(Object processRecord) {
