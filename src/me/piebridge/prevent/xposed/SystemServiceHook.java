@@ -4,7 +4,6 @@ import android.app.IApplicationThread;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageParser;
 import android.net.Uri;
@@ -20,10 +19,7 @@ import java.util.Set;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
-
-import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
-import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.ActivityManagerServiceHook;
 import me.piebridge.prevent.framework.IntentFilterHook;
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
