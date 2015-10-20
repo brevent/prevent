@@ -86,6 +86,7 @@ public final class SystemHook {
     private static final Object RESTORE_LOCK = new Object();
     private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
     private static boolean destroyProcesses;
+    private static String currentPackageName;
 
     private SystemHook() {
 
@@ -435,6 +436,7 @@ public final class SystemHook {
     }
 
     public static void onStartActivity(Object activityRecord) {
+        currentPackageName = ActivityRecordUtils.getPackageName(activityRecord);
         if (systemReceiver != null) {
             systemReceiver.onStartActivity(activityRecord);
         }
@@ -447,6 +449,7 @@ public final class SystemHook {
     }
 
     public static void onResumeActivity(Object activityRecord) {
+        currentPackageName = ActivityRecordUtils.getPackageName(activityRecord);
         if (systemReceiver != null) {
             systemReceiver.onResumeActivity(activityRecord);
         }
@@ -465,8 +468,11 @@ public final class SystemHook {
     }
 
     public static void onMoveActivityToBack(Object activityRecord) {
-        if (systemReceiver != null) {
-            String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+        String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+        PreventLog.v("move activity to back, package: " + packageName + ", current: " + currentPackageName);
+        if (PackageUtils.equals(packageName, currentPackageName)) {
+            PreventLog.d(packageName + " move activity to back, but not in back");
+        } else if (systemReceiver != null) {
             systemReceiver.onDestroyActivity("move activity to back", packageName);
         }
     }
