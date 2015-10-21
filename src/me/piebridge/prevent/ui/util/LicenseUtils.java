@@ -28,6 +28,7 @@ public class LicenseUtils {
 
     private static boolean inAppLicensed = false;
 
+    // @formatter:off
     private static final byte[] MODULUS = {
              -93, -117,  -85,   56,  -65,   -8,  -86,   59,   52,   43,  -50,  -47,   64,   51,   89, -116,
               95,  120,  -85,  -82,  -60,  -78,   65,   80,   18,   78, -109,   61,  106,  -28,  112,   76,
@@ -46,6 +47,7 @@ public class LicenseUtils {
                6,  -37,  -13,  -99,  123,  -41,   69,  120,  111, -106,   31, -124,   91,   51,   89,  -96,
              126,   20,  -75,  108, -107,   16,  127,   56,  -36,  -17,  -24,  -92,  -34,  -48,   65,   73,
     };
+    // @formatter:on
 
     private LicenseUtils() {
 

@@ -24,6 +24,7 @@ public class DonateUtils {
 
     public static final String ITEM_TYPE = "inapp";
 
+    // @formatter:off
     private static final byte[] MODULUS = {
              -49,   46,   -4,   49,  107,   86, -118,   15,  -77,    4,  -19,   58,  104,  -43,   -8,   83,
              -62,   21,   -2,  -78,    3,   37,   80,    1, -107,   96,    9,  -60,   57,  -58,  -53,  -14,
@@ -42,6 +43,7 @@ public class DonateUtils {
               87, -127,  -50,  -87,  -75,   -6,   11,   60,  -50,  100,  -26,  109,   73, -105,   77,  -52,
               35,  -98,  -59,  -35,  -62,  -52,   46,   63, -105,   -1,   84, -125,   15,   98, -109,   43,
     };
+    // @formatter:on
 
     private DonateUtils() {
 
