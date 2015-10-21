@@ -15,6 +15,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -29,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
 import me.piebridge.billing.DonateActivity;
@@ -37,6 +39,7 @@ import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.DeprecatedUtils;
 import me.piebridge.prevent.ui.util.EmailUtils;
+import me.piebridge.prevent.ui.util.FileUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.QQUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
@@ -76,7 +79,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             webView.loadUrl("file:///android_asset/about.en.html");
         }
         setView(R.id.alipay, "com.eg.android.AlipayGphone");
-        findViewById(R.id.wechat).setVisibility(View.GONE);
+        setView(R.id.wechat, "com.tencent.mm");
         if (setView(R.id.play, "com.android.vending")) {
             findViewById(R.id.play).setVisibility(View.GONE);
             checkDonate();
@@ -151,8 +154,37 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     }
 
     private boolean donateViaWeChat() {
-        // TODO
-        return false;
+        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        if (dir == null) {
+            return false;
+        }
+        File screenshots = new File(dir, "Screenshots");
+        if (!screenshots.exists()) {
+            screenshots.mkdirs();
+        }
+        File wechat = new File(screenshots, "pr_donate_wechat.png");
+        try {
+            FileUtils.dumpFile(getAssets().open("wechat.png"), wechat);
+        } catch (IOException e) {
+            UILog.d("cannot dump wechat", e);
+            return false;
+        }
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        mediaScanIntent.setData(Uri.fromFile(wechat));
+        sendBroadcast(mediaScanIntent);
+        showDonateDialog();
+        Intent intent = new Intent();
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setData(Uri.parse("weixin://dl/scan"));
+        try {
+            startActivity(intent);
+            for (int i = 0; i < 0x3; ++i) {
+                Toast.makeText(this, R.string.select_qr_code, Toast.LENGTH_LONG).show();
+            }
+        } catch (Throwable t) { // NOSONAR
+            hideDonateDialog();
+        }
+        return true;
     }
 
     private boolean donateViaAlipay() {

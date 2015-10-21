@@ -14,11 +14,9 @@
         android:name="me.piebridge.prevent.permission.MANAGER"
         android:protectionLevel="signature" />
 
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="18" />
-    <uses-permission android:name="me.piebridge.prevent.permission.MANAGER" />
     <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="me.piebridge.prevent.permission.MANAGER" />
 
     <application
         android:allowBackup="true"

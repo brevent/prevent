@@ -79,6 +79,7 @@
 
     <!-- donation -->
     <string name="donation">Spenden sind gern gesehen, wenn du magst.</string>
+    <string name="select_qr_code">Pilih Kode QR dari Album</string>
 
     <!-- version -->
     <string name="licensed">Lizenziert</string>

@@ -78,6 +78,7 @@
 
     <!-- donation -->
     <string name="donation">如果喜欢，请随(duo)意(duo)捐赠</string>
+    <string name="select_qr_code">请点击菜单，从相册选取二维码</string>
 
     <!-- version -->
     <string name="licensed">授权给尊贵的SVIP用户使用</string>

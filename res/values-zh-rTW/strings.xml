@@ -78,6 +78,7 @@
 
     <!-- donation -->
     <string name="donation">如果喜歡，請隨意捐贈</string>
+    <string name="select_qr_code">從相簿中選擇QR Code</string>
 
     <!-- version -->
     <string name="licensed">已授權</string>
