@@ -1,6 +1,5 @@
 package me.piebridge.prevent.ui;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -30,13 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Locale;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import me.piebridge.billing.DonateActivity;
 import me.piebridge.forcestopgb.BuildConfig;
@@ -47,6 +40,7 @@ import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.QQUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
+import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
@@ -418,39 +412,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     }
 
     private void reportBug() {
-        try {
-            File path = new File(getExternalFilesDir(null), "logs.zip");
-            final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
-
-            for (File file : getExternalCacheDir().listFiles()) {
-                zos.putNextEntry(new ZipEntry(file.getName()));
-                copyInputStream(zos, file);
-            }
-
-            @SuppressLint("SdCardPath")
-            File xposedLog = new File("/data/data/de.robv.android.xposed.installer/log/error.log");
-            if (xposedLog.isFile() && xposedLog.canRead()) {
-                zos.putNextEntry(new ZipEntry("xposed.log"));
-                copyInputStream(zos, xposedLog);
-            }
-
-            zos.close();
-            Runtime.getRuntime().exec("/system/bin/sync");
-            EmailUtils.sendZip(this, path, getVersionInfo(true));
-        } catch (IOException e) {
-            UILog.d("cannot report bug", e);
-        }
-    }
-
-    private void copyInputStream(ZipOutputStream zos, File file) throws IOException {
-        byte[] buffer = new byte[0x1000];
-        InputStream is = new FileInputStream(file);
-        int length;
-        while ((length = is.read(buffer)) > 0) {
-            zos.write(buffer, 0, length);
-        }
-        zos.flush();
-        is.close();
+        ReportUtils.reportBug(this, getVersionInfo(true));
     }
 
 }

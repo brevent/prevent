@@ -44,9 +44,11 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
+import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 import me.piebridge.prevent.xposed.XposedUtils;
 
@@ -431,7 +433,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 finish();
             }
         });
-        builder.setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Intent intent = new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
@@ -446,7 +448,17 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 }
             }
         });
+        builder.setNeutralButton(R.string.report_bug, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                reportBug();
+            }
+        });
         builder.create().show();
+    }
+
+    private void reportBug() {
+        ReportUtils.reportBug(this, null);
     }
 
     private void showTestDialog() {
