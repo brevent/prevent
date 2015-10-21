@@ -63,13 +63,13 @@
     <string name="force_stop_1hour">1小时</string>
 
     <!-- request license -->
-    <string name="no_license">请累计打赏10元或以上，然后联系作者获取许可。</string>
+    <string name="no_license">请累计捐赠10元或以上，然后联系作者获取许可。</string>
     <string name="no_valid_license">您没有权限使用颁发给“%1$s”的许可，请重新获取。</string>
     <string name="email_request">邮件获取</string>
     <string name="copy_request">复制请求</string>
 
     <!-- user guide menu -->
-    <string name="donate">打赏</string>
+    <string name="donate">捐赠</string>
     <string name="version">版本</string>
     <string name="feedback">反馈</string>
     <string name="report_bug">报告问题</string>
@@ -77,7 +77,7 @@
     <string name="advanced_settings">强迫症设置</string>
 
     <!-- donation -->
-    <string name="donation">如果喜欢，请随意打赏</string>
+    <string name="donation">如果喜欢，请随(duo)意(duo)捐赠</string>
 
     <!-- version -->
     <string name="licensed">授权给尊贵的SVIP用户使用</string>
