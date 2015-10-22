@@ -416,7 +416,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     private String getVersionInfo(boolean showAppVersion) {
         StringBuilder sb = new StringBuilder();
         String licenseName;
-        if (BuildConfig.DONATE) {
+        if (!BuildConfig.DONATE) {
             licenseName = null;
         } else if (showAppVersion) {
             licenseName = LicenseUtils.getLicense(this);
