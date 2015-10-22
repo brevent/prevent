@@ -98,6 +98,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         if (BuildConfig.DONATE) {
             checkLicense();
             hideDonateDialog();
+            deleteQrCodeIfNeeded();
         }
     }
 
@@ -153,25 +154,40 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
     }
 
-    private boolean donateViaWeChat() {
+    private File getQrCode() {
         File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         if (dir == null) {
-            return false;
+            return null;
         }
-        File screenshots = new File(dir, "Screenshots");
-        if (!screenshots.exists()) {
-            screenshots.mkdirs();
+        if (!dir.exists()) {
+            dir.mkdirs();
         }
-        File wechat = new File(screenshots, "pr_donate_wechat.png");
+        return new File(dir, "pr_donate.png");
+    }
+
+    private void refreshQrCode(File qrCode) {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        mediaScanIntent.setData(Uri.fromFile(qrCode));
+        sendBroadcast(mediaScanIntent);
+    }
+
+    private void deleteQrCodeIfNeeded() {
+        File qrCode = getQrCode();
+        if (qrCode != null && qrCode.exists()) {
+            qrCode.delete();
+            refreshQrCode(qrCode);
+        }
+    }
+
+    private boolean donateViaWeChat() {
+        File qrCode = getQrCode();
         try {
-            FileUtils.dumpFile(getAssets().open("wechat.png"), wechat);
+            FileUtils.dumpFile(getAssets().open("wechat.png"), qrCode);
         } catch (IOException e) {
             UILog.d("cannot dump wechat", e);
             return false;
         }
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        mediaScanIntent.setData(Uri.fromFile(wechat));
-        sendBroadcast(mediaScanIntent);
+        refreshQrCode(qrCode);
         showDonateDialog();
         Intent intent = new Intent();
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
