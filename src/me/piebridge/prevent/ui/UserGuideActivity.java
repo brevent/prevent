@@ -98,8 +98,13 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         if (BuildConfig.DONATE) {
             checkLicense();
             hideDonateDialog();
-            deleteQrCodeIfNeeded();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        deleteQrCodeIfNeeded();
+        super.onDestroy();
     }
 
     private int getPixel(int dp) {
@@ -159,10 +164,11 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         if (dir == null) {
             return null;
         }
-        if (!dir.exists()) {
-            dir.mkdirs();
+        File screenshots = new File(dir, "Screenshots");
+        if (!screenshots.exists()) {
+            screenshots.mkdirs();
         }
-        return new File(dir, "pr_donate.png");
+        return new File(screenshots, "pr_donate.png");
     }
 
     private void refreshQrCode(File qrCode) {
