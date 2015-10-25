@@ -23,7 +23,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebView;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -69,6 +68,9 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.about);
         ThemeUtils.fixSmartBar(this);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+            getActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         WebView webView = (WebView) findViewById(R.id.webview);
         webView.setVerticalScrollBarEnabled(false);
@@ -121,7 +123,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     }
 
     private boolean setView(int id, String packageName) {
-        View donate = findViewById(id);
+        TextView donate = (TextView) findViewById(id);
         PackageManager pm = getPackageManager();
         try {
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
@@ -141,13 +143,9 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
                 label = pm.getApplicationLabel(info);
             }
 
-            ImageView image = (ImageView) donate.findViewWithTag("image");
-            image.setContentDescription(label);
-            image.setImageDrawable(cropDrawable(pm.getApplicationIcon(info)));
-
-            TextView text = (TextView) donate.findViewWithTag("text");
-            text.setText(label);
-
+            donate.setContentDescription(label);
+            donate.setCompoundDrawablesWithIntrinsicBounds(null, cropDrawable(pm.getApplicationIcon(info)), null, null);
+            donate.setText(label);
             donate.setClickable(true);
             donate.setOnClickListener(this);
             donate.setVisibility(View.VISIBLE);
@@ -195,9 +193,10 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
         refreshQrCode(qrCode);
         showDonateDialog();
-        Intent intent = new Intent();
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.setData(Uri.parse("weixin://dl/scan"));
+        Intent intent = new Intent("com.tencent.mm.action.BIZSHORTCUT");
+        intent.setPackage("com.tencent.mm");
+        intent.putExtra("LauncherUI.From.Scaner.Shortcut", true);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         try {
             startActivity(intent);
             for (int i = 0; i < 0x3; ++i) {
@@ -261,15 +260,15 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.string.donate) {
+        if (id == android.R.id.home) {
+            finish();
+        } else if (id == R.string.donate) {
             clickedDonate = true;
             donateView.setVisibility(View.VISIBLE);
         } else if (id == R.string.feedback) {
-            if (!Locale.CHINA.equals(Locale.getDefault()) || !QQUtils.joinQQ(this)) {
-                EmailUtils.sendEmail(this, getString(R.string.feedback));
-            }
+            feedback();
         } else if (id == R.string.report_bug) {
-            return requestLog();
+            requestLog();
         } else if (id == R.string.version) {
             showVersionInfo();
         } else if (id == R.string.advanced_settings) {
@@ -278,6 +277,12 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             requestLicense();
         }
         return true;
+    }
+
+    private void feedback() {
+        if (!Locale.CHINA.equals(Locale.getDefault()) || !QQUtils.joinQQ(this)) {
+            EmailUtils.sendEmail(this, getString(R.string.feedback));
+        }
     }
 
     private boolean checkLicense() {
@@ -338,7 +343,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
     }
 
-    private boolean requestLog() {
+    private void requestLog() {
         File dir = getExternalCacheDir();
         if (dir != null) {
             for (File file : dir.listFiles()) {
@@ -358,7 +363,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             }
             sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, null, 0, null, null);
         }
-        return false;
     }
 
     @Override

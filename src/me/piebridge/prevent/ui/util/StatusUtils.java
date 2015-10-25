@@ -4,11 +4,10 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.os.SystemClock;
 import android.text.format.DateUtils;
+import android.util.SparseIntArray;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -19,7 +18,7 @@ import me.piebridge.forcestopgb.R;
  */
 public class StatusUtils {
 
-    private static Map<Integer, Integer> statusMap = new HashMap<Integer, Integer>();
+    private static SparseIntArray statusMap = new SparseIntArray();
 
     static {
         statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND, R.string.importance_background);
@@ -52,8 +51,8 @@ public class StatusUtils {
     private static CharSequence doFormatRunning(Context context, Set<Long> running) {
         Set<String> sets = new LinkedHashSet<String>();
         for (Long i : running) {
-            Integer v = statusMap.get(i.intValue());
-            if (v == null) {
+            int v = statusMap.get(i.intValue());
+            if (v == 0) {
                 long elapsed = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime()) - Math.abs(i);
                 sets.add(DateUtils.formatElapsedTime(elapsed));
             } else {
@@ -80,8 +79,8 @@ public class StatusUtils {
 
     private static boolean isPriority(Set<Long> running) {
         for (Long i : running) {
-            Integer v = statusMap.get(i.intValue());
-            if (v == null) {
+            int v = statusMap.get(i.intValue());
+            if (v == 0) {
                 return i < 0;
             }
         }

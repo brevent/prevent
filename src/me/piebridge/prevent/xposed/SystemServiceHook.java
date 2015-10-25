@@ -534,7 +534,8 @@ public class SystemServiceHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
             Boolean result = (Boolean) param.getResult();
-            if (result != null && result && IntentFilterHook.isPrevent((Intent) param.thisObject)) {
+            String action = ((Intent) param.thisObject).getAction();
+            if (result != null && result && SafeActionUtils.isSafeAction(action)) {
                 param.setResult(false);
             }
         }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
     android:id="@+id/donate"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
@@ -14,7 +15,7 @@
         android:layout_gravity="center"
         android:gravity="center_horizontal"
         android:text="@string/donation"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+        android:textAppearance="?android:attr/textAppearanceSmall"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,86 +24,39 @@
         android:gravity="center_horizontal"
         android:orientation="horizontal">
 
-        <LinearLayout
+        <TextView
             android:id="@+id/alipay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:visibility="visible">
+            android:drawableTop="@drawable/ic_launcher"
+            android:gravity="center"
+            android:text="@android:string/unknownName"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="center"
-                android:layout_margin="2dp"
-                android:contentDescription="@android:string/unknownName"
-                android:src="@drawable/ic_launcher"
-                android:tag="image" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:tag="text"
-                android:text="@android:string/unknownName"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
-        </LinearLayout>
-
-        <LinearLayout
+        <TextView
             android:id="@+id/wechat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:visibility="visible">
+            android:drawableTop="@drawable/ic_launcher"
+            android:gravity="center"
+            android:text="@android:string/unknownName"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="center"
-                android:layout_margin="2dp"
-                android:contentDescription="@android:string/unknownName"
-                android:src="@drawable/ic_launcher"
-                android:tag="image" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:tag="text"
-                android:text="@android:string/unknownName"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
-        </LinearLayout>
-
-        <LinearLayout
+        <TextView
             android:id="@+id/play"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:visibility="visible">
-
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="center"
-                android:layout_margin="2dp"
-                android:contentDescription="@android:string/unknownName"
-                android:src="@drawable/ic_launcher"
-                android:tag="image" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:tag="text"
-                android:text="@android:string/unknownName"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
-        </LinearLayout>
+            android:drawableTop="@drawable/ic_launcher"
+            android:gravity="center"
+            android:text="@android:string/unknownName"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
 
     </LinearLayout>
 

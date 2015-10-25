@@ -24,7 +24,7 @@ import me.piebridge.prevent.ui.UILog;
 /**
  * Created by thom on 15/10/11.
  */
-public abstract class DonateActivity extends Activity implements DonateListener {
+public abstract class DonateActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -32,7 +32,7 @@ public abstract class DonateActivity extends Activity implements DonateListener 
             String data = intent.getStringExtra("INAPP_PURCHASE_DATA");
             String signature = intent.getStringExtra("INAPP_DATA_SIGNATURE");
             if (DonateUtils.verify(data, signature)) {
-                onDonated(null);
+                onDonatedOnUi();
             } else {
                 Toast.makeText(this, R.string.play_verify_error, Toast.LENGTH_LONG).show();
             }
@@ -94,7 +94,7 @@ public abstract class DonateActivity extends Activity implements DonateListener 
         serviceIntent.setPackage("com.android.vending");
         bindService(serviceIntent, new DonateService(this) {
             @Override
-            protected void onAvailable(IInAppBillingService service) {
+            public void onAvailable(IInAppBillingService service) {
                 boolean donating = false;
                 if (!BuildConfig.DEBUG || checkDonate(service)) {
                     donating = donate(service);
@@ -125,18 +125,17 @@ public abstract class DonateActivity extends Activity implements DonateListener 
         serviceIntent.setPackage("com.android.vending");
         bindService(serviceIntent, new DonateService(this) {
             @Override
-            protected void onAvailable(IInAppBillingService service) {
+            public void onAvailable(IInAppBillingService service) {
                 if (isDonated()) {
-                    onDonated(service);
+                    onDonatedOnUi();
                 } else {
-                    DonateActivity.this.onAvailable(service);
+                    onAvailableOnUi();
                 }
             }
         }, Context.BIND_AUTO_CREATE);
     }
 
-    @Override
-    public void onAvailable(IInAppBillingService service) {
+    void onAvailableOnUi() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -145,8 +144,7 @@ public abstract class DonateActivity extends Activity implements DonateListener 
         });
     }
 
-    @Override
-    public void onUnavailable(IInAppBillingService service) {
+    void onUnavailableOnUi() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -155,8 +153,7 @@ public abstract class DonateActivity extends Activity implements DonateListener 
         });
     }
 
-    @Override
-    public void onDonated(IInAppBillingService service) {
+    private void onDonatedOnUi() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

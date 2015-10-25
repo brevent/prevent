@@ -8,7 +8,5 @@ import com.android.vending.billing.IInAppBillingService;
 public interface DonateListener {
     void onAvailable(IInAppBillingService service);
 
-    void onDonated(IInAppBillingService service);
-
     void onUnavailable(IInAppBillingService service);
 }

@@ -62,10 +62,11 @@ public class PackageUtils {
         if (pm.getLaunchIntentForPackage(appInfo.packageName) != null) {
             return true;
         }
-        if (!isSystemSignaturePackage(pm, BuildConfig.APPLICATION_ID)) {
-            return !isSystemSignaturePackage(pm, appInfo.packageName);
-        } else {
+        if (isSystemSignaturePackage(pm, BuildConfig.APPLICATION_ID)) {
+            // shouldn't happen, but for some abnormal rom
             return GmsUtils.isGapps(pm, appInfo.packageName);
+        } else {
+            return !isSystemSignaturePackage(pm, appInfo.packageName);
         }
     }
 

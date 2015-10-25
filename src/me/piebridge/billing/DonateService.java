@@ -18,7 +18,7 @@ import me.piebridge.prevent.ui.UILog;
 /**
  * Created by thom on 15/10/11.
  */
-public class DonateService implements ServiceConnection {
+public class DonateService implements ServiceConnection, DonateListener {
 
     private IInAppBillingService mService;
 
@@ -42,11 +42,11 @@ public class DonateService implements ServiceConnection {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                if (!isBillingSupported()) {
+                if (isBillingSupported()) {
+                    onAvailable(mService);
+                } else {
                     UILog.e("billing is not supported");
                     onUnavailable(mService);
-                } else {
-                    onAvailable(mService);
                 }
                 unBindService();
             }
@@ -64,17 +64,19 @@ public class DonateService implements ServiceConnection {
         }
     }
 
-    protected void onAvailable(IInAppBillingService service) {
+    @Override
+    public void onAvailable(IInAppBillingService service) {
         DonateActivity donateActivity = wr.get();
         if (donateActivity != null) {
-            donateActivity.onAvailable(service);
+            donateActivity.onAvailableOnUi();
         }
     }
 
-    protected void onUnavailable(IInAppBillingService service) {
+    @Override
+    public void onUnavailable(IInAppBillingService service) {
         DonateActivity donateActivity = wr.get();
         if (donateActivity != null) {
-            donateActivity.onUnavailable(service);
+            donateActivity.onUnavailableOnUi();
         }
     }
 

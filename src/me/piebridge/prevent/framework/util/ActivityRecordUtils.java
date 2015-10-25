@@ -29,7 +29,7 @@ public class ActivityRecordUtils {
     private static Object getField(Object target, String name) {
         Object activityRecord = getActivityRecord(target);
         Field field = fields.get(name);
-        if (field == null) {
+        if (activityRecord != null && field == null) {
             try {
                 field = activityRecord.getClass().getDeclaredField(name);
             } catch (NoSuchFieldException e) {

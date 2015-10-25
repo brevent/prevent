@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -38,6 +39,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     private Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
     private Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
     private Map<String, Long> leavingPackages = new ConcurrentHashMap<String, Long>();
+    private Set<String> checkingNextTime = new TreeSet<String>();
     private ScheduledFuture<?> leavingFuture;
     private ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
 
@@ -229,6 +231,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         PreventLog.d("screen off");
         screen = false;
         cancelCheckingIfNeeded();
+        checkingNextTime.clear();
         checkLeavingPackages();
     }
 
@@ -251,12 +254,12 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             if (!Boolean.FALSE.equals(prevent)) {
                 continue;
             }
-            long elapsed;
+            long elapsed = 0;
             Long lastRunning = leavingPackages.get(packageName);
             if (lastRunning != null) {
                 elapsed = now - lastRunning;
-            } else {
-                elapsed = timeout - countCounter(packageName);
+            } else if (!checkingNextTime.add(packageName)) {
+                elapsed = timeout;
             }
             if (elapsed >= timeout) {
                 PreventLog.i("leaving package " + packageName + " for " + elapsed + " seconds");
@@ -279,6 +282,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || !hasHighPriority(packageName)) {
                 HideApiUtils.forceStopPackage(mContext, packageName);
                 leavingPackages.remove(packageName);
+                checkingNextTime.remove(packageName);
             }
         }
     }

@@ -104,7 +104,7 @@ public class IntentFilterHook {
     }
 
     private static boolean isSafeReceiverAction(boolean isSystem, String action) {
-        return isSystem && !SafeActionUtils.isProtectedBroadcast(action);
+        return isSystem && SafeActionUtils.isSafeAction(action);
     }
 
     public static IntentFilterMatchResult hookActivityIntentInfo(PackageParser.ActivityIntentInfo filter, String sender, String action) {
@@ -138,11 +138,6 @@ public class IntentFilterHook {
         // the default action is block, so change the log level
         LogUtils.logIntentFilter(true, sender, filter, action, packageName);
         return IntentFilterMatchResult.NO_MATCH;
-    }
-
-    public static boolean isPrevent(Intent intent) {
-        String action = intent.getAction();
-        return !SafeActionUtils.isProtectedBroadcast(action) || GmsUtils.isGcmAction(null, true, action);
     }
 
     private static boolean isSafeServiceAction(String action) {

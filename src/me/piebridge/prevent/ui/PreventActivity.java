@@ -44,7 +44,6 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
-import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
@@ -577,11 +576,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (!refresh(true)) {
+                        if (refresh(true)) {
+                            dialog.dismiss();
+                        } else {
                             showViewPager();
                             retrieveRunning();
-                        } else {
-                            dialog.dismiss();
                         }
                     }
                 });

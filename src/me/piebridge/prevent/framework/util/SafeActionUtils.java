@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.PreventLog;
 
@@ -32,6 +33,7 @@ public class SafeActionUtils {
 
     static {
         SAFE_PACKAGE_ACTIONS.put("com.eg.android.AlipayGphone", Collections.singletonList("com.eg.android.AlipayGphone.IAlixPay"));
+        SAFE_PACKAGE_ACTIONS.put("com.android.vending", Collections.singletonList("com.android.vending.billing.InAppBillingService.BIND"));
     }
 
     private SafeActionUtils() {
@@ -106,11 +108,18 @@ public class SafeActionUtils {
         return components != null && components.contains(cn);
     }
 
-    public static boolean isProtectedBroadcast(String action) {
-        if (action == null || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || PreventIntent.ACTION_REGISTERED.equals(action)) {
+    public static boolean isSafeAction(String action) {
+        if (action == null) {
             return false;
         }
-        return action.startsWith("android.intent.action") || AppGlobals.getPackageManager().isProtectedBroadcast(action);
+        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || PreventIntent.ACTION_REGISTERED.equals(action)) {
+            // should be white list
+            return true;
+        }
+        if (GmsUtils.isGcmAction(null, false, action)) {
+            return true;
+        }
+        return !action.startsWith("android.intent.action") && !AppGlobals.getPackageManager().isProtectedBroadcast(action);
     }
 
     public static void updateWidget(ComponentName component, boolean added) {

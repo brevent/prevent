@@ -290,13 +290,13 @@ public final class SystemHook {
                 checkingWhiteList.remove(packageName);
             }
         }
-        if (!GmsUtils.canStopGms()) {
-            return GmsUtils.getGmsPackages();
-        } else {
+        if (GmsUtils.canStopGms()) {
             if (forcestop) {
                 HideApiUtils.forceStopPackage(mContext, packageName);
             }
             return Collections.emptyList();
+        } else {
+            return GmsUtils.getGmsPackages();
         }
     }
 
@@ -522,8 +522,8 @@ public final class SystemHook {
         }
     }
 
-    public static boolean isActivated() {
-        return activated;
+    public static boolean isNotActivated() {
+        return !activated;
     }
 
     public static void setDestroyProcesses(boolean destroyProcesses) {
@@ -556,6 +556,9 @@ public final class SystemHook {
 
         private void loadPrevent(Map<String, Boolean> preventPackages) {
             Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
+            if (cursor == null) {
+                return;
+            }
             int index = cursor.getColumnIndex(PreventProvider.COLUMN_PACKAGE);
             while (cursor.moveToNext()) {
                 String name = cursor.getString(index);

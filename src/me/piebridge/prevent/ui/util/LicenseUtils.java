@@ -244,8 +244,8 @@ public class LicenseUtils {
         inAppLicensed = true;
     }
 
-    public static boolean isInAppLicensed() {
-        return inAppLicensed;
+    public static boolean isNotInAppLicensed() {
+        return !inAppLicensed;
     }
 
 }

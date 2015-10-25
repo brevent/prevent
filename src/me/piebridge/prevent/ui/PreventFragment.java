@@ -462,9 +462,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     }
 
     private class Adapter extends ArrayAdapter<AppInfo> {
-        private PackageManager pm;
-        private LayoutInflater inflater;
-        private PreventActivity mActivity;
+        private final PackageManager pm;
+        private final LayoutInflater inflater;
+        private final PreventActivity mActivity;
         private final CompoundButton.OnCheckedChangeListener mListener;
 
         private List<AppInfo> mAppInfos = new ArrayList<AppInfo>();
@@ -505,7 +505,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         public View getView(int position, View convertView, ViewGroup parent) {
             View view = convertView;
             if (view == null) {
-                view = inflater.inflate(R.layout.item, null, true);
+                view = inflater.inflate(R.layout.item, parent, false);
                 ViewHolder viewHolder = new ViewHolder();
                 viewHolder.checkView = (CheckBox) view.findViewById(R.id.check);
                 viewHolder.iconView = (ImageView) view.findViewById(R.id.icon);

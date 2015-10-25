@@ -5,10 +5,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import java.util.Collection;
@@ -43,6 +45,9 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         DeprecatedUtils.addPreferencesFromResource(this, R.xml.settings);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+            getActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         Preference forceStopTimeout = DeprecatedUtils.findPreference(this, PreventIntent.KEY_FORCE_STOP_TIMEOUT);
         forceStopTimeout.setOnPreferenceChangeListener(this);
@@ -55,6 +60,15 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         if (BuildConfig.DONATE) {
             checkAccounts();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            finish();
+        }
+        return true;
     }
 
     private void checkAccounts() {
@@ -97,7 +111,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
-        if (BuildConfig.DONATE && !LicenseUtils.isInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
+        if (BuildConfig.DONATE && LicenseUtils.isNotInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
             LicenseUtils.requestLicense(this, license, accounts);
             return false;
         }
@@ -120,7 +134,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
-        if (BuildConfig.DONATE && !LicenseUtils.isInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
+        if (BuildConfig.DONATE && LicenseUtils.isNotInAppLicensed() && !TextUtils.isEmpty(accounts) && KEYS_NEED_LICENSE.contains(key)) {
             LicenseUtils.requestLicense(this, license, accounts);
             return true;
         } else {
