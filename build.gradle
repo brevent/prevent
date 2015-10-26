@@ -15,8 +15,6 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        versionCode Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())
-        versionName 'git describe --tags'.execute().text.trim().substring(1)
         buildConfigField "boolean", "RELEASE", "false"
         buildConfigField "boolean", "DONATE", "false"
         buildConfigField "String", "DONATE_ALIPAY", "null"
@@ -66,6 +64,11 @@ android {
                 signingConfig signingConfigs.release
             }
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_6
+        targetCompatibility JavaVersion.VERSION_1_6
     }
 }
 
