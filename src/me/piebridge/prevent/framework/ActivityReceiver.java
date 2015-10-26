@@ -39,7 +39,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     private Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
     private Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
     private Map<String, Long> leavingPackages = new ConcurrentHashMap<String, Long>();
-    private Set<String> checkingNextTime = new TreeSet<String>();
+    private Set<String> checkLeavingNext = new TreeSet<String>();
     private ScheduledFuture<?> leavingFuture;
     private ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
 
@@ -231,8 +231,31 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         PreventLog.d("screen off");
         screen = false;
         cancelCheckingIfNeeded();
-        checkingNextTime.clear();
+        checkLeavingNext.clear();
         checkLeavingPackages();
+    }
+
+    public void cancelCheckLeaving(String packageName) {
+        checkLeavingNext.remove(packageName);
+    }
+
+    private long getElapsed(long now, String packageName) {
+        long elapsed = 0;
+        Long lastRunning = leavingPackages.get(packageName);
+        if (lastRunning != null) {
+            elapsed = now - lastRunning;
+        } else {
+            int count = countCounter(packageName);
+            if (count > 0) {
+                elapsed = 0;
+            } else if (checkLeavingNext.contains(packageName)) {
+                elapsed = timeout;
+            } else {
+                checkLeavingNext.add(packageName);
+                elapsed = timeout - SystemHook.TIME_CHECK_USER_LEAVING;
+            }
+        }
+        return elapsed;
     }
 
     private void checkLeavingPackages() {
@@ -254,13 +277,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             if (!Boolean.FALSE.equals(prevent)) {
                 continue;
             }
-            long elapsed = 0;
-            Long lastRunning = leavingPackages.get(packageName);
-            if (lastRunning != null) {
-                elapsed = now - lastRunning;
-            } else if (!checkingNextTime.add(packageName)) {
-                elapsed = timeout;
-            }
+            long elapsed = getElapsed(now, packageName);
             if (elapsed >= timeout) {
                 PreventLog.i("leaving package " + packageName + " for " + elapsed + " seconds");
                 stopPackages.add(packageName);
@@ -282,7 +299,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || !hasHighPriority(packageName)) {
                 HideApiUtils.forceStopPackage(mContext, packageName);
                 leavingPackages.remove(packageName);
-                checkingNextTime.remove(packageName);
+                checkLeavingNext.remove(packageName);
             }
         }
     }

@@ -610,6 +610,7 @@ public final class SystemHook {
     }
 
     public static void restoreLater(final String packageName) {
+        systemReceiver.cancelCheckLeaving(packageName);
         synchronized (RESTORE_LOCK) {
             ScheduledFuture<?> restoreFuture = restoreFutures.get(packageName);
             if (restoreFuture != null && restoreFuture.getDelay(TimeUnit.SECONDS) > 0) {
