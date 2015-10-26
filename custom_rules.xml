@@ -36,7 +36,6 @@ public static final String APPLICATION_ID = "${project.app.package}";
 public static final String VERSION_NAME = "${project.app.versionName}";
 public static final boolean DONATE = false;
 public static final String DONATE_ALIPAY = null;
-public static final String DONATE_WECHAT = null;
 public static final String EMAIL = null;
 public static final String QUN = null;
 

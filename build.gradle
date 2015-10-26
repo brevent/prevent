@@ -18,7 +18,6 @@ android {
         buildConfigField "boolean", "RELEASE", "false"
         buildConfigField "boolean", "DONATE", "false"
         buildConfigField "String", "DONATE_ALIPAY", "null"
-        buildConfigField "String", "DONATE_WECHAT", "null"
         buildConfigField "String", "EMAIL", "null"
         buildConfigField "String", "QUN", "null"
     }
