@@ -28,9 +28,7 @@ public class AlarmManagerServiceUtils {
         context.sendBroadcast(intent);
     }
 
-    public static boolean canHook(Object[] args) {
-        @SuppressWarnings("unchecked")
-        Set<String> categories = (Set<String>) args[0x4];
+    public static boolean canHook(Set<String> categories) {
         return categories != null && categories.contains(PreventIntent.CATEGORY_ALARM);
     }
 

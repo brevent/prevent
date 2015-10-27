@@ -1,7 +1,5 @@
 package me.piebridge.prevent.framework;
 
-import android.app.ActivityThread;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -18,7 +16,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -102,61 +99,6 @@ public final class SystemHook {
         return mClassLoader;
     }
 
-    private static Context getContext(Object activityManagerService) {
-        Field field = null;
-        Class<?> clazz = activityManagerService.getClass();
-        while (clazz != null && field == null) {
-            try {
-                field = clazz.getDeclaredField("mContext");
-            } catch (NoSuchFieldException e) { // NOSONAR
-                PreventLog.d("cannot find mContext in " + clazz.getName());
-                clazz = clazz.getSuperclass();
-            }
-        }
-
-        if (field != null) {
-            field.setAccessible(true);
-            try {
-                return (Context) field.get(activityManagerService);
-            } catch (IllegalAccessException e) {
-                PreventLog.d("cannot visit mContext in " + activityManagerService.getClass().getName(), e);
-            }
-        }
-        return null;
-    }
-
-    public static Context getRegisterContext(Object activityManagerService) {
-        Context context = ActivityThread.currentApplication();
-        if (context != null && checkRegisterContext(context)) {
-            return context;
-        }
-        context = getContext(activityManagerService);
-        if (context != null && checkRegisterContext(context)) {
-            return context;
-        }
-        return null;
-    }
-
-    private static boolean checkRegisterContext(Context context) {
-        BroadcastReceiver receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                // do nothing
-            }
-        };
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(PreventIntent.ACTION_GET_PACKAGES);
-        filter.addDataScheme(PreventIntent.SCHEME);
-        try {
-            context.registerReceiver(receiver, filter);
-            context.unregisterReceiver(receiver);
-            return true;
-        } catch (SecurityException e) { // NOSONAR
-            PreventLog.d("cannot register: " + e.getMessage());
-            return false;
-        }
-    }
-
     public static boolean registerReceiver() {
         HandlerThread thread = new HandlerThread("PreventService");
         thread.start();
@@ -192,12 +134,15 @@ public final class SystemHook {
         return true;
     }
 
-    public static boolean retrievePreventsIfNeeded(final Object activityManagerService) {
+    public static boolean retrievePreventsIfNeeded(final Context context) {
         if (mPreventPackages != null) {
             return true;
         }
-        if (mContext == null && (mContext = getRegisterContext(activityManagerService)) == null) {
-            return false;
+        if (mContext == null) {
+            mContext = context;
+            if (mContext == null) {
+                return false;
+            }
         }
         PreventLog.d("context: " + mContext.getClass().getName());
         if (retrievingTask == null) {
@@ -437,10 +382,10 @@ public final class SystemHook {
         }
     }
 
-    public static void onStartActivity(Object activityRecord) {
+    public static void onLaunchActivity(Object activityRecord) {
         currentPackageName = ActivityRecordUtils.getPackageName(activityRecord);
         if (systemReceiver != null) {
-            systemReceiver.onStartActivity(activityRecord);
+            systemReceiver.onLaunchActivity(activityRecord);
         }
     }
 

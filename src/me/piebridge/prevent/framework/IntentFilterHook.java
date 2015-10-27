@@ -11,6 +11,7 @@ import android.os.Binder;
 import android.os.Process;
 
 import java.util.Map;
+import java.util.Set;
 
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
@@ -37,14 +38,13 @@ public class IntentFilterHook {
     }
 
     public static boolean canHook(int result) {
-        return result > 0 && SystemHook.isSystemHook() && mContext != null;
+        return result >= 0 && SystemHook.isSystemHook() && mContext != null;
     }
 
-    public static IntentFilterMatchResult hookBroadcastFilter(Object filter, Object[] args) {
-        String action = (String) args[0];
+    public static IntentFilterMatchResult hookBroadcastFilter(Object filter, String action, Uri data, Set<String> categories) {
         if (NotificationManagerServiceUtils.canHook(filter, action)) {
-            return NotificationManagerServiceUtils.hook((Uri) args[0x3], mPreventPackages);
-        } else if (AlarmManagerServiceUtils.canHook(args)) {
+            return NotificationManagerServiceUtils.hook(data, mPreventPackages);
+        } else if (AlarmManagerServiceUtils.canHook(categories)) {
             return AlarmManagerServiceUtils.hook(filter);
         } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
             return hookCloseSystemDialogs(filter, action);

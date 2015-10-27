@@ -1,0 +1,441 @@
+diff --git a/services/core/java/com/android/server/IntentResolver.java b/services/core/java/com/android/server/IntentResolver.java
+index 3359060..31c4499 100644
+--- a/services/core/java/com/android/server/IntentResolver.java
++++ b/services/core/java/com/android/server/IntentResolver.java
+@@ -39,6 +39,7 @@ import android.util.Printer;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+ import com.android.internal.util.FastPrintWriter;
++import com.android.server.am.ActivityManagerService;
+ 
+ /**
+  * {@hide}
+@@ -692,7 +693,10 @@ public abstract class IntentResolver<F extends IntentFilter, R extends Object> {
+         final Uri data = intent.getData();
+         final String packageName = intent.getPackage();
+ 
+-        final boolean excludingStopped = intent.isExcludingStopped();
++        boolean excludingStopped = intent.isExcludingStopped();
++        if (excludingStopped) {
++            excludingStopped = ActivityManagerService.getPreventRunning().isExcludingStopped(action);
++        }
+ 
+         final Printer logPrinter;
+         final PrintWriter logPrintWriter;
+@@ -747,6 +751,7 @@ public abstract class IntentResolver<F extends IntentFilter, R extends Object> {
+             }
+ 
+             match = filter.match(action, resolvedType, scheme, data, categories, TAG);
++            match = ActivityManagerService.getPreventRunning().match(match, filter, action, resolvedType, scheme, data, categories);
+             if (match >= 0) {
+                 if (debug) Slog.v(TAG, "  Filter matched!  match=0x" +
+                         Integer.toHexString(match) + " hasDefault="
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 58f7f10..3032482 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -231,6 +231,8 @@ import android.view.WindowManager;
+ 
+ import dalvik.system.VMRuntime;
+ 
++import me.piebridge.PreventRunning;
++
+ import java.io.BufferedInputStream;
+ import java.io.BufferedOutputStream;
+ import java.io.DataInputStream;
+@@ -425,6 +427,8 @@ public final class ActivityManagerService extends ActivityManagerNative
+     // so that dispatch of foreground broadcasts gets precedence.
+     final BroadcastQueue[] mBroadcastQueues = new BroadcastQueue[2];
+ 
++    public static PreventRunning mPreventRunning;
++
+     BroadcastQueue broadcastQueueForIntent(Intent intent) {
+         final boolean isFg = (intent.getFlags() & Intent.FLAG_RECEIVER_FOREGROUND) != 0;
+         if (DEBUG_BROADCAST_BACKGROUND) Slog.i(TAG_BROADCAST,
+@@ -2287,6 +2291,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+     // Note: This method is invoked on the main thread but may need to attach various
+     // handlers to other threads.  So take care to be explicit about the looper.
+     public ActivityManagerService(Context systemContext) {
++        mPreventRunning = new PreventRunning();
+         mContext = systemContext;
+         mFactoryTest = FactoryTest.getMode();
+         mSystemThread = ActivityThread.currentActivityThread();
+@@ -2382,6 +2387,10 @@ public final class ActivityManagerService extends ActivityManagerNative
+         Watchdog.getInstance().addThread(mHandler);
+     }
+ 
++    public static PreventRunning getPreventRunning() {
++        return mPreventRunning;
++    }
++
+     public void setSystemServiceManager(SystemServiceManager mgr) {
+         mSystemServiceManager = mgr;
+     }
+@@ -3077,6 +3086,9 @@ public final class ActivityManagerService extends ActivityManagerNative
+             boolean knownToBeDead, int intentFlags, String hostingType, ComponentName hostingName,
+             boolean allowWhileBooting, boolean isolated, int isolatedUid, boolean keepIfLarge,
+             String abiOverride, String entryPoint, String[] entryPointArgs, Runnable crashHandler) {
++        if (!mPreventRunning.hookStartProcessLocked(mContext, info, hostingType, hostingName)) {
++            return null;
++        }
+         long startTime = SystemClock.elapsedRealtime();
+         ProcessRecord app;
+         if (!isolated) {
+@@ -3799,9 +3811,16 @@ public final class ActivityManagerService extends ActivityManagerNative
+     public final int startActivity(IApplicationThread caller, String callingPackage,
+             Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+             int startFlags, ProfilerInfo profilerInfo, Bundle options) {
+-        return startActivityAsUser(caller, callingPackage, intent, resolvedType, resultTo,
++        int res = startActivityAsUser(caller, callingPackage, intent, resolvedType, resultTo,
+             resultWho, requestCode, startFlags, profilerInfo, options,
+             UserHandle.getCallingUserId());
++        if (res >= 0 && intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
++            ProcessRecord app = getRecordForAppLocked(caller);
++            if (app != null && app.info != null) {
++                mPreventRunning.onStartHomeActivity(app.info.packageName);
++            }
++        }
++        return res;
+     }
+ 
+     @Override
+@@ -4668,6 +4687,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+                 Slog.i(TAG, "Process " + app.processName + " (pid " + pid
+                         + ") has died");
+                 mAllowLowerMemLevel = true;
++                mPreventRunning.onAppDied(app);
+             } else {
+                 // Note that we always want to do oom adj to update our state with the
+                 // new number of procs.
+@@ -5283,6 +5303,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+ 
+     @Override
+     public void addPackageDependency(String packageName) {
++        /*
+         synchronized (this) {
+             int callingPid = Binder.getCallingPid();
+             if (callingPid == Process.myPid()) {
+@@ -5300,6 +5321,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+                 proc.pkgDeps.add(packageName);
+             }
+         }
++        */
+     }
+ 
+     /*
+@@ -8678,6 +8700,8 @@ public final class ActivityManagerService extends ActivityManagerNative
+                 pr.waitingToKill = "remove task";
+             }
+         }
++
++        mPreventRunning.onCleanUpRemovedTask(pkg);
+     }
+ 
+     private void removeTasksByPackageNameLocked(String packageName, int userId) {
+@@ -8811,7 +8835,12 @@ public final class ActivityManagerService extends ActivityManagerNative
+                         mStackSupervisor.showLockTaskToast();
+                         return false;
+                     }
+-                    return ActivityRecord.getStackLocked(token).moveTaskToBackLocked(taskId);
++                    if (ActivityRecord.getStackLocked(token).moveTaskToBackLocked(taskId)) {
++                        mPreventRunning.onMoveActivityTaskToBack(ActivityRecord.forTokenLocked(token).packageName);
++                        return true;
++                    } else {
++                        return false;
++                    }
+                 }
+             } finally {
+                 Binder.restoreCallingIdentity(origId);
+@@ -15677,9 +15706,12 @@ public final class ActivityManagerService extends ActivityManagerNative
+             final int callingPid = Binder.getCallingPid();
+             final int callingUid = Binder.getCallingUid();
+             final long origId = Binder.clearCallingIdentity();
++            final ProcessRecord callerApp = getRecordForAppLocked(caller);
++            mPreventRunning.setSender(callerApp != null ? callerApp.info.packageName : null);
+             ComponentName res = mServices.startServiceLocked(caller, service,
+                     resolvedType, callingPid, callingUid, callingPackage, userId);
+             Binder.restoreCallingIdentity(origId);
++            mPreventRunning.setSender(null);
+             return res;
+         }
+     }
+@@ -15909,8 +15941,12 @@ public final class ActivityManagerService extends ActivityManagerNative
+         }
+ 
+         synchronized(this) {
+-            return mServices.bindServiceLocked(caller, token, service,
++            final ProcessRecord callerApp = getRecordForAppLocked(caller);
++            mPreventRunning.setSender(callerApp != null ? callerApp.info.packageName : null);
++            int res = mServices.bindServiceLocked(caller, token, service,
+                     resolvedType, connection, flags, callingPackage, userId);
++            mPreventRunning.setSender(null);
++            return res;
+         }
+     }
+ 
+@@ -16932,6 +16968,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+             intent = verifyBroadcastLocked(intent);
+ 
+             final ProcessRecord callerApp = getRecordForAppLocked(caller);
++            mPreventRunning.setSender(callerApp != null ? callerApp.info.packageName : null);
+             final int callingPid = Binder.getCallingPid();
+             final int callingUid = Binder.getCallingUid();
+             final long origId = Binder.clearCallingIdentity();
+@@ -16941,6 +16978,10 @@ public final class ActivityManagerService extends ActivityManagerNative
+                     requiredPermissions, appOp, null, serialized, sticky,
+                     callingPid, callingUid, userId);
+             Binder.restoreCallingIdentity(origId);
++            if (res >= 0) {
++                mPreventRunning.onBroadcastIntent(intent);
++            }
++            mPreventRunning.setSender(null);
+             return res;
+         }
+     }
+diff --git a/services/core/java/com/android/server/am/ActivityStack.java b/services/core/java/com/android/server/am/ActivityStack.java
+index 6e34876..c221a03 100644
+--- a/services/core/java/com/android/server/am/ActivityStack.java
++++ b/services/core/java/com/android/server/am/ActivityStack.java
+@@ -864,6 +864,9 @@ final class ActivityStack {
+                         prev.userId, System.identityHashCode(prev),
+                         prev.shortComponentName);
+                 mService.updateUsageStats(prev, false);
++                if (userLeaving) {
++                    mService.getPreventRunning().onUserLeavingActivity(prev);
++                }
+                 prev.app.thread.schedulePauseActivity(prev.appToken, prev.finishing,
+                         userLeaving, prev.configChangeFlags, dontWait);
+             } catch (Exception e) {
+@@ -1941,6 +1944,7 @@ final class ActivityStack {
+                 next.app.pendingUiClean = true;
+                 next.app.forceProcessStateUpTo(mService.mTopProcessState);
+                 next.clearOptionsLocked();
++                mService.getPreventRunning().onResumeActivity(next);
+                 next.app.thread.scheduleResumeActivity(next.appToken, next.app.repProcState,
+                         mService.isNextTransitionForward(), resumeAnimOptions);
+ 
+@@ -3375,6 +3379,7 @@ final class ActivityStack {
+ 
+             try {
+                 if (DEBUG_SWITCH) Slog.i(TAG_SWITCH, "Destroying: " + r);
++                mService.getPreventRunning().onDestroyActivity(r);
+                 r.app.thread.scheduleDestroyActivity(r.appToken, r.finishing,
+                         r.configChangeFlags);
+             } catch (Exception e) {
+diff --git a/services/core/java/com/android/server/am/ActivityStackSupervisor.java b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
+index 6d91309..020738e 100644
+--- a/services/core/java/com/android/server/am/ActivityStackSupervisor.java
++++ b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
+@@ -1281,6 +1281,7 @@ public final class ActivityStackSupervisor implements DisplayListener {
+                 app.pendingUiClean = true;
+             }
+             app.forceProcessStateUpTo(mService.mTopProcessState);
++            mService.getPreventRunning().onLaunchActivity(r);
+             app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken,
+                     System.identityHashCode(r), r.info, new Configuration(mService.mConfiguration),
+                     new Configuration(stack.mOverrideConfig), r.compat, r.launchedFromPackage,
+diff --git a/services/core/java/me/piebridge/PreventRunning.java b/services/core/java/me/piebridge/PreventRunning.java
+new file mode 100644
+index 0000000..b396965
+--- /dev/null
++++ b/services/core/java/me/piebridge/PreventRunning.java
+@@ -0,0 +1,151 @@
++package me.piebridge;
++
++import android.content.ComponentName;
++import android.content.Context;
++import android.content.Intent;
++import android.content.pm.ApplicationInfo;
++import android.net.Uri;
++import android.util.Log;
++
++import java.io.File;
++import java.lang.Throwable;
++import java.util.Set;
++
++import dalvik.system.DexClassLoader;
++
++/**
++ * Created by thom on 15/10/27.
++ */
++public class PreventRunning implements PreventRunningHook {
++
++    private static final String TAG = "Prevent";
++
++    private PreventRunningHook mPreventRunning;
++
++    private static File[] APKS = {
++            new File("/data/app/me.piebridge.forcestopgb-1/base.apk"),
++            new File("/data/app/me.piebridge.forcestopgb-2/base.apk"),
++            new File("/data/app/me.piebridge.forcestopgb-3/base.apk"),
++            new File("/data/app/me.piebridge.forcestopgb-1.apk"),
++            new File("/data/app/me.piebridge.forcestopgb-2.apk"),
++            new File("/data/app/me.piebridge.forcestopgb-3.apk"),
++    };
++
++    public PreventRunning() {
++        for (File apk : APKS) {
++            if (apk.exists() && initPreventRunning(apk)) {
++                break;
++            }
++        }
++    }
++
++    private boolean initPreventRunning(File apk) {
++        try {
++            ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
++            ClassLoader classLoader = new DexClassLoader(apk.getAbsolutePath(), "/cache", null, currentClassLoader);
++            Log.d(TAG, "loading PreventRunning from " + apk);
++            mPreventRunning = (PreventRunningHook) classLoader.loadClass("me.piebridge.prevent.framework.PreventRunning").newInstance();
++            return true;
++        } catch (ClassNotFoundException e) {
++            Log.d(TAG, "cannot find class", e);
++        } catch (InstantiationException e) {
++            Log.d(TAG, "cannot instance class", e);
++        } catch (IllegalAccessException e) {
++            Log.d(TAG, "cannot access class", e);
++        } catch (Throwable t) { // NOSONAR
++            Log.d(TAG, "cannot load PreventRunning from " + apk, t);
++        }
++        return false;
++    }
++
++    @Override
++    public void setSender(String sender) {
++        if (mPreventRunning != null) {
++            mPreventRunning.setSender(sender);
++        }
++    }
++
++    @Override
++    public void onBroadcastIntent(Intent intent) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onBroadcastIntent(intent);
++        }
++    }
++
++    @Override
++    public void onCleanUpRemovedTask(String packageName) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onCleanUpRemovedTask(packageName);
++        }
++    }
++
++    @Override
++    public void onStartHomeActivity(String packageName) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onStartHomeActivity(packageName);
++        }
++    }
++
++    @Override
++    public void onMoveActivityTaskToBack(String packageName) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onMoveActivityTaskToBack(packageName);
++        }
++    }
++
++    @Override
++    public void onAppDied(Object processRecord) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onAppDied(processRecord);
++        }
++    }
++
++    @Override
++    public void onLaunchActivity(Object activityRecord) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onLaunchActivity(activityRecord);
++        }
++    }
++
++    @Override
++    public void onResumeActivity(Object activityRecord) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onResumeActivity(activityRecord);
++        }
++    }
++
++    @Override
++    public void onUserLeavingActivity(Object activityRecord) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onUserLeavingActivity(activityRecord);
++        }
++    }
++
++    @Override
++    public void onDestroyActivity(Object activityRecord) {
++        if (mPreventRunning != null) {
++            mPreventRunning.onDestroyActivity(activityRecord);
++        }
++    }
++
++    @Override
++    public boolean isExcludingStopped(String action) {
++        return mPreventRunning == null || mPreventRunning.isExcludingStopped(action);
++    }
++
++
++    @Override
++    public boolean hookStartProcessLocked(Context context, ApplicationInfo info, String hostingType, ComponentName hostingName) {
++        return mPreventRunning == null || mPreventRunning.hookStartProcessLocked(context, info, hostingType, hostingName);
++    }
++
++    @Override
++    public int match(int match, Object filter, String action, String type, String scheme, Uri data, Set<String> categories) {
++        if (mPreventRunning != null) {
++            return mPreventRunning.match(match, filter, action, type, scheme, data, categories);
++        } else {
++            return match;
++        }
++    }
++
++}
+diff --git a/services/core/java/me/piebridge/PreventRunningHook.java b/services/core/java/me/piebridge/PreventRunningHook.java
+new file mode 100644
+index 0000000..98ea8c0
+--- /dev/null
++++ b/services/core/java/me/piebridge/PreventRunningHook.java
+@@ -0,0 +1,42 @@
++package me.piebridge;
++
++import android.content.ComponentName;
++import android.content.Context;
++import android.content.Intent;
++import android.content.pm.ApplicationInfo;
++import android.net.Uri;
++
++import java.util.Set;
++
++/**
++ * Created by thom on 15/10/27.
++ */
++public interface PreventRunningHook {
++
++    void setSender(String sender);
++
++    void onBroadcastIntent(Intent intent);
++
++    void onCleanUpRemovedTask(String packageName);
++
++    void onStartHomeActivity(String sender);
++
++    void onMoveActivityTaskToBack(String packageName);
++
++    void onAppDied(Object processRecord);
++
++    void onLaunchActivity(Object activityRecord);
++
++    void onResumeActivity(Object activityRecord);
++
++    void onUserLeavingActivity(Object activityRecord);
++
++    void onDestroyActivity(Object activityRecord);
++
++    boolean isExcludingStopped(String action);
++
++    boolean hookStartProcessLocked(Context context, ApplicationInfo info, String hostingType, ComponentName hostingName);
++
++    int match(int match, Object filter, String action, String type, String scheme, Uri data, Set<String> categories);
++
++}

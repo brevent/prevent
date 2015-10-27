@@ -122,7 +122,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         }
     }
 
-    public void onStartActivity(Object activityRecord) {
+    public void onLaunchActivity(Object activityRecord) {
         String packageName = ActivityRecordUtils.getPackageName(activityRecord);
         SystemHook.cancelCheck(packageName);
         SystemHook.updateRunningGapps(packageName, true);
@@ -240,7 +240,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     }
 
     private long getElapsed(long now, String packageName) {
-        long elapsed = 0;
+        long elapsed;
         Long lastRunning = leavingPackages.get(packageName);
         if (lastRunning != null) {
             elapsed = now - lastRunning;

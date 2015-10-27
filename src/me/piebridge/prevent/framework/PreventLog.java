@@ -2,7 +2,8 @@ package me.piebridge.prevent.framework;
 
 import android.util.Log;
 
-import de.robv.android.xposed.XposedBridge;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Created by thom on 15/7/25.
@@ -11,9 +12,17 @@ public class PreventLog {
 
     public static final String TAG = "Prevent";
 
-    private static boolean hasXposedString = true;
+    private static boolean hasXposedString = false;
 
-    private static boolean hasXposedThrowable = true;
+    private static boolean hasXposedThrowable = false;
+
+    private static Method xposedLogString;
+
+    private static Method xposedLogThrowable;
+
+    static {
+        initXposed();
+    }
 
     private PreventLog() {
 
@@ -75,10 +84,13 @@ public class PreventLog {
             return;
         }
         try {
-            XposedBridge.log(msg);
-        } catch (NoSuchMethodError e) {
+            xposedLogString.invoke(null, msg);
+        } catch (InvocationTargetException e) {
             hasXposedString = false;
-            Log.e(TAG, "no XposedBridge.log(String)", e);
+            Log.e(TAG, "cannot invoke XposedBridge.log(String)", e);
+        } catch (IllegalAccessException e) {
+            hasXposedString = false;
+            Log.e(TAG, "cannot access XposedBridge.log(String)", e);
         }
     }
 
@@ -87,10 +99,27 @@ public class PreventLog {
             return;
         }
         try {
-            XposedBridge.log(t);
-        } catch (NoSuchMethodError e) {
+            xposedLogThrowable.invoke(null, t);
+        } catch (InvocationTargetException e) {
             hasXposedThrowable = false;
-            Log.e(TAG, "no XposedBridge.log(Throwable)", e);
+            Log.e(TAG, "cannot invoke XposedBridge.log(Throwable)", e);
+        } catch (IllegalAccessException e) {
+            hasXposedThrowable = false;
+            Log.e(TAG, "cannot access XposedBridge.log(Throwable)", e);
+        }
+    }
+
+    private static void initXposed() {
+        try {
+            Class<?> clazz = Class.forName("de.robv.android.xposed.XposedBridge", false, ClassLoader.getSystemClassLoader());
+            xposedLogString = clazz.getMethod("log", String.class);
+            hasXposedString = true;
+            xposedLogThrowable = clazz.getMethod("log", Throwable.class);
+            hasXposedThrowable = true;
+        } catch (ClassNotFoundException e) {
+            Log.w(TAG, "cannot find XposedBridge"); // NOSONAR
+        } catch (NoSuchMethodException e) {
+            Log.w(TAG, "cannot find method", e);
         }
     }
 

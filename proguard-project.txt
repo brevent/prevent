@@ -24,3 +24,6 @@
 -keepnames class com.android.vending.billing.** { *; }
 
 -keep class me.piebridge.prevent.xposed.XposedMod { public *; }
+
+-keep class me.piebridge.PreventRunningHook { *; }
+-keep class me.piebridge.prevent.framework.PreventRunning { public *; }

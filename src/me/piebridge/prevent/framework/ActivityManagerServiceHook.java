@@ -18,7 +18,6 @@ import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.AccountWatcher;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
-import me.piebridge.prevent.framework.util.TaskRecordUtils;
 
 /**
  * Created by thom on 15/8/11.
@@ -42,15 +41,12 @@ public class ActivityManagerServiceHook {
         mAccountWatcher = new AccountWatcher(context);
     }
 
-    public static boolean hookBeforeStartProcessLocked(Object thiz, Object[] args, String sender) {
-        ApplicationInfo info = (ApplicationInfo) args[0x1];
-        String hostingType = (String) args[0x4];
-        ComponentName hostingName = (ComponentName) args[0x5];
+    public static boolean hookStartProcessLocked(Context context, ApplicationInfo info, String hostingType, ComponentName hostingName, String sender) {
         String packageName = info.packageName;
 
         PreventLog.v("startProcessLocked, packageName: " + packageName + ", hostingType: " + hostingType);
         if (mPreventPackages == null && ("content provider".equals(hostingType) || "broadcast".equals(hostingType))) {
-            SystemHook.retrievePreventsIfNeeded(thiz);
+            SystemHook.retrievePreventsIfNeeded(context);
         }
 
         if (mContext == null) {
@@ -214,11 +210,7 @@ public class ActivityManagerServiceHook {
         }
     }
 
-    public static boolean hookAfterCleanUpRemovedTaskLocked(Object[] args) {
-        String packageName = TaskRecordUtils.getPackageName(args[0]);
-        if (!shouldKillProcess(args[1])) {
-            return false;
-        }
+    public static boolean onCleanUpRemovedTask(String packageName) {
         SystemHook.updateRunningGapps(packageName, false);
         if (packageName != null && mPreventPackages != null && mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
@@ -226,19 +218,6 @@ public class ActivityManagerServiceHook {
             SystemHook.forceStopPackageForce(packageName, SystemHook.TIME_IMMEDIATE);
         }
         return true;
-    }
-
-    private static boolean shouldKillProcess(Object killProcess) {
-        if (killProcess == null) {
-            return false;
-        }
-        if (killProcess instanceof Boolean) {
-            return (Boolean) killProcess;
-        } else if (killProcess instanceof Integer) {
-            Integer flags = (Integer) killProcess;
-            return (flags & 0x1) != 0;
-        }
-        return false;
     }
 
 }
