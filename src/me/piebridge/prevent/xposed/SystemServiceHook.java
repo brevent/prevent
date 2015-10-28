@@ -425,9 +425,8 @@ public class SystemServiceHook extends XC_MethodHook {
             }
             Object processRecord = getRecordForAppLocked(param.thisObject, param.args[0]);
             ApplicationInfo info = ProcessRecordUtils.getInfo(processRecord);
-            if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) {
-                String packageName = info == null ? "" : info.packageName;
-                preventRunning.onStartHomeActivity(packageName);
+            if (intent != null && intent.hasCategory(Intent.CATEGORY_HOME) && info != null) {
+                preventRunning.onStartHomeActivity(info.packageName);
             }
         }
     }
@@ -546,6 +545,9 @@ public class SystemServiceHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             int result = (Integer) param.getResult();
+            if (result < 0) {
+                return;
+            }
             String action = (String) param.args[0x0];
             String type = (String) param.args[0x1];
             String scheme = (String) param.args[0x2];
