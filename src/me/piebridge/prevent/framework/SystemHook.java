@@ -296,15 +296,6 @@ public final class SystemHook {
         return whiteList;
     }
 
-    static void forceStopPackageForce(final String packageName, int second) {
-        singleExecutor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                forceStopPackage(packageName);
-            }
-        }, second, TimeUnit.SECONDS);
-    }
-
     public static void forceStopPackage(final String packageName) {
         if (!Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             return;

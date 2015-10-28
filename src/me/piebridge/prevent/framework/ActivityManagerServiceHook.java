@@ -16,7 +16,9 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.AccountWatcher;
+import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
+import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
 
 /**
@@ -214,8 +216,9 @@ public class ActivityManagerServiceHook {
         SystemHook.updateRunningGapps(packageName, false);
         if (packageName != null && mPreventPackages != null && mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
-            LogUtils.logForceStop("removeTask", packageName, "force in " + SystemHook.TIME_IMMEDIATE + "s");
-            SystemHook.forceStopPackageForce(packageName, SystemHook.TIME_IMMEDIATE);
+            LogUtils.logForceStop("removeTask", packageName, "");
+            NotificationManagerServiceUtils.onRemoveTask(packageName);
+            HideApiUtils.forceStopPackage(mContext, packageName);
         }
         return true;
     }

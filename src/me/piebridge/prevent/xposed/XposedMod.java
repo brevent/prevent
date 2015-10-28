@@ -4,8 +4,6 @@ import android.app.ActivityThread;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XposedBridge;
-import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.prevent.framework.PreventLog;
 
 public class XposedMod implements IXposedHookZygoteInit {
 

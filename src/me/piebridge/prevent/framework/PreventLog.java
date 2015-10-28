@@ -116,8 +116,8 @@ public class PreventLog {
             hasXposedString = true;
             xposedLogThrowable = clazz.getMethod("log", Throwable.class);
             hasXposedThrowable = true;
-        } catch (ClassNotFoundException e) {
-            Log.w(TAG, "cannot find XposedBridge"); // NOSONAR
+        } catch (ClassNotFoundException e) { // NOSONAR
+            Log.w(TAG, "cannot find XposedBridge");
         } catch (NoSuchMethodException e) {
             Log.w(TAG, "cannot find method", e);
         }

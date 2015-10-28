@@ -10,7 +10,9 @@ import android.os.UserHandle;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
@@ -30,10 +32,12 @@ public class NotificationManagerServiceUtils {
 
     private static final int REASON_PACKAGE_CHANGED = 5;
 
-    private static final int[] REMOVE_FLAGS = new int[]{
+    private static final int[] REMOVE_FLAGS = new int[] {
             Notification.FLAG_FOREGROUND_SERVICE,
             Notification.FLAG_NO_CLEAR,
             Notification.FLAG_ONGOING_EVENT};
+
+    private static Set<String> mPackages = new HashSet<String>();
 
     static {
         initMethod();
@@ -78,7 +82,7 @@ public class NotificationManagerServiceUtils {
         return false;
     }
 
-    public static boolean cancelStickyNotification(String pkgName) {
+    public static boolean cancelStickyNotification(final String pkgName) {
         if (cancelAllNotificationsInt == null) {
             return false;
         }
@@ -124,11 +128,16 @@ public class NotificationManagerServiceUtils {
 
     public static IntentFilterMatchResult hook(Uri data, Map<String, Boolean> preventPackages) {
         String packageName = data.getSchemeSpecificPart();
-        if (packageName != null && preventPackages.containsKey(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
+        if (packageName != null && preventPackages.containsKey(packageName) && !mPackages.contains(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
             return IntentFilterMatchResult.NO_MATCH;
         } else {
+            mPackages.remove(packageName);
             return IntentFilterMatchResult.NONE;
         }
+    }
+
+    public static void onRemoveTask(String packageName) {
+        mPackages.add(packageName);
     }
 
 }
