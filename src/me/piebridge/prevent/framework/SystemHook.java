@@ -414,8 +414,7 @@ public final class SystemHook {
         }
     }
 
-    public static void onMoveActivityToBack(final Object activityRecord) {
-        final String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+    public static void onMoveActivityToBack(final String packageName) {
         systemReceiver.removeLeavingPackage(packageName);
         PreventLog.v("move activity to back, package: " + packageName + ", current: " + currentPackageName);
         moveBackExecutor.schedule(new Runnable() {
