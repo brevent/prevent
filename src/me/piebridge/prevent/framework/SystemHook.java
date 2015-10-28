@@ -189,6 +189,7 @@ public final class SystemHook {
             while ((length = is.read(buffer)) != -1) {
                 os.write(buffer, 0, length);
             }
+            is.close();
             return os.toString().trim();
         } catch (IOException e) {
             PreventLog.e("cannot read file " + file, e);
