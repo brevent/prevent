@@ -203,11 +203,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     public void onUserLeavingActivity(Object activityRecord) {
         String packageName = ActivityRecordUtils.getPackageName(activityRecord);
         int count = countCounter(packageName);
-        if (count > 0) {
-            leavingPackages.put(packageName, TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime()));
-        } else {
-            leavingPackages.remove(packageName);
-        }
+        leavingPackages.put(packageName, TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime()));
         LogUtils.logActivity("user leaving activity", packageName, count);
     }
 
@@ -245,12 +241,13 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         if (lastRunning != null) {
             elapsed = now - lastRunning;
         } else {
-            int count = countCounter(packageName);
-            if (count > 0) {
+            if (packageName.equals(SystemHook.getCurrentPackageName())) {
+                PreventLog.v(packageName + " is running, set elapsed to 0");
                 elapsed = 0;
             } else if (checkLeavingNext.contains(packageName)) {
                 elapsed = timeout;
             } else {
+                PreventLog.v("cannot figure elapsed for " + packageName + ", wait for next checking");
                 checkLeavingNext.add(packageName);
                 elapsed = timeout - SystemHook.TIME_CHECK_USER_LEAVING;
             }

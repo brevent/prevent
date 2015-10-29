@@ -470,6 +470,10 @@ public final class SystemHook {
         return destroyProcesses;
     }
 
+    public static String getCurrentPackageName() {
+        return currentPackageName;
+    }
+
     private static class RetrievingTask implements Runnable {
         @Override
         public void run() {
