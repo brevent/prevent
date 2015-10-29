@@ -528,6 +528,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             holder.nameView.setText(appInfo.name);
             if (!PackageUtils.equals(holder.packageName, appInfo.packageName)) {
                 holder.summaryView.setVisibility(View.GONE);
+                holder.iconView.setVisibility(View.INVISIBLE);
                 holder.loadingView.setVisibility(View.VISIBLE);
             }
             holder.packageName = appInfo.packageName;
@@ -753,6 +754,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         @Override
         protected void onPostExecute(ViewHolder holder) {
             holder.iconView.setImageDrawable(holder.icon);
+            holder.iconView.setVisibility(View.VISIBLE);
             holder.summaryView.setText(StatusUtils.formatRunning(mActivity, holder.running));
             holder.loadingView.setVisibility(View.GONE);
             holder.summaryView.setVisibility(View.VISIBLE);
