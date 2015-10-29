@@ -473,7 +473,6 @@ public class SystemServiceHook extends XC_MethodHook {
             }
         }
 
-
         private Context getRegisterContext(Object activityManagerService) {
             Context context = ActivityThread.currentApplication();
             if (context != null && checkRegisterContext(context)) {

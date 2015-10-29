@@ -11,6 +11,7 @@ import android.net.Uri;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
@@ -32,6 +33,8 @@ public class ActivityManagerServiceHook {
     private static Collection<String> settingsPackages = new HashSet<String>();
     private static Collection<String> importantSystemPackages = new HashSet<String>();
     private static AccountWatcher mAccountWatcher;
+
+    private static ScheduledThreadPoolExecutor cleanUpExecutor = new ScheduledThreadPoolExecutor(0x1);
 
     private ActivityManagerServiceHook() {
 
@@ -212,13 +215,18 @@ public class ActivityManagerServiceHook {
         }
     }
 
-    public static boolean onCleanUpRemovedTask(String packageName) {
+    public static boolean onCleanUpRemovedTask(final String packageName) {
         SystemHook.updateRunningGapps(packageName, false);
         if (packageName != null && mPreventPackages != null && mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
-            LogUtils.logForceStop("removeTask", packageName, "");
-            NotificationManagerServiceUtils.onRemoveTask(packageName);
-            HideApiUtils.forceStopPackage(mContext, packageName);
+            cleanUpExecutor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    LogUtils.logForceStop("removeTask", packageName, "");
+                    NotificationManagerServiceUtils.onRemoveTask(packageName);
+                    HideApiUtils.forceStopPackage(mContext, packageName);
+                }
+            });
         }
         return true;
     }
