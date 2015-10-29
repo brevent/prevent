@@ -467,7 +467,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     }
 
     private class Adapter extends ArrayAdapter<AppInfo> {
-        private final PackageManager pm;
+        private final PackageManager mPm;
         private final LayoutInflater inflater;
         private final PreventActivity mActivity;
         private final CompoundButton.OnCheckedChangeListener mListener;
@@ -482,7 +482,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         public Adapter(PreventActivity activity) {
             super(activity, R.layout.item);
             mActivity = activity;
-            pm = mActivity.getPackageManager();
+            mPm = mActivity.getPackageManager();
             inflater = LayoutInflater.from(activity);
             mListener = new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -528,7 +528,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             holder.nameView.setText(appInfo.name);
             if (!PackageUtils.equals(holder.packageName, appInfo.packageName)) {
                 holder.summaryView.setVisibility(View.GONE);
-                holder.iconView.setVisibility(View.INVISIBLE);
+                holder.iconView.setImageDrawable(mPm.getDefaultActivityIcon());
                 holder.loadingView.setVisibility(View.VISIBLE);
             }
             holder.packageName = appInfo.packageName;
@@ -686,14 +686,14 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                     publishProgress(++i);
                     ApplicationInfo info;
                     try {
-                        info = pm.getApplicationInfo(name, 0);
+                        info = mPm.getApplicationInfo(name, 0);
                     } catch (NameNotFoundException e) { // NOSONAR
                         info = null;
                     }
                     if (info == null || !info.enabled) {
                         continue;
                     }
-                    String label = info.loadLabel(pm).toString();
+                    String label = info.loadLabel(mPm).toString();
                     applications.add(new AppInfo(name, label, running.get(name)).setFlags(info.flags));
                 }
                 return applications;
@@ -754,7 +754,6 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         @Override
         protected void onPostExecute(ViewHolder holder) {
             holder.iconView.setImageDrawable(holder.icon);
-            holder.iconView.setVisibility(View.VISIBLE);
             holder.summaryView.setText(StatusUtils.formatRunning(mActivity, holder.running));
             holder.loadingView.setVisibility(View.GONE);
             holder.summaryView.setVisibility(View.VISIBLE);
