@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.ListFragment;
 import android.text.Editable;
@@ -71,6 +72,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     private static Map<String, Position> positions = new HashMap<String, Position>();
 
     private boolean scrolling;
+    private static boolean appNotification;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -78,6 +80,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         registerForContextMenu(getListView());
         mActivity = (PreventActivity) getActivity();
         if (mActivity != null) {
+            appNotification = PreferenceManager.getDefaultSharedPreferences(mActivity).getBoolean("app_notification", Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP);
             setNewAdapterIfNeeded(mActivity, true);
         }
     }
@@ -193,7 +196,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         if (holder.canUninstall) {
             menu.add(Menu.NONE, R.string.uninstall, Menu.NONE, R.string.uninstall);
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (appNotification) {
             menu.add(Menu.NONE, R.string.app_notifications, Menu.NONE, R.string.app_notifications);
         }
     }
@@ -247,6 +250,8 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             mActivity.startActivity(intent);
             return true;
         } catch (ActivityNotFoundException e) {
+            appNotification = false;
+            PreferenceManager.getDefaultSharedPreferences(mActivity).edit().putBoolean("app_notification", false).apply();
             UILog.d("cannot start notification for " + packageName, e);
             return false;
         }
