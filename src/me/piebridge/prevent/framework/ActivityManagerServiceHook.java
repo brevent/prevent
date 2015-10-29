@@ -219,12 +219,14 @@ public class ActivityManagerServiceHook {
         SystemHook.updateRunningGapps(packageName, false);
         if (packageName != null && mPreventPackages != null && mPreventPackages.containsKey(packageName)) {
             mPreventPackages.put(packageName, true);
-            cleanUpExecutor.submit(new Runnable() {
+            cleanUpExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    LogUtils.logForceStop("removeTask", packageName, "");
-                    NotificationManagerServiceUtils.onRemoveTask(packageName);
-                    HideApiUtils.forceStopPackage(mContext, packageName);
+                    if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+                        LogUtils.logForceStop("removeTask", packageName, "");
+                        NotificationManagerServiceUtils.onRemoveTask(packageName);
+                        HideApiUtils.forceStopPackage(mContext, packageName);
+                    }
                 }
             });
         }

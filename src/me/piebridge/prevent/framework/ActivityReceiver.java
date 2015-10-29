@@ -296,7 +296,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
             if (screen) {
                 break;
             }
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || !hasHighPriority(packageName)) {
+            if (Boolean.TRUE.equals(mPreventPackages.get(packageName)) && (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || !hasHighPriority(packageName))) {
                 HideApiUtils.forceStopPackage(mContext, packageName);
                 leavingPackages.remove(packageName);
                 checkLeavingNext.remove(packageName);

@@ -238,7 +238,7 @@ public final class SystemHook {
         }
         if (GmsUtils.canStopGms()) {
             if (forcestop) {
-                HideApiUtils.forceStopPackage(mContext, packageName);
+                forceStopPackage(packageName);
             }
             return Collections.emptyList();
         } else {
