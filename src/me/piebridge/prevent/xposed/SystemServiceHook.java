@@ -403,7 +403,7 @@ public class SystemServiceHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             Boolean result = (Boolean) param.getResult();
-            if (result) {
+            if (result != null && result) {
                 Object activityRecord = ActivityRecordUtils.getActivityRecord(param.args[0x0]);
                 preventRunning.onMoveActivityTaskToBack(ActivityRecordUtils.getPackageName(activityRecord));
             }
@@ -413,7 +413,8 @@ public class SystemServiceHook extends XC_MethodHook {
     public static class HomeActivityHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            if ((Integer) param.getResult() < 0) {
+            Integer result = (Integer) param.getResult();
+            if (result != null && result < 0) {
                 return;
             }
             Intent intent = null;
@@ -453,7 +454,8 @@ public class SystemServiceHook extends XC_MethodHook {
         protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
             super.afterHookedMethod(param);
             Intent intent = (Intent) param.args[0x1];
-            if (((Integer) param.getResult()) >= 0 && intent != null) {
+            Integer result = (Integer) param.getResult();
+            if (result != null && result >= 0 && intent != null) {
                 preventRunning.onBroadcastIntent(intent);
             }
         }
@@ -543,8 +545,8 @@ public class SystemServiceHook extends XC_MethodHook {
     public static class IntentFilterMatchHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            int result = (Integer) param.getResult();
-            if (result < 0) {
+            Integer result = (Integer) param.getResult();
+            if (result != null && result < 0) {
                 return;
             }
             String action = (String) param.args[0x0];
