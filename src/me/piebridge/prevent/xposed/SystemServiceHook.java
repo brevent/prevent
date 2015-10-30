@@ -414,7 +414,7 @@ public class SystemServiceHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             Integer result = (Integer) param.getResult();
-            if (result != null && result < 0) {
+            if (result == null || result < 0) {
                 return;
             }
             Intent intent = null;
@@ -546,7 +546,7 @@ public class SystemServiceHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
             Integer result = (Integer) param.getResult();
-            if (result != null && result < 0) {
+            if (result == null || result < 0) {
                 return;
             }
             String action = (String) param.args[0x0];
