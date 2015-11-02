@@ -42,7 +42,7 @@ public class IntentFilterHook {
     }
 
     public static IntentFilterMatchResult hookBroadcastFilter(Object filter, String action, Uri data, Set<String> categories) {
-        if (NotificationManagerServiceUtils.canHook(filter, action)) {
+        if (NotificationManagerServiceUtils.canHook(filter, data, action)) {
             return NotificationManagerServiceUtils.hook(data, mPreventPackages);
         } else if (AlarmManagerServiceUtils.canHook(categories)) {
             return AlarmManagerServiceUtils.hook(filter);
@@ -79,7 +79,7 @@ public class IntentFilterHook {
         Boolean prevents = mPreventPackages.get(packageName);
         if (prevents == null) {
             PackageManager pm = mContext.getPackageManager();
-            if (receiver && GmsUtils.isGapps(pm, packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
+            if (receiver && GmsUtils.isGapps(packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
                 PreventLog.d("allow " + packageName + " to use gms for next service");
                 SystemHook.restoreLater(packageName);
             }
@@ -100,7 +100,7 @@ public class IntentFilterHook {
     }
 
     private static boolean cannotPreventGms(String packageName, String sender) {
-        return GmsUtils.isGms(packageName) && (GmsUtils.isGapps(mContext.getPackageManager(), sender) || GmsUtils.isGappsCaller(mContext));
+        return GmsUtils.isGms(packageName) && (GmsUtils.isGapps(sender) || GmsUtils.isGappsCaller(mContext));
     }
 
     private static boolean isSafeReceiverAction(boolean isSystem, String action) {

@@ -89,6 +89,7 @@ public class NotificationManagerServiceUtils {
         int uid = Process.myUid();
         int pid = Process.myPid();
         int length = cancelAllNotificationsInt.getParameterTypes().length;
+        PreventLog.v("cancel sticky notification: " + pkgName);
         try {
             for (int flag : REMOVE_FLAGS) {
                 if (length == 0x4) {
@@ -109,7 +110,11 @@ public class NotificationManagerServiceUtils {
         return false;
     }
 
-    public static boolean canHook(Object filter, String action) {
+    public static boolean canHook(Object filter, Uri data, String action) {
+        return canHook(filter, action) && !mPackages.remove(data.getSchemeSpecificPart());
+    }
+
+    private static boolean canHook(Object filter, String action) {
         if (!Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             return false;
         }
@@ -117,7 +122,6 @@ public class NotificationManagerServiceUtils {
             return nmsFilter.equals(filter);
         }
         String name = BroadcastFilterUtils.getReceiverName(filter);
-
         if (name != null && (name.startsWith(NMS) || name.startsWith(NMS_21))) {
             nmsFilter = filter;
             return true;
@@ -128,10 +132,9 @@ public class NotificationManagerServiceUtils {
 
     public static IntentFilterMatchResult hook(Uri data, Map<String, Boolean> preventPackages) {
         String packageName = data.getSchemeSpecificPart();
-        if (packageName != null && preventPackages.containsKey(packageName) && !mPackages.contains(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
+        if (packageName != null && preventPackages.containsKey(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
             return IntentFilterMatchResult.NO_MATCH;
         } else {
-            mPackages.remove(packageName);
             return IntentFilterMatchResult.NONE;
         }
     }

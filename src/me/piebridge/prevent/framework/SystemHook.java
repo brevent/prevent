@@ -205,14 +205,14 @@ public final class SystemHook {
         synchronized (CHECKING_LOCK) {
             serviceFuture = serviceFutures.get(packageName);
             if (serviceFuture != null && serviceFuture.getDelay(TimeUnit.SECONDS) > 0) {
-                GmsUtils.decreaseGmsCount(mContext, packageName);
+                GmsUtils.decreaseGmsCount(packageName);
                 serviceFuture.cancel(false);
             }
             if (!GmsUtils.isGms(packageName)) {
                 checkingWhiteList.add(packageName);
             }
         }
-        GmsUtils.increaseGmsCount(mContext, packageName);
+        GmsUtils.increaseGmsCount(packageName);
         serviceFuture = checkingExecutor.schedule(new CheckingRunningService(mContext, mPreventPackages) {
             @Override
             protected Collection<String> preparePackageNames() {
@@ -230,7 +230,7 @@ public final class SystemHook {
     }
 
     private static Collection<String> prepareServiceWhiteList(String packageName, boolean forcestop) {
-        GmsUtils.decreaseGmsCount(mContext, packageName);
+        GmsUtils.decreaseGmsCount(packageName);
         if (!GmsUtils.isGms(packageName)) {
             synchronized (CHECKING_LOCK) {
                 checkingWhiteList.remove(packageName);
@@ -516,7 +516,7 @@ public final class SystemHook {
         }
         systemReceiver.removeLeavingPackage(packageName);
         PackageManager pm = mContext.getPackageManager();
-        if (GmsUtils.isGapps(pm, packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
+        if (GmsUtils.isGapps(packageName) && pm.getLaunchIntentForPackage(packageName) != null) {
             if (added) {
                 if (!runningGapps.contains(packageName)) {
                     PreventLog.d("add " + packageName + " to running gapps: " + runningGapps);

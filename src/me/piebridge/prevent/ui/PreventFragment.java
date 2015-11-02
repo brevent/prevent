@@ -624,9 +624,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
             private boolean queryCombined(String query, AppInfo appInfo) {
                 if ("-sg".equals(query)) {
-                    return appInfo.isSystem() && !GmsUtils.isGapps(mActivity.getPackageManager(), appInfo.packageName);
+                    return appInfo.isSystem() && !GmsUtils.isGapps(appInfo.packageName);
                 } else if ("-3g".equals(query)) {
-                    return !appInfo.isSystem() || GmsUtils.isGapps(mActivity.getPackageManager(), appInfo.packageName);
+                    return !appInfo.isSystem() || GmsUtils.isGapps(appInfo.packageName);
                 }
                 return false;
             }
@@ -651,7 +651,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             }
 
             private boolean queryForGapps(String query, AppInfo appInfo) {
-                return "-g".equals(query) && GmsUtils.isGapps(mActivity.getPackageManager(), appInfo.packageName);
+                return "-g".equals(query) && GmsUtils.isGapps(appInfo.packageName);
             }
 
             private boolean queryForRunning(String query, AppInfo appInfo) {

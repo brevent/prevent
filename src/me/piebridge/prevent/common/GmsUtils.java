@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.framework.SystemHook;
 
@@ -51,19 +50,15 @@ public class GmsUtils {
         return packageName != null && (packageName.startsWith(GAPPS_PREFIX) || GAPPS.contains(packageName));
     }
 
-    public static boolean isGapps(PackageManager pm, String packageName) {
-        return isGapps(packageName) || (pm.checkSignatures(BuildConfig.APPLICATION_ID, GMS) != PackageManager.SIGNATURE_MATCH && pm.checkSignatures(packageName, GMS) == PackageManager.SIGNATURE_MATCH);
-    }
-
-    public static void increaseGmsCount(Context context, String packageName) {
-        if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
+    public static void increaseGmsCount(String packageName) {
+        if (!GMS.equals(packageName) && isGapps(packageName)) {
             int gmsCount = GMS_COUNTER.incrementAndGet();
             PreventLog.d("increase gms reference: " + gmsCount + ", package: " + packageName);
         }
     }
 
-    public static void decreaseGmsCount(Context context, String packageName) {
-        if (!GMS.equals(packageName) && isGapps(context.getPackageManager(), packageName)) {
+    public static void decreaseGmsCount(String packageName) {
+        if (!GMS.equals(packageName) && isGapps(packageName)) {
             int gmsCount = GMS_COUNTER.decrementAndGet();
             PreventLog.d("decrease gms reference: " + gmsCount + ", package: " + packageName);
         }

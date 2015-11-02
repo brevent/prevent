@@ -155,7 +155,7 @@ public class ActivityManagerServiceHook {
         if (settingsPackages.contains(sender)) {
             return true;
         }
-        if (!GmsUtils.isGapps(pm, sender)) {
+        if (!GmsUtils.isGapps(sender)) {
             return false;
         }
         return pm.getLaunchIntentForPackage(sender) == null || SystemHook.hasRunningActivity(sender);

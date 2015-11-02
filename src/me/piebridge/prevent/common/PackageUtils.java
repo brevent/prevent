@@ -64,7 +64,7 @@ public class PackageUtils {
         }
         if (isSystemSignaturePackage(pm, BuildConfig.APPLICATION_ID)) {
             // shouldn't happen, but for some abnormal rom
-            return GmsUtils.isGapps(pm, appInfo.packageName);
+            return GmsUtils.isGapps(appInfo.packageName);
         } else {
             return !isSystemSignaturePackage(pm, appInfo.packageName);
         }
