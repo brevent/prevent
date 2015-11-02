@@ -82,7 +82,10 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
         setView(R.id.alipay, "com.eg.android.AlipayGphone");
         setView(R.id.wechat, "com.tencent.mm");
-        setView(R.id.paypal, "com.paypal.android.p2pmobile");
+        if (!setView(R.id.paypal, "com.paypal.android.p2pmobile")) {
+            TextView paypal = (TextView) findViewById(R.id.paypal);
+            paypal.setCompoundDrawablesWithIntrinsicBounds(null, cropDrawable(paypal.getCompoundDrawables()[1]), null, null);
+        }
         if (setView(R.id.play, "com.android.vending")) {
             findViewById(R.id.play).setVisibility(View.GONE);
             checkDonate();
