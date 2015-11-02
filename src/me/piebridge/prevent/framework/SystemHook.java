@@ -359,11 +359,11 @@ public final class SystemHook {
 
     private static boolean isPrevent(String[] names) {
         for (String name : names) {
-            if (mPreventPackages.containsKey(name)) {
-                return true;
+            if (!Boolean.TRUE.equals(mPreventPackages.get(name))) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public static void restorePrevent(String packageName) {
