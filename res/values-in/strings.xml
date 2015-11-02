@@ -79,12 +79,13 @@
 
     <!-- donation -->
     <string name="donation">Jangan ragu untuk donasi jika kamu suka.</string>
+    <string name="select_qr_code">Pilih Kode QR dari Album</string>
+    <string name="paypal">PayPal</string>
 
     <!-- version -->
     <string name="licensed">Berlisensi</string>
 
     <!-- google play in-app billing -->
     <string name="play_verify_error">Kegagalan untuk memverifikasi pembelian Anda, jangan retak Google Play In-app Billing.</string>
-    <string name="select_qr_code">请点击菜单，选择“从相册选取二维码”</string>
 
 </resources>

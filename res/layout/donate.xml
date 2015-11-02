@@ -33,7 +33,8 @@
             android:drawableTop="@drawable/ic_launcher"
             android:gravity="center"
             android:text="@android:string/unknownName"
-            android:textAppearance="?android:attr/textAppearanceSmall"/>
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/wechat"
@@ -44,8 +45,19 @@
             android:drawableTop="@drawable/ic_launcher"
             android:gravity="center"
             android:text="@android:string/unknownName"
-            android:textAppearance="?android:attr/textAppearanceSmall"/>
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:visibility="gone"/>
 
+        <TextView
+            android:id="@+id/paypal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/paypal"
+            android:gravity="center"
+            android:text="@string/paypal"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
 
         <TextView
             android:id="@+id/play"
@@ -56,7 +68,8 @@
             android:drawableTop="@drawable/ic_launcher"
             android:gravity="center"
             android:text="@android:string/unknownName"
-            android:textAppearance="?android:attr/textAppearanceSmall"/>
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:visibility="gone"/>
 
     </LinearLayout>
 

@@ -82,6 +82,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
         setView(R.id.alipay, "com.eg.android.AlipayGphone");
         setView(R.id.wechat, "com.tencent.mm");
+        setView(R.id.paypal, "com.paypal.android.p2pmobile");
         if (setView(R.id.play, "com.android.vending")) {
             findViewById(R.id.play).setVisibility(View.GONE);
             checkDonate();
@@ -128,21 +129,9 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         try {
             ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
             if (!info.enabled) {
-                donate.setVisibility(View.GONE);
                 return false;
             }
-            CharSequence label = null;
-            if ("com.android.vending".equals(packageName)) {
-                Resources resources = pm.getResourcesForApplication(info);
-                int appName = resources.getIdentifier("app_name", "string", packageName);
-                if (appName > 0) {
-                    label = resources.getText(appName);
-                }
-            }
-            if (TextUtils.isEmpty(label)) {
-                label = pm.getApplicationLabel(info);
-            }
-
+            CharSequence label = getLabel(pm, info);
             donate.setContentDescription(label);
             donate.setCompoundDrawablesWithIntrinsicBounds(null, cropDrawable(pm.getApplicationIcon(info)), null, null);
             donate.setText(label);
@@ -151,10 +140,24 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             donate.setVisibility(View.VISIBLE);
             return true;
         } catch (PackageManager.NameNotFoundException e) {
-            donate.setVisibility(View.GONE);
             UILog.d("cannot find package " + packageName, e);
             return false;
         }
+    }
+
+    private CharSequence getLabel(PackageManager pm, ApplicationInfo info) throws PackageManager.NameNotFoundException {
+        CharSequence label = null;
+        if ("com.android.vending".equals(info.packageName)) {
+            Resources resources = pm.getResourcesForApplication(info);
+            int appName = resources.getIdentifier("app_name", "string", info.packageName);
+            if (appName > 0) {
+                label = resources.getText(appName);
+            }
+        }
+        if (TextUtils.isEmpty(label)) {
+            label = pm.getApplicationLabel(info);
+        }
+        return label;
     }
 
     private File getQrCode() {
@@ -221,6 +224,16 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         return true;
     }
 
+    private boolean donateViaPayPal() {
+        showDonateDialog();
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.DONATE_PAYPAL)));
+        } catch (Throwable t) { // NOSONAR
+            // do nothing
+        }
+        return true;
+    }
+
     @Override
     public void onClick(View v) {
         int id = v.getId();
@@ -228,6 +241,8 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             donateViaWeChat();
         } else if (id == R.id.alipay) {
             donateViaAlipay();
+        } else if (id == R.id.paypal) {
+            donateViaPayPal();
         } else if (id == R.id.play) {
             showDonateDialog();
             donateViaPlay();
