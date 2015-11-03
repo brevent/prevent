@@ -13,6 +13,10 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
@@ -38,6 +42,8 @@ public class NotificationManagerServiceUtils {
             Notification.FLAG_ONGOING_EVENT};
 
     private static Set<String> mPackages = new HashSet<String>();
+    private static Boolean success;
+    private static ScheduledThreadPoolExecutor clearExecutor = new ScheduledThreadPoolExecutor(0x1);
 
     static {
         initMethod();
@@ -82,22 +88,45 @@ public class NotificationManagerServiceUtils {
         return false;
     }
 
-    public static boolean cancelStickyNotification(final String pkgName) {
+    private static boolean cancelStickyNotification(final String packageName) {
         if (cancelAllNotificationsInt == null) {
             return false;
         }
+        if (Boolean.FALSE.equals(success)) {
+            return false;
+        }
+        Future<Boolean> future = clearExecutor.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return cancelStickyNotificationBlock(packageName);
+            }
+        });
+        if (Boolean.TRUE.equals(success)) {
+            return true;
+        }
+        try {
+            success = future.get();
+        } catch (InterruptedException e) { // NOSONAR
+            PreventLog.d("cannot cancelStickyNotification (interrupt)", e);
+        } catch (ExecutionException e) { // NOSONAR
+            PreventLog.d("cannot cancelStickyNotification (execution)", e);
+        }
+        return success;
+    }
+
+    private static boolean cancelStickyNotificationBlock(String packageName) {
         int uid = Process.myUid();
         int pid = Process.myPid();
         int length = cancelAllNotificationsInt.getParameterTypes().length;
-        PreventLog.v("cancel sticky notification: " + pkgName);
+        PreventLog.v("cancel sticky notification: " + packageName);
         try {
             for (int flag : REMOVE_FLAGS) {
                 if (length == 0x4) {
-                    cancelAllNotificationsInt.invoke(notificationManagerService, pkgName, flag, 0, true);
+                    cancelAllNotificationsInt.invoke(notificationManagerService, packageName, flag, 0, true);
                 } else if (length == 0x5) {
-                    cancelAllNotificationsInt.invoke(notificationManagerService, pkgName, flag, 0, true, UserHandle.USER_ALL);
+                    cancelAllNotificationsInt.invoke(notificationManagerService, packageName, flag, 0, true, UserHandle.USER_ALL);
                 } else if (length == 0x9) {
-                    cancelAllNotificationsInt.invoke(notificationManagerService, uid, pid, pkgName, flag, 0, true,
+                    cancelAllNotificationsInt.invoke(notificationManagerService, uid, pid, packageName, flag, 0, true,
                             UserHandle.USER_ALL, REASON_PACKAGE_CHANGED, null);
                 }
             }
@@ -132,7 +161,7 @@ public class NotificationManagerServiceUtils {
 
     public static IntentFilterMatchResult hook(Uri data, Map<String, Boolean> preventPackages) {
         String packageName = data.getSchemeSpecificPart();
-        if (packageName != null && preventPackages.containsKey(packageName) && NotificationManagerServiceUtils.cancelStickyNotification(packageName)) {
+        if (packageName != null && preventPackages.containsKey(packageName) && cancelStickyNotification(packageName)) {
             return IntentFilterMatchResult.NO_MATCH;
         } else {
             return IntentFilterMatchResult.NONE;
