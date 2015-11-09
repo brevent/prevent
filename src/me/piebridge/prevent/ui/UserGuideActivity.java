@@ -1,5 +1,6 @@
 package me.piebridge.prevent.ui;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -16,6 +17,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -62,6 +65,8 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
 
     private boolean clickedDonate = false;
 
+    private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0x1;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         ThemeUtils.setTheme(this);
@@ -81,7 +86,11 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             webView.loadUrl("file:///android_asset/about.en.html");
         }
         setView(R.id.alipay, "com.eg.android.AlipayGphone");
-        setView(R.id.wechat, "com.tencent.mm");
+        if (hasPermission()) {
+            setView(R.id.wechat, "com.tencent.mm");
+        } else {
+            findViewById(R.id.wechat).setVisibility(View.GONE);
+        }
         if (!setView(R.id.paypal, "com.paypal.android.p2pmobile")) {
             TextView paypal = (TextView) findViewById(R.id.paypal);
             paypal.setClickable(true);
@@ -170,11 +179,40 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         if (dir == null) {
             return null;
         }
+        if (!checkPermission()) {
+            return null;
+        }
         File screenshots = new File(dir, "Screenshots");
         if (!screenshots.exists()) {
             screenshots.mkdirs();
         }
         return new File(screenshots, "pr_donate.png");
+    }
+
+    private boolean hasPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+                || !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+    }
+
+    private boolean checkPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+        if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
+        return false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                donateViaWeChat();
+            } else {
+                findViewById(R.id.wechat).setVisibility(View.GONE);
+            }
+        }
     }
 
     private void refreshQrCode(File qrCode) {
@@ -193,6 +231,9 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
 
     private boolean donateViaWeChat() {
         File qrCode = getQrCode();
+        if (qrCode == null) {
+            return false;
+        }
         try {
             FileUtils.dumpFile(getAssets().open("wechat.png"), qrCode);
         } catch (IOException e) {

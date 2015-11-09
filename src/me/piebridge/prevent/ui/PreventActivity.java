@@ -136,7 +136,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         mPageSelections = new ArrayList<Set<String>>();
         mPageSelections.add(new HashSet<String>());
         mPageSelections.add(new HashSet<String>());
-        mPager.setOnPageChangeListener(this);
+        mPager.addOnPageChangeListener(this);
         mPager.setAdapter(new ScreenSlidePagerAdapter(getSupportFragmentManager()));
 
         HandlerThread thread = new HandlerThread("PreventUI");

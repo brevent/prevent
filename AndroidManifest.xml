@@ -3,7 +3,7 @@
     package="me.piebridge.forcestopgb"
     android:installLocation="internalOnly"
     android:versionCode="667"
-    android:versionName="1.2.7">
+    android:versionName="1.2.8">
 
     <uses-sdk
         android:maxSdkVersion="23"
