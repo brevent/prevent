@@ -17,6 +17,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import me.piebridge.prevent.framework.IntentFilterMatchResult;
 import me.piebridge.prevent.framework.PreventLog;
@@ -105,13 +107,15 @@ public class NotificationManagerServiceUtils {
             return true;
         }
         try {
-            success = future.get();
+            success = future.get(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) { // NOSONAR
             PreventLog.d("cannot cancelStickyNotification (interrupt)", e);
         } catch (ExecutionException e) { // NOSONAR
             PreventLog.d("cannot cancelStickyNotification (execution)", e);
+        } catch (TimeoutException e) {
+            PreventLog.d("timeout when cancelStickyNotification", e);
         }
-        return success;
+        return Boolean.TRUE.equals(success);
     }
 
     private static boolean cancelStickyNotificationBlock(String packageName) {
