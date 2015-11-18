@@ -498,9 +498,12 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             sb.append(licenseName);
             sb.append("\n");
         }
-        sb.append("Xposed: v");
-        sb.append(getXposedVersion());
-        sb.append("\n");
+        Object xposedVersion = getXposedVersion();
+        if (xposedVersion != null) {
+            sb.append("Xposed: v");
+            sb.append(xposedVersion);
+            sb.append("\n");
+        }
         sb.append("Android: ");
         sb.append(Locale.getDefault());
         sb.append("-");
