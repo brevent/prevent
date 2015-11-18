@@ -8,6 +8,7 @@
     <!-- xposed -->
     <string name="xposed_summary">Mencegah berjalannya aplikasi.</string>
     <string name="xposed_disabled">Tolong aktifkan \"Prevent Running\" di \"Xposed Installer\", atau matikan kemudian aktifkan \"Prevent Running\".</string>
+    <string name="install_internal">Prevent Running harus dipasang di penyimpanan internal.</string>
 
     <!-- receiver -->
     <string name="no_prevents">Tolong atur daftar pencegahan.</string>

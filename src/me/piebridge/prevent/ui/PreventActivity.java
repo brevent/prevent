@@ -9,11 +9,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -417,11 +420,24 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         dialog.show();
     }
 
+    private boolean isInternal() {
+        PackageManager pm = getPackageManager();
+        try {
+            String source = pm.getApplicationInfo(getPackageName(), 0).sourceDir;
+            if (source.startsWith(Environment.getDataDirectory().getAbsolutePath()) || source.startsWith(Environment.getRootDirectory().getAbsolutePath())) {
+                return true;
+            }
+        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
+            // do nothing
+        }
+        return false;
+    }
+
     private void showDisableDialog(String result) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
         if (result == null) {
-            builder.setMessage(R.string.xposed_disabled);
+            builder.setMessage(isInternal() ? R.string.xposed_disabled : R.string.install_internal);
         } else {
             builder.setMessage(result);
         }
@@ -435,16 +451,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
-                intent.setPackage("de.robv.android.xposed.installer");
-                intent.putExtra("section", "modules");
-                intent.putExtra("module", getPackageName());
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                try {
-                    startActivity(intent);
-                } catch (ActivityNotFoundException e) { // NOSONAR
-                    finish();
-                }
+                fixDisabled();
             }
         });
         builder.setNeutralButton(R.string.report_bug, new DialogInterface.OnClickListener() {
@@ -454,6 +461,32 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             }
         });
         builder.create().show();
+    }
+
+    private void fixDisabled() {
+        if (isInternal()) {
+            startXposed();
+        } else {
+            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, getPackage()));
+            finish();
+        }
+    }
+
+    private void startXposed() {
+        Intent intent = new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
+        intent.setPackage("de.robv.android.xposed.installer");
+        intent.putExtra("section", "modules");
+        intent.putExtra("module", getPackageName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) { // NOSONAR
+            finish();
+        }
+    }
+
+    private Uri getPackage() {
+        return Uri.fromParts("package", getPackageName(), null);
     }
 
     private void reportBug() {
@@ -474,7 +507,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                startActivity(new Intent(Intent.ACTION_DELETE, Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)));
+                startActivity(new Intent(Intent.ACTION_DELETE, getPackage()));
                 finish();
             }
         });

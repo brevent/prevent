@@ -87,5 +87,6 @@
 
     <!-- google play in-app billing -->
     <string name="play_verify_error">Fail to verify your purchase, please don\'t crack Google Play In-app Billing.</string>
+    <string name="install_internal">Prevent Running should be installed in internal storage.</string>
 
 </resources>
