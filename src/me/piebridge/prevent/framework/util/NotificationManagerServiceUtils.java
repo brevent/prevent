@@ -91,9 +91,6 @@ public class NotificationManagerServiceUtils {
     }
 
     private static boolean cancelStickyNotification(final String packageName) {
-        if (cancelAllNotificationsInt == null) {
-            return false;
-        }
         if (Boolean.FALSE.equals(success)) {
             return false;
         }
@@ -165,7 +162,7 @@ public class NotificationManagerServiceUtils {
 
     public static IntentFilterMatchResult hook(Uri data, Map<String, Boolean> preventPackages) {
         String packageName = data.getSchemeSpecificPart();
-        if (packageName != null && preventPackages.containsKey(packageName) && cancelStickyNotification(packageName)) {
+        if (cancelAllNotificationsInt != null && packageName != null && preventPackages.containsKey(packageName) && cancelStickyNotification(packageName)) {
             return IntentFilterMatchResult.NO_MATCH;
         } else {
             return IntentFilterMatchResult.NONE;
