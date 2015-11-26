@@ -50,15 +50,15 @@ public class GmsUtils {
         return packageName != null && (packageName.startsWith(GAPPS_PREFIX) || GAPPS.contains(packageName));
     }
 
-    public static void increaseGmsCount(String packageName) {
-        if (!GMS.equals(packageName) && isGapps(packageName)) {
+    public static void increaseGmsCount(Context context, String packageName) {
+        if (!GMS.equals(packageName) && isGapps(packageName) && !PackageUtils.isLauncher(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.incrementAndGet();
             PreventLog.d("increase gms reference: " + gmsCount + ", package: " + packageName);
         }
     }
 
-    public static void decreaseGmsCount(String packageName) {
-        if (!GMS.equals(packageName) && isGapps(packageName)) {
+    public static void decreaseGmsCount(Context context, String packageName) {
+        if (!GMS.equals(packageName) && isGapps(packageName) && !PackageUtils.isLauncher(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.decrementAndGet();
             PreventLog.d("decrease gms reference: " + gmsCount + ", package: " + packageName);
         }

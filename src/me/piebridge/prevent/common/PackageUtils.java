@@ -42,7 +42,7 @@ public class PackageUtils {
         }
     }
 
-    private static boolean isLauncher(PackageManager pm, String packageName) {
+    public static boolean isLauncher(PackageManager pm, String packageName) {
         if (launchers == null) {
             initLauncher(pm);
         }

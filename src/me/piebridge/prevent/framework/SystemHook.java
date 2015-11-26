@@ -205,14 +205,14 @@ public final class SystemHook {
         synchronized (CHECKING_LOCK) {
             serviceFuture = serviceFutures.get(packageName);
             if (serviceFuture != null && serviceFuture.getDelay(TimeUnit.SECONDS) > 0) {
-                GmsUtils.decreaseGmsCount(packageName);
+                GmsUtils.decreaseGmsCount(mContext, packageName);
                 serviceFuture.cancel(false);
             }
             if (!GmsUtils.isGms(packageName)) {
                 checkingWhiteList.add(packageName);
             }
         }
-        GmsUtils.increaseGmsCount(packageName);
+        GmsUtils.increaseGmsCount(mContext, packageName);
         serviceFuture = checkingExecutor.schedule(new CheckingRunningService(mContext, mPreventPackages) {
             @Override
             protected Collection<String> preparePackageNames() {
@@ -230,7 +230,7 @@ public final class SystemHook {
     }
 
     private static Collection<String> prepareServiceWhiteList(String packageName, boolean forcestop) {
-        GmsUtils.decreaseGmsCount(packageName);
+        GmsUtils.decreaseGmsCount(mContext, packageName);
         if (!GmsUtils.isGms(packageName)) {
             synchronized (CHECKING_LOCK) {
                 checkingWhiteList.remove(packageName);
@@ -534,14 +534,17 @@ public final class SystemHook {
 
     public static boolean hasRunningGapps() {
         Iterator<String> it = runningGapps.iterator();
+        int count = 0;
         while (it.hasNext()) {
             String packageName = it.next();
-            int count = systemReceiver.countCounter(packageName);
-            if (count == 0) {
+            int counter = systemReceiver.countCounter(packageName);
+            if (counter == 0) {
                 it.remove();
+            } else if (counter > 1 || !PackageUtils.isLauncher(mContext.getPackageManager(), packageName)) {
+                count += 1;
             }
         }
-        if (!runningGapps.isEmpty()) {
+        if (count > 0) {
             PreventLog.d("running gapps: " + runningGapps);
             return true;
         } else {
