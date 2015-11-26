@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -97,7 +98,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         if (mActivity != null && mAdapter != null) {
             Set<String> selections = mActivity.getSelection();
             if (checked) {
-                selections.addAll(mAdapter.getAllPackages());
+                selections.addAll(mAdapter.getAllPreventablePackages());
             } else {
                 selections.clear();
             }
@@ -185,10 +186,12 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             setHeaderIcon(menu, holder.icon);
         }
         menu.add(Menu.NONE, R.string.app_info, Menu.NONE, R.string.app_info);
-        if (mActivity.getPreventPackages().containsKey(holder.packageName)) {
-            menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
-        } else {
-            menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
+        if (holder.checkView.isEnabled()) {
+            if (mActivity.getPreventPackages().containsKey(holder.packageName)) {
+                menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
+            } else {
+                menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
+            }
         }
         if (getMainIntent(holder.packageName) != null) {
             menu.add(Menu.NONE, R.string.open, Menu.NONE, R.string.open);
@@ -309,6 +312,10 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
     protected abstract String getDefaultQuery();
 
+    protected boolean showRunning() {
+        return false;
+    }
+
     public void saveListPosition() {
         if (mAdapter != null) {
             ListView l = getListView();
@@ -338,7 +345,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             if (mAdapter != null) {
                 setListAdapter(null);
             }
-            mAdapter = new Adapter(activity, names, filter);
+            mAdapter = new Adapter(activity, names, filter, showRunning());
             setListAdapter(mAdapter);
             if (prevNames == null) {
                 prevNames = new HashSet<String>();
@@ -474,6 +481,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
         private List<AppInfo> mAppInfos = new ArrayList<AppInfo>();
         private Set<String> mNames = new HashSet<String>();
+        private Set<String> mCanPreventNames = new HashSet<String>();
         private Set<String> mFiltered;
         private Filter mFilter;
         private View mView;
@@ -499,11 +507,15 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             };
         }
 
-        public Adapter(final PreventActivity activity, Set<String> names, View view) {
+        public Adapter(final PreventActivity activity, Set<String> names, View view, boolean showRunning) {
             this(activity);
             mView = view;
             mNames.addAll(names);
             mTask = new RetrieveInfoTask();
+            mCanPreventNames.addAll(names);
+            if (showRunning) {
+                mNames.addAll(mActivity.getRunningProcesses().keySet());
+            }
         }
 
         @Override
@@ -532,6 +544,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 holder.loadingView.setVisibility(View.VISIBLE);
             }
             holder.packageName = appInfo.packageName;
+            holder.checkView.setEnabled(mCanPreventNames.contains(holder.packageName));
             holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
             if (appInfo.isSystem()) {
                 view.setBackgroundColor(mActivity.getDangerousColor());
@@ -556,12 +569,21 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             return mFilter;
         }
 
-        public Collection<String> getAllPackages() {
+        public Collection<String> getAllPreventablePackages() {
+            Set<String> allPreventablePackages = new HashSet<String>();
             if (mFiltered == null) {
-                return mNames;
+                allPreventablePackages.addAll(mNames);
             } else {
-                return mFiltered;
+                allPreventablePackages.addAll(mFiltered);
             }
+            Iterator<String> iterator = allPreventablePackages.iterator();
+            while (iterator.hasNext()) {
+                String name = iterator.next();
+                if (!mCanPreventNames.contains(name)) {
+                    iterator.remove();
+                }
+            }
+            return allPreventablePackages;
         }
 
         public void startTaskIfNeeded() {
@@ -578,8 +600,10 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             protected FilterResults performFiltering(CharSequence prefix) {
                 FilterResults results = new FilterResults();
                 String query;
+                boolean defaultQuery = false;
                 if (TextUtils.isEmpty(prefix)) {
                     query = getDefaultQuery();
+                    defaultQuery = true;
                 } else {
                     query = prefix.toString().toLowerCase(Locale.US);
                 }
@@ -593,6 +617,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 } else {
                     mFiltered.clear();
                     for (AppInfo appInfo : mAppInfos) {
+                        if (defaultQuery && !mCanPreventNames.contains(appInfo.packageName)) {
+                            continue;
+                        }
                         if (match(query, appInfo)) {
                             values.add(appInfo);
                             mFiltered.add(appInfo.packageName);
@@ -771,7 +798,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 String licenseName = LicenseUtils.getRawLicenseName(activity);
                 preventAll = licenseName != null && licenseName.startsWith("PA");
             } else {
-                preventAll = false;
+                preventAll = true;
             }
             for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
                 ApplicationInfo appInfo = pkgInfo.applicationInfo;
@@ -790,6 +817,11 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         @Override
         protected String getDefaultQuery() {
             return "-3g";
+        }
+
+        @Override
+        protected boolean showRunning() {
+            return true;
         }
 
     }
