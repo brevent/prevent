@@ -13,8 +13,8 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
@@ -36,7 +36,8 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     private AlertDialog dialog;
 
-    private static Collection<String> KEYS_NEED_LICENSE = Collections.singletonList(
+    private static Collection<String> KEYS_NEED_LICENSE = Arrays.asList(
+            PreventIntent.KEY_LOCK_SYNC_SETTINGS,
             PreventIntent.KEY_DESTROY_PROCESSES
     );
 
@@ -53,8 +54,8 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         forceStopTimeout.setOnPreferenceChangeListener(this);
         forceStopTimeout.setOnPreferenceClickListener(this);
 
-        Preference destroyProcesses = DeprecatedUtils.findPreference(this, PreventIntent.KEY_DESTROY_PROCESSES);
-        destroyProcesses.setOnPreferenceChangeListener(this);
+        DeprecatedUtils.findPreference(this, PreventIntent.KEY_DESTROY_PROCESSES).setOnPreferenceChangeListener(this);
+        DeprecatedUtils.findPreference(this, PreventIntent.KEY_LOCK_SYNC_SETTINGS).setOnPreferenceChangeListener(this);
 
         // check license
         if (BuildConfig.DONATE) {
@@ -115,17 +116,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
             LicenseUtils.requestLicense(this, license, accounts);
             return false;
         }
-        if (PreventIntent.KEY_FORCE_STOP_TIMEOUT.equals(key)) {
-            UILog.d("update timeout to " + newValue);
-            Bundle bundle = new Bundle();
-            bundle.putLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT, Long.valueOf(String.valueOf(newValue)));
-            PreventUtils.updateConfiguration(this, bundle);
-        } else if (PreventIntent.KEY_DESTROY_PROCESSES.equals(key)) {
-            UILog.d("update destroy processes to " + newValue);
-            Bundle bundle = new Bundle();
-            bundle.putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, (Boolean) newValue);
-            PreventUtils.updateConfiguration(this, bundle);
-        }
+        PreventReceiver.updateConfiguration(this);
         // tricky to fix for android 2.3
         preference.setShouldDisableView(true);
         return true;

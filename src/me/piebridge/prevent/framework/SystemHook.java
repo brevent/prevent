@@ -34,6 +34,7 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.framework.util.AccountWatcher;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -86,6 +87,8 @@ public final class SystemHook {
     private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
     private static boolean destroyProcesses;
     private static String currentPackageName;
+    private static boolean lockSyncSettings;
+    private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
 
     private SystemHook() {
 
@@ -474,6 +477,37 @@ public final class SystemHook {
         return currentPackageName;
     }
 
+    public static void checkSync(final String packageName) {
+        singleExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                AccountWatcher accountWatcher = ActivityManagerServiceHook.getAccountWatcher();
+                Boolean syncable = accountWatcher.isPackageSyncable(packageName);
+                if (syncable != null) {
+                    PreventLog.d("sync for " + packageName + ": " + syncable);
+                    syncPackages.put(packageName, syncable);
+                }
+            }
+        });
+    }
+
+    public static void resetSync(final String packageName) {
+        singleExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                AccountWatcher accountWatcher = ActivityManagerServiceHook.getAccountWatcher();
+                if (lockSyncSettings && Boolean.FALSE.equals(syncPackages.get(packageName)) && Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+                    PreventLog.d("reset sync for " + packageName + " to false");
+                    accountWatcher.setSyncable(packageName, false);
+                }
+            }
+        });
+    }
+
+    public static void setLockSyncSettings(boolean lockSyncSettings) {
+        SystemHook.lockSyncSettings = lockSyncSettings;
+    }
+
     private static class RetrievingTask implements Runnable {
         @Override
         public void run() {
@@ -513,6 +547,9 @@ public final class SystemHook {
     public static void updateRunningGapps(String packageName, boolean added) {
         if (mContext == null || packageName == null) {
             return;
+        }
+        if (!added) {
+            resetSync(packageName);
         }
         systemReceiver.removeLeavingPackage(packageName);
         PackageManager pm = mContext.getPackageManager();

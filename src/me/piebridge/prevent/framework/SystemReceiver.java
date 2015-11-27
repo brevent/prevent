@@ -101,6 +101,11 @@ public class SystemReceiver extends ActivityReceiver {
             PreventLog.i("update destroy processes to " + destroyProcesses);
             SystemHook.setDestroyProcesses(destroyProcesses);
         }
+        if (bundle.containsKey(PreventIntent.KEY_LOCK_SYNC_SETTINGS)) {
+            boolean lockSyncSettings = bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS);
+            PreventLog.i("update lock sync settings to " + lockSyncSettings);
+            SystemHook.setLockSyncSettings(lockSyncSettings);
+        }
     }
 
     private boolean handleCheckLicense(Context context, Intent intent) {

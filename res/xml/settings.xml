@@ -16,6 +16,12 @@
             android:summary="@string/backup_prevent_list"
             android:title="@string/backup" />
 
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="lock_sync_settings"
+            android:summary="@string/lock_sync_settings"
+            android:title="@string/lock_sync" />
+
         <me.piebridge.prevent.ui.ListPreferenceSummary
             android:defaultValue="-1"
             android:entries="@array/force_stop_entries"

@@ -26,27 +26,38 @@ public class PreventReceiver extends BroadcastReceiver {
             UILog.d("action: " + action + ", package: " + packageName);
             PreventUtils.update(context, new String[]{packageName}, true);
         } else if (PreventIntent.ACTION_REGISTERED.equals(action)) {
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-            long timeout = -1;
-            try {
-                timeout = Long.parseLong(sp.getString(PreventIntent.KEY_FORCE_STOP_TIMEOUT, "-1"));
-            } catch (NumberFormatException e) {
-                UILog.d("invalid value for " + PreventIntent.KEY_FORCE_STOP_TIMEOUT, e);
-                sp.edit().putString(PreventIntent.KEY_FORCE_STOP_TIMEOUT, "-1").apply();
-            }
-            boolean destroyProcesses = false;
-            try {
-                destroyProcesses = sp.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES, false);
-            } catch (ClassCastException e) {
-                UILog.d("invalid value for " + PreventIntent.KEY_DESTROY_PROCESSES, e);
-                sp.edit().putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, false).apply();
-            }
-            Bundle bundle = new Bundle();
-            bundle.putLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT, timeout);
-            bundle.putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, destroyProcesses);
-            UILog.d("timeout: " + timeout + ", destroyProcesses: " + destroyProcesses);
-            PreventUtils.updateConfiguration(context, bundle);
+            updateConfiguration(context);
         }
+    }
+
+    public static void updateConfiguration(Context context) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        long timeout = -1;
+        try {
+            timeout = Long.parseLong(sp.getString(PreventIntent.KEY_FORCE_STOP_TIMEOUT, "-1"));
+        } catch (NumberFormatException e) {
+            UILog.d("invalid value for " + PreventIntent.KEY_FORCE_STOP_TIMEOUT, e);
+            sp.edit().putString(PreventIntent.KEY_FORCE_STOP_TIMEOUT, "-1").apply();
+        }
+        boolean destroyProcesses = getPreference(sp, PreventIntent.KEY_DESTROY_PROCESSES, false);
+        boolean lockSyncSettings = getPreference(sp, PreventIntent.KEY_LOCK_SYNC_SETTINGS, false);
+        Bundle bundle = new Bundle();
+        bundle.putLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT, timeout);
+        bundle.putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, destroyProcesses);
+        bundle.putBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS, lockSyncSettings);
+        UILog.d("timeout: " + timeout + ", destroyProcesses: " + destroyProcesses + ", lockSyncSettings: " + lockSyncSettings);
+        PreventUtils.updateConfiguration(context, bundle);
+    }
+
+    private static boolean getPreference(SharedPreferences sp, String key, boolean defaultValue) {
+        boolean value = defaultValue;
+        try {
+            value = sp.getBoolean(key, defaultValue);
+        } catch (ClassCastException e) {
+            UILog.d("invalid value for " + key, e);
+            sp.edit().putBoolean(key, defaultValue).apply();
+        }
+        return value;
     }
 
 }

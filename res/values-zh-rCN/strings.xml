@@ -54,6 +54,8 @@
     <string name="destroy_processes_summary">用户退出后强行停止程序（强烈推荐关闭）</string>
     <string name="backup">备份</string>
     <string name="backup_prevent_list">将阻止列表备份到外部存储</string>
+    <string name="lock_sync">同步锁定</string>
+    <string name="lock_sync_settings">阻止应用开启已经关闭的同步设置</string>
     <string name="force_stop_label">强行停止后台程序</string>
     <string name="force_stop_summary">后台程序无操作%1$s后（屏幕关闭时处理）</string>
     <string name="force_stop_never">永不（推荐）</string>

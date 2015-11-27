@@ -54,10 +54,10 @@ public final class PreventListUtils {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         boolean backup = false;
         try {
-            backup = sp.getBoolean(PreventIntent.BACKUP_PREVENT_LIST, false);
+            backup = sp.getBoolean(PreventIntent.KEY_BACKUP_PREVENT_LIST, false);
         } catch (ClassCastException e) {
-            UILog.d("invalid value for " + PreventIntent.BACKUP_PREVENT_LIST, e);
-            sp.edit().putBoolean(PreventIntent.BACKUP_PREVENT_LIST, false).apply();
+            UILog.d("invalid value for " + PreventIntent.KEY_BACKUP_PREVENT_LIST, e);
+            sp.edit().putBoolean(PreventIntent.KEY_BACKUP_PREVENT_LIST, false).apply();
         }
         for (File dir : getExternalFilesDirs(context)) {
             if (dir == null) {

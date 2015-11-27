@@ -1,6 +1,7 @@
 package me.piebridge.prevent.framework;
 
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -196,7 +197,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookSyncService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        if (mAccountWatcher.isComponentSyncable(hostingName)) {
+        if (ContentResolver.getMasterSyncAutomatically() && mAccountWatcher.isComponentSyncable(hostingName)) {
             handleSafeService(packageName);
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType + "(sync)", hostingName, sender);
@@ -231,6 +232,10 @@ public class ActivityManagerServiceHook {
             });
         }
         return true;
+    }
+
+    public static AccountWatcher getAccountWatcher() {
+        return mAccountWatcher;
     }
 
 }

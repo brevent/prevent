@@ -148,6 +148,9 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         }
         pidCounter.incrementAndGet();
         int count = countCounter(pid, packageName);
+        if (count == 1) {
+            SystemHook.checkSync(packageName);
+        }
         LogUtils.logActivity("start activity", packageName, count);
     }
 

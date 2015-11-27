@@ -55,6 +55,8 @@
     <string name="destroy_processes_summary">Beenden der Anwendung erzwingen, sobald der Benutzer alle Activities beendet hat (nicht empfohlen)</string>
     <string name="backup">Sicherung</string>
     <string name="backup_prevent_list">Blockier-Liste auf externen Speicher sichern</string>
+    <string name="lock_sync">Lock Sync (English)</string>
+    <string name="lock_sync_settings">Prevent apps from turning on disabled sync items (English)</string>
     <string name="force_stop_label">Beenden von Hintergrund-Apps erzwingen</string>
     <string name="force_stop_summary">%1$s nach Bildschirm aus und Inaktivität der Hintergrund-Apps</string>
     <string name="force_stop_never">Nie (Empfohlen)</string>

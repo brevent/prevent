@@ -55,6 +55,8 @@
     <string name="destroy_processes_summary">Paksa berhenti aplikasi setelah pengguna meniadakan semua aktifitas (disarankan off)</string>
     <string name="backup">Cadangkan</string>
     <string name="backup_prevent_list">Cadangkan daftar pencegahan ke penyimpanan eksternal</string>
+    <string name="lock_sync">Lock Sync (English)</string>
+    <string name="lock_sync_settings">Prevent apps from turning on disabled sync items (English)</string>
     <string name="force_stop_label">Paksa berhenti aplikasi latar belakang</string>
     <string name="force_stop_summary">Layar mati, dan setelah %1$s ketidakaktifan dengan aplikasi latar belakang</string>
     <string name="force_stop_never">Jangan pernah (Disarankan)</string>

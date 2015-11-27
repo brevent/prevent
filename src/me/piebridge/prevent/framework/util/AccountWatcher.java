@@ -6,13 +6,16 @@ import android.accounts.OnAccountsUpdateListener;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SyncAdapterType;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -31,6 +34,7 @@ import me.piebridge.prevent.framework.PreventLog;
 public class AccountWatcher implements OnAccountsUpdateListener {
 
     private static final String NAMESPACE_ANDROID = "http://schemas.android.com/apk/res/android";
+    private static final String SYNC_ADAPTER = "android.content.SyncAdapter";
     private final Context mContext;
     private final Collection<Account> mEnabledAccounts = new ArrayList<Account>();
 
@@ -52,7 +56,7 @@ public class AccountWatcher implements OnAccountsUpdateListener {
             PackageManager pm = context.getPackageManager();
             ServiceInfo si = pm.getServiceInfo(cn, PackageManager.GET_META_DATA);
             Resources resources = pm.getResourcesForApplication(si.packageName);
-            parser = si.loadXmlMetaData(pm, "android.content.SyncAdapter");
+            parser = si.loadXmlMetaData(pm, SYNC_ADAPTER);
             while (true) {
                 int type = parser.next();
                 if (type == XmlPullParser.START_TAG && "sync-adapter".equals(parser.getName())) {
@@ -100,9 +104,6 @@ public class AccountWatcher implements OnAccountsUpdateListener {
     }
 
     public boolean isComponentSyncable(ComponentName component) {
-        if (!ContentResolver.getMasterSyncAutomatically()) {
-            return false;
-        }
         PreventLog.d("check sync for " + component.flattenToShortString());
         SyncAdapterType type = getSyncAdapter(mContext, component);
         if (type == null) {
@@ -114,6 +115,48 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         } else {
             PreventLog.d(component.flattenToShortString() + " isn't syncable");
             return false;
+        }
+    }
+
+    @Nullable
+    public Boolean isPackageSyncable(String packageName) {
+        PackageManager pm = mContext.getPackageManager();
+        Intent intent = new Intent(SYNC_ADAPTER);
+        intent.setPackage(packageName);
+        Boolean result = null;
+        for (ResolveInfo info : pm.queryIntentServices(intent, 0)) {
+            ServiceInfo si = info.serviceInfo;
+            if (packageName.equals(si.packageName)) {
+                result = false;
+                if (isComponentSyncable(new ComponentName(si.packageName, si.name))) {
+                    return true;
+                }
+            }
+        }
+        return result;
+    }
+
+    public void setSyncable(String packageName, boolean syncable) {
+        PackageManager pm = mContext.getPackageManager();
+        Intent intent = new Intent(SYNC_ADAPTER);
+        intent.setPackage(packageName);
+        for (ResolveInfo info : pm.queryIntentServices(intent, 0)) {
+            ServiceInfo si = info.serviceInfo;
+            if (packageName.equals(si.packageName)) {
+                setSyncable(new ComponentName(si.packageName, si.name), syncable);
+            }
+        }
+    }
+
+    private void setSyncable(ComponentName component, boolean syncable) {
+        PreventLog.d("set sync to " + syncable + " for " + component.flattenToShortString());
+        SyncAdapterType type = getSyncAdapter(mContext, component);
+        if (type != null && type.isUserVisible()) {
+            for (Account account : mEnabledAccounts) {
+                if (account.type.equals(type.accountType)) {
+                    ContentResolver.setSyncAutomatically(account, type.authority, syncable);
+                }
+            }
         }
     }
 
