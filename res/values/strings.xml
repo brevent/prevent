@@ -8,6 +8,7 @@
     <!-- xposed -->
     <string name="xposed_summary">Prevent applications from running.</string>
     <string name="xposed_disabled">Please enable \"Prevent Running\" in \"Xposed Installer\", or disable then enable \"Prevent Running\".</string>
+    <string name="install_internal">Prevent Running should be installed in internal storage.</string>
 
     <!-- receiver -->
     <string name="no_prevents">Please configure prevent list.</string>
@@ -89,6 +90,5 @@
 
     <!-- google play in-app billing -->
     <string name="play_verify_error">Fail to verify your purchase, please don\'t crack Google Play In-app Billing.</string>
-    <string name="install_internal">Prevent Running should be installed in internal storage.</string>
 
 </resources>
