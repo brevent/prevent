@@ -187,11 +187,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         }
         menu.add(Menu.NONE, R.string.app_info, Menu.NONE, R.string.app_info);
         if (holder.checkView.isEnabled()) {
-            if (mActivity.getPreventPackages().containsKey(holder.packageName)) {
-                menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
-            } else {
-                menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
-            }
+            updatePreventMenu(menu, holder.packageName);
         }
         if (getMainIntent(holder.packageName) != null) {
             menu.add(Menu.NONE, R.string.open, Menu.NONE, R.string.open);
@@ -201,6 +197,14 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         }
         if (appNotification) {
             menu.add(Menu.NONE, R.string.app_notifications, Menu.NONE, R.string.app_notifications);
+        }
+    }
+
+    private void updatePreventMenu(Menu menu, String packageName) {
+        if (mActivity.getPreventPackages().containsKey(packageName)) {
+            menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
+        } else {
+            menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
         }
     }
 
