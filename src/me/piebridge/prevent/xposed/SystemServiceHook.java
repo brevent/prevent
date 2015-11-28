@@ -46,10 +46,20 @@ public class SystemServiceHook extends XC_MethodHook {
 
     @Override
     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+        if (systemHooked) {
+            return;
+        }
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            Class.forName("me.piebridge.PreventRunning", false, classLoader);
+            PreventLog.d("find PreventRunning in current thread class loader, disable xposed way");
+            systemHooked = true;
+        } catch (ClassNotFoundException e) { // NOSONAR
+            // do nothing
+        }
         if (!systemHooked) {
             PreventLog.d("start prevent hook (system)");
             preventRunning = new PreventRunning();
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             hookActivityManagerService(classLoader);
             hookActivity(classLoader);
             hookIntentFilter(classLoader);
