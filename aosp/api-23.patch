@@ -1,5 +1,3 @@
-diff --git a/services/core/java/com/android/server/IntentResolver.java b/services/core/java/com/android/server/IntentResolver.java
-index 3359060..464df55 100644
 --- a/services/core/java/com/android/server/IntentResolver.java
 +++ b/services/core/java/com/android/server/IntentResolver.java
 @@ -692,7 +692,7 @@ public abstract class IntentResolver<F extends IntentFilter, R extends Object> {
@@ -20,11 +18,9 @@ index 3359060..464df55 100644
              if (match >= 0) {
                  if (debug) Slog.v(TAG, "  Filter matched!  match=0x" +
                          Integer.toHexString(match) + " hasDefault="
-diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
-index 58f7f10..5a8067a 100644
 --- a/services/core/java/com/android/server/am/ActivityManagerService.java
 +++ b/services/core/java/com/android/server/am/ActivityManagerService.java
-@@ -2287,6 +2287,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -2323,6 +2323,7 @@ public final class ActivityManagerService extends ActivityManagerNative
      // Note: This method is invoked on the main thread but may need to attach various
      // handlers to other threads.  So take care to be explicit about the looper.
      public ActivityManagerService(Context systemContext) {
@@ -32,7 +28,7 @@ index 58f7f10..5a8067a 100644
          mContext = systemContext;
          mFactoryTest = FactoryTest.getMode();
          mSystemThread = ActivityThread.currentActivityThread();
-@@ -3067,6 +3068,9 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -3103,6 +3104,9 @@ public final class ActivityManagerService extends ActivityManagerNative
              ApplicationInfo info, boolean knownToBeDead, int intentFlags,
              String hostingType, ComponentName hostingName, boolean allowWhileBooting,
              boolean isolated, boolean keepIfLarge) {
@@ -42,7 +38,7 @@ index 58f7f10..5a8067a 100644
          return startProcessLocked(processName, info, knownToBeDead, intentFlags, hostingType,
                  hostingName, allowWhileBooting, isolated, 0 /* isolatedUid */, keepIfLarge,
                  null /* ABI override */, null /* entryPoint */, null /* entryPointArgs */,
-@@ -3799,9 +3803,10 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -3845,9 +3849,10 @@ public final class ActivityManagerService extends ActivityManagerNative
      public final int startActivity(IApplicationThread caller, String callingPackage,
              Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
              int startFlags, ProfilerInfo profilerInfo, Bundle options) {
@@ -55,7 +51,7 @@ index 58f7f10..5a8067a 100644
      }
  
      @Override
-@@ -4668,6 +4673,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -4714,6 +4719,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                  Slog.i(TAG, "Process " + app.processName + " (pid " + pid
                          + ") has died");
                  mAllowLowerMemLevel = true;
@@ -63,16 +59,18 @@ index 58f7f10..5a8067a 100644
              } else {
                  // Note that we always want to do oom adj to update our state with the
                  // new number of procs.
-@@ -5297,7 +5303,7 @@ public final class ActivityManagerService extends ActivityManagerNative
-                 if (proc.pkgDeps == null) {
-                     proc.pkgDeps = new ArraySet<String>(1);
-                 }
--                proc.pkgDeps.add(packageName);
-+                proc.pkgDeps.size();
-             }
-         }
-     }
-@@ -8678,6 +8684,8 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -5577,8 +5583,8 @@ public final class ActivityManagerService extends ActivityManagerNative
+                 // that match it.  We need to qualify this by the processes
+                 // that are running under the specified app and user ID.
+                 } else {
+-                    final boolean isDep = app.pkgDeps != null
+-                            && app.pkgDeps.contains(packageName);
++                    final boolean isDep = PreventRunningUtils.isDep(app.pkgDeps != null
++                            && app.pkgDeps.contains(packageName));
+                     if (!isDep && UserHandle.getAppId(app.uid) != appId) {
+                         continue;
+                     }
+@@ -8735,6 +8741,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                  pr.waitingToKill = "remove task";
              }
          }
@@ -81,7 +79,7 @@ index 58f7f10..5a8067a 100644
      }
  
      private void removeTasksByPackageNameLocked(String packageName, int userId) {
-@@ -8811,7 +8819,8 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -8868,7 +8876,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                          mStackSupervisor.showLockTaskToast();
                          return false;
                      }
@@ -91,7 +89,7 @@ index 58f7f10..5a8067a 100644
                  }
              } finally {
                  Binder.restoreCallingIdentity(origId);
-@@ -15674,12 +15683,14 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -15746,12 +15755,14 @@ public final class ActivityManagerService extends ActivityManagerNative
          if (DEBUG_SERVICE) Slog.v(TAG_SERVICE,
                  "startService: " + service + " type=" + resolvedType);
          synchronized(this) {
@@ -106,7 +104,7 @@ index 58f7f10..5a8067a 100644
              return res;
          }
      }
-@@ -15909,8 +15920,9 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -15981,8 +15992,9 @@ public final class ActivityManagerService extends ActivityManagerNative
          }
  
          synchronized(this) {
@@ -118,7 +116,7 @@ index 58f7f10..5a8067a 100644
          }
      }
  
-@@ -16935,12 +16947,14 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -17007,12 +17019,14 @@ public final class ActivityManagerService extends ActivityManagerNative
              final int callingPid = Binder.getCallingPid();
              final int callingUid = Binder.getCallingUid();
              final long origId = Binder.clearCallingIdentity();
@@ -135,8 +133,6 @@ index 58f7f10..5a8067a 100644
              return res;
          }
      }
-diff --git a/services/core/java/com/android/server/am/ActivityStack.java b/services/core/java/com/android/server/am/ActivityStack.java
-index 6e34876..17a9a8b 100644
 --- a/services/core/java/com/android/server/am/ActivityStack.java
 +++ b/services/core/java/com/android/server/am/ActivityStack.java
 @@ -866,6 +866,7 @@ final class ActivityStack {
@@ -163,8 +159,6 @@ index 6e34876..17a9a8b 100644
              } catch (Exception e) {
                  // We can just ignore exceptions here...  if the process
                  // has crashed, our death notification will clean things
-diff --git a/services/core/java/com/android/server/am/ActivityStackSupervisor.java b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
-index 6d91309..b4ab916 100644
 --- a/services/core/java/com/android/server/am/ActivityStackSupervisor.java
 +++ b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
 @@ -1286,6 +1286,7 @@ public final class ActivityStackSupervisor implements DisplayListener {
@@ -175,12 +169,9 @@ index 6d91309..b4ab916 100644
  
              if ((app.info.privateFlags&ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE) != 0) {
                  // This may be a heavy-weight process!  Note that the package
-diff --git a/services/core/java/com/android/server/am/PreventRunningUtils.java b/services/core/java/com/android/server/am/PreventRunningUtils.java
-new file mode 100644
-index 0000000..1452262
---- /dev/null
+--- a/services/core/java/com/android/server/am/PreventRunningUtils.java
 +++ b/services/core/java/com/android/server/am/PreventRunningUtils.java
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,117 @@
 +package com.android.server.am;
 +
 +import android.app.IApplicationThread;
@@ -293,11 +284,12 @@ index 0000000..1452262
 +    public static boolean hookStartProcessLocked(ApplicationInfo info, boolean knownToBeDead, int intentFlags, String hostingType, ComponentName hostingName) {
 +        return mPreventRunning.hookStartProcessLocked(mAm.mContext, info, hostingType, hostingName);
 +    }
++
++    public static boolean isDep(boolean isDep) {
++        return false;
++    }
 +}
-diff --git a/services/core/java/me/piebridge/PreventRunning.java b/services/core/java/me/piebridge/PreventRunning.java
-new file mode 100644
-index 0000000..b396965
---- /dev/null
+--- a/services/core/java/me/piebridge/PreventRunning.java
 +++ b/services/core/java/me/piebridge/PreventRunning.java
 @@ -0,0 +1,151 @@
 +package me.piebridge;
@@ -345,7 +337,7 @@ index 0000000..b396965
 +        try {
 +            ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
 +            ClassLoader classLoader = new DexClassLoader(apk.getAbsolutePath(), "/cache", null, currentClassLoader);
-+            Log.d(TAG, "loading PreventRunning from " + apk);
++            Log.d(TAG, "loading PreventRunning(20151127) from " + apk);
 +            mPreventRunning = (PreventRunningHook) classLoader.loadClass("me.piebridge.prevent.framework.PreventRunning").newInstance();
 +            return true;
 +        } catch (ClassNotFoundException e) {
@@ -451,10 +443,7 @@ index 0000000..b396965
 +    }
 +
 +}
-diff --git a/services/core/java/me/piebridge/PreventRunningHook.java b/services/core/java/me/piebridge/PreventRunningHook.java
-new file mode 100644
-index 0000000..98ea8c0
---- /dev/null
+--- a/services/core/java/me/piebridge/PreventRunningHook.java
 +++ b/services/core/java/me/piebridge/PreventRunningHook.java
 @@ -0,0 +1,42 @@
 +package me.piebridge;
