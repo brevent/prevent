@@ -59,17 +59,15 @@
              } else {
                  // Note that we always want to do oom adj to update our state with the
                  // new number of procs.
-@@ -5577,8 +5583,8 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -5577,7 +5583,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                  // that match it.  We need to qualify this by the processes
                  // that are running under the specified app and user ID.
                  } else {
 -                    final boolean isDep = app.pkgDeps != null
--                            && app.pkgDeps.contains(packageName);
-+                    final boolean isDep = PreventRunningUtils.isDep(app.pkgDeps != null
-+                            && app.pkgDeps.contains(packageName));
++                    final boolean isDep = PreventRunningUtils.isDep(app.pkgDeps)
+                             && app.pkgDeps.contains(packageName);
                      if (!isDep && UserHandle.getAppId(app.uid) != appId) {
                          continue;
-                     }
 @@ -8735,6 +8741,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                  pr.waitingToKill = "remove task";
              }
@@ -171,7 +169,7 @@
                  // This may be a heavy-weight process!  Note that the package
 --- a/services/core/java/com/android/server/am/PreventRunningUtils.java
 +++ b/services/core/java/com/android/server/am/PreventRunningUtils.java
-@@ -0,0 +1,117 @@
+@@ -0,0 +1,118 @@
 +package com.android.server.am;
 +
 +import android.app.IApplicationThread;
@@ -181,6 +179,7 @@
 +import android.content.pm.ApplicationInfo;
 +import android.net.Uri;
 +import android.os.IBinder;
++import android.util.ArraySet;
 +
 +import java.util.Set;
 +
@@ -285,13 +284,13 @@
 +        return mPreventRunning.hookStartProcessLocked(mAm.mContext, info, hostingType, hostingName);
 +    }
 +
-+    public static boolean isDep(boolean isDep) {
++    public static boolean isDep(ArraySet<String> pkgDeps) {
 +        return false;
 +    }
 +}
 --- a/services/core/java/me/piebridge/PreventRunning.java
 +++ b/services/core/java/me/piebridge/PreventRunning.java
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,182 @@
 +package me.piebridge;
 +
 +import android.content.ComponentName;
@@ -302,7 +301,8 @@
 +import android.util.Log;
 +
 +import java.io.File;
-+import java.lang.Throwable;
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
 +import java.util.Set;
 +
 +import dalvik.system.DexClassLoader;
@@ -314,20 +314,23 @@
 +
 +    private static final String TAG = "Prevent";
 +
++    private static final int VERSION = 20151202;
++
 +    private PreventRunningHook mPreventRunning;
 +
-+    private static File[] APKS = {
-+            new File("/data/app/me.piebridge.forcestopgb-1/base.apk"),
-+            new File("/data/app/me.piebridge.forcestopgb-2/base.apk"),
-+            new File("/data/app/me.piebridge.forcestopgb-3/base.apk"),
-+            new File("/data/app/me.piebridge.forcestopgb-1.apk"),
-+            new File("/data/app/me.piebridge.forcestopgb-2.apk"),
-+            new File("/data/app/me.piebridge.forcestopgb-3.apk"),
++    private static String[] APKS = {
++            "/data/app/me.piebridge.forcestopgb-1/base.apk",
++            "/data/app/me.piebridge.forcestopgb-2/base.apk",
++            "/data/app/me.piebridge.forcestopgb-3/base.apk",
++            "/data/app/me.piebridge.forcestopgb-1.apk",
++            "/data/app/me.piebridge.forcestopgb-2.apk",
++            "/data/app/me.piebridge.forcestopgb-3.apk",
 +    };
 +
 +    public PreventRunning() {
-+        for (File apk : APKS) {
-+            if (apk.exists() && initPreventRunning(apk)) {
++        for (String apk : APKS) {
++            File file = new File(apk);
++            if (file.exists() && initPreventRunning(file)) {
 +                break;
 +            }
 +        }
@@ -337,8 +340,10 @@
 +        try {
 +            ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
 +            ClassLoader classLoader = new DexClassLoader(apk.getAbsolutePath(), "/cache", null, currentClassLoader);
-+            Log.d(TAG, "loading PreventRunning(20151127) from " + apk);
++            Log.d(TAG, "loading PreventRunning(" + VERSION + ") from " + apk);
 +            mPreventRunning = (PreventRunningHook) classLoader.loadClass("me.piebridge.prevent.framework.PreventRunning").newInstance();
++            setVersion();
++            setMethod();
 +            return true;
 +        } catch (ClassNotFoundException e) {
 +            Log.d(TAG, "cannot find class", e);
@@ -442,6 +447,31 @@
 +        }
 +    }
 +
++    private void setVersion() {
++        try {
++            Method method = mPreventRunning.getClass().getMethod("setVersion", int.class);
++            method.invoke(mPreventRunning, VERSION);
++        } catch (NoSuchMethodException e) {
++            Log.d(TAG, "cannot find method", e);
++        } catch (InvocationTargetException e) {
++            Log.d(TAG, "cannot invoke target", e);
++        } catch (IllegalAccessException e) {
++            Log.d(TAG, "illegal access", e);
++        }
++    }
++
++    private void setMethod() {
++        try {
++            Method method = mPreventRunning.getClass().getMethod("setMethod", String.class);
++            method.invoke(mPreventRunning, "native");
++        } catch (NoSuchMethodException e) {
++            Log.d(TAG, "cannot find method", e);
++        } catch (InvocationTargetException e) {
++            Log.d(TAG, "cannot invoke target", e);
++        } catch (IllegalAccessException e) {
++            Log.d(TAG, "illegal access", e);
++        }
++    }
 +}
 --- a/services/core/java/me/piebridge/PreventRunningHook.java
 +++ b/services/core/java/me/piebridge/PreventRunningHook.java

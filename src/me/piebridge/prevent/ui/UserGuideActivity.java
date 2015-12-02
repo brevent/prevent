@@ -31,6 +31,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
@@ -53,6 +56,8 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
  */
 public class UserGuideActivity extends DonateActivity implements View.OnClickListener {
 
+    private static final Integer VERSION = 20150212;
+
     private View donateView;
 
     private AlertDialog request;
@@ -66,6 +71,10 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     private boolean clickedDonate = false;
 
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0x1;
+
+    private String name;
+    private Integer version = getXposedVersion();
+    private String method = "xposed";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -107,6 +116,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         } else {
             donateView.setVisibility(View.GONE);
         }
+        retrieveInfo();
     }
 
     @Override
@@ -404,6 +414,18 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
     }
 
+    private void retrieveInfo() {
+        Intent intent = new Intent();
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+        intent.setAction(PreventIntent.ACTION_GET_INFO);
+        intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+        UILog.i("sending get info broadcast");
+        if (receiver == null) {
+            receiver = new HookReceiver();
+        }
+        sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, null, 0, null, null);
+    }
+
     private void requestLog() {
         File dir = getExternalCacheDir();
         if (dir != null) {
@@ -462,6 +484,20 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             String action = intent.getAction();
             if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
                 handleRequestLog();
+            } else if (PreventIntent.ACTION_GET_INFO.equals(action)) {
+                handleInfo();
+            }
+        }
+
+        private void handleInfo() {
+            String info = getResultData();
+            try {
+                JSONObject json = new JSONObject(info);
+                version = json.optInt("version");
+                method = json.optString("method");
+                name = json.optString("name");
+            } catch (JSONException e) {
+                UILog.d("cannot get version from " + info, e);
             }
         }
 
@@ -476,11 +512,11 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
     }
 
-    private static Object getXposedVersion() {
+    private static Integer getXposedVersion() {
         try {
-            return Class.forName("de.robv.android.xposed.XposedBridge", false, ClassLoader.getSystemClassLoader()).getField("XPOSED_BRIDGE_VERSION").get(null);
+            return (Integer) Class.forName("de.robv.android.xposed.XposedBridge", false, ClassLoader.getSystemClassLoader()).getField("XPOSED_BRIDGE_VERSION").get(null);
         } catch (Throwable t) { // NOSONAR
-            return null;
+            return 0;
         }
     }
 
@@ -498,12 +534,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             sb.append(licenseName);
             sb.append("\n");
         }
-        Object xposedVersion = getXposedVersion();
-        if (xposedVersion != null) {
-            sb.append("Xposed: v");
-            sb.append(xposedVersion);
-            sb.append("\n");
-        }
+        showVersion(sb);
         sb.append("Android: ");
         sb.append(Locale.getDefault());
         sb.append("-");
@@ -517,6 +548,28 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
         sb.append(Build.FINGERPRINT);
         return sb.toString();
+    }
+
+    private void showVersion(StringBuilder sb) {
+        if (name != null && !BuildConfig.VERSION_NAME.equalsIgnoreCase(name)) {
+            sb.append("Active: ");
+            sb.append(name);
+            sb.append("\n");
+        }
+        if (version != null) {
+            if (version == 0) {
+                method = "native";
+            }
+            sb.append("Bridge: ");
+            sb.append(method);
+            sb.append(" v");
+            sb.append(version);
+            if ("native".equalsIgnoreCase(method) && version < VERSION) {
+                sb.append(" -> v");
+                sb.append(VERSION);
+            }
+            sb.append("\n");
+        }
     }
 
     private void showVersionInfo() {

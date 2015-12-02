@@ -60,6 +60,8 @@ public class SystemServiceHook extends XC_MethodHook {
         if (!systemHooked) {
             PreventLog.d("start prevent hook (system)");
             preventRunning = new PreventRunning();
+            preventRunning.setVersion(XposedBridge.XPOSED_BRIDGE_VERSION);
+            preventRunning.setMethod("xposed");
             hookActivityManagerService(classLoader);
             hookActivity(classLoader);
             hookIntentFilter(classLoader);

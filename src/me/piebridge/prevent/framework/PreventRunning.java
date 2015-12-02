@@ -116,4 +116,13 @@ public class PreventRunning implements PreventRunningHook {
         return match;
     }
 
+    public void setVersion(int version) {
+        PreventLog.d("bridge version: " + version);
+        SystemHook.setVersion(version);
+    }
+
+    public void setMethod(String method) {
+        PreventLog.d("bridge method: " + method);
+        SystemHook.setMethod(method);
+    }
 }

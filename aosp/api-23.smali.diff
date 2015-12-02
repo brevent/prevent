@@ -46,35 +46,22 @@ baksmali ... -b -s [-x] ...
      return-void
  .end method
  
-@@ -20929,9 +20933,13 @@
+@@ -20923,6 +20927,10 @@
+     :cond_5
+     iget-object v13, v6, Lcom/android/server/am/ProcessRecord;->pkgDeps:Landroid/util/ArraySet;
  
-     invoke-virtual {v13, p1}, Landroid/util/ArraySet;->contains(Ljava/lang/Object;)Z
- 
--    move-result v11
++    invoke-static {v13}, Lcom/android/server/am/PreventRunningUtils;->isDep(Landroid/util/ArraySet;)Z
++
 +    move-result v13
- 
-     :goto_4
-+    invoke-static {v13}, Lcom/android/server/am/PreventRunningUtils;->isDep(Z)Z
 +
-+    move-result v11
-+
-     if-nez v11, :cond_6
+     if-eqz v13, :cond_8
  
-     iget v13, v6, Lcom/android/server/am/ProcessRecord;->uid:I
-@@ -20971,7 +20979,7 @@
-     goto :goto_3
- 
-     :cond_8
--    const/4 v11, 0x0
-+    const/4 v13, 0x0
- 
-     goto :goto_4
- 
+     iget-object v13, v6, Lcom/android/server/am/ProcessRecord;->pkgDeps:Landroid/util/ArraySet;
 @@ -29544,6 +29552,8 @@
  
      iput-boolean v4, p0, Lcom/android/server/am/ActivityManagerService;->mAllowLowerMemLevel:Z
  
-+    invoke-static {p1}, Lcom/android/server/am/PreventRunningUtils;->onAppDied(Lcom/android/server/am/ProcessRecord;)V
++    invoke-static/range {p1 .. p1}, Lcom/android/server/am/PreventRunningUtils;->onAppDied(Lcom/android/server/am/ProcessRecord;)V
 +
      :goto_1
      const/4 v4, 0x3
@@ -226,7 +213,7 @@ baksmali ... -b -s [-x] ...
      iget-object v4, v0, Lcom/android/server/am/ProcessRecord;->info:Landroid/content/pm/ApplicationInfo;
 --- a/com/android/server/am/PreventRunningUtils.smali
 +++ b/com/android/server/am/PreventRunningUtils.smali
-@@ -0,0 +1,340 @@
+@@ -0,0 +1,349 @@
 +.class public Lcom/android/server/am/PreventRunningUtils;
 +.super Ljava/lang/Object;
 +.source "PreventRunningUtils.java"
@@ -283,8 +270,17 @@ baksmali ... -b -s [-x] ...
 +    return-void
 +.end method
 +
-+.method public static isDep(Z)Z
++.method public static isDep(Landroid/util/ArraySet;)Z
 +    .registers 2
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "(",
++            "Landroid/util/ArraySet",
++            "<",
++            "Ljava/lang/String;",
++            ">;)Z"
++        }
++    .end annotation
 +
 +    const/4 v0, 0x0
 +
@@ -569,7 +565,7 @@ baksmali ... -b -s [-x] ...
 +.end method
 --- a/me/piebridge/PreventRunning.smali
 +++ b/me/piebridge/PreventRunning.smali
-@@ -0,0 +1,503 @@
+@@ -0,0 +1,655 @@
 +.class public Lme/piebridge/PreventRunning;
 +.super Ljava/lang/Object;
 +.source "PreventRunning.java"
@@ -579,9 +575,11 @@ baksmali ... -b -s [-x] ...
 +
 +
 +# static fields
-+.field private static APKS:[Ljava/io/File; = null
++.field private static APKS:[Ljava/lang/String; = null
 +
 +.field private static final TAG:Ljava/lang/String; = "Prevent"
++
++.field private static final VERSION:I = 0x1337ba2
 +
 +
 +# instance fields
@@ -594,106 +592,86 @@ baksmali ... -b -s [-x] ...
 +
 +    const/4 v0, 0x6
 +
-+    new-array v0, v0, [Ljava/io/File;
++    new-array v0, v0, [Ljava/lang/String;
 +
-+    new-instance v1, Ljava/io/File;
-+
-+    const-string/jumbo v2, "/data/app/me.piebridge.forcestopgb-1/base.apk"
-+
-+    invoke-direct {v1, v2}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++    const-string/jumbo v1, "/data/app/me.piebridge.forcestopgb-1/base.apk"
 +
 +    const/4 v2, 0x0
 +
 +    aput-object v1, v0, v2
 +
-+    new-instance v1, Ljava/io/File;
-+
-+    const-string/jumbo v2, "/data/app/me.piebridge.forcestopgb-2/base.apk"
-+
-+    invoke-direct {v1, v2}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++    const-string/jumbo v1, "/data/app/me.piebridge.forcestopgb-2/base.apk"
 +
 +    const/4 v2, 0x1
 +
 +    aput-object v1, v0, v2
 +
-+    new-instance v1, Ljava/io/File;
-+
-+    const-string/jumbo v2, "/data/app/me.piebridge.forcestopgb-3/base.apk"
-+
-+    invoke-direct {v1, v2}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++    const-string/jumbo v1, "/data/app/me.piebridge.forcestopgb-3/base.apk"
 +
 +    const/4 v2, 0x2
 +
 +    aput-object v1, v0, v2
 +
-+    new-instance v1, Ljava/io/File;
-+
-+    const-string/jumbo v2, "/data/app/me.piebridge.forcestopgb-1.apk"
-+
-+    invoke-direct {v1, v2}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++    const-string/jumbo v1, "/data/app/me.piebridge.forcestopgb-1.apk"
 +
 +    const/4 v2, 0x3
 +
 +    aput-object v1, v0, v2
 +
-+    new-instance v1, Ljava/io/File;
-+
-+    const-string/jumbo v2, "/data/app/me.piebridge.forcestopgb-2.apk"
-+
-+    invoke-direct {v1, v2}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++    const-string/jumbo v1, "/data/app/me.piebridge.forcestopgb-2.apk"
 +
 +    const/4 v2, 0x4
 +
 +    aput-object v1, v0, v2
 +
-+    new-instance v1, Ljava/io/File;
-+
-+    const-string/jumbo v2, "/data/app/me.piebridge.forcestopgb-3.apk"
-+
-+    invoke-direct {v1, v2}, Ljava/io/File;-><init>(Ljava/lang/String;)V
++    const-string/jumbo v1, "/data/app/me.piebridge.forcestopgb-3.apk"
 +
 +    const/4 v2, 0x5
 +
 +    aput-object v1, v0, v2
 +
-+    sput-object v0, Lme/piebridge/PreventRunning;->APKS:[Ljava/io/File;
++    sput-object v0, Lme/piebridge/PreventRunning;->APKS:[Ljava/lang/String;
 +
 +    return-void
 +.end method
 +
 +.method public constructor <init>()V
-+    .registers 6
++    .registers 7
 +
 +    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +
-+    sget-object v2, Lme/piebridge/PreventRunning;->APKS:[Ljava/io/File;
++    sget-object v3, Lme/piebridge/PreventRunning;->APKS:[Ljava/lang/String;
 +
-+    const/4 v1, 0x0
++    const/4 v2, 0x0
 +
-+    array-length v3, v2
++    array-length v4, v3
 +
 +    :goto_0
-+    if-ge v1, v3, :cond_0
++    if-ge v2, v4, :cond_0
 +
-+    aget-object v0, v2, v1
++    aget-object v0, v3, v2
 +
-+    invoke-virtual {v0}, Ljava/io/File;->exists()Z
++    new-instance v1, Ljava/io/File;
 +
-+    move-result v4
++    invoke-direct {v1, v0}, Ljava/io/File;-><init>(Ljava/lang/String;)V
 +
-+    if-eqz v4, :cond_1
++    invoke-virtual {v1}, Ljava/io/File;->exists()Z
 +
-+    invoke-direct {p0, v0}, Lme/piebridge/PreventRunning;->initPreventRunning(Ljava/io/File;)Z
++    move-result v5
 +
-+    move-result v4
++    if-eqz v5, :cond_1
 +
-+    if-eqz v4, :cond_1
++    invoke-direct {p0, v1}, Lme/piebridge/PreventRunning;->initPreventRunning(Ljava/io/File;)Z
++
++    move-result v5
++
++    if-eqz v5, :cond_1
 +
 +    :cond_0
 +    return-void
 +
 +    :cond_1
-+    add-int/lit8 v1, v1, 0x1
++    add-int/lit8 v2, v2, 0x1
 +
 +    goto :goto_0
 +.end method
@@ -728,7 +706,7 @@ baksmali ... -b -s [-x] ...
 +
 +    invoke-direct {v7}, Ljava/lang/StringBuilder;-><init>()V
 +
-+    const-string/jumbo v8, "loading PreventRunning(20151127) from "
++    const-string/jumbo v8, "loading PreventRunning(20151202) from "
 +
 +    invoke-virtual {v7, v8}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
@@ -757,6 +735,10 @@ baksmali ... -b -s [-x] ...
 +    check-cast v6, Lme/piebridge/PreventRunningHook;
 +
 +    iput-object v6, p0, Lme/piebridge/PreventRunning;->mPreventRunning:Lme/piebridge/PreventRunningHook;
++
++    invoke-direct {p0}, Lme/piebridge/PreventRunning;->setVersion()V
++
++    invoke-direct {p0}, Lme/piebridge/PreventRunning;->setMethod()V
 +    :try_end_0
 +    .catch Ljava/lang/ClassNotFoundException; {:try_start_0 .. :try_end_0} :catch_3
 +    .catch Ljava/lang/InstantiationException; {:try_start_0 .. :try_end_0} :catch_2
@@ -827,6 +809,172 @@ baksmali ... -b -s [-x] ...
 +    const-string/jumbo v7, "cannot find class"
 +
 +    invoke-static {v6, v7, v2}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    goto :goto_0
++.end method
++
++.method private setMethod()V
++    .registers 10
++
++    :try_start_0
++    iget-object v4, p0, Lme/piebridge/PreventRunning;->mPreventRunning:Lme/piebridge/PreventRunningHook;
++
++    invoke-virtual {v4}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    move-result-object v4
++
++    const-string/jumbo v5, "setMethod"
++
++    const/4 v6, 0x1
++
++    new-array v6, v6, [Ljava/lang/Class;
++
++    const-class v7, Ljava/lang/String;
++
++    const/4 v8, 0x0
++
++    aput-object v7, v6, v8
++
++    invoke-virtual {v4, v5, v6}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
++
++    move-result-object v3
++
++    iget-object v4, p0, Lme/piebridge/PreventRunning;->mPreventRunning:Lme/piebridge/PreventRunningHook;
++
++    const/4 v5, 0x1
++
++    new-array v5, v5, [Ljava/lang/Object;
++
++    const-string/jumbo v6, "native"
++
++    const/4 v7, 0x0
++
++    aput-object v6, v5, v7
++
++    invoke-virtual {v3, v4, v5}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++    :try_end_0
++    .catch Ljava/lang/NoSuchMethodException; {:try_start_0 .. :try_end_0} :catch_2
++    .catch Ljava/lang/reflect/InvocationTargetException; {:try_start_0 .. :try_end_0} :catch_1
++    .catch Ljava/lang/IllegalAccessException; {:try_start_0 .. :try_end_0} :catch_0
++
++    :goto_0
++    return-void
++
++    :catch_0
++    move-exception v0
++
++    const-string/jumbo v4, "Prevent"
++
++    const-string/jumbo v5, "illegal access"
++
++    invoke-static {v4, v5, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    goto :goto_0
++
++    :catch_1
++    move-exception v2
++
++    const-string/jumbo v4, "Prevent"
++
++    const-string/jumbo v5, "cannot invoke target"
++
++    invoke-static {v4, v5, v2}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    goto :goto_0
++
++    :catch_2
++    move-exception v1
++
++    const-string/jumbo v4, "Prevent"
++
++    const-string/jumbo v5, "cannot find method"
++
++    invoke-static {v4, v5, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    goto :goto_0
++.end method
++
++.method private setVersion()V
++    .registers 10
++
++    :try_start_0
++    iget-object v4, p0, Lme/piebridge/PreventRunning;->mPreventRunning:Lme/piebridge/PreventRunningHook;
++
++    invoke-virtual {v4}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    move-result-object v4
++
++    const-string/jumbo v5, "setVersion"
++
++    const/4 v6, 0x1
++
++    new-array v6, v6, [Ljava/lang/Class;
++
++    sget-object v7, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
++
++    const/4 v8, 0x0
++
++    aput-object v7, v6, v8
++
++    invoke-virtual {v4, v5, v6}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
++
++    move-result-object v3
++
++    iget-object v4, p0, Lme/piebridge/PreventRunning;->mPreventRunning:Lme/piebridge/PreventRunningHook;
++
++    const/4 v5, 0x1
++
++    new-array v5, v5, [Ljava/lang/Object;
++
++    const v6, 0x1337ba2
++
++    invoke-static {v6}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v6
++
++    const/4 v7, 0x0
++
++    aput-object v6, v5, v7
++
++    invoke-virtual {v3, v4, v5}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++    :try_end_0
++    .catch Ljava/lang/NoSuchMethodException; {:try_start_0 .. :try_end_0} :catch_2
++    .catch Ljava/lang/reflect/InvocationTargetException; {:try_start_0 .. :try_end_0} :catch_1
++    .catch Ljava/lang/IllegalAccessException; {:try_start_0 .. :try_end_0} :catch_0
++
++    :goto_0
++    return-void
++
++    :catch_0
++    move-exception v0
++
++    const-string/jumbo v4, "Prevent"
++
++    const-string/jumbo v5, "illegal access"
++
++    invoke-static {v4, v5, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    goto :goto_0
++
++    :catch_1
++    move-exception v2
++
++    const-string/jumbo v4, "Prevent"
++
++    const-string/jumbo v5, "cannot invoke target"
++
++    invoke-static {v4, v5, v2}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    goto :goto_0
++
++    :catch_2
++    move-exception v1
++
++    const-string/jumbo v4, "Prevent"
++
++    const-string/jumbo v5, "cannot find method"
++
++    invoke-static {v4, v5, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 +
 +    goto :goto_0
 +.end method

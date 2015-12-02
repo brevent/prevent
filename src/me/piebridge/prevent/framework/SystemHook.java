@@ -89,6 +89,8 @@ public final class SystemHook {
     private static String currentPackageName;
     private static boolean lockSyncSettings;
     private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
+    private static int version;
+    private static String method;
 
     private SystemHook() {
 
@@ -506,6 +508,22 @@ public final class SystemHook {
 
     public static void setLockSyncSettings(boolean lockSyncSettings) {
         SystemHook.lockSyncSettings = lockSyncSettings;
+    }
+
+    public static int getVersion() {
+        return version;
+    }
+
+    public static String getMethod() {
+        return method;
+    }
+
+    public static void setMethod(String method) {
+        SystemHook.method = method;
+    }
+
+    public static void setVersion(int version) {
+        SystemHook.version = version;
     }
 
     private static class RetrievingTask implements Runnable {

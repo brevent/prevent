@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
@@ -39,6 +40,7 @@ public class SystemReceiver extends ActivityReceiver {
     public static final Collection<String> MANAGER_ACTIONS = Arrays.asList(
             PreventIntent.ACTION_GET_PACKAGES,
             PreventIntent.ACTION_GET_PROCESSES,
+            PreventIntent.ACTION_GET_INFO,
             PreventIntent.ACTION_UPDATE_PREVENT,
             PreventIntent.ACTION_SYSTEM_LOG,
             PreventIntent.ACTION_UPDATE_CONFIGURATION,
@@ -77,6 +79,8 @@ public class SystemReceiver extends ActivityReceiver {
             handleGetPackages(action);
         } else if (PreventIntent.ACTION_GET_PROCESSES.equals(action)) {
             handleGetProcesses(context, action);
+        } else if (PreventIntent.ACTION_GET_INFO.equals(action)) {
+            handleGetInfo();
         } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
             handleUpdatePrevent(action, intent);
         } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
@@ -89,6 +93,14 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (PreventIntent.ACTION_CHECK_LICENSE.equals(action)) {
             handleCheckLicense(context, intent);
         }
+    }
+
+    private void handleGetInfo() {
+        Map<String, Object> info = new LinkedHashMap<String, Object>();
+        info.put("method", SystemHook.getMethod());
+        info.put("version", SystemHook.getVersion());
+        info.put("name", BuildConfig.VERSION_NAME);
+        setResultData(new JSONObject(info).toString());
     }
 
     private void handleConfiguration(Bundle bundle) {
