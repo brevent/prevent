@@ -7,7 +7,7 @@
 - [smali](http://github.com/JesusFreke/smali) 把smali源码编译成dex
 - [baksmali](http://github.com/JesusFreke/smali) 把dex反编译成smali
 - patch 打补丁，Linux/Mac OS X下自带，windows需要下载，像git/mingw等都有
-- `api-23.smali.diff`
+- [api-23.smali.patch](api-23.smali.patch)
 
 ## 从系统中获取 `services.jar`
 
@@ -28,7 +28,7 @@ shell> java -jar baksmali.jar -a 23 -b -s services.jar -o services
 ## 打补丁
 
 ```
-shell> patch -p0 < api-23.smali.diff
+shell> patch -p0 < api-23.smali.patch
 ```
 
 需要检查是否有打成功。
