@@ -5,7 +5,7 @@
 ## 需求
 - [java](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 运行smali/baksmali需要Java，JRE就够了。
 - [smali](http://github.com/JesusFreke/smali) 把smali源码编译成dex，二进制下载在 [smali ‐ Bitbucket](https://bitbucket.org/JesusFreke/smali/downloads) 上。
-- [baksmali](http://github.com/JesusFreke/smali) 把dex反编译成smali，二进制下载也在 [smali ‐ Bitbucket](https://bitbucket.org/JesusFreke/smali/downloads) 上。
+- [baksmali](http://github.com/JesusFreke/smali) 把dex反编译成smali，二进制下载`也`在 [smali ‐ Bitbucket](https://bitbucket.org/JesusFreke/smali/downloads) 上。
 - patch 打补丁，Linux/Mac OS X下自带，windows需要下载[Patch for Windows](http://gnuwin32.sourceforge.net/packages/patch.htm)，另外[Git for Windows](https://git-for-windows.github.io/)也自带。
 - [api-23.smali.patch](api-23.smali.patch)
 
@@ -28,11 +28,13 @@ shell> java -jar baksmali.jar -a 23 -b -s services.jar -o services
 ## 打补丁
 
 ```
+shell> # Linux / Mac OS X使用
 shell> patch -p0 < api-23.smali.patch
 ```
 
 在Windows的某些版本下(如windows 7)，名称中含`patch`的程序，必须额外加上特定的`manifest`，否则不能运行，所以换个名字吧。此外，由于Windows下的一些换行符问题，参数还必须加上`--binary`。
 ```
+cmd> :: Windows 使用
 cmd> move patch.exe dabuding.exe
 cmd> dabuding.exe --binary -p0 < api-23.smali.patch
 ```
