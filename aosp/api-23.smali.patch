@@ -6,8 +6,8 @@ baksmali ... -b -s [-x] ...
 -s,--sequential-labels
 	create label names using a sequential numbering scheme per label type, rather than using the bytecode address
 
---- a/com/android/server/IntentResolver.smali
-+++ b/com/android/server/IntentResolver.smali
+--- aosp-6.0/com/android/server/IntentResolver.smali
++++ services/com/android/server/IntentResolver.smali
 @@ -285,7 +285,7 @@
  
      move-result-object v19
@@ -26,13 +26,13 @@ baksmali ... -b -s [-x] ...
  
      move-result v17
  
---- a/com/android/server/am/ActivityManagerService.smali
-+++ b/com/android/server/am/ActivityManagerService.smali
+--- aosp-6.0/com/android/server/am/ActivityManagerService.smali
++++ services/com/android/server/am/ActivityManagerService.smali
 @@ -2127,6 +2127,8 @@
  
      iput-object v0, p0, Lcom/android/server/am/ActivityManagerService;->mBgHandler:Landroid/os/Handler;
  
-+    invoke-static {p0}, Lcom/android/server/am/PreventRunningUtils;->init(Lcom/android/server/am/ActivityManagerService;)V
++    invoke-static/range {p0 .. p0}, Lcom/android/server/am/PreventRunningUtils;->init(Lcom/android/server/am/ActivityManagerService;)V
 +
      iput-object p1, p0, Lcom/android/server/am/ActivityManagerService;->mContext:Landroid/content/Context;
  
@@ -70,7 +70,7 @@ baksmali ... -b -s [-x] ...
      monitor-enter p0
  
      :try_start_0
-+    invoke-static {p1}, Lcom/android/server/am/PreventRunningUtils;->setSender(Landroid/app/IApplicationThread;)V
++    invoke-static/range {p1 .. p1}, Lcom/android/server/am/PreventRunningUtils;->setSender(Landroid/app/IApplicationThread;)V
 +
      iget-object v0, p0, Lcom/android/server/am/ActivityManagerService;->mServices:Lcom/android/server/am/ActiveServices;
  
@@ -157,7 +157,7 @@ baksmali ... -b -s [-x] ...
      monitor-enter p0
  
      :try_start_0
-+    invoke-static {p1}, Lcom/android/server/am/PreventRunningUtils;->setSender(Landroid/app/IApplicationThread;)V
++    invoke-static/range {p1 .. p1}, Lcom/android/server/am/PreventRunningUtils;->setSender(Landroid/app/IApplicationThread;)V
 +
      invoke-static {}, Landroid/os/Binder;->getCallingPid()I
  
@@ -171,8 +171,8 @@ baksmali ... -b -s [-x] ...
      :try_end_0
      .catchall {:try_start_0 .. :try_end_0} :catchall_0
  
---- a/com/android/server/am/ActivityStack.smali
-+++ b/com/android/server/am/ActivityStack.smali
+--- aosp-6.0/com/android/server/am/ActivityStack.smali
++++ services/com/android/server/am/ActivityStack.smali
 @@ -3710,6 +3710,8 @@
  
      invoke-interface {v3, v4, v5, v6, v0}, Landroid/app/IApplicationThread;->scheduleResumeActivity(Landroid/os/IBinder;IZLandroid/os/Bundle;)V
@@ -187,7 +187,7 @@ baksmali ... -b -s [-x] ...
  
      invoke-interface {v5, v6, v7, v8}, Landroid/app/IApplicationThread;->scheduleDestroyActivity(Landroid/os/IBinder;ZI)V
 +
-+    invoke-static {p1}, Lcom/android/server/am/PreventRunningUtils;->onDestroyActivity(Lcom/android/server/am/ActivityRecord;)V
++    invoke-static/range {p1 .. p1}, Lcom/android/server/am/PreventRunningUtils;->onDestroyActivity(Lcom/android/server/am/ActivityRecord;)V
      :try_end_0
      .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
  
@@ -200,8 +200,8 @@ baksmali ... -b -s [-x] ...
      :try_end_0
      .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
  
---- a/com/android/server/am/ActivityStackSupervisor.smali
-+++ b/com/android/server/am/ActivityStackSupervisor.smali
+--- aosp-6.0/com/android/server/am/ActivityStackSupervisor.smali
++++ services/com/android/server/am/ActivityStackSupervisor.smali
 @@ -7357,6 +7357,8 @@
  
      invoke-interface/range {v4 .. v21}, Landroid/app/IApplicationThread;->scheduleLaunchActivity(Landroid/content/Intent;Landroid/os/IBinder;ILandroid/content/pm/ActivityInfo;Landroid/content/res/Configuration;Landroid/content/res/Configuration;Landroid/content/res/CompatibilityInfo;Ljava/lang/String;Lcom/android/internal/app/IVoiceInteractor;ILandroid/os/Bundle;Landroid/os/PersistableBundle;Ljava/util/List;Ljava/util/List;ZZLandroid/app/ProfilerInfo;)V
@@ -211,8 +211,8 @@ baksmali ... -b -s [-x] ...
      move-object/from16 v0, p2
  
      iget-object v4, v0, Lcom/android/server/am/ProcessRecord;->info:Landroid/content/pm/ApplicationInfo;
---- a/com/android/server/am/PreventRunningUtils.smali
-+++ b/com/android/server/am/PreventRunningUtils.smali
+--- aosp-6.0/com/android/server/am/PreventRunningUtils.smali
++++ services/com/android/server/am/PreventRunningUtils.smali
 @@ -0,0 +1,349 @@
 +.class public Lcom/android/server/am/PreventRunningUtils;
 +.super Ljava/lang/Object;
@@ -563,8 +563,8 @@ baksmali ... -b -s [-x] ...
 +
 +    return-void
 +.end method
---- a/me/piebridge/PreventRunning.smali
-+++ b/me/piebridge/PreventRunning.smali
+--- aosp-6.0/me/piebridge/PreventRunning.smali
++++ services/me/piebridge/PreventRunning.smali
 @@ -0,0 +1,655 @@
 +.class public Lme/piebridge/PreventRunning;
 +.super Ljava/lang/Object;
@@ -1221,8 +1221,8 @@ baksmali ... -b -s [-x] ...
 +    :cond_0
 +    return-void
 +.end method
---- a/me/piebridge/PreventRunningHook.smali
-+++ b/me/piebridge/PreventRunningHook.smali
+--- aosp-6.0/me/piebridge/PreventRunningHook.smali
++++ services/me/piebridge/PreventRunningHook.smali
 @@ -0,0 +1,58 @@
 +.class public interface abstract Lme/piebridge/PreventRunningHook;
 +.super Ljava/lang/Object;
