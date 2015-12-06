@@ -15,6 +15,7 @@
     <string name="updated_prevents">Blockier-Liste auf %1$d aktualisiert</string>
 
     <!-- main activity -->
+    <string name="version_mismatch">Please reboot to active current version (English)</string>
     <string name="applications">Anwendungen</string>
     <string name="prevent_list">Blockier-Liste</string>
     <string name="prevent">Automatisch blockieren</string>
@@ -83,7 +84,7 @@
 
     <!-- donation -->
     <string name="donation">Spenden sind gern gesehen, wenn du magst.</string>
-    <string name="select_qr_code">QR-Code aus Bildergalerie wählen</string>
+    <string name="select_qr_code">QR-Code aus Album wählen</string>
     <string name="paypal">PayPal</string>
 
     <!-- version -->

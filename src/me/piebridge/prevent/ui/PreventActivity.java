@@ -90,6 +90,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private boolean initialized;
     private boolean paused;
 
+    private String name;
+
     public int getDangerousColor() {
         if (dangerousColor == null) {
             dangerousColor = getThemedColor(R.attr.color_dangerous);
@@ -227,6 +229,20 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         intent.setAction(PreventIntent.ACTION_GET_PROCESSES);
         intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
         UILog.i("sending get processes broadcast");
+        sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
+        if (name == null) {
+            retrieveInfo();
+        } else {
+            showRebootIfNeeded();
+        }
+    }
+
+    private void retrieveInfo() {
+        Intent intent = new Intent();
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+        intent.setAction(PreventIntent.ACTION_GET_INFO);
+        intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+        UILog.i("sending get info broadcast");
         sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
     }
 
@@ -583,6 +599,48 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return showed;
     }
 
+    private boolean showRebootIfNeeded() {
+        if (name == null) {
+            return false;
+        }
+        String version = getVersion(BuildConfig.VERSION_NAME);
+        if (version.equalsIgnoreCase(name)) {
+            return false;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.mismatch).setVisibility(View.VISIBLE);
+            }
+        });
+        return true;
+    }
+
+    /**
+     * x.y.z
+     * @param version
+     * @return
+     */
+    private static String getVersion(String version) {
+        int index = -1;
+        int count = 0x3;
+        while (count > 0) {
+            int newIndex = version.indexOf('.', index + 1);
+            if (newIndex == -1) {
+                index = -1;
+                break;
+            } else {
+                index = newIndex;
+                count--;
+            }
+        }
+        if (index == -1) {
+            return version;
+        } else {
+            return version.substring(0, index);
+        }
+    }
+
     private class HookReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -601,6 +659,19 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     preventPackages.put(packageName, true);
                 }
                 updateTimeIfNeeded(packageName);
+            } else if (PreventIntent.ACTION_GET_INFO.equals(action)) {
+                handleGetInfo();
+            }
+        }
+
+        private void handleGetInfo() {
+            String info = getResultData();
+            try {
+                JSONObject json = new JSONObject(info);
+                name = json.optString("name");
+                showRebootIfNeeded();
+            } catch (JSONException e) {
+                UILog.d("cannot get version from " + info, e);
             }
         }
 

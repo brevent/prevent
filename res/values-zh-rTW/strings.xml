@@ -15,6 +15,7 @@
     <string name="updated_prevents">成功更新阻止列表，共%1$d條</string>
 
     <!-- main activity -->
+    <string name="version_mismatch">請重啟激活當前版本</string>
     <string name="applications">所有程式</string>
     <string name="prevent_list">阻止列表</string>
     <string name="prevent">自動阻止</string>

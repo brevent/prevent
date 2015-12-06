@@ -15,6 +15,7 @@
     <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
 
     <!-- main activity -->
+    <string name="version_mismatch">Please reboot to active current version (English)</string>
     <string name="applications">Aplikasi</string>
     <string name="prevent_list">Daftar Pencegahan</string>
     <string name="prevent">Pencegahan Otomatis</string>
