@@ -35,8 +35,8 @@ shell> patch -p0 < api-23.smali.patch
 在Windows的某些版本下(如windows 7)，名称中含`patch`的程序，必须额外加上特定的`manifest`，否则不能运行，所以换个名字吧。此外，由于Windows下的一些换行符问题，参数还必须加上`--binary`。
 ```
 cmd> :: Windows 使用
-cmd> move patch.exe dabuding.exe
-cmd> dabuding.exe --binary -p0 < api-23.smali.patch
+cmd> move patch.exe p@tch.exe
+cmd> p@tch.exe --binary -p0 < api-23.smali.patch
 ```
 
 需要检查是否有打成功。
