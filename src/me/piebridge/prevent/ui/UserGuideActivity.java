@@ -430,8 +430,8 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         File dir = getExternalCacheDir();
         if (dir != null) {
             for (File file : dir.listFiles()) {
-                String name = file.getName();
-                if (name.startsWith("system.") || name.startsWith("prevent.")) {
+                String path = file.getName();
+                if (path.startsWith("system.") || path.startsWith("prevent.")) {
                     file.delete();
                 }
             }
