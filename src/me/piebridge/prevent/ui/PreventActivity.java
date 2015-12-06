@@ -624,6 +624,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private static String getVersion(String version) {
         int index = -1;
         int count = 0x3;
+        if (version.contains("_r")) {
+            version = version.split("_r", 2)[0];
+        }
         while (count > 0) {
             int newIndex = version.indexOf('.', index + 1);
             if (newIndex == -1) {
