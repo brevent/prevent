@@ -20,14 +20,14 @@
                          Integer.toHexString(match) + " hasDefault="
 --- a/services/core/java/com/android/server/am/ActivityManagerService.java
 +++ b/services/core/java/com/android/server/am/ActivityManagerService.java
-@@ -2323,6 +2323,7 @@ public final class ActivityManagerService extends ActivityManagerNative
-     // Note: This method is invoked on the main thread but may need to attach various
-     // handlers to other threads.  So take care to be explicit about the looper.
-     public ActivityManagerService(Context systemContext) {
-+        PreventRunningUtils.init(this);
-         mContext = systemContext;
-         mFactoryTest = FactoryTest.getMode();
+@@ -2328,6 +2328,7 @@ public final class ActivityManagerService extends ActivityManagerNative
          mSystemThread = ActivityThread.currentActivityThread();
+ 
+         Slog.i(TAG, "Memory class: " + ActivityManager.staticGetMemoryClass());
++        PreventRunningUtils.init(this);
+ 
+         mHandlerThread = new ServiceThread(TAG,
+                 android.os.Process.THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
 @@ -3103,6 +3104,9 @@ public final class ActivityManagerService extends ActivityManagerNative
              ApplicationInfo info, boolean knownToBeDead, int intentFlags,
              String hostingType, ComponentName hostingName, boolean allowWhileBooting,
@@ -51,14 +51,14 @@
      }
  
      @Override
-@@ -4714,6 +4719,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -4713,6 +4718,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+             if (!app.killedByAm) {
                  Slog.i(TAG, "Process " + app.processName + " (pid " + pid
                          + ") has died");
-                 mAllowLowerMemLevel = true;
 +                PreventRunningUtils.onAppDied(app);
+                 mAllowLowerMemLevel = true;
              } else {
                  // Note that we always want to do oom adj to update our state with the
-                 // new number of procs.
 @@ -5577,7 +5583,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                  // that match it.  We need to qualify this by the processes
                  // that are running under the specified app and user ID.
@@ -68,15 +68,15 @@
                              && app.pkgDeps.contains(packageName);
                      if (!isDep && UserHandle.getAppId(app.uid) != appId) {
                          continue;
-@@ -8735,6 +8741,8 @@ public final class ActivityManagerService extends ActivityManagerNative
-                 pr.waitingToKill = "remove task";
+@@ -8724,6 +8730,8 @@ public final class ActivityManagerService extends ActivityManagerNative
              }
          }
-+
-+        PreventRunningUtils.onCleanUpRemovedTask(pkg);
-     }
  
-     private void removeTasksByPackageNameLocked(String packageName, int userId) {
++        PreventRunningUtils.onCleanUpRemovedTask(component);
++
+         // Kill the running processes.
+         for (int i = 0; i < procsToKill.size(); i++) {
+             ProcessRecord pr = procsToKill.get(i);
 @@ -8868,7 +8876,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                          mStackSupervisor.showLockTaskToast();
                          return false;
@@ -87,39 +87,38 @@
                  }
              } finally {
                  Binder.restoreCallingIdentity(origId);
-@@ -15746,12 +15755,14 @@ public final class ActivityManagerService extends ActivityManagerNative
-         if (DEBUG_SERVICE) Slog.v(TAG_SERVICE,
-                 "startService: " + service + " type=" + resolvedType);
-         synchronized(this) {
-+            PreventRunningUtils.setSender(caller);
+@@ -15749,8 +15758,10 @@ public final class ActivityManagerService extends ActivityManagerNative
              final int callingPid = Binder.getCallingPid();
              final int callingUid = Binder.getCallingUid();
              final long origId = Binder.clearCallingIdentity();
-             ComponentName res = mServices.startServiceLocked(caller, service,
-                     resolvedType, callingPid, callingUid, callingPackage, userId);
+-            ComponentName res = mServices.startServiceLocked(caller, service,
+-                    resolvedType, callingPid, callingUid, callingPackage, userId);
++            PreventRunningUtils.setSenderInStartService(caller);
++            ComponentName res = PreventRunningUtils.clearSenderInStartService(
++                    mServices.startServiceLocked(caller, service,
++                    resolvedType, callingPid, callingUid, callingPackage, userId));
              Binder.restoreCallingIdentity(origId);
-+            PreventRunningUtils.setSender();
              return res;
          }
-     }
-@@ -15981,8 +15992,9 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -15981,8 +15992,10 @@ public final class ActivityManagerService extends ActivityManagerNative
          }
  
          synchronized(this) {
 -            return mServices.bindServiceLocked(caller, token, service,
 -                    resolvedType, connection, flags, callingPackage, userId);
-+            PreventRunningUtils.setSender(caller);
-+            return PreventRunningUtils.setSender(mServices.bindServiceLocked(caller, token, service,
++            PreventRunningUtils.setSenderInBindService(caller);
++            return PreventRunningUtils.clearSenderInBindService(
++                    mServices.bindServiceLocked(caller, token, service,
 +                    resolvedType, connection, flags, callingPackage, userId));
          }
      }
  
-@@ -17007,12 +17019,14 @@ public final class ActivityManagerService extends ActivityManagerNative
+@@ -17007,11 +17020,12 @@ public final class ActivityManagerService extends ActivityManagerNative
              final int callingPid = Binder.getCallingPid();
              final int callingUid = Binder.getCallingUid();
              final long origId = Binder.clearCallingIdentity();
 -            int res = broadcastIntentLocked(callerApp,
-+            PreventRunningUtils.setSender(callerApp);
++            PreventRunningUtils.setSenderInBroadcastIntent(caller);
 +            int res = PreventRunningUtils.onBroadcastIntent(broadcastIntentLocked(callerApp,
                      callerApp != null ? callerApp.info.packageName : null,
                      intent, resolvedType, resultTo, resultCode, resultData, resultExtras,
@@ -127,10 +126,8 @@
 -                    callingPid, callingUid, userId);
 +                    callingPid, callingUid, userId), intent);
              Binder.restoreCallingIdentity(origId);
-+            PreventRunningUtils.setSender();
              return res;
          }
-     }
 --- a/services/core/java/com/android/server/am/ActivityStack.java
 +++ b/services/core/java/com/android/server/am/ActivityStack.java
 @@ -866,6 +866,7 @@ final class ActivityStack {
@@ -169,7 +166,7 @@
                  // This may be a heavy-weight process!  Note that the package
 --- a/services/core/java/com/android/server/am/PreventRunningUtils.java
 +++ b/services/core/java/com/android/server/am/PreventRunningUtils.java
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,133 @@
 +package com.android.server.am;
 +
 +import android.app.IApplicationThread;
@@ -216,20 +213,37 @@
 +        mPreventRunning.onLaunchActivity(ar);
 +    }
 +
-+    public static void setSender() {
-+        mPreventRunning.setSender(null);
-+    }
-+
-+    public static void setSender(IApplicationThread caller) {
++    private static void setSender(IApplicationThread caller) {
 +        final ProcessRecord callerApp = mAm.getRecordForAppLocked(caller);
 +        mPreventRunning.setSender(callerApp != null ? callerApp.info.packageName : null);
 +    }
 +
-+    public static void setSender(ProcessRecord callerApp) {
-+        mPreventRunning.setSender(callerApp != null ? callerApp.info.packageName : null);
++    public static void setSenderInStartService(IApplicationThread caller) {
++        setSender(caller);
 +    }
 +
-+    public static int setSender(int res) {
++    public static ComponentName clearSenderInStartService(ComponentName res) {
++        mPreventRunning.setSender(null);
++        return res;
++    }
++
++    public static void setSenderInBindService(IApplicationThread caller) {
++        setSender(caller);
++    }
++
++    public static int clearSenderInBindService(int res) {
++        mPreventRunning.setSender(null);
++        return res;
++    }
++
++    public static void setSenderInBroadcastIntent(IApplicationThread caller) {
++        setSender(caller);
++    }
++
++    public static int onBroadcastIntent(int res, Intent intent) {
++        if (res >= 0) {
++            mPreventRunning.onBroadcastIntent(intent);
++        }
 +        mPreventRunning.setSender(null);
 +        return res;
 +    }
@@ -238,22 +252,20 @@
 +        mPreventRunning.onAppDied(app);
 +    }
 +
-+    public static void onCleanUpRemovedTask(String packageName) {
-+        mPreventRunning.onCleanUpRemovedTask(packageName);
++    public static void onCleanUpRemovedTask(ComponentName component) {
++        mPreventRunning.onCleanUpRemovedTask(component.getPackageName());
 +    }
 +
 +    public static boolean onMoveActivityTaskToBack(boolean res, IBinder token) {
 +        if (res) {
-+            mPreventRunning.onMoveActivityTaskToBack(ActivityRecord.forTokenLocked(token).packageName);
++            ActivityRecord ar = forToken(token);
++            mPreventRunning.onMoveActivityTaskToBack(ar != null ? ar.packageName : null);
 +        }
 +        return res;
 +    }
 +
-+    public static int onBroadcastIntent(int res, Intent intent) {
-+        if (res >= 0) {
-+            mPreventRunning.onBroadcastIntent(intent);
-+        }
-+        return res;
++    private static ActivityRecord forToken(IBinder token) {
++        return ActivityRecord.forTokenLocked(token);
 +    }
 +
 +    public static boolean isExcludingStopped(Intent intent) {
