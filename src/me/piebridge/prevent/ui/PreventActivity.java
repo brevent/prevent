@@ -666,6 +666,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         private void handleGetInfo() {
             String info = getResultData();
+            if (TextUtils.isEmpty(info)) {
+                return;
+            }
             try {
                 JSONObject json = new JSONObject(info);
                 name = json.optString("name");

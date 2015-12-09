@@ -491,6 +491,9 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
 
         private void handleInfo() {
             String info = getResultData();
+            if (TextUtils.isEmpty(info)) {
+                return;
+            }
             try {
                 JSONObject json = new JSONObject(info);
                 version = json.optInt("version");
