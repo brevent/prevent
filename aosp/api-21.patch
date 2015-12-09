@@ -1,6 +1,8 @@
+diff --git a/services/core/java/com/android/server/IntentResolver.java b/services/core/java/com/android/server/IntentResolver.java
+index 07cc864..d3b51fa 100644
 --- a/services/core/java/com/android/server/IntentResolver.java
 +++ b/services/core/java/com/android/server/IntentResolver.java
-@@ -692,7 +692,7 @@
+@@ -638,7 +638,7 @@
          final Uri data = intent.getData();
          final String packageName = intent.getPackage();
  
@@ -9,7 +11,7 @@
  
          final Printer logPrinter;
          final PrintWriter logPrintWriter;
-@@ -746,7 +746,7 @@
+@@ -681,7 +681,7 @@
                  continue;
              }
  
@@ -18,9 +20,11 @@
              if (match >= 0) {
                  if (debug) Slog.v(TAG, "  Filter matched!  match=0x" +
                          Integer.toHexString(match) + " hasDefault="
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 8dfb321..1989677 100755
 --- a/services/core/java/com/android/server/am/ActivityManagerService.java
 +++ b/services/core/java/com/android/server/am/ActivityManagerService.java
-@@ -2332,6 +2332,7 @@
+@@ -2266,6 +2266,7 @@
          mSystemThread = ActivityThread.currentActivityThread();
  
          Slog.i(TAG, "Memory class: " + ActivityManager.staticGetMemoryClass());
@@ -28,7 +32,7 @@
  
          mHandlerThread = new ServiceThread(TAG,
                  android.os.Process.THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
-@@ -3107,6 +3108,9 @@
+@@ -2948,6 +2949,9 @@
              ApplicationInfo info, boolean knownToBeDead, int intentFlags,
              String hostingType, ComponentName hostingName, boolean allowWhileBooting,
              boolean isolated, boolean keepIfLarge) {
@@ -38,7 +42,7 @@
          return startProcessLocked(processName, info, knownToBeDead, intentFlags, hostingType,
                  hostingName, allowWhileBooting, isolated, 0 /* isolatedUid */, keepIfLarge,
                  null /* ABI override */, null /* entryPoint */, null /* entryPointArgs */,
-@@ -3849,9 +3853,10 @@
+@@ -3540,9 +3544,10 @@
      public final int startActivity(IApplicationThread caller, String callingPackage,
              Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
              int startFlags, ProfilerInfo profilerInfo, Bundle options) {
@@ -51,7 +55,7 @@
      }
  
      @Override
-@@ -4717,6 +4722,7 @@
+@@ -4877,6 +4882,7 @@
              if (!app.killedByAm) {
                  Slog.i(TAG, "Process " + app.processName + " (pid " + pid
                          + ") has died");
@@ -59,7 +63,7 @@
                  mAllowLowerMemLevel = true;
              } else {
                  // Note that we always want to do oom adj to update our state with the
-@@ -5581,7 +5587,7 @@
+@@ -5740,7 +5746,7 @@
                  // that match it.  We need to qualify this by the processes
                  // that are running under the specified app and user ID.
                  } else {
@@ -68,52 +72,52 @@
                              && app.pkgDeps.contains(packageName);
                      if (!isDep && UserHandle.getAppId(app.uid) != appId) {
                          continue;
-@@ -8739,6 +8745,8 @@
-                 pr.waitingToKill = "remove task";
-             }
-         }
-+
-+        PreventRunningUtils.onCleanUpRemovedTask(component);
-     }
+@@ -8490,6 +8496,8 @@
+         mServices.cleanUpRemovedTaskLocked(tr, component, baseIntent);
  
-     private void removeTasksByPackageNameLocked(String packageName, int userId) {
-@@ -8872,7 +8880,8 @@
+         if (killProcesses) {
++            PreventRunningUtils.onCleanUpRemovedTask(component);
++
+             // Find any running processes associated with this app.
+             final String pkg = component.getPackageName();
+             ArrayList<ProcessRecord> procs = new ArrayList<ProcessRecord>();
+@@ -8653,7 +8661,8 @@
                          mStackSupervisor.showLockTaskToast();
                          return false;
                      }
--                    return ActivityRecord.getStackLocked(token).moveTaskToBackLocked(taskId);
+-                    return ActivityRecord.getStackLocked(token).moveTaskToBackLocked(taskId, null);
 +                    return PreventRunningUtils.onMoveActivityTaskToBack(
-+                        ActivityRecord.getStackLocked(token).moveTaskToBackLocked(taskId), token);
++                        ActivityRecord.getStackLocked(token).moveTaskToBackLocked(taskId, null), token);
                  }
              } finally {
                  Binder.restoreCallingIdentity(origId);
-@@ -15753,8 +15762,10 @@
+@@ -14692,8 +14701,10 @@
              final int callingPid = Binder.getCallingPid();
              final int callingUid = Binder.getCallingUid();
              final long origId = Binder.clearCallingIdentity();
 -            ComponentName res = mServices.startServiceLocked(caller, service,
--                    resolvedType, callingPid, callingUid, callingPackage, userId);
+-                    resolvedType, callingPid, callingUid, userId);
 +            PreventRunningUtils.setSenderInStartService(caller);
 +            ComponentName res = PreventRunningUtils.clearSenderInStartService(
 +                mServices.startServiceLocked(caller, service,
-+                    resolvedType, callingPid, callingUid, callingPackage, userId));
++                    resolvedType, callingPid, callingUid, userId));
              Binder.restoreCallingIdentity(origId);
              return res;
          }
-@@ -15985,8 +15996,10 @@
+@@ -14915,8 +14926,10 @@
          }
  
          synchronized(this) {
--            return mServices.bindServiceLocked(caller, token, service,
--                    resolvedType, connection, flags, callingPackage, userId);
+-            return mServices.bindServiceLocked(caller, token, service, resolvedType,
+-                    connection, flags, userId);
 +            PreventRunningUtils.setSenderInBindService(caller);
 +            return PreventRunningUtils.clearSenderInBindService(
-+                mServices.bindServiceLocked(caller, token, service,
-+                    resolvedType, connection, flags, callingPackage, userId));
++                mServices.bindServiceLocked(caller, token, service, resolvedType,
++                    connection, flags, userId));
          }
      }
  
-@@ -17011,11 +17024,13 @@
+@@ -15897,11 +15910,13 @@
              final int callingPid = Binder.getCallingPid();
              final int callingUid = Binder.getCallingUid();
              final long origId = Binder.clearCallingIdentity();
@@ -122,16 +126,18 @@
 +            int res = PreventRunningUtils.onBroadcastIntent(
 +                broadcastIntentLocked(callerApp,
                      callerApp != null ? callerApp.info.packageName : null,
-                     intent, resolvedType, resultTo, resultCode, resultData, resultExtras,
-                     requiredPermissions, appOp, null, serialized, sticky,
+                     intent, resolvedType, resultTo,
+                     resultCode, resultData, map, requiredPermission, appOp, serialized, sticky,
 -                    callingPid, callingUid, userId);
 +                    callingPid, callingUid, userId), intent);
              Binder.restoreCallingIdentity(origId);
              return res;
          }
+diff --git a/services/core/java/com/android/server/am/ActivityStack.java b/services/core/java/com/android/server/am/ActivityStack.java
+index e1b8278..9016490 100755
 --- a/services/core/java/com/android/server/am/ActivityStack.java
 +++ b/services/core/java/com/android/server/am/ActivityStack.java
-@@ -866,6 +866,7 @@
+@@ -851,6 +851,7 @@
                  mService.updateUsageStats(prev, false);
                  prev.app.thread.schedulePauseActivity(prev.appToken, prev.finishing,
                          userLeaving, prev.configChangeFlags, dontWait);
@@ -139,7 +145,7 @@
              } catch (Exception e) {
                  // Ignore exception, if process died other code will cleanup.
                  Slog.w(TAG, "Exception thrown during pause", e);
-@@ -1943,6 +1944,7 @@
+@@ -1856,6 +1857,7 @@
                  next.clearOptionsLocked();
                  next.app.thread.scheduleResumeActivity(next.appToken, next.app.repProcState,
                          mService.isNextTransitionForward(), resumeAnimOptions);
@@ -147,25 +153,30 @@
  
                  mStackSupervisor.checkReadyForSleepLocked();
  
-@@ -3377,6 +3379,7 @@
-                 if (DEBUG_SWITCH) Slog.i(TAG_SWITCH, "Destroying: " + r);
+@@ -3221,6 +3223,7 @@
+                 if (DEBUG_SWITCH) Slog.i(TAG, "Destroying: " + r);
                  r.app.thread.scheduleDestroyActivity(r.appToken, r.finishing,
                          r.configChangeFlags);
 +                PreventRunningUtils.onDestroyActivity(r);
              } catch (Exception e) {
                  // We can just ignore exceptions here...  if the process
                  // has crashed, our death notification will clean things
+diff --git a/services/core/java/com/android/server/am/ActivityStackSupervisor.java b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
+index 03dd3c0..7e1e41f 100644
 --- a/services/core/java/com/android/server/am/ActivityStackSupervisor.java
 +++ b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
-@@ -1286,6 +1286,7 @@
-                     new Configuration(stack.mOverrideConfig), r.compat, r.launchedFromPackage,
-                     task.voiceInteractor, app.repProcState, r.icicle, r.persistentState, results,
-                     newIntents, !andResume, mService.isNextTransitionForward(), profilerInfo);
+@@ -1159,6 +1159,7 @@
+                     r.compat, r.task.voiceInteractor, app.repProcState, r.icicle, r.persistentState,
+                     results, newIntents, !andResume, mService.isNextTransitionForward(),
+                     profilerInfo);
 +            PreventRunningUtils.onLaunchActivity(r);
  
-             if ((app.info.privateFlags&ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE) != 0) {
+             if ((app.info.flags&ApplicationInfo.FLAG_CANT_SAVE_STATE) != 0) {
                  // This may be a heavy-weight process!  Note that the package
---- a/services/core/java/com/android/server/am/PreventRunningUtils.java
+diff --git a/services/core/java/com/android/server/am/PreventRunningUtils.java b/services/core/java/com/android/server/am/PreventRunningUtils.java
+new file mode 100644
+index 0000000..f614d12
+--- /dev/null
 +++ b/services/core/java/com/android/server/am/PreventRunningUtils.java
 @@ -0,0 +1,133 @@
 +package com.android.server.am;
@@ -266,7 +277,7 @@
 +    }
 +
 +    private static ActivityRecord forToken(IBinder token) {
-+        return ActivityRecord.forTokenLocked(token);
++        return ActivityRecord.forToken(token);
 +    }
 +
 +    public static boolean isExcludingStopped(Intent intent) {
@@ -301,7 +312,10 @@
 +        return false;
 +    }
 +}
---- a/services/core/java/me/piebridge/PreventRunning.java
+diff --git a/services/core/java/me/piebridge/PreventRunning.java b/services/core/java/me/piebridge/PreventRunning.java
+new file mode 100644
+index 0000000..b68a5b4
+--- /dev/null
 +++ b/services/core/java/me/piebridge/PreventRunning.java
 @@ -0,0 +1,182 @@
 +package me.piebridge;
@@ -486,7 +500,10 @@
 +        }
 +    }
 +}
---- a/services/core/java/me/piebridge/PreventRunningHook.java
+diff --git a/services/core/java/me/piebridge/PreventRunningHook.java b/services/core/java/me/piebridge/PreventRunningHook.java
+new file mode 100644
+index 0000000..98ea8c0
+--- /dev/null
 +++ b/services/core/java/me/piebridge/PreventRunningHook.java
 @@ -0,0 +1,42 @@
 +package me.piebridge;

@@ -1,4 +1,4 @@
-“阻止运行”支持非Xposed模式，但是需要改动系统。改动有两种方式，一是源码方式，二是直接smali方式。目前提供android 5.1和android 6.0的补丁，本文适用于android 5.1。
+“阻止运行”支持非Xposed模式，但是需要改动系统。改动有两种方式，一是源码方式，二是直接smali方式。目前提供android 5.X和android 6.0的补丁，本文适用于android 5.1。
 
 * 说明
 
