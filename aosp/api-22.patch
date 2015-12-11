@@ -28,16 +28,16 @@
  
          mHandlerThread = new ServiceThread(TAG,
                  android.os.Process.THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
-@@ -2770,6 +2771,9 @@
-             ApplicationInfo info, boolean knownToBeDead, int intentFlags,
-             String hostingType, ComponentName hostingName, boolean allowWhileBooting,
-             boolean isolated, boolean keepIfLarge) {
+@@ -2780,6 +2781,9 @@
+             boolean knownToBeDead, int intentFlags, String hostingType, ComponentName hostingName,
+             boolean allowWhileBooting, boolean isolated, int isolatedUid, boolean keepIfLarge,
+             String abiOverride, String entryPoint, String[] entryPointArgs, Runnable crashHandler) {
 +        if (!PreventRunningUtils.hookStartProcessLocked(info, knownToBeDead, intentFlags, hostingType, hostingName)) {
 +            return null;
 +        }
-         return startProcessLocked(processName, info, knownToBeDead, intentFlags, hostingType,
-                 hostingName, allowWhileBooting, isolated, 0 /* isolatedUid */, keepIfLarge,
-                 null /* ABI override */, null /* entryPoint */, null /* entryPointArgs */,
+         long startTime = SystemClock.elapsedRealtime();
+         ProcessRecord app;
+         if (!isolated) {
 @@ -3353,9 +3357,10 @@
      public final int startActivity(IApplicationThread caller, String callingPackage,
              Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
@@ -327,7 +327,7 @@
 +
 +    private static final String TAG = "Prevent";
 +
-+    private static final int VERSION = 20151202;
++    private static final int VERSION = 20151210;
 +
 +    private PreventRunningHook mPreventRunning;
 +

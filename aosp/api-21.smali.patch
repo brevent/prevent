@@ -168,28 +168,28 @@ baksmali ... -b -s [-x] ...
  
  .method public final startActivityAndWait(Landroid/app/IApplicationThread;Ljava/lang/String;Landroid/content/Intent;Ljava/lang/String;Landroid/os/IBinder;Ljava/lang/String;IILandroid/app/ProfilerInfo;Landroid/os/Bundle;I)Landroid/app/IActivityManager$WaitResult;
      .registers 32
-@@ -66028,10 +66066,21 @@
+@@ -65665,10 +65703,21 @@
  .end method
  
- .method final startProcessLocked(Ljava/lang/String;Landroid/content/pm/ApplicationInfo;ZILjava/lang/String;Landroid/content/ComponentName;ZZZ)Lcom/android/server/am/ProcessRecord;
-     .registers 25
+ .method final startProcessLocked(Ljava/lang/String;Landroid/content/pm/ApplicationInfo;ZILjava/lang/String;Landroid/content/ComponentName;ZZIZLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/Runnable;)Lcom/android/server/am/ProcessRecord;
+     .registers 27
  
 +    invoke-static/range {p2 .. p6}, Lcom/android/server/am/PreventRunningUtils;->hookStartProcessLocked(Landroid/content/pm/ApplicationInfo;ZILjava/lang/String;Landroid/content/ComponentName;)Z
 +
 +    move-result v0
 +
-+    if-nez v0, :cond_0
++    if-nez v0, :cond_o
 +
 +    const/4 v0, 0x0
 +
 +    return-object v0
 +
-+    :cond_0
-     const/4 v9, 0x0
++    :cond_o
+     invoke-static {}, Landroid/os/SystemClock;->elapsedRealtime()J
  
-     const/4 v11, 0x0
+     move-result-wide v10
  
-     const/4 v12, 0x0
+     if-nez p8, :cond_1
 @@ -66233,12 +66282,19 @@
  
      move-object v3, p3
@@ -674,7 +674,7 @@ baksmali ... -b -s [-x] ...
 +
 +.field private static final TAG:Ljava/lang/String; = "Prevent"
 +
-+.field private static final VERSION:I = 0x1337ba2
++.field private static final VERSION:I = 0x1337baa
 +
 +
 +# instance fields
@@ -801,7 +801,7 @@ baksmali ... -b -s [-x] ...
 +
 +    invoke-direct {v5}, Ljava/lang/StringBuilder;-><init>()V
 +
-+    const-string v6, "loading PreventRunning(20151202) from "
++    const-string v6, "loading PreventRunning(20151210) from "
 +
 +    invoke-virtual {v5, v6}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
@@ -1024,7 +1024,7 @@ baksmali ... -b -s [-x] ...
 +
 +    const/4 v4, 0x0
 +
-+    const v5, 0x1337ba2
++    const v5, 0x1337baa
 +
 +    invoke-static {v5}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
 +
