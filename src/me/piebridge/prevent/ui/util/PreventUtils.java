@@ -1,7 +1,9 @@
 package me.piebridge.prevent.ui.util;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +15,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
+import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 
@@ -53,6 +57,26 @@ public class PreventUtils {
         Intent intent = new Intent(PreventIntent.ACTION_REBOOT, Uri.fromParts(PreventIntent.SCHEME, context.getPackageName(), null));
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
         context.sendBroadcast(intent, PreventIntent.PERMISSION_SYSTEM);
+    }
+
+    public static void confirmReboot(final Context context) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.reboot);
+        builder.setMessage(R.string.are_you_sure);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                dialog.dismiss();
+            }
+        });
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                reboot(context);
+            }
+        });
+        builder.create().show();
     }
 
     private static class PreventListReceiver extends BroadcastReceiver {

@@ -141,6 +141,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         preventButton.setOnClickListener(this);
         preventButton.setEnabled(false);
         removeButton.setEnabled(false);
+        findViewById(R.id.mismatch).setOnClickListener(this);
         receiver = new HookReceiver();
 
         mPageTitles = new String[] {getString(R.string.applications), getString(R.string.prevent_list)};
@@ -391,7 +392,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     @Override
     public void onClick(View v) {
-        onClick(v.getId());
+        if (v.getId() == R.id.mismatch) {
+            PreventUtils.confirmReboot(this);
+        } else {
+            onClick(v.getId());
+        }
     }
 
     private boolean onClick(int id) {

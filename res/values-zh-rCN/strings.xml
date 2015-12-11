@@ -16,6 +16,8 @@
 
     <!-- main activity -->
     <string name="version_mismatch">请重启激活当前版本</string>
+    <string name="reboot">重启</string>
+    <string name="are_you_sure">你确定？</string>
     <string name="applications">所有程序</string>
     <string name="prevent_list">阻止列表</string>
     <string name="prevent">自动阻止</string>

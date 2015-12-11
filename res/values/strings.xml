@@ -16,6 +16,8 @@
 
     <!-- main activity -->
     <string name="version_mismatch">Please reboot to active current version</string>
+    <string name="reboot">Reboot</string>
+    <string name="are_you_sure">Are you sure?</string>
     <string name="applications">Applications</string>
     <string name="prevent_list">Prevent List</string>
     <string name="prevent">Auto Prevent</string>

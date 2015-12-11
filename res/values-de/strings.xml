@@ -16,6 +16,8 @@
 
     <!-- main activity -->
     <string name="version_mismatch">Please reboot to active current version (English)</string>
+    <string name="reboot">Geräte-Neustart</string>
+    <string name="are_you_sure">Bist du sicher?</string>
     <string name="applications">Anwendungen</string>
     <string name="prevent_list">Blockier-Liste</string>
     <string name="prevent">Automatisch blockieren</string>

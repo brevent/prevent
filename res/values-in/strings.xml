@@ -16,6 +16,8 @@
 
     <!-- main activity -->
     <string name="version_mismatch">Please reboot to active current version (English)</string>
+    <string name="reboot">Reboot (English)</string>
+    <string name="are_you_sure">Are you sure (English)?</string>
     <string name="applications">Aplikasi</string>
     <string name="prevent_list">Daftar Pencegahan</string>
     <string name="prevent">Pencegahan Otomatis</string>
