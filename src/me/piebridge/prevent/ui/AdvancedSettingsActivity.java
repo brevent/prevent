@@ -40,6 +40,12 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
             PreventIntent.KEY_DESTROY_PROCESSES
     );
 
+    private static Collection<String> KEYS_BOOLEAN = Arrays.asList(
+            PreventIntent.KEY_DESTROY_PROCESSES,
+            PreventIntent.KEY_LOCK_SYNC_SETTINGS,
+            PreventIntent.KEY_USE_APP_STANDBY
+    );
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         ThemeUtils.setTheme(this);
@@ -53,9 +59,12 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         forceStopTimeout.setOnPreferenceChangeListener(this);
         forceStopTimeout.setOnPreferenceClickListener(this);
 
-        DeprecatedUtils.findPreference(this, PreventIntent.KEY_DESTROY_PROCESSES).setOnPreferenceChangeListener(this);
-        DeprecatedUtils.findPreference(this, PreventIntent.KEY_LOCK_SYNC_SETTINGS).setOnPreferenceChangeListener(this);
-        DeprecatedUtils.findPreference(this, PreventIntent.KEY_USE_APP_STANDBY).setOnPreferenceChangeListener(this);
+        for (String key : KEYS_BOOLEAN) {
+            Preference preference = DeprecatedUtils.findPreference(this, key);
+            if (preference != null) {
+                preference.setOnPreferenceChangeListener(this);
+            }
+        }
 
         // check license
         if (BuildConfig.DONATE) {
