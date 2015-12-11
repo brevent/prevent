@@ -15,7 +15,7 @@
 - [smali](http://github.com/JesusFreke/smali) 把smali源码编译成dex，二进制下载在 [smali ‐ Bitbucket](https://bitbucket.org/JesusFreke/smali/downloads) 上。
 - [baksmali](http://github.com/JesusFreke/smali) 把dex反编译成smali，二进制下载`也`在 [smali ‐ Bitbucket](https://bitbucket.org/JesusFreke/smali/downloads) 上。
 - patch 打补丁，Linux/Mac OS X下自带，windows需要下载[Patch for Windows](http://gnuwin32.sourceforge.net/packages/patch.htm)，另外[Git for Windows](https://git-for-windows.github.io/)也自带。
-- [api-23.smali.patch](api-23.smali.patch), [api-22.smali.patch](api-22.smali.patch)
+- [api-23.smali.patch](api-23.smali.patch), [api-23.patch](api-23.patch)
 - (可选) [oat2dex](https://github.com/testwhat/SmaliEx/) 把oat转换成dex，二进制下载在 [Releases - testwhat/SmaliEx](https://github.com/testwhat/SmaliEx/releases) 上。
 
 ## 从系统中获取 `services.jar`
