@@ -13,8 +13,8 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
@@ -35,7 +35,8 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     private AlertDialog dialog;
 
-    private static Collection<String> KEYS_NEED_LICENSE = Collections.singletonList(
+    private static Collection<String> KEYS_NEED_LICENSE = Arrays.asList(
+            PreventIntent.KEY_USE_APP_STANDBY,
             PreventIntent.KEY_DESTROY_PROCESSES
     );
 
@@ -54,6 +55,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
         DeprecatedUtils.findPreference(this, PreventIntent.KEY_DESTROY_PROCESSES).setOnPreferenceChangeListener(this);
         DeprecatedUtils.findPreference(this, PreventIntent.KEY_LOCK_SYNC_SETTINGS).setOnPreferenceChangeListener(this);
+        DeprecatedUtils.findPreference(this, PreventIntent.KEY_USE_APP_STANDBY).setOnPreferenceChangeListener(this);
 
         // check license
         if (BuildConfig.DONATE) {

@@ -57,6 +57,8 @@
     <string name="backup_prevent_list">將阻止列表備份到外部記憶體</string>
     <string name="lock_sync">同步鎖定</string>
     <string name="lock_sync_settings">阻止程式開啟已經關閉的同步設置</string>
+    <string name="use_app_standby">休眠程式</string>
+    <string name="use_app_standby_settings">使用休眠代替強制停止</string>
     <string name="force_stop_label">強制停止背景程式</string>
     <string name="force_stop_summary">背景程式閒置%1$s後（螢幕關閉時處理）</string>
     <string name="force_stop_never">永不（推薦）</string>

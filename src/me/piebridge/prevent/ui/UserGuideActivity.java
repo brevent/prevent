@@ -48,7 +48,6 @@ import me.piebridge.prevent.ui.util.FileUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.QQUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
-import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
@@ -61,8 +60,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     private View donateView;
 
     private AlertDialog request;
-
-    private ProgressDialog dialog;
 
     private ProgressDialog donateDialog;
 
@@ -319,7 +316,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);
         if (BuildConfig.DONATE) {
             menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
-            menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
             if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
                 menu.add(Menu.NONE, R.string.request_license, Menu.NONE, R.string.request_license);
             }
@@ -338,8 +334,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             donateView.setVisibility(View.VISIBLE);
         } else if (id == R.string.feedback) {
             feedback();
-        } else if (id == R.string.report_bug) {
-            requestLog();
         } else if (id == R.string.version) {
             showVersionInfo();
         } else if (id == R.string.advanced_settings) {
@@ -385,17 +379,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
     }
 
-    private void showProcessDialog(int resId) {
-        if (dialog == null) {
-            dialog = new ProgressDialog(this);
-        }
-        dialog.setTitle(R.string.app_name);
-        dialog.setIcon(R.drawable.ic_launcher);
-        dialog.setCancelable(false);
-        dialog.setMessage(getString(resId));
-        dialog.show();
-    }
-
     private void showDonateDialog() {
         RelativeLayout layout = new RelativeLayout(this);
         int pixel = getPixel(0x30);
@@ -424,28 +407,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             receiver = new HookReceiver();
         }
         sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, null, 0, null, null);
-    }
-
-    private void requestLog() {
-        File dir = getExternalCacheDir();
-        if (dir != null) {
-            for (File file : dir.listFiles()) {
-                String path = file.getName();
-                if (path.startsWith("system.") || path.startsWith("prevent.")) {
-                    file.delete();
-                }
-            }
-            Intent intent = new Intent();
-            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
-            intent.setAction(PreventIntent.ACTION_SYSTEM_LOG);
-            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-            UILog.i("sending request log broadcast");
-            showProcessDialog(R.string.retrieving);
-            if (receiver == null) {
-                receiver = new HookReceiver();
-            }
-            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, null, 0, null, null);
-        }
     }
 
     @Override
@@ -482,9 +443,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
-                handleRequestLog();
-            } else if (PreventIntent.ACTION_GET_INFO.equals(action)) {
+            if (PreventIntent.ACTION_GET_INFO.equals(action)) {
                 handleInfo();
             }
         }
@@ -502,16 +461,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             } catch (JSONException e) {
                 UILog.d("cannot get version from " + info, e);
             }
-        }
-
-        private void handleRequestLog() {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    dialog.dismiss();
-                    reportBug();
-                }
-            });
         }
     }
 
@@ -587,10 +536,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             }
         });
         builder.create().show();
-    }
-
-    private void reportBug() {
-        ReportUtils.reportBug(this, getVersionInfo(true));
     }
 
 }

@@ -41,11 +41,14 @@ public class PreventReceiver extends BroadcastReceiver {
         }
         boolean destroyProcesses = getPreference(sp, PreventIntent.KEY_DESTROY_PROCESSES, false);
         boolean lockSyncSettings = getPreference(sp, PreventIntent.KEY_LOCK_SYNC_SETTINGS, false);
+        boolean useAppStandby = getPreference(sp, PreventIntent.KEY_USE_APP_STANDBY, false);
         Bundle bundle = new Bundle();
         bundle.putLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT, timeout);
         bundle.putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, destroyProcesses);
         bundle.putBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS, lockSyncSettings);
-        UILog.d("timeout: " + timeout + ", destroyProcesses: " + destroyProcesses + ", lockSyncSettings: " + lockSyncSettings);
+        bundle.putBoolean(PreventIntent.KEY_USE_APP_STANDBY, useAppStandby);
+        UILog.d("timeout: " + timeout + ", destroyProcesses: " + destroyProcesses
+                + ", lockSyncSettings: " + lockSyncSettings + ", useAppStandby: " + useAppStandby);
         PreventUtils.updateConfiguration(context, bundle);
     }
 

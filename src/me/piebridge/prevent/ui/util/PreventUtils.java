@@ -43,6 +43,18 @@ public class PreventUtils {
         context.sendBroadcast(intent, PreventIntent.PERMISSION_SYSTEM);
     }
 
+    public static void softReboot(Context context) {
+        Intent intent = new Intent(PreventIntent.ACTION_SOFT_REBOOT, Uri.fromParts(PreventIntent.SCHEME, context.getPackageName(), null));
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+        context.sendBroadcast(intent, PreventIntent.PERMISSION_SYSTEM);
+    }
+
+    public static void reboot(Context context) {
+        Intent intent = new Intent(PreventIntent.ACTION_REBOOT, Uri.fromParts(PreventIntent.SCHEME, context.getPackageName(), null));
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+        context.sendBroadcast(intent, PreventIntent.PERMISSION_SYSTEM);
+    }
+
     private static class PreventListReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {

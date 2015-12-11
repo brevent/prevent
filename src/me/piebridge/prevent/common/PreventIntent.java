@@ -18,6 +18,8 @@ public final class PreventIntent {
     public static final String ACTION_CHECK_LICENSE = NAMESPACE + "CHECK_LICENSE";
     public static final String ACTION_UPDATE_CONFIGURATION = NAMESPACE + "UPDATE_CONFIGURATION";
     public static final String ACTION_REGISTERED = NAMESPACE + "REGISTERED";
+    public static final String ACTION_SOFT_REBOOT = NAMESPACE + "SOFT_REBOOT";
+    public static final String ACTION_REBOOT = NAMESPACE + "REBOOT";
 
     public static final String EXTRA_PACKAGES = NAMESPACE + "PACKAGES";
     public static final String EXTRA_PREVENT = NAMESPACE + "PREVENT";
@@ -33,6 +35,7 @@ public final class PreventIntent {
     public static final String KEY_DESTROY_PROCESSES = "destroy_processes";
     public static final String KEY_BACKUP_PREVENT_LIST = "backup_prevent_list";
     public static final String KEY_LOCK_SYNC_SETTINGS = "lock_sync_settings";
+    public static final String KEY_USE_APP_STANDBY = "use_app_standby";
 
     private PreventIntent() {
 

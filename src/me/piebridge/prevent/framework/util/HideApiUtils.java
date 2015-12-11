@@ -40,6 +40,9 @@ public class HideApiUtils {
     }
 
     public static Object getThis0(Object object) {
+        if (object == null) {
+            return null;
+        }
         Class<?> clazz = object.getClass();
         try {
             Field field = clazz.getDeclaredField("this$0");

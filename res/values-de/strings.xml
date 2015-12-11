@@ -58,7 +58,8 @@
     <string name="backup_prevent_list">Blockier-Liste auf externen Speicher sichern</string>
     <string name="lock_sync">Synchronisieren sperren</string>
     <string name="lock_sync_settings">Verhindert, dass Apps deaktivierte Synchronisationseinträge wieder einschalten</string>
-	
+    <string name="use_app_standby">App Standby (English)</string>
+    <string name="use_app_standby_settings">Use standby instead of force stopping (English)</string>
     <string name="force_stop_label">Beenden von Hintergrund-Apps erzwingen</string>
     <string name="force_stop_summary">%1$s nach Bildschirm aus und Inaktivität der Hintergrund-Apps</string>
     <string name="force_stop_never">Nie (Empfohlen)</string>

@@ -33,6 +33,9 @@ import android.widget.Button;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,15 +45,18 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.EmailUtils;
+import me.piebridge.prevent.ui.util.FileUtils;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
-import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 import me.piebridge.prevent.xposed.XposedUtils;
 
@@ -137,7 +143,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         removeButton.setEnabled(false);
         receiver = new HookReceiver();
 
-        mPageTitles = new String[]{getString(R.string.applications), getString(R.string.prevent_list)};
+        mPageTitles = new String[] {getString(R.string.applications), getString(R.string.prevent_list)};
         mPageSelections = new ArrayList<Set<String>>();
         mPageSelections.add(new HashSet<String>());
         mPageSelections.add(new HashSet<String>());
@@ -273,6 +279,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
         menu.add(Menu.NONE, R.string.user_guide, Menu.NONE, R.string.user_guide);
+        menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -281,6 +288,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         int id = item.getItemId();
         if (id == R.string.switch_theme) {
             return switchTheme();
+        } else if (id == R.string.report_bug) {
+            requestLog();
+            return true;
         } else {
             return onClick(id);
         }
@@ -366,7 +376,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     public void changePrevent(String packageName, boolean prevent) {
-        PreventUtils.update(this, new String[]{packageName}, prevent);
+        PreventUtils.update(this, new String[] {packageName}, prevent);
         if (prevent) {
             preventPackages.put(packageName, !running.containsKey(packageName));
         } else {
@@ -505,10 +515,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         return Uri.fromParts("package", getPackageName(), null);
     }
 
-    private void reportBug() {
-        ReportUtils.reportBug(this, null);
-    }
-
     private void showTestDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
@@ -604,7 +610,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             return false;
         }
         String version = getVersion(BuildConfig.VERSION_NAME);
-        if (version.equalsIgnoreCase(name) || version.startsWith(name + "_r")) {
+        String activeVersion = getVersion(name);
+        if (version.equalsIgnoreCase(activeVersion)) {
             return false;
         }
         runOnUiThread(new Runnable() {
@@ -618,14 +625,23 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     /**
      * x.y.z
+     *
      * @param version
      * @return
      */
     private static String getVersion(String version) {
-        int index = -1;
+        int index;
+        String releaseVersion;
         int count = 0x3;
+        index = version.indexOf("_r");
+        if (index != -1) {
+            releaseVersion = version.substring(0, index);
+        } else {
+            releaseVersion = version;
+        }
+        index = -1;
         while (count > 0) {
-            int newIndex = version.indexOf('.', index + 1);
+            int newIndex = releaseVersion.indexOf('.', index + 1);
             if (newIndex == -1) {
                 index = -1;
                 break;
@@ -635,9 +651,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             }
         }
         if (index == -1) {
-            return version;
+            return releaseVersion;
         } else {
-            return version.substring(0, index);
+            return releaseVersion.substring(0, index);
         }
     }
 
@@ -661,7 +677,19 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 updateTimeIfNeeded(packageName);
             } else if (PreventIntent.ACTION_GET_INFO.equals(action)) {
                 handleGetInfo();
+            } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
+                handleRequestLog();
             }
+        }
+
+        private void handleRequestLog() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    dialog.dismiss();
+                    reportBug();
+                }
+            });
         }
 
         private void handleGetInfo() {
@@ -856,6 +884,54 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     public void onStop() {
         preventPackages = null;
         super.onStop();
+    }
+
+    private void reportBug() {
+        File dir = getExternalFilesDir(null);
+        File cacheDir = getExternalCacheDir();
+        if (dir == null || cacheDir == null) {
+            return;
+        }
+        try {
+            File path = new File(dir, "logs.zip");
+            final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
+
+            for (File file : cacheDir.listFiles()) {
+                zos.putNextEntry(new ZipEntry(file.getName()));
+                FileUtils.copyFile(zos, file);
+            }
+
+            File xposedLog = new File(Environment.getDataDirectory() + "/data/de.robv.android.xposed.installer/log/error.log");
+            if (xposedLog.isFile() && xposedLog.canRead()) {
+                zos.putNextEntry(new ZipEntry("xposed.log"));
+                FileUtils.copyFile(zos, xposedLog);
+            }
+
+            zos.close();
+            Runtime.getRuntime().exec("/system/bin/sync");
+            EmailUtils.sendZip(this, path, null);
+        } catch (IOException e) {
+            UILog.d("cannot report bug", e);
+        }
+    }
+
+    private void requestLog() {
+        File dir = getExternalCacheDir();
+        if (dir != null) {
+            for (File file : dir.listFiles()) {
+                String path = file.getName();
+                if (path.startsWith("system.") || path.startsWith("prevent.")) {
+                    file.delete();
+                }
+            }
+            Intent intent = new Intent();
+            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+            intent.setAction(PreventIntent.ACTION_SYSTEM_LOG);
+            intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
+            UILog.i("sending request log broadcast");
+            showProcessDialog(R.string.retrieving);
+            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, null, 0, null, null);
+        }
     }
 
 }

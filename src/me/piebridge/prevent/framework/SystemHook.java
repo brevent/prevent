@@ -1,13 +1,17 @@
 package me.piebridge.prevent.framework;
 
+import android.app.usage.IUsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
+import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.text.TextUtils;
 
 import java.io.BufferedInputStream;
@@ -16,6 +20,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -86,6 +92,7 @@ public final class SystemHook {
     private static final Object RESTORE_LOCK = new Object();
     private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
     private static boolean destroyProcesses;
+    private static boolean useAppStandby;
     private static String currentPackageName;
     private static boolean lockSyncSettings;
     private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
@@ -309,11 +316,58 @@ public final class SystemHook {
         forceStopExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+                if (!Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+                    return;
+                }
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !isUseAppStandby() || !inactive(packageName)) {
                     HideApiUtils.forceStopPackage(mContext, packageName);
                 }
             }
         });
+    }
+
+    private static boolean inactive(String packageName) {
+        IUsageStatsManager usm = IUsageStatsManager.Stub.asInterface(ServiceManager.getService(Context.USAGE_STATS_SERVICE));
+        Object usageStatsService = HideApiUtils.getThis0(usm);
+        if (usageStatsService == null) {
+            return false;
+        }
+        if (isAppInactive(usm, packageName)) {
+            PreventLog.d(packageName + " already inactive");
+        } else {
+            if (!setAppInactive(usageStatsService, packageName)) {
+                return false;
+            }
+            PreventLog.d("set " + packageName + " to inactive, current inactive: " + isAppInactive(usm, packageName));
+        }
+        return isAppInactive(usm, packageName);
+    }
+
+    private static boolean setAppInactive(Object usageStatsService, String packageName) {
+        try {
+            Method method = usageStatsService.getClass().getDeclaredMethod("setAppIdle", String.class, boolean.class, int.class);
+            method.setAccessible(true);
+            method.invoke(usageStatsService, packageName, true, 0);
+            return true;
+        } catch (NoSuchMethodException e) {
+            PreventLog.d("7. cannot inactive(no method) " + packageName, e);
+            return false;
+        } catch (InvocationTargetException e) {
+            PreventLog.d("7. cannot inactive(invoke) " + packageName, e);
+            return false;
+        } catch (IllegalAccessException e) {
+            PreventLog.d("7. cannot inactive(illegal access) " + packageName, e);
+            return false;
+        }
+    }
+
+    private static boolean isAppInactive(IUsageStatsManager usm, String packageName) {
+        try {
+            return usm.isAppInactive(packageName, 0);
+        } catch (RemoteException e) {
+            PreventLog.d("remote exception " + packageName, e);
+            return false;
+        }
     }
 
     public static boolean killNoFather() {
@@ -524,6 +578,14 @@ public final class SystemHook {
 
     public static void setVersion(int version) {
         SystemHook.version = version;
+    }
+
+    public static boolean isUseAppStandby() {
+        return useAppStandby;
+    }
+
+    public static void setUseAppStandby(boolean useAppStandby) {
+        SystemHook.useAppStandby = useAppStandby;
     }
 
     private static class RetrievingTask implements Runnable {

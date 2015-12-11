@@ -76,10 +76,14 @@ abstract class CheckingRunningService implements Runnable {
 
     private void stopServiceIfNeeded(Set<String> shouldStopPackageNames) {
         for (String name : shouldStopPackageNames) {
+            String forceStop = "force stop";
+            if (SystemHook.isUseAppStandby()) {
+                forceStop = "standby";
+            }
             if (SystemHook.isDestroyProcesses()) {
-                PreventLog.i(name + " has running services, force stop it");
+                PreventLog.i(forceStop + " " + name);
             } else {
-                PreventLog.i("force stop " + name);
+                PreventLog.i(name + " has running services, " + forceStop + " it");
             }
             SystemHook.forceStopPackage(name);
         }

@@ -58,6 +58,8 @@
     <string name="backup_prevent_list">Back up prevent list to external storage</string>
     <string name="lock_sync">Lock Sync</string>
     <string name="lock_sync_settings">Prevent apps from turning on disabled sync items</string>
+    <string name="use_app_standby">App Standby</string>
+    <string name="use_app_standby_settings">Use standby instead of force stopping</string>
     <string name="force_stop_label">Force stop background apps</string>
     <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
     <string name="force_stop_never">Never (Recommend)</string>
