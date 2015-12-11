@@ -279,8 +279,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             removeMenu.setVisible(false);
         }
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
-        menu.add(Menu.NONE, R.string.user_guide, Menu.NONE, R.string.user_guide);
         menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
+        menu.add(Menu.NONE, R.string.user_guide, Menu.NONE, R.string.user_guide);
         return super.onCreateOptionsMenu(menu);
     }
 
