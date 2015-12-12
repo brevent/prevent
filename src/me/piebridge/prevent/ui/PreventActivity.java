@@ -96,6 +96,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private boolean initialized;
     private boolean paused;
 
+    private int code;
     private String name;
 
     public int getDangerousColor() {
@@ -392,7 +393,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.mismatch) {
+        if (v.getId() == R.id.mismatch && code > 0) {
             PreventUtils.confirmReboot(this);
         } else {
             onClick(v.getId());
@@ -705,6 +706,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             try {
                 JSONObject json = new JSONObject(info);
                 name = json.optString("name");
+                code = json.optInt("code");
                 showRebootIfNeeded();
             } catch (JSONException e) {
                 UILog.d("cannot get version from " + info, e);

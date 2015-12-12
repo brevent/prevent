@@ -116,6 +116,7 @@ public class SystemReceiver extends ActivityReceiver {
         info.put("method", SystemHook.getMethod());
         info.put("version", SystemHook.getVersion());
         info.put("name", BuildConfig.VERSION_NAME);
+        info.put("code", BuildConfig.VERSION_CODE);
         setResultData(new JSONObject(info).toString());
     }
 

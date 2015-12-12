@@ -33,6 +33,7 @@
                        replace='\1
 public static final boolean RELEASE = false;
 public static final String APPLICATION_ID = "${project.app.package}";
+public static final String VERSION_CODE = "${project.app.versionCode}";
 public static final String VERSION_NAME = "${project.app.versionName}";
 public static final boolean DONATE = false;
 public static final String DONATE_ALIPAY = null;
