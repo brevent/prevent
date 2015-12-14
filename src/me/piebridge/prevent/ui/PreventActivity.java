@@ -34,8 +34,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,18 +43,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
-import me.piebridge.prevent.ui.util.EmailUtils;
-import me.piebridge.prevent.ui.util.FileUtils;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
+import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 import me.piebridge.prevent.xposed.XposedUtils;
 
@@ -495,6 +490,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         builder.create().show();
     }
 
+    private void reportBug() {
+        ReportUtils.clearReport(this);
+    }
+
     private void fixDisabled() {
         if (isInternal()) {
             startXposed();
@@ -893,44 +892,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         super.onStop();
     }
 
-    private void reportBug() {
-        File dir = getExternalFilesDir(null);
-        File cacheDir = getExternalCacheDir();
-        if (dir == null || cacheDir == null) {
-            return;
-        }
-        try {
-            File path = new File(dir, "logs.zip");
-            final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
-
-            for (File file : cacheDir.listFiles()) {
-                zos.putNextEntry(new ZipEntry(file.getName()));
-                FileUtils.copyFile(zos, file);
-            }
-
-            File xposedLog = new File(Environment.getDataDirectory() + "/data/de.robv.android.xposed.installer/log/error.log");
-            if (xposedLog.isFile() && xposedLog.canRead()) {
-                zos.putNextEntry(new ZipEntry("xposed.log"));
-                FileUtils.copyFile(zos, xposedLog);
-            }
-
-            zos.close();
-            Runtime.getRuntime().exec("/system/bin/sync");
-            EmailUtils.sendZip(this, path, null);
-        } catch (IOException e) {
-            UILog.d("cannot report bug", e);
-        }
-    }
-
     private void requestLog() {
         File dir = getExternalCacheDir();
         if (dir != null) {
-            for (File file : dir.listFiles()) {
-                String path = file.getName();
-                if (path.startsWith("system.") || path.startsWith("prevent.")) {
-                    file.delete();
-                }
-            }
+            ReportUtils.clearReport(this);
             Intent intent = new Intent();
             intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
             intent.setAction(PreventIntent.ACTION_SYSTEM_LOG);
