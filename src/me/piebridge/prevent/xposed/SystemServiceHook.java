@@ -106,8 +106,12 @@ public class SystemServiceHook extends XC_MethodHook {
 
         hookActivityManagerServiceHandleAppDiedLocked(activityManagerService, classLoader);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        try {
             XposedHelpers.findAndHookMethod(activityManagerService, "addPackageDependency", String.class, XC_MethodReplacement.DO_NOTHING);
+        } catch (NoSuchMethodError e) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                PreventLog.e("cannot find method ActivityManagerService.addPackageDependency", e);
+            }
         }
 
         getRecordForAppLocked = activityManagerService.getDeclaredMethod("getRecordForAppLocked", IApplicationThread.class);
