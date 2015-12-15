@@ -491,7 +491,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void reportBug() {
-        ReportUtils.clearReport(this);
+        ReportUtils.reportBug(this);
     }
 
     private void fixDisabled() {
