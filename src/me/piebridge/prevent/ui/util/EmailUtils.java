@@ -36,9 +36,9 @@ public class EmailUtils {
         return subject.toString();
     }
 
-    public static void sendEmail(Context context, String content) {
+    public static boolean sendEmail(Context context, String content) {
         if (TextUtils.isEmpty(BuildConfig.EMAIL)) {
-            return;
+            return false;
         }
         Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + BuildConfig.EMAIL));
         intent.putExtra(Intent.EXTRA_SUBJECT, getSubject(context));
@@ -47,8 +47,10 @@ public class EmailUtils {
         }
         try {
             context.startActivity(intent);
+            return true;
         } catch (ActivityNotFoundException e) {
             UILog.d("cannot send email", e);
+            return false;
         }
     }
 

@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,8 +49,10 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
+import me.piebridge.prevent.ui.util.QQUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
@@ -464,7 +467,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.app_name) + "(" + BuildConfig.VERSION_NAME + ")");
         if (result == null) {
-            builder.setMessage(isInternal() ? R.string.xposed_disabled : R.string.install_internal);
+            builder.setMessage(getDisabledMessage());
         } else {
             builder.setMessage(result);
         }
@@ -490,16 +493,39 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         builder.create().show();
     }
 
+    private int getDisabledMessage() {
+        if (!isInternal()) {
+            return R.string.install_internal;
+        } else if (hasXposed()) {
+            return R.string.xposed_disabled;
+        } else {
+            return R.string.no_xposed;
+        }
+    }
+
     private void reportBug() {
         ReportUtils.reportBug(this);
     }
 
     private void fixDisabled() {
-        if (isInternal()) {
-            startXposed();
-        } else {
+        if (!isInternal()) {
             startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, getPackage()));
             finish();
+        } else if (hasXposed()) {
+            startXposed();
+        } else if (!Locale.CHINA.equals(Locale.getDefault()) || !QQUtils.joinQQ(this)) {
+            if (EmailUtils.sendEmail(this, Build.MODEL + ", " + Build.DISPLAY + ", " + Build.FINGERPRINT)) {
+                finish();
+            }
+        }
+    }
+
+    private boolean hasXposed() {
+        try {
+            getPackageManager().getPackageInfo("de.robv.android.xposed.installer", 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
+            return false;
         }
     }
 

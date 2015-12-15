@@ -9,6 +9,7 @@
     <string name="xposed_summary">Hindere Apps am Laufen</string>
     <string name="xposed_disabled">Bitte schalte \"Prevent Running\" im \"Xposed Installer\" ein und starte dein Gerät neu.</string>
     <string name="install_internal">Prevent Running sollte im internen Speicher installiert werden.</string>
+    <string name="no_xposed">Please install Xposed Installer, or add the Prevent Running patch to ROM. (English)</string>
 
     <!-- receiver -->
     <string name="no_prevents">Bitte konfiguriere die Blockier-Liste.</string>

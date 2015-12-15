@@ -9,6 +9,7 @@
     <string name="xposed_summary">Mencegah berjalannya aplikasi.</string>
     <string name="xposed_disabled">Tolong aktifkan \"Prevent Running\" di \"Xposed Installer\", atau matikan kemudian aktifkan \"Prevent Running\".</string>
     <string name="install_internal">Prevent Running harus dipasang di penyimpanan internal.</string>
+    <string name="no_xposed">Please install Xposed Installer, or add the Prevent Running patch to ROM. (English)</string>
 
     <!-- receiver -->
     <string name="no_prevents">Tolong atur daftar pencegahan.</string>

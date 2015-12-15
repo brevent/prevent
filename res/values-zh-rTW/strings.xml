@@ -9,6 +9,7 @@
     <string name="xposed_summary">阻止程式自動運行</string>
     <string name="xposed_disabled">請在『Xposed Installer』中啟用『阻止運行』，或者先禁用再啟用『阻止運行』。 </string>
     <string name="install_internal">『阻止運行』應當安裝在內部存儲。</string>
+    <string name="no_xposed">請先安裝『Xposed Installer』，或者給ROM打『阻止運行』補丁。</string>
 
     <!-- receiver -->
     <string name="no_prevents">請配置『阻止列表』。 </string>
