@@ -837,23 +837,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
         @Override
         protected Set<String> getPackageNames(PreventActivity activity) {
-            Set<String> names = new HashSet<String>();
-            PackageManager pm = activity.getPackageManager();
-            Set<String> removes = new HashSet<String>();
-            for (String packageName : activity.getPreventPackages().keySet()) {
-                try {
-                    pm.getApplicationInfo(packageName, 0);
-                    names.add(packageName);
-                    continue;
-                } catch (PackageManager.NameNotFoundException e) { // NOSONAR
-                    // do nothing
-                }
-                removes.add(packageName);
-            }
-            if (!removes.isEmpty()) {
-                PreventUtils.update(getActivity(), removes.toArray(new String[removes.size()]), false);
-            }
-            return names;
+            return new TreeSet<String>(activity.getPreventPackages().keySet());
         }
 
         @Override
