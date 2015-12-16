@@ -186,7 +186,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             setHeaderIcon(menu, holder.icon);
         }
         menu.add(Menu.NONE, R.string.app_info, Menu.NONE, R.string.app_info);
-        if (holder.checkView.isEnabled()) {
+        if (holder.checkView.isEnabled() || canPreventAll()) {
             updatePreventMenu(menu, holder.packageName);
         }
         if (getMainIntent(holder.packageName) != null) {
@@ -197,6 +197,16 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         }
         if (appNotification) {
             menu.add(Menu.NONE, R.string.app_notifications, Menu.NONE, R.string.app_notifications);
+        }
+    }
+
+    private boolean canPreventAll() {
+        boolean preventAll;
+        if (BuildConfig.DONATE) {
+            String licenseName = LicenseUtils.getRawLicenseName(mActivity);
+            return licenseName != null && licenseName.startsWith("PA");
+        } else {
+            return true;
         }
     }
 
@@ -797,16 +807,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         protected Set<String> getPackageNames(PreventActivity activity) {
             Set<String> names = new HashSet<String>();
             PackageManager pm = activity.getPackageManager();
-            boolean preventAll;
-            if (BuildConfig.DONATE) {
-                String licenseName = LicenseUtils.getRawLicenseName(activity);
-                preventAll = licenseName != null && licenseName.startsWith("PA");
-            } else {
-                preventAll = true;
-            }
             for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
                 ApplicationInfo appInfo = pkgInfo.applicationInfo;
-                if (preventAll || PackageUtils.canPrevent(pm, appInfo)) {
+                if (PackageUtils.canPrevent(pm, appInfo)) {
                     names.add(appInfo.packageName);
                 }
             }
