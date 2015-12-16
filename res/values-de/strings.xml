@@ -16,7 +16,7 @@
     <string name="updated_prevents">Blockier-Liste auf %1$d aktualisiert</string>
 
     <!-- main activity -->
-    <string name="version_mismatch">Please reboot to active current version (English)</string>
+    <string name="version_mismatch">Bitte starte dein Gerät neu, um die aktuelle Version zu aktivieren</string>
     <string name="reboot">Geräte-Neustart</string>
     <string name="are_you_sure">Bist du sicher?</string>
     <string name="applications">Anwendungen</string>
@@ -61,8 +61,8 @@
     <string name="backup_prevent_list">Blockier-Liste auf externen Speicher sichern</string>
     <string name="lock_sync">Synchronisieren sperren</string>
     <string name="lock_sync_settings">Verhindert, dass Apps deaktivierte Synchronisationseinträge wieder einschalten</string>
-    <string name="use_app_standby">App Standby (English)</string>
-    <string name="use_app_standby_settings">Use standby instead of force stopping (English)</string>
+    <string name="use_app_standby">App-Ruhezustand</string>
+    <string name="use_app_standby_settings">Versetze Apps in Standby, anstatt ein Beenden zu erzwingen</string>
     <string name="force_stop_label">Beenden von Hintergrund-Apps erzwingen</string>
     <string name="force_stop_summary">%1$s nach Bildschirm aus und Inaktivität der Hintergrund-Apps</string>
     <string name="force_stop_never">Nie (Empfohlen)</string>
