@@ -326,7 +326,7 @@ public final class SystemHook {
         });
     }
 
-    private static boolean inactive(String packageName) {
+    public static boolean inactive(String packageName) {
         IUsageStatsManager usm = IUsageStatsManager.Stub.asInterface(ServiceManager.getService(Context.USAGE_STATS_SERVICE));
         Object usageStatsService = HideApiUtils.getThis0(usm);
         if (usageStatsService == null) {
@@ -340,6 +340,11 @@ public final class SystemHook {
             }
             PreventLog.d("set " + packageName + " to inactive, current inactive: " + isAppInactive(usm, packageName));
         }
+        return isAppInactive(usm, packageName);
+    }
+
+    public static boolean isAppInactive(String packageName) {
+        IUsageStatsManager usm = IUsageStatsManager.Stub.asInterface(ServiceManager.getService(Context.USAGE_STATS_SERVICE));
         return isAppInactive(usm, packageName);
     }
 
