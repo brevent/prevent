@@ -13,6 +13,7 @@ import android.os.Process;
 import java.util.Map;
 import java.util.Set;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
@@ -112,15 +113,26 @@ public class IntentFilterHook {
         PackageParser.Activity activity = filter.activity;
         PackageParser.Package owner = activity.owner;
         if (owner.receivers.contains(activity)) {
-            return hookReceiver(filter, owner.applicationInfo, sender, action);
+            String packageName = owner.applicationInfo.packageName;
+            if (canIgnoreReceiver(packageName, action)) {
+                // prevent update prevent list
+                LogUtils.logIntentFilter(true, sender, filter, action, packageName);
+                return IntentFilterMatchResult.NO_MATCH;
+            } else {
+                return hookReceiver(filter, packageName, sender, action);
+            }
         } else {
             // we only care about receiver
             return IntentFilterMatchResult.NONE;
         }
     }
 
-    private static IntentFilterMatchResult hookReceiver(PackageParser.ActivityIntentInfo filter, ApplicationInfo ai, String sender, String action) {
-        String packageName = ai.packageName;
+    private static boolean canIgnoreReceiver(String packageName, String action) {
+        return BuildConfig.APPLICATION_ID.equals(packageName) && mPreventPackages.containsKey(BuildConfig.APPLICATION_ID) &&
+                (Intent.ACTION_PACKAGE_ADDED.equals(action) || Intent.ACTION_PACKAGE_REMOVED.equals(action));
+    }
+
+    private static IntentFilterMatchResult hookReceiver(PackageParser.ActivityIntentInfo filter, String packageName, String sender, String action) {
         if (cannotPrevent(packageName, sender, true)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
