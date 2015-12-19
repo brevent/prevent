@@ -17,6 +17,7 @@ import android.os.ParcelFileDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -66,8 +67,39 @@ public class SystemServiceHook extends XC_MethodHook {
             hookActivity(classLoader);
             hookIntentFilter(classLoader);
             hookIntentIfNeeded(classLoader);
+            hookIntentResolver(classLoader);
             PreventLog.d("finish prevent hook (system)");
             systemHooked = true;
+        }
+    }
+
+    private void hookIntentResolver(ClassLoader classLoader) {
+        try {
+            XposedHelpers.findAndHookMethod("com.android.server.IntentResolver", classLoader, "sortResults", List.class, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    if (param.hasThrowable()) {
+                        try {
+                            dump(param);
+                        } catch (Throwable t) {
+                            PreventLog.e("cannot dump", t);
+                        }
+                        param.setThrowable(null);
+                    }
+                }
+
+                private void dump(MethodHookParam param) {
+                    @SuppressWarnings("unchecked")
+                    List<IntentFilter> results = (List<IntentFilter>) param.args[0];
+                    PreventLog.e("sortResults: " + results.size());
+                    for (IntentFilter filter : results) {
+                        PreventLog.e("sortResults, intent filter: " + filter + ", priority: " + filter.getPriority());
+                    }
+                }
+            });
+            PreventLog.d("hooked com.android.server.IntentResolver.sortResults");
+        } catch (Throwable t) {
+            PreventLog.e("cannot hook com.android.server.IntentResolver.sortResults");
         }
     }
 
