@@ -3,7 +3,6 @@ package me.piebridge.prevent.ui;
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -41,7 +40,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,7 +50,6 @@ import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
-import me.piebridge.prevent.ui.util.QQUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
@@ -496,7 +493,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private int getDisabledMessage() {
         if (!isInternal()) {
             return R.string.install_internal;
-        } else if (hasXposed()) {
+        } else if (XposedUtils.hasXposed(this)) {
             return R.string.xposed_disabled;
         } else {
             return R.string.no_xposed;
@@ -511,33 +508,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         if (!isInternal()) {
             startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, getPackage()));
             finish();
-        } else if (hasXposed()) {
-            startXposed();
-        } else if (!Locale.CHINA.equals(Locale.getDefault()) || !QQUtils.joinQQ(this)) {
-            if (EmailUtils.sendEmail(this, Build.MODEL + ", " + Build.DISPLAY + ", " + Build.FINGERPRINT)) {
-                finish();
-            }
-        }
-    }
-
-    private boolean hasXposed() {
-        try {
-            getPackageManager().getPackageInfo("de.robv.android.xposed.installer", 0);
-            return true;
-        } catch (PackageManager.NameNotFoundException e) { // NOSONAR
-            return false;
-        }
-    }
-
-    private void startXposed() {
-        Intent intent = new Intent("de.robv.android.xposed.installer.OPEN_SECTION");
-        intent.setPackage("de.robv.android.xposed.installer");
-        intent.putExtra("section", "modules");
-        intent.putExtra("module", getPackageName());
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try {
-            startActivity(intent);
-        } catch (ActivityNotFoundException e) { // NOSONAR
+        } else if (XposedUtils.hasXposed(this)) {
+            XposedUtils.startXposed(this);
+        } else if (EmailUtils.sendEmail(this, Build.MODEL + ", " + Build.DISPLAY + ", " + Build.FINGERPRINT)) {
             finish();
         }
     }

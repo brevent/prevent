@@ -174,9 +174,13 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         return headerIconWidth;
     }
 
+    private boolean canCreateContextMenu(ContextMenu menu, ContextMenuInfo menuInfo) {
+        return mActivity != null && menu != null && menuInfo != null;
+    }
+
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-        if (mActivity == null || menu == null || menuInfo == null) {
+        if (!canCreateContextMenu(menu, menuInfo)) {
             return;
         }
         menu.clear();
@@ -201,7 +205,6 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     }
 
     private boolean canPreventAll() {
-        boolean preventAll;
         if (BuildConfig.DONATE) {
             String licenseName = LicenseUtils.getRawLicenseName(mActivity);
             return licenseName != null && licenseName.startsWith("PA");
