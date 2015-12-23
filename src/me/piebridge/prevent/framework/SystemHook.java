@@ -92,11 +92,14 @@ public final class SystemHook {
     private static ScheduledThreadPoolExecutor restoreExecutor = new ScheduledThreadPoolExecutor(0x2);
     private static final Object RESTORE_LOCK = new Object();
     private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
+
+    private static String currentPackageName;
+    private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
+
     private static boolean destroyProcesses;
     private static boolean useAppStandby;
-    private static String currentPackageName;
     private static boolean lockSyncSettings;
-    private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
+
     private static int version;
     private static String method;
 
@@ -530,7 +533,7 @@ public final class SystemHook {
     }
 
     public static boolean isDestroyProcesses() {
-        return destroyProcesses;
+        return SystemHook.destroyProcesses;
     }
 
     public static String getCurrentPackageName() {
@@ -556,7 +559,7 @@ public final class SystemHook {
             @Override
             public void run() {
                 AccountWatcher accountWatcher = ActivityManagerServiceHook.getAccountWatcher();
-                if (lockSyncSettings && Boolean.FALSE.equals(syncPackages.get(packageName)) && Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+                if (SystemHook.lockSyncSettings && Boolean.FALSE.equals(syncPackages.get(packageName)) && Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
                     PreventLog.d("reset sync for " + packageName + " to false");
                     accountWatcher.setSyncable(packageName, false);
                 }
@@ -569,11 +572,11 @@ public final class SystemHook {
     }
 
     public static int getVersion() {
-        return version;
+        return SystemHook.version;
     }
 
     public static String getMethod() {
-        return method;
+        return SystemHook.method;
     }
 
     public static void setMethod(String method) {
@@ -585,7 +588,7 @@ public final class SystemHook {
     }
 
     public static boolean isUseAppStandby() {
-        return useAppStandby;
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && SystemHook.useAppStandby;
     }
 
     public static void setUseAppStandby(boolean useAppStandby) {
@@ -693,7 +696,7 @@ public final class SystemHook {
     public static void forceStopPackage(String packageName, boolean force) {
         if (force) {
             HideApiUtils.forceStopPackage(mContext, packageName);
-        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !SystemHook.isUseAppStandby() || !SystemHook.inactive(packageName)) {
+        } else if (!isUseAppStandby() || !inactive(packageName)) {
             NotificationManagerServiceUtils.keepNotification(packageName);
             HideApiUtils.forceStopPackage(mContext, packageName);
         }
