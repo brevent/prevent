@@ -78,6 +78,7 @@ public class SystemServiceHook extends XC_MethodHook {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 if (param.hasThrowable()) {
+                    PreventLog.e("ignore order in sortResults", param.getThrowable());
                     param.setThrowable(null);
                 }
             }
