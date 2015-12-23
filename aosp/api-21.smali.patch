@@ -99,7 +99,7 @@ baksmali ... -b -s [-x] ...
      move v7, p7
  
 +    # .method public bindService(Landroid/app/IApplicationThread;Landroid/os/IBinder;Landroid/content/Intent;Ljava/lang/String;Landroid/app/IServiceConnection;II)I
-+    invoke-static {p1}, Lcom/android/server/am/PreventRunningUtils;->setSenderInBindService(Landroid/app/IApplicationThread;)V
++    invoke-static/range {p1 .. p1}, Lcom/android/server/am/PreventRunningUtils;->setSenderInBindService(Landroid/app/IApplicationThread;)V
 +
      invoke-virtual/range {v0 .. v7}, Lcom/android/server/am/ActiveServices;->bindServiceLocked(Landroid/app/IApplicationThread;Landroid/os/IBinder;Landroid/content/Intent;Ljava/lang/String;Landroid/app/IServiceConnection;II)I
  
