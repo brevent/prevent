@@ -43,7 +43,7 @@ public class NotificationManagerServiceUtils {
             Notification.FLAG_NO_CLEAR,
             Notification.FLAG_ONGOING_EVENT};
 
-    private static Set<String> mPackages = new HashSet<String>();
+    private static Set<String> mKeepNotificationPackages = new HashSet<String>();
     private static Boolean success;
     private static ScheduledThreadPoolExecutor clearExecutor = new ScheduledThreadPoolExecutor(0x1);
 
@@ -141,7 +141,7 @@ public class NotificationManagerServiceUtils {
     }
 
     public static boolean canHook(Object filter, Uri data, String action) {
-        return canHook(filter, action) && !mPackages.remove(data.getSchemeSpecificPart());
+        return canHook(filter, action) && mKeepNotificationPackages.remove(data.getSchemeSpecificPart());
     }
 
     private static boolean canHook(Object filter, String action) {
@@ -169,8 +169,8 @@ public class NotificationManagerServiceUtils {
         }
     }
 
-    public static void onRemoveTask(String packageName) {
-        mPackages.add(packageName);
+    public static void keepNotification(String packageName) {
+        mKeepNotificationPackages.add(packageName);
     }
 
 }

@@ -225,8 +225,7 @@ public class ActivityManagerServiceHook {
                 public void run() {
                     if (Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
                         LogUtils.logForceStop("removeTask", packageName, "");
-                        NotificationManagerServiceUtils.onRemoveTask(packageName);
-                        HideApiUtils.forceStopPackage(mContext, packageName);
+                        SystemHook.forceStopPackage(packageName, true);
                     }
                 }
             });

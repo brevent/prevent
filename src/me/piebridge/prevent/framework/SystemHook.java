@@ -45,6 +45,7 @@ import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.LogcatUtils;
+import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.ui.PreventProvider;
 
 public final class SystemHook {
@@ -250,7 +251,7 @@ public final class SystemHook {
         }
         if (GmsUtils.canStopGms()) {
             if (forcestop) {
-                forceStopPackage(packageName);
+                forceStopPackageIfNeeded(packageName);
             }
             return Collections.emptyList();
         } else {
@@ -309,7 +310,7 @@ public final class SystemHook {
         return whiteList;
     }
 
-    public static void forceStopPackage(final String packageName) {
+    public static void forceStopPackageIfNeeded(final String packageName) {
         if (!Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
             return;
         }
@@ -319,9 +320,7 @@ public final class SystemHook {
                 if (!Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
                     return;
                 }
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !isUseAppStandby() || !inactive(packageName)) {
-                    HideApiUtils.forceStopPackage(mContext, packageName);
-                }
+                forceStopPackage(packageName, false);
             }
         });
     }
@@ -688,6 +687,15 @@ public final class SystemHook {
                 }
             }, TIME_CHECK_DISALLOW, TimeUnit.SECONDS);
             restoreFutures.put(packageName, restoreFuture);
+        }
+    }
+
+    public static void forceStopPackage(String packageName, boolean force) {
+        if (force) {
+            HideApiUtils.forceStopPackage(mContext, packageName);
+        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !SystemHook.isUseAppStandby() || !SystemHook.inactive(packageName)) {
+            NotificationManagerServiceUtils.keepNotification(packageName);
+            HideApiUtils.forceStopPackage(mContext, packageName);
         }
     }
 

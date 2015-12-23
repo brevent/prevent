@@ -297,9 +297,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
                 break;
             }
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || !hasHighPriority(packageName)) {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !SystemHook.isUseAppStandby() || !SystemHook.inactive(packageName)) {
-                    HideApiUtils.forceStopPackage(mContext, packageName);
-                }
+                SystemHook.forceStopPackage(packageName, false);
                 leavingPackages.remove(packageName);
                 checkLeavingNext.remove(packageName);
             }

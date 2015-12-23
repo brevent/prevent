@@ -85,7 +85,7 @@ abstract class CheckingRunningService implements Runnable {
             } else {
                 PreventLog.i(name + " has running services, " + forceStop + " it");
             }
-            SystemHook.forceStopPackage(name);
+            SystemHook.forceStopPackageIfNeeded(name);
         }
     }
 
