@@ -18,9 +18,7 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.AccountWatcher;
-import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
-import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
 
 /**
