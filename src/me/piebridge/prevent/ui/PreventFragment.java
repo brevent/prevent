@@ -57,7 +57,6 @@ import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
-import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.StatusUtils;
 
 public abstract class PreventFragment extends ListFragment implements AbsListView.OnScrollListener {
