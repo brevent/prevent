@@ -19,6 +19,7 @@ import java.util.Set;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.PreventLog;
+import me.piebridge.prevent.framework.SystemHook;
 
 /**
  * Created by thom on 15/7/31.
@@ -27,6 +28,7 @@ public class SafeActionUtils {
 
     private static final Object LOCK = new Object();
     private static Map<String, Set<ComponentName>> syncAdapters = new HashMap<String, Set<ComponentName>>();
+    private static Map<String, Set<ComponentName>> accountAdapters = new HashMap<String, Set<ComponentName>>();
     private static Map<String, Set<ComponentName>> safeActions = new HashMap<String, Set<ComponentName>>();
     private static Set<ComponentName> widgets = new HashSet<ComponentName>();
     private static Map<String, Collection<String>> SAFE_PACKAGE_ACTIONS = new HashMap<String, Collection<String>>();
@@ -44,6 +46,7 @@ public class SafeActionUtils {
         if (packageName != null) {
             synchronized (LOCK) {
                 syncAdapters.remove(packageName);
+                accountAdapters.remove(packageName);
                 safeActions.remove(packageName);
             }
         }
@@ -70,12 +73,26 @@ public class SafeActionUtils {
         return widgets.contains(cn);
     }
 
-    public static boolean isSyncService(Context context, ComponentName cn) {
-        return isSafeActionCache(syncAdapters, cn) || isSyncAdapter(context, cn);
+    public static boolean isSyncService(Context context, ComponentName cn, String sender) {
+        return SystemHook.isFramework(sender) && isSafeActionCache(syncAdapters, cn) || isSyncAdapter(context, cn);
+    }
+
+    public static boolean isAccountService(Context context, ComponentName cn, String sender) {
+        return SystemHook.isFramework(sender) && isSafeActionCache(accountAdapters, cn) || isAccountAdapter(context, cn);
+    }
+
+    private static boolean isAccountAdapter(Context context, ComponentName cn) {
+        PreventLog.v("check account authenticator for service: " + cn.flattenToShortString());
+        if (isActionService(context, cn, "android.accounts.AccountAuthenticator")) {
+            addSafeActions(accountAdapters, cn);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public static boolean isSyncAdapter(Context context, ComponentName cn) {
-        PreventLog.v("check account for service: " + cn.flattenToShortString());
+        PreventLog.v("check sync adapter for service: " + cn.flattenToShortString());
         if (isActionService(context, cn, "android.content.SyncAdapter")) {
             addSafeActions(syncAdapters, cn);
             return true;

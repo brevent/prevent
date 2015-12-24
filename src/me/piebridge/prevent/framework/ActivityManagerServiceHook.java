@@ -104,19 +104,41 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        if (SystemHook.isFramework(sender) && SafeActionUtils.isSyncService(mContext, hostingName)) {
+        if (SafeActionUtils.isSyncService(mContext, hostingName, sender)) {
             return hookSyncService(hostingName, hostingType, packageName, sender);
+        }
+        if (SafeActionUtils.isAccountService(mContext, hostingName, sender)) {
+            return hookAccountService(hostingName, hostingType, packageName, sender);
         }
         if (GmsUtils.isGms(packageName)) {
             return hookGmsService(hostingName, hostingType, packageName, sender);
         }
-        if (sender == null || cannotPrevent(sender, packageName) || SafeActionUtils.cannotPrevent(mContext, hostingName)) {
+        if (cannotPrevent(sender, packageName, hostingName)) {
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType, hostingName, sender);
             return true;
+        } else {
+            LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
+            return false;
         }
-        LogUtils.logStartProcess(true, packageName, hostingType, hostingName, sender);
-        return false;
+    }
+
+    private static boolean hookAccountService(ComponentName hostingName, String hostingType, String packageName, String sender) {
+        String currentPackageName = SystemHook.getCurrentPackageName();
+        PreventLog.d("account authenticator, current package: " + currentPackageName + ", " + hostingName.flattenToShortString());
+        if (currentPackageName == null || cannotPrevent(currentPackageName) || (GmsUtils.isGapps(packageName) && GmsUtils.isGapps(currentPackageName))) {
+            handleSafeService(packageName);
+            SystemHook.checkRunningServices(packageName, true);
+            LogUtils.logStartProcess(packageName, hostingType + "(account)", hostingName, sender);
+            return true;
+        } else {
+            LogUtils.logStartProcess(true, packageName, hostingType + "(account)", hostingName, sender);
+            return false;
+        }
+    }
+
+    private static boolean cannotPrevent(String sender, String packageName, ComponentName hostingName) {
+        return sender == null || cannotPrevent(sender, packageName) || SafeActionUtils.cannotPrevent(mContext, hostingName);
     }
 
     private static boolean hookGmsService(ComponentName hostingName, String hostingType, String packageName, String sender) {
