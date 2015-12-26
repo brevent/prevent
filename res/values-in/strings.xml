@@ -9,16 +9,16 @@
     <string name="xposed_summary">Mencegah berjalannya aplikasi.</string>
     <string name="xposed_disabled">Tolong aktifkan \"Prevent Running\" di \"Xposed Installer\", atau matikan kemudian aktifkan \"Prevent Running\".</string>
     <string name="install_internal">Prevent Running harus dipasang di penyimpanan internal.</string>
-    <string name="no_xposed">Please install Xposed Installer, or add the Prevent Running patch to ROM. (English)</string>
+    <string name="no_xposed">Tolong instal Xposed Installer, atau tambah patch Prevent Running ke ROM.</string>
 
     <!-- receiver -->
     <string name="no_prevents">Tolong atur daftar pencegahan.</string>
     <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
 
     <!-- main activity -->
-    <string name="version_mismatch">Please reboot to active current version (English)</string>
-    <string name="reboot">Reboot (English)</string>
-    <string name="are_you_sure">Are you sure (English)?</string>
+    <string name="version_mismatch">Tolong boot ulang untuk mengaktifkan versi sekarang</string>
+    <string name="reboot">Boot ulang</string>
+    <string name="are_you_sure">Apa kamu yakin?</string>
     <string name="applications">Aplikasi</string>
     <string name="prevent_list">Daftar Pencegahan</string>
     <string name="prevent">Pencegahan Otomatis</string>
@@ -59,10 +59,10 @@
     <string name="destroy_processes_summary">Paksa berhenti aplikasi setelah pengguna meniadakan semua aktifitas (disarankan off)</string>
     <string name="backup">Cadangkan</string>
     <string name="backup_prevent_list">Cadangkan daftar pencegahan ke penyimpanan eksternal</string>
-    <string name="lock_sync">Lock Sync (English)</string>
-    <string name="lock_sync_settings">Prevent apps from turning on disabled sync items (English)</string>
-    <string name="use_app_standby">App Standby (English)</string>
-    <string name="use_app_standby_settings">Use standby instead of force stopping (English)</string>
+    <string name="lock_sync">Kunci Sync</string>
+    <string name="lock_sync_settings">Cegah aplikasi dari menyalakan item sync yang dinonaktifkan</string>
+    <string name="use_app_standby">Aplikasi siaga</string>
+    <string name="use_app_standby_settings">Gunakan siaga daripada henti paksa aplikasi</string>
     <string name="force_stop_label">Paksa berhenti aplikasi latar belakang</string>
     <string name="force_stop_summary">Layar mati, dan setelah %1$s ketidakaktifan dengan aplikasi latar belakang</string>
     <string name="force_stop_never">Jangan pernah (Disarankan)</string>
@@ -95,6 +95,6 @@
     <string name="licensed">Berlisensi</string>
 
     <!-- google play in-app billing -->
-    <string name="play_verify_error">Kegagalan untuk memverifikasi pembelian Anda, jangan retak Google Play In-app Billing.</string>
+    <string name="play_verify_error">Kegagalan untuk memverifikasi pembelian Anda, jangan merusak Google Play In-app Billing.</string>
 
 </resources>
