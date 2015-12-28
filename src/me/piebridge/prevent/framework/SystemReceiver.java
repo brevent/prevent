@@ -136,7 +136,7 @@ public class SystemReceiver extends ActivityReceiver {
             SystemHook.setLockSyncSettings(lockSyncSettings);
         }
         if (bundle.containsKey(PreventIntent.KEY_USE_APP_STANDBY)) {
-            boolean useAppStandby = bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS);
+            boolean useAppStandby = bundle.getBoolean(PreventIntent.KEY_USE_APP_STANDBY);
             PreventLog.i("update use app standby settings to " + useAppStandby);
             SystemHook.setUseAppStandby(useAppStandby);
         }

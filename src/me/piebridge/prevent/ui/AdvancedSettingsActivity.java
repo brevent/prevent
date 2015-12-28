@@ -36,6 +36,8 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     private AlertDialog dialog;
 
+    private boolean changed;
+
     private static Collection<String> KEYS_NEED_LICENSE = Collections.singletonList(
             PreventIntent.KEY_DESTROY_PROCESSES
     );
@@ -99,6 +101,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     protected void onResume() {
         super.onResume();
+        changed = false;
         if (BuildConfig.DONATE) {
             checkLicense();
         }
@@ -125,7 +128,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
             LicenseUtils.requestLicense(this, license, accounts);
             return false;
         }
-        PreventReceiver.updateConfiguration(this);
+        changed = true;
         // tricky to fix for android 2.3
         preference.setShouldDisableView(true);
         return true;
@@ -140,6 +143,14 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         } else {
             return false;
         }
+    }
+
+    @Override
+    protected void onPause() {
+        if (changed) {
+            PreventReceiver.updateConfiguration(this);
+        }
+        super.onPause();
     }
 
 }
