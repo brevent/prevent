@@ -9,7 +9,7 @@
     <string name="xposed_summary">Prevent applications from running.</string>
     <string name="xposed_disabled">Please enable \"Prevent Running\" in \"Xposed Installer\", or disable then enable \"Prevent Running\".</string>
     <string name="install_internal">Prevent Running should be installed in internal storage.</string>
-    <string name="no_xposed">Please install Xposed Installer, or add the Prevent Running patch to ROM.</string>
+    <string name="no_xposed">Please install Xposed Installer.</string>
 
     <!-- receiver -->
     <string name="no_prevents">Please configure prevent list.</string>
