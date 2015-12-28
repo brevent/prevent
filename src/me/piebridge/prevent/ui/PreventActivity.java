@@ -510,7 +510,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             finish();
         } else if (XposedUtils.hasXposed(this)) {
             XposedUtils.startXposed(this);
-        } else if (EmailUtils.sendEmail(this, Build.MODEL + ", " + Build.DISPLAY + ", " + Build.FINGERPRINT)) {
+        } else {
             finish();
         }
     }

@@ -20,7 +20,6 @@ android {
         buildConfigField "String", "DONATE_ALIPAY", "null"
         buildConfigField "String", "DONATE_PAYPAL", "null"
         buildConfigField "String", "EMAIL", "null"
-        buildConfigField "String", "QUN", "null"
     }
 
     buildTypes {

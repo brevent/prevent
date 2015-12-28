@@ -46,7 +46,6 @@ import me.piebridge.prevent.ui.util.DeprecatedUtils;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.FileUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
-import me.piebridge.prevent.ui.util.QQUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
@@ -345,9 +344,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     }
 
     private void feedback() {
-        if (!Locale.CHINA.equals(Locale.getDefault()) || !QQUtils.joinQQ(this)) {
-            EmailUtils.sendEmail(this, getString(R.string.feedback));
-        }
+        EmailUtils.sendEmail(this, getString(R.string.feedback));
     }
 
     private boolean checkLicense() {

@@ -39,7 +39,6 @@ public static final boolean DONATE = false;
 public static final String DONATE_ALIPAY = null;
 public static final String DONATE_PAYPAL = null;
 public static final String EMAIL = null;
-public static final String QUN = null;
 
 ' />
     </target>
