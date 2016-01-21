@@ -25,7 +25,7 @@
     <string name="remove">Blockieren entfernen</string>
 
     <!-- search hint -->
-    <string name="query_hint">\"-3\" für Benuteranwendungen</string>
+    <string name="query_hint">\"-3\" für Benutzeranwendungen</string>
     <string name="query_hint_system">\"-s\" für Systemanwendungen</string>
 
     <!-- main menu -->
