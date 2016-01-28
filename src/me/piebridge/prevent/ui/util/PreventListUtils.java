@@ -19,6 +19,7 @@ import java.util.TreeSet;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.PreventReceiver;
 import me.piebridge.prevent.ui.UILog;
 
 public final class PreventListUtils {
@@ -28,6 +29,7 @@ public final class PreventListUtils {
 
     private static final int MAX_WAIT = 3000;
     private static final int SINGLE_WAIT = 1000;
+    private static boolean synced = false;
 
     private PreventListUtils() {
 
@@ -72,9 +74,15 @@ public final class PreventListUtils {
         }
     }
 
-    public static void saveIfNeeded(Context context, Set<String> packages) {
+    public static void syncIfNeeded(Context context, Set<String> packages) {
         if (!new File(PREVENT).exists()) {
             save(context, packages);
+        } else if(packages.isEmpty() && !synced) {
+            synced = true;
+            Set<String> prevents = load(context);
+            if (!prevents.isEmpty()) {
+                PreventReceiver.updateConfiguration(context, true);
+            }
         }
     }
 

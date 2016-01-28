@@ -46,7 +46,7 @@ public class PreventReceiver extends BroadcastReceiver {
         updateConfiguration(context, false);
     }
 
-    private static void updateConfiguration(Context context, boolean updatePreventList) {
+    public static void updateConfiguration(Context context, boolean updatePreventList) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         long timeout = -1;
         try {
