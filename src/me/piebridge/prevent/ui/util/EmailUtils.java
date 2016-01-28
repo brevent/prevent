@@ -60,7 +60,7 @@ public class EmailUtils {
         }
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
-        intent.setType("application/zip");
+        intent.setType("vnd.android.cursor.dir/email");
         intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(path));
         intent.putExtra(Intent.EXTRA_SUBJECT, EmailUtils.getSubject(context));
         intent.putExtra(Intent.EXTRA_TEXT, content);
