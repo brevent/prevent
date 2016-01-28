@@ -56,6 +56,7 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
+import me.piebridge.prevent.ui.util.LabelLoader;
 import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.StatusUtils;
 
@@ -708,6 +709,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
         private class RetrieveInfoTask extends AsyncTask<Void, Integer, Set<AppInfo>> {
             ProgressDialog dialog;
+            LabelLoader labelLoader;
 
             @Override
             protected void onPreExecute() {
@@ -718,6 +720,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 dialog.setCancelable(false);
                 dialog.setMax(mNames.size());
                 dialog.show();
+                labelLoader = new LabelLoader(mActivity);
             }
 
             @Override
@@ -736,7 +739,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                     if (info == null || !info.enabled) {
                         continue;
                     }
-                    String label = info.loadLabel(mPm).toString();
+                    String label = labelLoader.loadLabel(info);
                     applications.add(new AppInfo(name, label, running.get(name)).setFlags(info.flags));
                 }
                 return applications;
