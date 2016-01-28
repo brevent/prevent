@@ -43,6 +43,9 @@
             <intent-filter>
                 <action android:name="me.piebridge.prevent.REGISTERED" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="me.piebridge.prevent.NOT_SUPPORTED" />
+            </intent-filter>
         </receiver>
 
         <activity

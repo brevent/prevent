@@ -14,6 +14,7 @@
     <!-- receiver -->
     <string name="no_prevents">Bitte konfiguriere die Blockier-Liste.</string>
     <string name="updated_prevents">Blockier-Liste auf %1$d aktualisiert</string>
+    <string name="not_supported">ROM wird nicht unterstützt: Bitte melden Sie den Fehler an die Entwickler.</string>
 
     <!-- main activity -->
     <string name="version_mismatch">Bitte starte dein Gerät neu, um die aktuelle Version zu aktivieren</string>

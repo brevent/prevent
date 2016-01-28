@@ -37,6 +37,8 @@ public class PreventReceiver extends BroadcastReceiver {
             PreventUtils.update(context, new String[]{packageName}, true);
         } else if (PreventIntent.ACTION_REGISTERED.equals(action)) {
             updateConfiguration(context, true);
+        } else if (PreventIntent.ACTION_NOT_SUPPORTED.equals(action)) {
+            notifyNotSupported(context);
         }
     }
 
@@ -117,4 +119,21 @@ public class PreventReceiver extends BroadcastReceiver {
         return path.delete();
     }
 
+    private static void notifyNotSupported(Context context) {
+        Intent open = new Intent(context, PreventActivity.class);
+        open.setAction(PreventIntent.ACTION_NOT_SUPPORTED);
+        open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent activity = PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification notification = new NotificationCompat.Builder(context)
+                .setAutoCancel(false)
+                .setContentTitle(context.getText(R.string.app_name))
+                .setContentText(context.getText(R.string.not_supported))
+                .setTicker(context.getText(R.string.app_name))
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(activity).build();
+
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.notify(0, notification);
+    }
 }

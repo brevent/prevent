@@ -14,6 +14,7 @@
     <!-- receiver -->
     <string name="no_prevents">Tolong atur daftar pencegahan.</string>
     <string name="updated_prevents">Daftar pencegahan diupdate ke %1$d</string>
+    <string name="not_supported">ROM tidak didukung, tolong laporkan kesalahan.</string>
 
     <!-- main activity -->
     <string name="version_mismatch">Tolong boot ulang untuk mengaktifkan versi sekarang</string>

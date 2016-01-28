@@ -47,7 +47,6 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
-import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
@@ -161,7 +160,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             // do nothing
         }
 
-        if (!BuildConfig.RELEASE) {
+        if (PreventIntent.ACTION_NOT_SUPPORTED.equals(getIntent().getAction())) {
+            reportBug();
+        } else if (!BuildConfig.RELEASE) {
             showTestDialog();
         } else {
             initialize();

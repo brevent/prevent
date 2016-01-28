@@ -98,6 +98,7 @@ public final class SystemHook {
 
     private static int version;
     private static String method;
+    private static boolean supported = true;
 
     private SystemHook() {
 
@@ -577,6 +578,20 @@ public final class SystemHook {
 
     public static void setUseAppStandby(boolean useAppStandby) {
         SystemHook.useAppStandby = useAppStandby;
+    }
+
+    public static void setNotSupported() {
+        if (isSupported()) {
+            SystemHook.supported = false;
+            Intent intent = new Intent(PreventIntent.ACTION_NOT_SUPPORTED);
+            intent.setPackage(BuildConfig.APPLICATION_ID);
+            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+            mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
+        }
+    }
+
+    public static boolean isSupported() {
+        return supported;
     }
 
     private static class RetrievingTask implements Runnable {

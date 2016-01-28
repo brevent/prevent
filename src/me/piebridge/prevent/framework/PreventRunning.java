@@ -33,72 +33,92 @@ public class PreventRunning implements PreventRunningHook {
 
     @Override
     public void setSender(String sender) {
-        mSender.set(sender);
+        if (SystemHook.isSupported()) {
+            mSender.set(sender);
+        }
     }
 
     @Override
     public void onBroadcastIntent(Intent intent) {
-        String action = intent.getAction();
-        if (AppWidgetManager.ACTION_APPWIDGET_ENABLED.equals(action)) {
-            SafeActionUtils.updateWidget(intent.getComponent(), true);
-        } else if (AppWidgetManager.ACTION_APPWIDGET_DISABLED.equals(action)) {
-            SafeActionUtils.updateWidget(intent.getComponent(), false);
+        if (SystemHook.isSupported()) {
+            String action = intent.getAction();
+            if (AppWidgetManager.ACTION_APPWIDGET_ENABLED.equals(action)) {
+                SafeActionUtils.updateWidget(intent.getComponent(), true);
+            } else if (AppWidgetManager.ACTION_APPWIDGET_DISABLED.equals(action)) {
+                SafeActionUtils.updateWidget(intent.getComponent(), false);
+            }
         }
     }
 
     @Override
     public void onCleanUpRemovedTask(String packageName) {
-        ActivityManagerServiceHook.onCleanUpRemovedTask(packageName);
+        if (SystemHook.isSupported()) {
+            ActivityManagerServiceHook.onCleanUpRemovedTask(packageName);
+        }
     }
 
     @Override
     public void onStartHomeActivity(String packageName) {
-        SystemHook.onStartHomeActivity(packageName);
+        if (SystemHook.isSupported()) {
+            SystemHook.onStartHomeActivity(packageName);
+        }
     }
 
     @Override
     public void onMoveActivityTaskToBack(String packageName) {
-        SystemHook.onMoveActivityToBack(packageName);
+        if (SystemHook.isSupported()) {
+            SystemHook.onMoveActivityToBack(packageName);
+        }
     }
 
     @Override
     public void onAppDied(Object processRecord) {
-        SystemHook.onAppDied(processRecord);
+        if (SystemHook.isSupported()) {
+            SystemHook.onAppDied(processRecord);
+        }
     }
 
     @Override
     public void onLaunchActivity(Object activityRecord) {
-        SystemHook.onLaunchActivity(activityRecord);
+        if (SystemHook.isSupported()) {
+            SystemHook.onLaunchActivity(activityRecord);
+        }
     }
 
     @Override
     public void onResumeActivity(Object activityRecord) {
-        SystemHook.onResumeActivity(activityRecord);
+        if (SystemHook.isSupported()) {
+            SystemHook.onResumeActivity(activityRecord);
+        }
     }
 
     @Override
     public void onUserLeavingActivity(Object activityRecord) {
-        SystemHook.onUserLeavingActivity(activityRecord);
+        if (SystemHook.isSupported()) {
+            SystemHook.onUserLeavingActivity(activityRecord);
+        }
     }
 
     @Override
     public void onDestroyActivity(Object activityRecord) {
-        SystemHook.onDestroyActivity(activityRecord);
+        if (SystemHook.isSupported()) {
+            SystemHook.onDestroyActivity(activityRecord);
+        }
     }
 
     @Override
     public boolean isExcludingStopped(String action) {
-        return !SafeActionUtils.isSafeAction(action);
+        return !SystemHook.isSupported() || !SafeActionUtils.isSafeAction(action);
     }
 
     @Override
     public boolean hookStartProcessLocked(Context context, ApplicationInfo info, String hostingType, ComponentName hostingName) {
-        return ActivityManagerServiceHook.hookStartProcessLocked(context, info, hostingType, hostingName, mSender.get());
+        return !SystemHook.isSupported() || ActivityManagerServiceHook.hookStartProcessLocked(context, info, hostingType, hostingName, mSender.get());
     }
 
     @Override
     public int match(int match, Object filter, String action, String type, String scheme, Uri data, Set<String> categories) {
-        if (IntentFilterHook.canHook(match)) {
+        if (SystemHook.isSupported() && IntentFilterHook.canHook(match)) {
             IntentFilterMatchResult result;
             if (filter instanceof PackageParser.ActivityIntentInfo) {
                 result = IntentFilterHook.hookActivityIntentInfo((PackageParser.ActivityIntentInfo) filter, mSender.get(), action);

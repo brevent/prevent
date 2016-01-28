@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import me.piebridge.prevent.framework.PreventLog;
+import me.piebridge.prevent.framework.SystemHook;
 
 /**
  * Created by thom on 15/9/18.
@@ -72,7 +73,11 @@ public class ActivityRecordUtils {
     }
 
     public static String getPackageName(Object target) {
-        return (String) getField(target, "packageName");
+        String packageName = (String) getField(target, "packageName");
+        if (packageName == null) {
+            SystemHook.setNotSupported();
+        }
+        return packageName;
     }
 
     public static ActivityInfo getInfo(Object target) {

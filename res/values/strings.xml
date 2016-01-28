@@ -14,6 +14,7 @@
     <!-- receiver -->
     <string name="no_prevents">Please configure prevent list.</string>
     <string name="updated_prevents">Updated prevent list to %1$d</string>
+    <string name="not_supported">ROM is not supported, please report bug.</string>
 
     <!-- main activity -->
     <string name="version_mismatch">Please reboot to active current version</string>

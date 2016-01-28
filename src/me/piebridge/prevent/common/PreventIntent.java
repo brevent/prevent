@@ -20,6 +20,7 @@ public final class PreventIntent {
     public static final String ACTION_REGISTERED = NAMESPACE + "REGISTERED";
     public static final String ACTION_SOFT_REBOOT = NAMESPACE + "SOFT_REBOOT";
     public static final String ACTION_REBOOT = NAMESPACE + "REBOOT";
+    public static final String ACTION_NOT_SUPPORTED = NAMESPACE + "NOT_SUPPORTED";
 
     public static final String EXTRA_PACKAGES = NAMESPACE + "PACKAGES";
     public static final String EXTRA_PREVENT = NAMESPACE + "PREVENT";
