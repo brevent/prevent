@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -31,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -44,9 +42,7 @@ import me.piebridge.prevent.framework.util.AccountWatcher;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
-import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
-import me.piebridge.prevent.ui.PreventProvider;
 
 public final class SystemHook {
 
@@ -85,7 +81,7 @@ public final class SystemHook {
     private static Map<String, ScheduledFuture<?>> serviceFutures = new HashMap<String, ScheduledFuture<?>>();
 
     private static RetrievingTask retrievingTask;
-    private static Future<?> retrievingFuture;
+    private static final Object RETRIEVING_LOCK = new Object();
 
     private static SystemReceiver systemReceiver;
 
@@ -145,6 +141,7 @@ public final class SystemHook {
 
         Intent intent = new Intent(PreventIntent.ACTION_REGISTERED);
         intent.setPackage(BuildConfig.APPLICATION_ID);
+        intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
         PreventLog.i("registered receiver");
         return true;
@@ -161,24 +158,11 @@ public final class SystemHook {
             }
         }
         PreventLog.d("context: " + mContext.getClass().getName());
-        if (retrievingTask == null) {
-            retrievingTask = new RetrievingTask();
-            retrievingFuture = retrievingExecutor.submit(retrievingTask);
-            retrievingExecutor.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    if (mPreventPackages == null) {
-                        PreventLog.d("checking prevents, no data");
-                        if (!retrievingFuture.isDone()) {
-                            retrievingFuture.cancel(true);
-                        }
-                        PreventLog.d("checking prevents, wait for next check");
-                        retrievingTask = null;
-                    } else {
-                        PreventLog.d("checking prevents, ok");
-                    }
-                }
-            }, 0x5, TimeUnit.SECONDS);
+        synchronized (RETRIEVING_LOCK) {
+            if (retrievingTask == null) {
+                retrievingTask = new RetrievingTask();
+                retrievingExecutor.submit(retrievingTask);
+            }
         }
         return true;
     }
@@ -600,34 +584,12 @@ public final class SystemHook {
         public void run() {
             PreventLog.d("RetrievingTask");
 
-            Map<String, Boolean> preventPackages = new HashMap<String, Boolean>();
-            loadPrevent(preventPackages);
-            PreventLog.d("prevents: " + preventPackages.size());
             mPreventPackages = new ConcurrentHashMap<String, Boolean>();
-            mPreventPackages.putAll(preventPackages);
-
             registerReceiver();
             ActivityManagerServiceHook.setContext(mContext, mPreventPackages);
             IntentFilterHook.setContext(mContext, mPreventPackages);
             PreventLog.i("prevent running " + BuildConfig.VERSION_NAME + " activated");
             activated = true;
-
-            LogcatUtils.logcat(mContext, "boot");
-        }
-
-        private void loadPrevent(Map<String, Boolean> preventPackages) {
-            Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
-            if (cursor == null) {
-                return;
-            }
-            int index = cursor.getColumnIndex(PreventProvider.COLUMN_PACKAGE);
-            while (cursor.moveToNext()) {
-                String name = cursor.getString(index);
-                if (name != null && !preventPackages.containsKey(name)) {
-                    preventPackages.put(name, true);
-                }
-            }
-            cursor.close();
         }
     }
 

@@ -140,6 +140,21 @@ public class SystemReceiver extends ActivityReceiver {
             PreventLog.i("update use app standby settings to " + useAppStandby);
             SystemHook.setUseAppStandby(useAppStandby);
         }
+        if (bundle.containsKey(PreventIntent.KEY_PREVENT_LIST)) {
+            updatePreventList(bundle.getStringArrayList(PreventIntent.KEY_PREVENT_LIST));
+        }
+    }
+
+    private void updatePreventList(Collection<String> preventList) {
+        if (preventList == null) {
+            return;
+        }
+        LogcatUtils.logcat(mContext, "boot");
+        for (String prevent : preventList) {
+            if (!mPreventPackages.containsKey(prevent)) {
+                mPreventPackages.put(prevent, true);
+            }
+        }
     }
 
     private boolean handleCheckLicense(Context context, Intent intent) {
