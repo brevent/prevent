@@ -86,6 +86,7 @@
     <string name="report_bug">Fehler melden</string>
     <string name="request_license">Lizenz anfordern</string>
     <string name="advanced_settings">Erweiterte Einstellungen</string>
+    <string name="choose_email">Bitte wählen Sie einen E-Mail-Client aus</string>
 
     <!-- donation -->
     <string name="donation">Spenden sind gern gesehen, wenn du magst.</string>

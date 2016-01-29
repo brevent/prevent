@@ -85,6 +85,7 @@
     <string name="report_bug">报告问题</string>
     <string name="request_license">获取许可</string>
     <string name="advanced_settings">强迫症设置</string>
+    <string name="choose_email">请选择邮件客户端</string>
 
     <!-- donation -->
     <string name="donation">如果喜欢，请随(duo)意(duo)捐赠</string>

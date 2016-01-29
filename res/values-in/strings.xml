@@ -86,6 +86,7 @@
     <string name="report_bug">Laporkan kesalahan</string>
     <string name="request_license">Minta lisensi</string>
     <string name="advanced_settings">Setelan lanjutan</string>
+    <string name="choose_email">Silahkan pilih EMail klien</string>
 
     <!-- donation -->
     <string name="donation">Jangan ragu untuk donasi jika kamu suka.</string>

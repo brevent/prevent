@@ -46,7 +46,7 @@ public class EmailUtils {
             intent.putExtra(Intent.EXTRA_TEXT, content);
         }
         try {
-            context.startActivity(intent);
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.choose_email)));
             return true;
         } catch (ActivityNotFoundException e) {
             UILog.d("cannot send email", e);
@@ -65,7 +65,7 @@ public class EmailUtils {
         intent.putExtra(Intent.EXTRA_SUBJECT, EmailUtils.getSubject(context));
         intent.putExtra(Intent.EXTRA_TEXT, content);
         intent.putExtra(Intent.EXTRA_EMAIL, new String[]{BuildConfig.EMAIL});
-        context.startActivity(intent);
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.choose_email)));
     }
 
 }

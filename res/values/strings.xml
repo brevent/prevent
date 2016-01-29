@@ -86,6 +86,7 @@
     <string name="report_bug">Report Bug</string>
     <string name="request_license">Request license</string>
     <string name="advanced_settings">Advanced Settings</string>
+    <string name="choose_email">Please choose EMail client</string>
 
     <!-- donation -->
     <string name="donation">Feel free to donate if you like.</string>

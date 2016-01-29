@@ -85,6 +85,7 @@
     <string name="report_bug">回報錯誤</string>
     <string name="request_license">导入授權</string>
     <string name="advanced_settings">進階設定</string>
+    <string name="choose_email">請選擇郵件客戶端</string>
 
     <!-- donation -->
     <string name="donation">如果喜歡，請隨意捐贈</string>
