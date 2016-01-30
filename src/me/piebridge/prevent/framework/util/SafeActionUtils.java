@@ -1,12 +1,14 @@
 package me.piebridge.prevent.framework.util;
 
 import android.app.AppGlobals;
+import android.app.job.JobService;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.os.Build;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -172,6 +174,15 @@ public class SafeActionUtils {
     public static boolean isSafeAction(String packageName, String action) {
         Collection<String> actions = SAFE_PACKAGE_ACTIONS.get(packageName);
         return actions != null && actions.contains(action);
+    }
+
+    public static boolean isJobService(ComponentName cn) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ServiceInfo si = AppGlobals.getPackageManager().getServiceInfo(cn, 0, 0);
+            return si != null && JobService.PERMISSION_BIND.equals(si.permission);
+        } else {
+            return false;
+        }
     }
 
 }
