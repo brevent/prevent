@@ -65,11 +65,14 @@ public class LogcatUtils {
         byte[] buffer = new byte[0x300];
         ContentResolver contentResolver = context.getContentResolver();
         String path = new SimpleDateFormat("yyyyMMdd.HH.mm.ss'.txt'", Locale.US).format(new Date());
+        int offset = 0;
         while ((length = is.read(buffer)) != -1) {
             String line = Base64.encodeToString(buffer, 0, length, Base64.URL_SAFE | Base64.NO_WRAP);
             Uri uri = PreventProvider.CONTENT_URI.buildUpon().appendQueryParameter("path", prefix + "." + path)
+                    .appendQueryParameter("offset", String.valueOf(offset))
                     .appendQueryParameter("log", line).build();
             contentResolver.query(uri, null, null, null, null);
+            offset += length;
         }
         is.close();
     }

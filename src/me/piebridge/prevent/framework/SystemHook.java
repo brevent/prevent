@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -26,13 +27,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
@@ -42,7 +48,9 @@ import me.piebridge.prevent.framework.util.AccountWatcher;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
+import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
+import me.piebridge.prevent.ui.PreventProvider;
 
 public final class SystemHook {
 
@@ -140,10 +148,6 @@ public final class SystemHook {
         noSchemeFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         mContext.registerReceiver(systemReceiver, noSchemeFilter, null, handler);
 
-        Intent intent = new Intent(PreventIntent.ACTION_REGISTERED);
-        intent.setPackage(BuildConfig.APPLICATION_ID);
-        intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-        mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
         PreventLog.i("registered receiver");
         return true;
     }
@@ -152,11 +156,11 @@ public final class SystemHook {
         if (mPreventPackages != null) {
             return true;
         }
+        if (context == null) {
+            return false;
+        }
         if (mContext == null) {
             mContext = context;
-            if (mContext == null) {
-                return false;
-            }
         }
         PreventLog.d("context: " + mContext.getClass().getName());
         synchronized (RETRIEVING_LOCK) {
@@ -600,11 +604,80 @@ public final class SystemHook {
             PreventLog.d("RetrievingTask");
 
             mPreventPackages = new ConcurrentHashMap<String, Boolean>();
+            for (int i = 0; i <= 0x5; ++i) {
+                if (loadPreventList()) {
+                    break;
+                }
+            }
             registerReceiver();
             ActivityManagerServiceHook.setContext(mContext, mPreventPackages);
             IntentFilterHook.setContext(mContext, mPreventPackages);
             PreventLog.i("prevent running " + BuildConfig.VERSION_NAME + " activated");
+            loadConfiguration();
             activated = true;
+            LogcatUtils.logcat(mContext, "boot");
+        }
+
+        private void loadConfiguration() {
+            Intent intent = new Intent(PreventIntent.ACTION_REGISTERED);
+            intent.setPackage(BuildConfig.APPLICATION_ID);
+            PreventLog.i("will load configuration via receiver");
+            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+            mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
+        }
+
+        private Future<Set<String>> loadPrevent() {
+            return retrievingExecutor.submit(new Callable<Set<String>>() {
+                @Override
+                public Set<String> call() {
+                    PreventLog.v("try load prevent list via provider");
+                    return loadPreventViaProvider();
+                }
+            });
+        }
+
+        private Set<String> loadPreventViaProvider() {
+            Set<String> packages = new LinkedHashSet<String>();
+            Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
+            if (cursor != null) {
+                int index = cursor.getColumnIndex(PreventProvider.COLUMN_PACKAGE);
+                while (cursor.moveToNext()) {
+                    packages.add(cursor.getString(index));
+                }
+                cursor.close();
+            }
+            return packages;
+        }
+
+        private boolean loadPreventList() {
+            Future<Set<String>> future = loadPrevent();
+            try {
+                loadPrevents(future.get(0x3, TimeUnit.SECONDS));
+                PreventLog.i("loaded prevent via provider");
+                return true;
+            } catch (InterruptedException e) {
+                PreventLog.w("cannot load prevent (interrupt)", e);
+            } catch (ExecutionException e) { // NOSONAR
+                if (!(e.getCause() instanceof IllegalArgumentException)) {
+                    PreventLog.w("cannot load prevent (exception)", e.getCause());
+                }
+                try {
+                    Thread.sleep(0x100);
+                } catch (InterruptedException f) {
+                    PreventLog.w("cannot sleep (interrupt)", f);
+                }
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                PreventLog.w("cannot load prevent (timeout)", e);
+            }
+            return false;
+        }
+
+        private void loadPrevents(Set<String> packages) {
+            PreventLog.i("loaded prevent: " + packages.size());
+            for (String packageName : packages) {
+                mPreventPackages.put(packageName, true);
+            }
         }
     }
 

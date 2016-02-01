@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -66,7 +65,6 @@ public class PreventReceiver extends BroadcastReceiver {
         UILog.d("timeout: " + timeout + ", destroyProcesses: " + destroyProcesses
                 + ", lockSyncSettings: " + lockSyncSettings + ", useAppStandby: " + useAppStandby);
         if (updatePreventList) {
-            eraseFiles(context.getExternalCacheDir());
             Set<String> prevents = PreventListUtils.load(context);
             if (prevents.isEmpty()) {
                 notifyNoPrevents(context);
@@ -102,21 +100,6 @@ public class PreventReceiver extends BroadcastReceiver {
 
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.notify(0, notification);
-    }
-
-    private static boolean eraseFiles(File path) {
-        if (path == null) {
-            return false;
-        }
-        if (path.isDirectory()) {
-            String[] files = path.list();
-            if (files != null) {
-                for (String file : files) {
-                    eraseFiles(new File(path, file));
-                }
-            }
-        }
-        return path.delete();
     }
 
     private static void notifyNotSupported(Context context) {

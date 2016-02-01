@@ -149,7 +149,7 @@ public class SystemReceiver extends ActivityReceiver {
         if (preventList == null) {
             return;
         }
-        LogcatUtils.logcat(mContext, "boot");
+        PreventLog.i("update prevent: " + preventList.size());
         for (String prevent : preventList) {
             if (!mPreventPackages.containsKey(prevent)) {
                 mPreventPackages.put(prevent, true);
