@@ -6,6 +6,7 @@ import android.content.Intent;
 import java.lang.reflect.Field;
 
 import me.piebridge.prevent.framework.PreventLog;
+import me.piebridge.prevent.framework.SystemHook;
 
 /**
  * Created by thom on 15/7/23.
@@ -15,6 +16,8 @@ public class TaskRecordUtils {
     private static Field taskRecord$intent;
 
     private static Field taskRecord$affinityIntent;
+
+    private static Class taskRecordClass;
 
     private TaskRecordUtils() {
 
@@ -45,12 +48,17 @@ public class TaskRecordUtils {
         } else {
             taskRecord = object;
         }
-        if (taskRecord$intent == null) {
-            taskRecord$intent = taskRecord.getClass().getDeclaredField("intent");
-            taskRecord$intent.setAccessible(true);
-
-            taskRecord$affinityIntent = taskRecord.getClass().getDeclaredField("affinityIntent");
-            taskRecord$affinityIntent.setAccessible(true);
+        if (taskRecord == null) {
+            return null;
+        }
+        if (taskRecordClass != taskRecord.getClass()) {
+            taskRecordClass = taskRecord.getClass();
+            taskRecord$intent = ReflectUtils.getDeclaredField(taskRecord, "intent");
+            taskRecord$affinityIntent = ReflectUtils.getDeclaredField(taskRecord, "affinityIntent");
+            if (taskRecord$intent == null || taskRecord$affinityIntent == null) {
+                SystemHook.setNotSupported();
+                return null;
+            }
         }
         Intent intent = (Intent) taskRecord$intent.get(taskRecord);
         if (intent == null) {

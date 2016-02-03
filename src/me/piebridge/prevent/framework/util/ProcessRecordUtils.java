@@ -48,8 +48,10 @@ public class ProcessRecordUtils {
             ProcessRecord$killedByAm.setAccessible(true);
         } catch (ClassNotFoundException e) {
             PreventLog.e("cannot find class for ProcessRecordUtils", e);
+            SystemHook.setNotSupported();
         } catch (NoSuchFieldException e) {
             PreventLog.e("cannot find fields for ProcessRecordUtils", e);
+            SystemHook.setNotSupported();
         }
     }
 

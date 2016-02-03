@@ -42,8 +42,10 @@ public class BroadcastFilterUtils {
             ReceiverList$receiver.setAccessible(true);
         } catch (ClassNotFoundException e) {
             PreventLog.e("cannot find classes for BroadcastFilterUtils", e);
+            SystemHook.setNotSupported();
         } catch (NoSuchFieldException e) {
             PreventLog.e("cannot find fields for BroadcastFilterUtils", e);
+            SystemHook.setNotSupported();
         }
     }
 

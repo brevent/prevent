@@ -30,6 +30,7 @@ import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.framework.PreventRunning;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.ProcessRecordUtils;
+import me.piebridge.prevent.framework.util.ReflectUtils;
 import me.piebridge.prevent.framework.util.TaskRecordUtils;
 
 /**
@@ -535,19 +536,8 @@ public class SystemServiceHook extends XC_MethodHook {
         }
 
         private Context getContext(Object activityManagerService) {
-            Field field = null;
-            Class<?> clazz = activityManagerService.getClass();
-            while (clazz != null && field == null) {
-                try {
-                    field = clazz.getDeclaredField("mContext");
-                } catch (NoSuchFieldException e) { // NOSONAR
-                    PreventLog.d("cannot find mContext in " + clazz.getName());
-                    clazz = clazz.getSuperclass();
-                }
-            }
-
+            Field field = ReflectUtils.getDeclaredField(activityManagerService, "mContext");
             if (field != null) {
-                field.setAccessible(true);
                 try {
                     return (Context) field.get(activityManagerService);
                 } catch (IllegalAccessException e) {

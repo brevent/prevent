@@ -17,7 +17,10 @@ import me.piebridge.prevent.framework.SystemHook;
 public class ActivityRecordUtils {
 
     private static Field weakActivity;
+    private static Class weakActivityClass;
+
     private static Map<String, Field> fields = new HashMap<String, Field>();
+    private static Class fieldsClass;
 
     private ActivityRecordUtils() {
 
@@ -29,43 +32,77 @@ public class ActivityRecordUtils {
 
     private static Object getField(Object target, String name) {
         Object activityRecord = getActivityRecord(target);
-        Field field = fields.get(name);
-        if (activityRecord != null && field == null) {
-            try {
-                field = activityRecord.getClass().getDeclaredField(name);
-            } catch (NoSuchFieldException e) {
-                PreventLog.v("cannot find field " + name + " in " + activityRecord, e);
-                return null;
-            }
-            field.setAccessible(true);
-            fields.put(name, field);
-        }
-        try {
-            return field.get(activityRecord);
-        } catch (IllegalAccessException e) {
-            PreventLog.v("cannot access " + name + " in " + activityRecord, e);
+        if (activityRecord == null) {
+            PreventLog.e("cannot find activity record from " + target);
             return null;
         }
+        Field field = getCacheField(target, name);
+        if (field != null) {
+            try {
+                return field.get(activityRecord);
+            } catch (IllegalAccessException e) {
+                PreventLog.e("cannot access " + name + " in " + activityRecord, e);
+            }
+        } else {
+            PreventLog.e("cannot get " + name + " in " + activityRecord);
+        }
+        return null;
+    }
+
+    private static Field getCacheField(Object target, String name) {
+        if (target == null) {
+            return null;
+        }
+        Field field;
+        if (fieldsClass == target.getClass() && fields.containsKey(name)) {
+            field = fields.get(name);
+        } else {
+            fieldsClass = target.getClass();
+            field = ReflectUtils.getDeclaredField(target, name);
+            if (field == null) {
+                SystemHook.setNotSupported();
+                PreventLog.e("cannot find " + name + " in " + fieldsClass);
+            } else {
+                PreventLog.d("find " + name + " " + field + " in " + fieldsClass);
+            }
+            fields.put(name, field);
+        }
+        return field;
     }
 
     public static Object getActivityRecord(Object target) {
+        PreventLog.d("getActivityRecord, target: " + target);
         if (isActivityRecord(target)) {
             return target;
         }
-        if (weakActivity == null) {
+        Field field = getCacheField(target);
+        if (field != null) {
             try {
-                weakActivity = target.getClass().getDeclaredField("weakActivity");
-                weakActivity.setAccessible(true);
-            } catch (NoSuchFieldException e) {
-                PreventLog.d("cannot find weakActivity in " + target, e);
+                return ((WeakReference<?>) field.get(target)).get();
+            } catch (IllegalAccessException e) {
+                PreventLog.e("cannot access weakActivity in " + target, e);
             }
+        } else {
+            PreventLog.e("cannot get weakActivity in " + target);
         }
-        try {
-            return ((WeakReference<?>) weakActivity.get(target)).get();
-        } catch (IllegalAccessException e) {
-            PreventLog.v("cannot access " + weakActivity + " in " + target, e);
+        return null;
+    }
+
+    private static Field getCacheField(Object target) {
+        if (target == null) {
             return null;
         }
+        if (weakActivityClass != target.getClass()) {
+            weakActivityClass = target.getClass();
+            weakActivity = ReflectUtils.getDeclaredField(target, "weakActivity");
+            if (weakActivity == null) {
+                PreventLog.e("cannot find weakActivity in " + weakActivityClass);
+                SystemHook.setNotSupported();
+            } else {
+                PreventLog.d("find weakActivity " + weakActivity + " in " + weakActivityClass);
+            }
+        }
+        return weakActivity;
     }
 
     public static Object getTask(Object target) {
@@ -73,11 +110,7 @@ public class ActivityRecordUtils {
     }
 
     public static String getPackageName(Object target) {
-        String packageName = (String) getField(target, "packageName");
-        if (packageName == null) {
-            SystemHook.setNotSupported();
-        }
-        return packageName;
+        return (String) getField(target, "packageName");
     }
 
     public static ActivityInfo getInfo(Object target) {
