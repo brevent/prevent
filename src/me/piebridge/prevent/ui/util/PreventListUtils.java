@@ -2,57 +2,43 @@ package me.piebridge.prevent.ui.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
+import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Set;
-import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.common.ExternalFileUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.common.FileUtils;
+import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.ui.PreventReceiver;
 import me.piebridge.prevent.ui.UILog;
 
 public final class PreventListUtils {
 
-    public static final String PREVENT = Environment.getDataDirectory() + "/data/" + BuildConfig.APPLICATION_ID + "/conf/prevent.list";
-    public static final String PREVENT_DEPRECATED = Environment.getDataDirectory() + "/data/" + BuildConfig.APPLICATION_ID + "/conf/forcestop.list";
-
-    private static final int MAX_WAIT = 3000;
-    private static final int SINGLE_WAIT = 1000;
     private static boolean synced = false;
+
+    private static PreventListUtils preventListUtils = new PreventListUtils();
 
     private PreventListUtils() {
 
     }
 
-    public static File[] getExternalFilesDirs(Context context) {
-        File[] files;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            files = context.getExternalFilesDirs(null);
-            if (files == null) {
-                files = new File[0];
-            }
-        } else {
-            files = new File[]{context.getExternalFilesDir(null)};
+    protected String getPrevent(Context context) {
+        String dataDir;
+        try {
+            dataDir = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).applicationInfo.dataDir;
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find package for context: " + context, e);
+            dataDir = Environment.getDataDirectory() + "/data/" + BuildConfig.APPLICATION_ID;
         }
-        return files;
+        return new File(new File(dataDir, "conf"), FileUtils.PREVENT_LIST).getAbsolutePath();
     }
 
-    public static synchronized void save(Context context, Set<String> packages) {
-        save(PREVENT, packages);
-        UILog.i("update prevents: " + packages.size());
-        String message = context.getString(R.string.updated_prevents, packages.size());
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    public synchronized void backupIfNeeded(Context context, Set<String> packages) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         boolean backup = false;
         try {
@@ -61,106 +47,39 @@ public final class PreventListUtils {
             UILog.d("invalid value for " + PreventIntent.KEY_BACKUP_PREVENT_LIST, e);
             sp.edit().putBoolean(PreventIntent.KEY_BACKUP_PREVENT_LIST, false).apply();
         }
-        for (File dir : getExternalFilesDirs(context)) {
+        for (File dir : ExternalFileUtils.getExternalFilesDirs(context)) {
             if (dir == null) {
                 continue;
             }
-            File file = new File(dir, "prevent.list");
+            File file = new File(dir, FileUtils.PREVENT_LIST);
             if (backup) {
-                save(file.getAbsolutePath(), packages);
+                FileUtils.save(file.getAbsolutePath(), packages);
             } else if (file.exists()) {
-                file.delete();
+                FileUtils.eraseFiles(file);
             }
+        }
+        File file = new File(getPrevent(context));
+        if (file.exists()) {
+            FileUtils.eraseFiles(file);
         }
     }
 
-    public static void syncIfNeeded(Context context, Set<String> packages) {
-        if (!new File(PREVENT).exists()) {
-            save(context, packages);
-        } else if(packages.isEmpty() && !synced) {
+    public boolean syncIfNeeded(Context context, Set<String> packages) {
+        boolean updated = false;
+        if (packages.isEmpty() && !synced) {
             synced = true;
-            Set<String> prevents = load(context);
-            if (!prevents.isEmpty()) {
-                PreventReceiver.updateConfiguration(context, true);
-            }
+            updated = PreventReceiver.updateConfiguration(context, true);
         }
+        backupIfNeeded(context, packages);
+        return updated;
     }
 
-    private static void save(String path, Set<String> packages) {
-        File lock = new File(path + ".lock");
-        File conf = lock.getParentFile();
-        if (conf.isFile()) {
-            conf.delete();
-        }
-        if (!conf.isDirectory()) {
-            conf.mkdir();
-        }
-        while (lock.exists() && System.currentTimeMillis() - lock.lastModified() < MAX_WAIT) {
-            try {
-                Thread.sleep(SINGLE_WAIT);
-            } catch (InterruptedException e) { // NOSONAR
-                // do nothing
-            }
-        }
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(lock));
-            for (String key : packages) {
-                writer.write(key);
-                writer.write("\n");
-            }
-            writer.close();
-            lock.renameTo(new File(path));
-        } catch (IOException e) {
-            UILog.e("cannot save " + path, e);
-        }
+    public Set<String> load(Context context) {
+        return FileUtils.load(context, getPrevent(context));
     }
 
-    private static Set<String> load(File file) {
-        Set<String> packages = new TreeSet<String>();
-        if (!file.exists()) {
-            return packages;
-        }
-        try {
-            String line;
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            while ((line = reader.readLine()) != null) {
-                int index = line.indexOf('=');
-                if (index != -1) {
-                    line = line.substring(0, index);
-                }
-                line = line.trim();
-                packages.add(line);
-            }
-            reader.close();
-        } catch (IOException e) {
-            UILog.e("cannot load " + file.getAbsolutePath(), e);
-        }
-        return packages;
-    }
-
-    private static void loadExternal(Set<String> packages, Context context) {
-        for (File file : getExternalFilesDirs(context)) {
-            if (file != null) {
-                packages.addAll(load(new File(file, "prevent.list")));
-                if (!packages.isEmpty()) {
-                    break;
-                }
-            }
-        }
-    }
-
-    public static Set<String> load(Context context) {
-        File fileDeprecated = new File(PREVENT_DEPRECATED);
-        Set<String> packages = load(new File(PREVENT));
-        if (context != null && packages.isEmpty()) {
-            loadExternal(packages, context);
-        }
-        if (fileDeprecated.isFile() && fileDeprecated.canWrite()) {
-            UILog.d("migrate packages");
-            packages.addAll(load(fileDeprecated));
-            fileDeprecated.delete();
-        }
-        return packages;
+    public static PreventListUtils getInstance() {
+        return preventListUtils;
     }
 
 }

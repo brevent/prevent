@@ -17,6 +17,7 @@ import java.math.BigInteger;
 import me.piebridge.billing.DonateUtils;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.common.ExternalFileUtils;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -55,7 +56,7 @@ public class LicenseUtils {
 
     private static byte[] readKey(Context context) {
         byte[] key;
-        for (File file : PreventListUtils.getExternalFilesDirs(context)) {
+        for (File file : ExternalFileUtils.getExternalFilesDirs(context)) {
             if (file == null) {
                 continue;
             }
@@ -225,7 +226,7 @@ public class LicenseUtils {
 
     private static void deleteLicenseIfNeeded(Context context) {
         deleteFileIfNeeded(context.getFilesDir());
-        for (File dir : PreventListUtils.getExternalFilesDirs(context)) {
+        for (File dir : ExternalFileUtils.getExternalFilesDirs(context)) {
             deleteFileIfNeeded(dir);
         }
     }

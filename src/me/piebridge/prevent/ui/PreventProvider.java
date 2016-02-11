@@ -4,7 +4,6 @@ import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.net.Uri;
 import android.provider.Settings;
 import android.util.Base64;
@@ -12,9 +11,8 @@ import android.util.Base64;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Set;
 
-import me.piebridge.prevent.ui.util.PreventListUtils;
+import me.piebridge.prevent.common.FileUtils;
 
 /**
  * Created by thom on 15/7/18.
@@ -34,20 +32,8 @@ public class PreventProvider extends ContentProvider {
         String log = uri.getQueryParameter("log");
         if (log != null) {
             saveLog(uri, log);
-            return null;
-        } else {
-            return loadPrevents();
         }
-    }
-
-    private Cursor loadPrevents() {
-        String[] columns = {COLUMN_PACKAGE};
-        MatrixCursor cursor = new MatrixCursor(columns);
-        Set<String> packages = PreventListUtils.load(getContext());
-        for (String packageName : packages) {
-            cursor.addRow(new String[]{packageName});
-        }
-        return cursor;
+        return null;
     }
 
     private void saveLog(Uri uri, String log) {
@@ -61,7 +47,7 @@ public class PreventProvider extends ContentProvider {
             return;
         }
         if (path.startsWith("boot") && "0".equals(offset)) {
-            eraseFiles(context.getExternalCacheDir());
+            FileUtils.eraseFiles(context.getExternalCacheDir());
         }
         File dir = context.getExternalCacheDir();
         if (dir == null) {
@@ -97,21 +83,5 @@ public class PreventProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         return 0;
     }
-
-    private static boolean eraseFiles(File path) {
-        if (path == null) {
-            return false;
-        }
-        if (path.isDirectory()) {
-            String[] files = path.list();
-            if (files != null) {
-                for (String file : files) {
-                    eraseFiles(new File(path, file));
-                }
-            }
-        }
-        return path.delete();
-    }
-
 
 }

@@ -49,8 +49,12 @@ public class ActivityManagerServiceHook {
         String packageName = info.packageName;
 
         PreventLog.v("startProcessLocked, packageName: " + packageName + ", hostingType: " + hostingType + ", sender: " + sender);
-        if (mPreventPackages == null) {
+        if (mContext == null && context != null) {
             SystemHook.retrievePreventsIfNeeded(context);
+        }
+
+        if (mPreventPackages == null) {
+            PreventLog.e("prevent list shouldn't be null");
             return true;
         }
 

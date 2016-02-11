@@ -816,7 +816,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                     }
                     preventPackages.putAll(prevents);
                 }
-                PreventListUtils.syncIfNeeded(PreventActivity.this, prevents.keySet());
+                boolean synced = PreventListUtils.getInstance().syncIfNeeded(PreventActivity.this, prevents.keySet());
+                if (synced) {
+                    retrievePrevents();
+                }
             } catch (JSONException e) {
                 UILog.e("cannot convert to json: " + result, e);
             }

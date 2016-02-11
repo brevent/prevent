@@ -35,7 +35,7 @@ public class PreventReceiver extends BroadcastReceiver {
             UILog.d("action: " + action + ", package: " + packageName);
             PreventUtils.update(context, new String[]{packageName}, true);
         } else if (PreventIntent.ACTION_REGISTERED.equals(action)) {
-            updateConfiguration(context, true);
+            updateConfiguration(context);
         } else if (PreventIntent.ACTION_NOT_SUPPORTED.equals(action)) {
             notifyNotSupported(context);
         }
@@ -45,7 +45,7 @@ public class PreventReceiver extends BroadcastReceiver {
         updateConfiguration(context, false);
     }
 
-    public static void updateConfiguration(Context context, boolean updatePreventList) {
+    public static boolean updateConfiguration(Context context, boolean updatePreventList) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         long timeout = -1;
         try {
@@ -64,14 +64,16 @@ public class PreventReceiver extends BroadcastReceiver {
         bundle.putBoolean(PreventIntent.KEY_USE_APP_STANDBY, useAppStandby);
         UILog.d("timeout: " + timeout + ", destroyProcesses: " + destroyProcesses
                 + ", lockSyncSettings: " + lockSyncSettings + ", useAppStandby: " + useAppStandby);
+        Set<String> prevents = null;
         if (updatePreventList) {
-            Set<String> prevents = PreventListUtils.load(context);
-            if (prevents.isEmpty()) {
-                notifyNoPrevents(context);
+            prevents = PreventListUtils.getInstance().load(context);
+            if (!prevents.isEmpty()) {
+                PreventUtils.showUpdated(context, prevents.size());
+                bundle.putStringArrayList(PreventIntent.KEY_PREVENT_LIST, new ArrayList<String>(prevents));
             }
-            bundle.putStringArrayList(PreventIntent.KEY_PREVENT_LIST, new ArrayList<String>(prevents));
         }
         PreventUtils.updateConfiguration(context, bundle);
+        return prevents != null && !prevents.isEmpty();
     }
 
     private static boolean getPreference(SharedPreferences sp, String key, boolean defaultValue) {
@@ -83,23 +85,6 @@ public class PreventReceiver extends BroadcastReceiver {
             sp.edit().putBoolean(key, defaultValue).apply();
         }
         return value;
-    }
-
-    private static void notifyNoPrevents(Context context) {
-        Intent open = new Intent(context, PreventActivity.class);
-        open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent activity = PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        Notification notification = new NotificationCompat.Builder(context)
-                .setAutoCancel(true)
-                .setContentTitle(context.getText(R.string.app_name))
-                .setContentText(context.getText(R.string.no_prevents))
-                .setTicker(context.getText(R.string.app_name))
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentIntent(activity).build();
-
-        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        nm.notify(0, notification);
     }
 
     private static void notifyNotSupported(Context context) {

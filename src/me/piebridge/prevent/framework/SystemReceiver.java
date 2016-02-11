@@ -28,6 +28,7 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.framework.util.PreventListUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.LogcatUtils;
@@ -155,6 +156,7 @@ public class SystemReceiver extends ActivityReceiver {
                 mPreventPackages.put(prevent, true);
             }
         }
+        PreventListUtils.getInstance().save(mContext, mPreventPackages.keySet(), true);
     }
 
     private boolean handleCheckLicense(Context context, Intent intent) {
@@ -197,10 +199,28 @@ public class SystemReceiver extends ActivityReceiver {
         if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)) {
             handlePackageRestarted("PACKAGE_RESTARTED", packageName);
         } else if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
-            SafeActionUtils.onPackageChanged(packageName);
+            onPackageAdded(intent);
         } else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
-            SafeActionUtils.onPackageChanged(packageName);
-            onPackageRemoved(packageName);
+            onPackageRemoved(intent);
+        }
+    }
+
+    protected void onPackageAdded(Intent intent) {
+        String packageName = PackageUtils.getPackageName(intent);
+        SafeActionUtils.onPackageChanged(packageName);
+        if (BuildConfig.APPLICATION_ID.equals(packageName) && !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+            SystemHook.setSupported(true);
+            PreventListUtils.getInstance().save(mContext, mPreventPackages.keySet(), false);
+        }
+    }
+
+    protected void onPackageRemoved(Intent intent) {
+        String packageName = PackageUtils.getPackageName(intent);
+        SafeActionUtils.onPackageChanged(packageName);
+        onPackageRemoved(packageName);
+        if (BuildConfig.APPLICATION_ID.equals(packageName) && !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+            SystemHook.setSupported(false);
+            PreventListUtils.getInstance().onRemoved(mContext);
         }
     }
 
@@ -263,6 +283,7 @@ public class SystemReceiver extends ActivityReceiver {
                 prevents.remove(name);
             }
         }
+        PreventListUtils.getInstance().save(mContext, mPreventPackages.keySet(), true);
         setResultCode(prevents.size());
         setResultData(new JSONObject(prevents).toString());
         LogUtils.logRequestInfo(action, null, prevents.size());

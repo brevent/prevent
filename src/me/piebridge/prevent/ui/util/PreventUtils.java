@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -78,6 +79,11 @@ public class PreventUtils {
         builder.create().show();
     }
 
+    public static void showUpdated(Context context, int size) {
+        String message = context.getString(R.string.updated_prevents, size);
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
+
     private static class PreventListReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -99,7 +105,8 @@ public class PreventUtils {
                 }
                 int size = getResultCode();
                 if (prevents.size() == size) {
-                    PreventListUtils.save(context, prevents);
+                    showUpdated(context, size);
+                    PreventListUtils.getInstance().backupIfNeeded(context, prevents);
                 } else {
                     UILog.e("update prevents: " + prevents.size() + " != " + size);
                 }

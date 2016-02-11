@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -27,18 +26,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
@@ -50,7 +44,7 @@ import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
-import me.piebridge.prevent.ui.PreventProvider;
+import me.piebridge.prevent.framework.util.PreventListUtils;
 
 public final class SystemHook {
 
@@ -76,7 +70,7 @@ public final class SystemHook {
 
     private static ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
 
-    private static ScheduledThreadPoolExecutor retrievingExecutor = new ScheduledThreadPoolExecutor(0x2);
+    private static ScheduledThreadPoolExecutor registeringExecutor = new ScheduledThreadPoolExecutor(0x2);
 
     private static ScheduledThreadPoolExecutor checkingExecutor = new ScheduledThreadPoolExecutor(0x2);
 
@@ -88,8 +82,7 @@ public final class SystemHook {
     private static ScheduledFuture<?> killingFuture;
     private static Map<String, ScheduledFuture<?>> serviceFutures = new HashMap<String, ScheduledFuture<?>>();
 
-    private static RetrievingTask retrievingTask;
-    private static final Object RETRIEVING_LOCK = new Object();
+    private static final Object REGISTER_LOCK = new Object();
 
     private static SystemReceiver systemReceiver;
 
@@ -148,28 +141,34 @@ public final class SystemHook {
         noSchemeFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         mContext.registerReceiver(systemReceiver, noSchemeFilter, null, handler);
 
-        PreventLog.i("registered receiver");
+        PreventLog.i("prevent running " + BuildConfig.VERSION_NAME + " activated");
+        activated = true;
         return true;
     }
 
-    public static boolean retrievePreventsIfNeeded(final Context context) {
-        if (mPreventPackages != null) {
-            return true;
-        }
-        if (context == null) {
-            return false;
-        }
+    public static void retrievePreventsIfNeeded(final Context context) {
         if (mContext == null) {
-            mContext = context;
-        }
-        PreventLog.d("context: " + mContext.getClass().getName());
-        synchronized (RETRIEVING_LOCK) {
-            if (retrievingTask == null) {
-                retrievingTask = new RetrievingTask();
-                retrievingExecutor.submit(retrievingTask);
+            synchronized (REGISTER_LOCK) {
+                if (mContext == null) {
+                    mContext = context;
+                    mPreventPackages = new ConcurrentHashMap<String, Boolean>();
+                    loadPreventList(mContext, mPreventPackages);
+                    ActivityManagerServiceHook.setContext(mContext, mPreventPackages);
+                    IntentFilterHook.setContext(mContext, mPreventPackages);
+                    registeringExecutor.submit(new RegisterTask());
+                }
             }
         }
-        return true;
+    }
+
+    private static void loadPreventList(Context context, Map<String, Boolean> preventPackages) {
+        if (PreventListUtils.getInstance().canLoad(context)) {
+            Set<String> prevents = PreventListUtils.getInstance().load(context);
+            PreventLog.d("prevent list size: " + prevents.size());
+            for (String packageName : prevents) {
+                preventPackages.put(packageName, true);
+            }
+        }
     }
 
     public static boolean isSystemHook() {
@@ -594,28 +593,34 @@ public final class SystemHook {
         }
     }
 
+    public static void setSupported(boolean supported) {
+        SystemHook.supported = supported;
+    }
+
     public static boolean isSupported() {
         return supported;
     }
 
-    private static class RetrievingTask implements Runnable {
+    private static class RegisterTask implements Runnable {
         @Override
         public void run() {
-            PreventLog.d("RetrievingTask");
-
-            mPreventPackages = new ConcurrentHashMap<String, Boolean>();
-            for (int i = 0; i <= 0x5; ++i) {
-                if (loadPreventList()) {
-                    break;
-                }
-            }
             registerReceiver();
-            ActivityManagerServiceHook.setContext(mContext, mPreventPackages);
-            IntentFilterHook.setContext(mContext, mPreventPackages);
-            PreventLog.i("prevent running " + BuildConfig.VERSION_NAME + " activated");
             loadConfiguration();
-            activated = true;
+            if (!PreventListUtils.getInstance().canLoad(mContext)) {
+                PreventLog.d("no prevent list");
+                notifyNoPrevent();
+            }
             LogcatUtils.logcat(mContext, "boot");
+        }
+
+        private void notifyNoPrevent() {
+            registeringExecutor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    PreventLog.d("notify no prevent");
+                    PreventListUtils.notifyNoPrevents(mContext);
+                }
+            });
         }
 
         private void loadConfiguration() {
@@ -624,60 +629,6 @@ public final class SystemHook {
             PreventLog.i("will load configuration via receiver");
             intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
             mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
-        }
-
-        private Future<Set<String>> loadPrevent() {
-            return retrievingExecutor.submit(new Callable<Set<String>>() {
-                @Override
-                public Set<String> call() {
-                    PreventLog.v("try load prevent list via provider");
-                    return loadPreventViaProvider();
-                }
-            });
-        }
-
-        private Set<String> loadPreventViaProvider() {
-            Set<String> packages = new LinkedHashSet<String>();
-            Cursor cursor = mContext.getContentResolver().query(PreventProvider.CONTENT_URI, null, null, null, null);
-            if (cursor != null) {
-                int index = cursor.getColumnIndex(PreventProvider.COLUMN_PACKAGE);
-                while (cursor.moveToNext()) {
-                    packages.add(cursor.getString(index));
-                }
-                cursor.close();
-            }
-            return packages;
-        }
-
-        private boolean loadPreventList() {
-            Future<Set<String>> future = loadPrevent();
-            try {
-                loadPrevents(future.get(0x3, TimeUnit.SECONDS));
-                PreventLog.i("loaded prevent via provider");
-                return true;
-            } catch (InterruptedException e) {
-                PreventLog.w("cannot load prevent (interrupt)", e);
-            } catch (ExecutionException e) { // NOSONAR
-                if (!(e.getCause() instanceof IllegalArgumentException)) {
-                    PreventLog.w("cannot load prevent (exception)", e.getCause());
-                }
-                try {
-                    Thread.sleep(0x100);
-                } catch (InterruptedException f) {
-                    PreventLog.w("cannot sleep (interrupt)", f);
-                }
-            } catch (TimeoutException e) {
-                future.cancel(true);
-                PreventLog.w("cannot load prevent (timeout)", e);
-            }
-            return false;
-        }
-
-        private void loadPrevents(Set<String> packages) {
-            PreventLog.i("loaded prevent: " + packages.size());
-            for (String packageName : packages) {
-                mPreventPackages.put(packageName, true);
-            }
         }
     }
 
