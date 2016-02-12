@@ -309,7 +309,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
-        if (donateView.getVisibility() == View.GONE) {
+        if (BuildConfig.DONATE && donateView.getVisibility() == View.GONE) {
             menu.add(Menu.NONE, R.string.donate, Menu.NONE, R.string.donate);
         }
         menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);

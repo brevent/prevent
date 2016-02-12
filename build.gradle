@@ -15,6 +15,7 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
+        versionName new XmlSlurper().parse("AndroidManifest.xml").@'android:versionName'.text()
         buildConfigField "boolean", "RELEASE", "false"
         buildConfigField "boolean", "DONATE", "false"
         buildConfigField "String", "DONATE_ALIPAY", "null"

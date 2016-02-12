@@ -114,7 +114,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             Field field = clazz.getDeclaredField("disableHooks");
             field.setAccessible(true);
             field.set(null, true);
-            if (XposedUtils.canDisableXposed()) {
+            if (BuildConfig.DONATE && XposedUtils.canDisableXposed()) {
                 XposedUtils.disableXposed(clazz);
             } else {
                 field.set(null, false);
