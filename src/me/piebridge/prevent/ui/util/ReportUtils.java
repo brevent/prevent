@@ -1,6 +1,7 @@
 package me.piebridge.prevent.ui.util;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 
 import java.io.File;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -27,25 +29,39 @@ public class ReportUtils {
             return;
         }
         try {
-            File path = new File(dir, "logs.zip");
+            File path = new File(dir, "logs-v" + BuildConfig.VERSION_NAME + ".zip");
             final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
 
-            for (File file : cacheDir.listFiles()) {
+            File[] caches = cacheDir.listFiles();
+            if (caches == null) {
+                caches = new File[0];
+            }
+            boolean empty = true;
+            for (File file : caches) {
+                empty = false;
                 zos.putNextEntry(new ZipEntry(file.getName()));
                 FileUtils.copyFile(zos, file);
+                zos.closeEntry();
             }
 
             File xposedLog = new File(Environment.getDataDirectory() + "/data/de.robv.android.xposed.installer/log/error.log");
             if (xposedLog.isFile() && xposedLog.canRead()) {
+                empty = false;
                 zos.putNextEntry(new ZipEntry("xposed.log"));
                 FileUtils.copyFile(zos, xposedLog);
+                zos.closeEntry();
+            }
+
+            if (empty) {
+                zos.putNextEntry(new ZipEntry("empty"));
+                zos.closeEntry();
             }
 
             zos.close();
             Runtime.getRuntime().exec("/system/bin/sync");
-            EmailUtils.sendZip(context, path, null);
+            EmailUtils.sendZip(context, path, Build.FINGERPRINT);
         } catch (IOException e) {
-            UILog.d("cannot report bug", e);
+            UILog.e("cannot report bug", e);
         }
     }
 
