@@ -504,11 +504,11 @@ public class SystemServiceHook extends XC_MethodHook {
         }
 
         private Context getRegisterContext(Object activityManagerService) {
-            Context context = ActivityThread.currentApplication();
+            Context context = getContext(activityManagerService);
             if (context != null && checkRegisterContext(context)) {
                 return context;
             }
-            context = getContext(activityManagerService);
+            context = ActivityThread.currentApplication();
             if (context != null && checkRegisterContext(context)) {
                 return context;
             }
