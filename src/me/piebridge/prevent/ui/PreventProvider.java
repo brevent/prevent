@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.provider.Settings;
 import android.util.Base64;
 
 import java.io.File;
@@ -18,9 +17,6 @@ import me.piebridge.prevent.common.FileUtils;
  * Created by thom on 15/7/18.
  */
 public class PreventProvider extends ContentProvider {
-
-    public static final Uri CONTENT_URI = Uri.parse("content://me.piebridge.prevent.provider");
-    public static final String COLUMN_PACKAGE = Settings.NameValueTable.VALUE;
 
     @Override
     public boolean onCreate() {

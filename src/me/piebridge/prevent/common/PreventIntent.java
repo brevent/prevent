@@ -1,5 +1,7 @@
 package me.piebridge.prevent.common;
 
+import android.net.Uri;
+
 import me.piebridge.forcestopgb.Manifest;
 
 /**
@@ -38,6 +40,8 @@ public final class PreventIntent {
     public static final String KEY_LOCK_SYNC_SETTINGS = "lock_sync_settings";
     public static final String KEY_USE_APP_STANDBY = "use_app_standby";
     public static final String KEY_PREVENT_LIST = "prevent_list";
+
+    public static final Uri CONTENT_URI = Uri.parse("content://me.piebridge.prevent.provider");
 
     private PreventIntent() {
 

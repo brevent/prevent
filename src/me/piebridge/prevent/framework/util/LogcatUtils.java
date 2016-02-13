@@ -14,8 +14,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.PreventLog;
-import me.piebridge.prevent.ui.PreventProvider;
 
 /**
  * Created by thom on 15/8/11.
@@ -68,7 +68,7 @@ public class LogcatUtils {
         int offset = 0;
         while ((length = is.read(buffer)) != -1) {
             String line = Base64.encodeToString(buffer, 0, length, Base64.URL_SAFE | Base64.NO_WRAP);
-            Uri uri = PreventProvider.CONTENT_URI.buildUpon().appendQueryParameter("path", prefix + "." + path)
+            Uri uri = PreventIntent.CONTENT_URI.buildUpon().appendQueryParameter("path", prefix + "." + path)
                     .appendQueryParameter("offset", String.valueOf(offset))
                     .appendQueryParameter("log", line).build();
             contentResolver.query(uri, null, null, null, null);
