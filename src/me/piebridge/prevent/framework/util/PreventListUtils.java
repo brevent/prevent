@@ -70,6 +70,7 @@ public final class PreventListUtils {
     }
 
     public static boolean notifyNoPrevents(Context context) {
+        PreventLog.d("notify no prevent list");
         ComponentName component = new ComponentName(BuildConfig.APPLICATION_ID, "me.piebridge.prevent.ui.PreventActivity");
         Intent open = new Intent(Intent.ACTION_MAIN);
         open.setComponent(component);
@@ -99,7 +100,6 @@ public final class PreventListUtils {
 
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.notify(0, notification);
-        PreventLog.d("notify using package: " + context.getPackageName());
         return true;
     }
 

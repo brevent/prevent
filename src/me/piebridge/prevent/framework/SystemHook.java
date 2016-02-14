@@ -42,7 +42,6 @@ import me.piebridge.prevent.framework.util.AccountWatcher;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
-import me.piebridge.prevent.framework.util.LogcatUtils;
 import me.piebridge.prevent.framework.util.NotificationManagerServiceUtils;
 import me.piebridge.prevent.framework.util.PreventListUtils;
 
@@ -69,8 +68,6 @@ public final class SystemHook {
     private static final Object CHECKING_LOCK = new Object();
 
     private static ScheduledThreadPoolExecutor singleExecutor = new ScheduledThreadPoolExecutor(0x2);
-
-    private static ScheduledThreadPoolExecutor registeringExecutor = new ScheduledThreadPoolExecutor(0x2);
 
     private static ScheduledThreadPoolExecutor checkingExecutor = new ScheduledThreadPoolExecutor(0x2);
 
@@ -155,7 +152,7 @@ public final class SystemHook {
                     loadPreventList(mContext, mPreventPackages);
                     ActivityManagerServiceHook.setContext(mContext, mPreventPackages);
                     IntentFilterHook.setContext(mContext, mPreventPackages);
-                    registeringExecutor.submit(new RegisterTask());
+                    registerReceiver();
                 }
             }
         }
@@ -599,37 +596,6 @@ public final class SystemHook {
 
     public static boolean isSupported() {
         return supported;
-    }
-
-    private static class RegisterTask implements Runnable {
-        @Override
-        public void run() {
-            registerReceiver();
-            loadConfiguration();
-            if (!PreventListUtils.getInstance().canLoad(mContext)) {
-                PreventLog.d("no prevent list");
-                notifyNoPrevent();
-            }
-            LogcatUtils.logcat(mContext, "boot");
-        }
-
-        private void notifyNoPrevent() {
-            registeringExecutor.submit(new Runnable() {
-                @Override
-                public void run() {
-                    PreventLog.d("notify no prevent");
-                    PreventListUtils.notifyNoPrevents(mContext);
-                }
-            });
-        }
-
-        private void loadConfiguration() {
-            Intent intent = new Intent(PreventIntent.ACTION_REGISTERED);
-            intent.setPackage(BuildConfig.APPLICATION_ID);
-            PreventLog.i("will load configuration via receiver");
-            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-            mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
-        }
     }
 
     public static void updateRunningGapps(String packageName, boolean added) {

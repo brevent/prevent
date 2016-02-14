@@ -42,6 +42,7 @@ public class LogcatUtils {
     }
 
     public static long logcat(Context context, String prefix) {
+        PreventLog.d("send " + prefix + " log");
         File cache = new File(CACHE);
         if (cache.exists()) {
             long size = cache.length();

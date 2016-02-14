@@ -58,6 +58,7 @@ public class SystemReceiver extends ActivityReceiver {
     );
 
     public static final Collection<String> NON_SCHEME_ACTIONS = Arrays.asList(
+            Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_SCREEN_OFF,
             Intent.ACTION_SCREEN_ON
     );
@@ -229,7 +230,21 @@ public class SystemReceiver extends ActivityReceiver {
             onScreenOff();
         } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
             onScreenOn();
+        } else if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
+            if (!PreventListUtils.getInstance().canLoad(mContext)) {
+                PreventListUtils.notifyNoPrevents(mContext);
+            }
+            loadConfiguration();
+            LogcatUtils.logcat(mContext, "boot");
         }
+    }
+
+    private void loadConfiguration() {
+        PreventLog.i("load configuration via receiver");
+        Intent intent = new Intent(PreventIntent.ACTION_REGISTERED);
+        intent.setPackage(BuildConfig.APPLICATION_ID);
+        intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+        mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
     }
 
     private void handleGetProcesses(Context context, String action) {
