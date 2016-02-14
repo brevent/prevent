@@ -48,7 +48,6 @@ public class ActivityManagerServiceHook {
     public static boolean hookStartProcessLocked(Context context, ApplicationInfo info, String hostingType, ComponentName hostingName, String sender) {
         String packageName = info.packageName;
 
-        PreventLog.v("startProcessLocked, packageName: " + packageName + ", hostingType: " + hostingType + ", sender: " + sender);
         if (mContext == null && context != null) {
             SystemHook.retrievePreventsIfNeeded(context);
         }
