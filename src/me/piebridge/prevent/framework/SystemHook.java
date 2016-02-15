@@ -672,4 +672,7 @@ public final class SystemHook {
         }
     }
 
+    public static Context getContext() {
+        return mContext;
+    }
 }

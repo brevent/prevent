@@ -2,8 +2,10 @@ package me.piebridge.prevent.framework.util;
 
 import android.Manifest;
 import android.app.AppGlobals;
+import android.app.SearchManager;
 import android.app.job.JobService;
 import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -35,6 +37,9 @@ public class SafeActionUtils {
     private static Map<String, Set<ComponentName>> safeActions = new HashMap<String, Set<ComponentName>>();
     private static Set<ComponentName> widgets = new HashSet<ComponentName>();
     private static Map<String, Collection<String>> SAFE_PACKAGE_ACTIONS = new HashMap<String, Collection<String>>();
+
+    private static ComponentName searchWidget;
+    private static boolean retrievedSearchWidget;
 
     static {
         SAFE_PACKAGE_ACTIONS.put("com.eg.android.AlipayGphone", Collections.singletonList("com.eg.android.AlipayGphone.IAlixPay"));
@@ -73,7 +78,7 @@ public class SafeActionUtils {
     }
 
     public static boolean isSafeBroadcast(ComponentName cn) {
-        return widgets.contains(cn);
+        return !cn.equals(searchWidget) && widgets.contains(cn);
     }
 
     public static boolean isSyncService(Context context, ComponentName cn, String sender) {
@@ -152,6 +157,11 @@ public class SafeActionUtils {
                 PreventLog.i("remove widget " + component.flattenToShortString());
                 widgets.remove(component);
             }
+            if (!retrievedSearchWidget && SystemHook.getContext() != null) {
+                searchWidget = getSearchWidgetProvider(SystemHook.getContext());
+                PreventLog.i("search widget: " + searchWidget);
+                retrievedSearchWidget = true;
+            }
         }
     }
 
@@ -185,6 +195,38 @@ public class SafeActionUtils {
         } else {
             return false;
         }
+    }
+
+    public static ComponentName getSearchWidgetProvider(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return null;
+        }
+        SearchManager searchManager = (SearchManager) context.getSystemService(Context.SEARCH_SERVICE);
+        ComponentName searchActivity = searchManager.getGlobalSearchActivity();
+        if (searchActivity == null) {
+            return null;
+        }
+        return getProviderInPackage(context, searchActivity.getPackageName());
+    }
+
+    private static ComponentName getProviderInPackage(Context context, String packageName) {
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        List<AppWidgetProviderInfo> providers = appWidgetManager.getInstalledProviders();
+        if (providers == null) {
+            return null;
+        }
+        final int count = providers.size();
+        for (int i = 0; i < count; ++i) {
+            AppWidgetProviderInfo info = providers.get(i);
+            if ((info.widgetCategory & AppWidgetProviderInfo.WIDGET_CATEGORY_SEARCHBOX) == 0) {
+                continue;
+            }
+            ComponentName provider = info.provider;
+            if (provider != null && provider.getPackageName().equals(packageName)) {
+                return provider;
+            }
+        }
+        return null;
     }
 
 }
