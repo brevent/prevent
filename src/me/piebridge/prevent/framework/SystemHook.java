@@ -499,6 +499,9 @@ public final class SystemHook {
         if (isFramework(packageName) || GmsUtils.isGms(packageName)) {
             return true;
         }
+        if (GmsUtils.isGapps(packageName)) {
+            return false;
+        }
         try {
             PackageManager pm = mContext.getPackageManager();
             int flags = pm.getApplicationInfo(packageName, 0).flags;
