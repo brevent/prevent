@@ -126,7 +126,10 @@ public class ActivityManagerServiceHook {
     private static boolean hookAccountService(ComponentName hostingName, String hostingType, String packageName, String sender) {
         String currentPackageName = SystemHook.getCurrentPackageName();
         PreventLog.d("account authenticator, current package: " + currentPackageName + ", " + hostingName.flattenToShortString());
-        if (currentPackageName == null || cannotPrevent(currentPackageName) || (GmsUtils.isGapps(packageName) && GmsUtils.isGapps(currentPackageName))) {
+        if (settingsPackages.isEmpty()) {
+            retrieveSettingsPackage(mContext.getPackageManager(), settingsPackages);
+        }
+        if ((currentPackageName != null && settingsPackages.contains(currentPackageName)) || (GmsUtils.isGapps(packageName) && GmsUtils.isGapps(currentPackageName))) {
             handleSafeService(packageName);
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType + "(account)", hostingName, sender);
