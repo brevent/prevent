@@ -61,7 +61,7 @@ public class SafeActionUtils {
     }
 
     private static boolean addSafeActions(Map<String, Set<ComponentName>> actions, ComponentName cn) {
-        PreventLog.i("add " + cn.flattenToShortString() + " as sync adapter");
+        PreventLog.i("add " + cn.flattenToShortString() + " as safe component");
         String packageName = cn.getPackageName();
         if (packageName == null) {
             return false;
@@ -166,20 +166,30 @@ public class SafeActionUtils {
     }
 
     public static boolean cannotPrevent(Context context, ComponentName cn) {
+        String packageName = cn.getPackageName();
         if (isSafeActionCache(safeActions, cn)) {
+            allowGmsIfNeeded(packageName);
             return true;
         }
-        Collection<String> actions = SAFE_PACKAGE_ACTIONS.get(cn.getPackageName());
+        Collection<String> actions = SAFE_PACKAGE_ACTIONS.get(packageName);
         if (actions == null) {
             return false;
         }
         for (String action : actions) {
             if (isActionService(context, cn, action)) {
                 addSafeActions(safeActions, cn);
+                allowGmsIfNeeded(packageName);
                 return true;
             }
         }
         return false;
+    }
+
+    private static void allowGmsIfNeeded(String packageName) {
+        if (GmsUtils.isGapps(packageName)) {
+            PreventLog.d("allow " + packageName + " to use gms for next service");
+            SystemHook.restoreLater(packageName);
+        }
     }
 
     public static boolean isSafeAction(String packageName, String action) {
