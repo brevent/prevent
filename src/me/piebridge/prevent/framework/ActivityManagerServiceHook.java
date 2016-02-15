@@ -138,7 +138,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean cannotPrevent(String sender, String packageName, ComponentName hostingName) {
-        if (SafeActionUtils.isJobService(hostingName)) {
+        if (SafeActionUtils.isUnsafeService(hostingName)) {
             return false;
         }
         return sender == null || cannotPrevent(sender, packageName) || SafeActionUtils.cannotPrevent(mContext, hostingName);

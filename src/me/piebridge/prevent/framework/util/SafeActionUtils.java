@@ -1,5 +1,6 @@
 package me.piebridge.prevent.framework.util;
 
+import android.Manifest;
 import android.app.AppGlobals;
 import android.app.job.JobService;
 import android.appwidget.AppWidgetManager;
@@ -176,10 +177,11 @@ public class SafeActionUtils {
         return actions != null && actions.contains(action);
     }
 
-    public static boolean isJobService(ComponentName cn) {
+    public static boolean isUnsafeService(ComponentName cn) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ServiceInfo si = AppGlobals.getPackageManager().getServiceInfo(cn, 0, 0);
-            return si != null && JobService.PERMISSION_BIND.equals(si.permission);
+            return si != null && (JobService.PERMISSION_BIND.equals(si.permission)
+                    || Manifest.permission.BIND_VOICE_INTERACTION.equals(si.permission));
         } else {
             return false;
         }
