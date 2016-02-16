@@ -38,9 +38,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     private boolean changed;
 
-    private static Collection<String> KEYS_NEED_LICENSE = Collections.singletonList(
-            PreventIntent.KEY_DESTROY_PROCESSES
-    );
+    private static Collection<String> KEYS_NEED_LICENSE = Collections.emptyList();
 
     private static Collection<String> KEYS_BOOLEAN = Arrays.asList(
             PreventIntent.KEY_DESTROY_PROCESSES,

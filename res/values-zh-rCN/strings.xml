@@ -73,8 +73,8 @@
     <string name="force_stop_1hour">1小时</string>
 
     <!-- request license -->
-    <string name="no_license">请累计捐赠10元或以上，然后联系作者获取许可。</string>
-    <string name="no_valid_license">您没有权限使用颁发给“%1$s”的许可，请重新获取。</string>
+    <string name="no_license">感谢捐赠，敬请联系作者发放捐赠证明。10元以下，不单独发放捐赠证明；10元，发放普通不记名捐赠；20元，可以指定捐赠名称；30元，可以阻止和系统同一签名的应用。</string>
+    <string name="no_valid_license">您没有权限使用颁发给“%1$s”的捐赠证明，请重新获取。</string>
     <string name="email_request">邮件获取</string>
     <string name="copy_request">复制请求</string>
 
@@ -83,7 +83,7 @@
     <string name="version">版本</string>
     <string name="feedback">反馈</string>
     <string name="report_bug">报告问题</string>
-    <string name="request_license">获取许可</string>
+    <string name="request_license">捐赠留名</string>
     <string name="advanced_settings">强迫症设置</string>
     <string name="choose_email">请选择邮件客户端</string>
 
