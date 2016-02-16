@@ -11,21 +11,15 @@ Not-in-use packages in `prevent list` can only run:
 - some other app call it's activity (share, launcher)
 - widget on home, however, it can only run 30 seconds
 - sync service if you allow, it can only run 30 seconds too
-- system services, or alipay's service
+- system services (excluding normal gapps), or alipay's service
 
-**NOTE**: when Google Play Services(`GMS`) and related apps are in `prevent list`, only `GAPPS` and `GCM`-apps can use it.
+**NOTE**: When Google Play Services(`GMS`) and related apps are in `prevent list`, only `GAPPS` and `GCM`-apps can use it. However, you cannot receive `GCM` message if `GMS` is not running.
 
-"`Prevent Running`" prevents following actions:
+**WARNING**: Don't prevent `system` apps nor daily apps, otherwise, you may miss important message.
 
-- (when prevents) suicide in activity, which will restart service
-- (when prevents) move task to background
-- (when prevents) start home activity
+**WARNING**: Don't prevent "`Xposed Installer`", otherwise the module won't active when you update it.
 
-**WARNING**: Please don't prevent `system` apps nor daily apps. Otherwise, you may miss important message. "`Prevent Running`" won't show `system` apps with the same signature with Android system, nor `system` launcher.
-
-**WARNING**: Please don't prevent "`Xposed Installer`", otherwise the module won't active when you update it.
-
-"`Prevent Running`" should work from android 2.3 to 5.1. However, I mainly use 5.1.
+"`Prevent Running`" should work from android 2.3 to 6.0. However, I mainly use 5.1.
 
 ## How to use
 
@@ -92,7 +86,7 @@ Project: [ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB). If 
 
 ## 模块介绍
 
-安卓3.1对强行停止的程序引入了[启动控制](http://developer.android.com/about/versions/android-3.1.html#launchcontrols)。但是，在2.3没有这个功能，而有些安卓4.X的设备根本没有实现。再者，很多流氓，总是有办法不断启动。
+Android 3.1对强行停止的程序引入了[启动控制](http://developer.android.com/about/versions/android-3.1.html#launchcontrols)。但是，在Android 2.3没有这个功能，而有些Android 4.X的设备根本没有实现。再者，很多流氓，总是有办法不断启动。
 
 “`阻止运行`”通过劫持几个系统API，保证`阻止列表`里的应用只在需要时才启动，同时支持谷歌家族应用。
 
@@ -104,23 +98,15 @@ Project: [ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB). If 
 - 除`谷歌服务`外的系统服务，或者支付宝的支付服务；
 - 其它可能的用户行为引起的启动。
 
-**注意**：当`谷歌服务`在阻止列表时，只有`谷歌家族应用`和第三方的`GCM`应用可以使用。同时，当有任何一个`谷歌家族应用`没有退出时，都不会退出`谷歌服务`。
-
-当用户退出6秒以后，如果有服务，将会被强行停止，否则进程等待回收。
-有些用户无法或不愿分清HOME与返回键区别，可以黑屏以后自动关闭进程，但是这项功能默认关闭。
-本人建议(并且程序默认)保留其它类型进程，如果强迫症实在不想保留进程，请捐赠以后获取许可，然后开启相关设置(强迫症是病，得花钱治)。
-
-“`阻止运行`”禁止以下行为：
-
-- (当程序被阻止时) 自杀，如搜狗地图。
-- (当程序被阻止时) 程序自己移到后台，如微信。
-- (当程序被阻止时) 程序启动HOME，如微博。
+**注意**：当`谷歌服务`在阻止列表时，只有`谷歌家族应用`和第三方的`GCM`应用可以使用。同时，当有任何一个`谷歌家族应用`没有退出时，都不会退出`谷歌服务`。当然，只有`GMS`运行时才能接收`GCM`消息，并唤醒相应应用。
 
 **警告**：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。“`阻止运行`”不会显示和系统同一签名的系统应用，也不会显示系统内置的启动器。
 
 **警告**：请不要阻止“`Xposed Installer`”，否则模块更新时，无法更新模块路径，导致重启以后无法加载模块。
 
-这个模块支持安卓2.3到5.1，个人主要在5.1上测试。(2.3请安装本人移植的xposed框架。）
+**提示**：有些用户无法或不愿分清`HOME`与`返回键`区别，可以开启“强行停止后台程序”，在离开程序一段时间后并黑屏时退出应用。这项功能默认关闭。
+
+“`阻止运行`”支持Android 2.3到6.0，本人主要在5.1上测试。(2.3请安装本人移植的xposed框架。）
 
 ## 使用说明
 
@@ -131,6 +117,8 @@ Project: [ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB). If 
 “`阻止运行`”自动把新装应用添加到`阻止列表`，如果不想这样，请把“`阻止运行`”添加到`阻止列表`（不建议）。
 
 同时，“`阻止运行`”不杀非`服务`的程序，但是保证非`服务`类进程不会变成`服务`在后台***一直***运行。
+
+**高级**：在`Xposed Installer`之外，本程序提供`ROM补丁`模式，只需替换相应文件，即可直接使用“`阻止运行`”。如有需要，请联系作者；或者阅读源码目录`aosp`下的文档。
 
 ## 特别搜索
 

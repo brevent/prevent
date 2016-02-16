@@ -21,24 +21,16 @@ code { font-size: larger }
 <li>some other app call it's activity (share, launcher)</li>
 <li>widget on home, however, it can only run 30 seconds</li>
 <li>sync service if you allow, it can only run 30 seconds too</li>
-<li>system services, or alipay's service</li>
+<li>system services (excluding normal gapps), or alipay's service</li>
 </ul>
 
-<p><strong>NOTE</strong>: when Google Play Services(<code>GMS</code>) and related apps are in <code>prevent list</code>, only <code>GAPPS</code> and <code>GCM</code>-apps can use it.</p>
+<p><strong>NOTE</strong>: When Google Play Services(<code>GMS</code>) and related apps are in <code>prevent list</code>, only <code>GAPPS</code> and <code>GCM</code>-apps can use it. However, you cannot receive <code>GCM</code> message if <code>GMS</code> is not running.</p>
 
-<p>"<code>Prevent Running</code>" prevents following actions:</p>
+<p><strong>WARNING</strong>: Don't prevent <code>system</code> apps nor daily apps, otherwise, you may miss important message.</p>
 
-<ul>
-<li>(when prevents) suicide in activity, which will restart service</li>
-<li>(when prevents) move task to background</li>
-<li>(when prevents) start home activity</li>
-</ul>
+<p><strong>WARNING</strong>: Don't prevent "<code>Xposed Installer</code>", otherwise the module won't active when you update it.</p>
 
-<p><strong>WARNING</strong>: Please don't prevent <code>system</code> apps nor daily apps. Otherwise, you may miss important message. "<code>Prevent Running</code>" won't show <code>system</code> apps with the same signature with Android system, nor <code>system</code> launcher.</p>
-
-<p><strong>WARNING</strong>: Please don't prevent "<code>Xposed Installer</code>", otherwise the module won't active when you update it.</p>
-
-<p>"<code>Prevent Running</code>" should work from android 2.3 to 5.1. However, I mainly use 5.1.</p>
+<p>"<code>Prevent Running</code>" should work from android 2.3 to 6.0. However, I mainly use 5.1.</p>
 
 <h2>How to use</h2>
 

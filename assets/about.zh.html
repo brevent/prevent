@@ -11,7 +11,7 @@ code { font-size: larger }
 <body>
 <h2>模块介绍</h2>
 
-<p>安卓3.1对强行停止的程序引入了<a href="http://developer.android.com/about/versions/android-3.1.html#launchcontrols">启动控制</a>。但是，在2.3没有这个功能，而有些安卓4.X的设备根本没有实现。再者，很多流氓，总是有办法不断启动。</p>
+<p>Android 3.1对强行停止的程序引入了<a href="http://developer.android.com/about/versions/android-3.1.html#launchcontrols">启动控制</a>。但是，在Android 2.3没有这个功能，而有些Android 4.X的设备根本没有实现。再者，很多流氓，总是有办法不断启动。</p>
 
 <p>“<code>阻止运行</code>”通过劫持几个系统API，保证<code>阻止列表</code>里的应用只在需要时才启动，同时支持谷歌家族应用。</p>
 
@@ -25,25 +25,15 @@ code { font-size: larger }
 <li>其它可能的用户行为引起的启动。</li>
 </ul>
 
-<p><strong>注意</strong>：当<code>谷歌服务</code>在阻止列表时，只有<code>谷歌家族应用</code>和第三方的<code>GCM</code>应用可以使用。同时，当有任何一个<code>谷歌家族应用</code>没有退出时，都不会退出<code>谷歌服务</code>。</p>
-
-<p>当用户退出6秒以后，如果有服务，将会被强行停止，否则进程等待回收。
-有些用户无法或不愿分清HOME与返回键区别，可以黑屏以后自动关闭进程，但是这项功能默认关闭。
-本人建议(并且程序默认)保留其它类型进程，如果强迫症实在不想保留进程，请捐赠以后获取许可，然后开启相关设置(强迫症是病，得花钱治)。</p>
-
-<p>“<code>阻止运行</code>”禁止以下行为：</p>
-
-<ul>
-<li>(当程序被阻止时) 自杀，如搜狗地图。</li>
-<li>(当程序被阻止时) 程序自己移到后台，如微信。</li>
-<li>(当程序被阻止时) 程序启动HOME，如微博。</li>
-</ul>
+<p><strong>注意</strong>：当<code>谷歌服务</code>在阻止列表时，只有<code>谷歌家族应用</code>和第三方的<code>GCM</code>应用可以使用。同时，当有任何一个<code>谷歌家族应用</code>没有退出时，都不会退出<code>谷歌服务</code>。当然，只有<code>GMS</code>运行时才能接收<code>GCM</code>消息，并唤醒相应应用。</p>
 
 <p><strong>警告</strong>：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。“<code>阻止运行</code>”不会显示和系统同一签名的系统应用，也不会显示系统内置的启动器。</p>
 
 <p><strong>警告</strong>：请不要阻止“<code>Xposed Installer</code>”，否则模块更新时，无法更新模块路径，导致重启以后无法加载模块。</p>
 
-<p>这个模块支持安卓2.3到5.1，个人主要在5.1上测试。(2.3请安装本人移植的xposed框架。）</p>
+<p><strong>提示</strong>：有些用户无法或不愿分清<code>HOME</code>与<code>返回键</code>区别，可以开启“强行停止后台程序”，在离开程序一段时间后并黑屏时退出应用。这项功能默认关闭。</p>
+
+<p>“<code>阻止运行</code>”支持Android 2.3到6.0，本人主要在5.1上测试。(2.3请安装本人移植的xposed框架。）</p>
 
 <h2>使用说明</h2>
 
@@ -56,6 +46,8 @@ code { font-size: larger }
 <p>“<code>阻止运行</code>”自动把新装应用添加到<code>阻止列表</code>，如果不想这样，请把“<code>阻止运行</code>”添加到<code>阻止列表</code>（不建议）。</p>
 
 <p>同时，“<code>阻止运行</code>”不杀非<code>服务</code>的程序，但是保证非<code>服务</code>类进程不会变成<code>服务</code>在后台<strong><em>一直</em></strong>运行。</p>
+
+<p><strong>高级</strong>：在<code>Xposed Installer</code>之外，本程序提供<code>ROM补丁</code>模式，只需替换相应文件，即可直接使用“<code>阻止运行</code>”。如有需要，请联系作者；或者阅读源码目录<code>aosp</code>下的文档。</p>
 
 <h2>特别搜索</h2>
 
