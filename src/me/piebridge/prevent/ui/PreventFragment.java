@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Bitmap;
@@ -103,6 +102,12 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 selections.clear();
             }
             mAdapter.notifyDataSetChanged();
+        }
+    }
+
+    public void setChecked(boolean checked) {
+        if (check != null) {
+            check.setChecked(checked);
         }
     }
 
@@ -328,6 +333,8 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     protected abstract int getQueryHint();
 
     protected abstract String getDefaultQuery();
+
+    protected abstract boolean canSelectAll();
 
     protected boolean showRunning() {
         return false;
@@ -561,7 +568,12 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 holder.loadingView.setVisibility(View.VISIBLE);
             }
             holder.packageName = appInfo.packageName;
-            holder.checkView.setEnabled(mCanPreventNames.contains(holder.packageName));
+            if (mCanPreventNames.contains(holder.packageName)) {
+                holder.checkView.setEnabled(true);
+            } else {
+                UILog.d("cannot prevent " + holder.packageName);
+                holder.checkView.setEnabled(false);
+            }
             holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
             if (appInfo.isSystem()) {
                 view.setBackgroundColor(mActivity.getDangerousColor());
@@ -593,10 +605,13 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             } else {
                 allPreventablePackages.addAll(mFiltered);
             }
+            if (canSelectAll()) {
+                return allPreventablePackages;
+            }
             Iterator<String> iterator = allPreventablePackages.iterator();
             while (iterator.hasNext()) {
                 String name = iterator.next();
-                if (!mCanPreventNames.contains(name)) {
+                if (!mCanPreventNames.contains(name) || PackageUtils.isImportPackage(mActivity, name)) {
                     iterator.remove();
                 }
             }
@@ -804,57 +819,6 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             holder.loadingView.setVisibility(View.GONE);
             holder.summaryView.setVisibility(View.VISIBLE);
         }
-    }
-
-    public static class Applications extends PreventFragment {
-
-        @Override
-        protected Set<String> getPackageNames(PreventActivity activity) {
-            Set<String> names = new HashSet<String>();
-            PackageManager pm = activity.getPackageManager();
-            for (PackageInfo pkgInfo : pm.getInstalledPackages(0)) {
-                ApplicationInfo appInfo = pkgInfo.applicationInfo;
-                if (PackageUtils.canPrevent(pm, appInfo)) {
-                    names.add(appInfo.packageName);
-                }
-            }
-            return names;
-        }
-
-        @Override
-        protected int getQueryHint() {
-            return R.string.query_hint_system;
-        }
-
-        @Override
-        protected String getDefaultQuery() {
-            return "-3g";
-        }
-
-        @Override
-        protected boolean showRunning() {
-            return true;
-        }
-
-    }
-
-    public static class PreventList extends PreventFragment {
-
-        @Override
-        protected Set<String> getPackageNames(PreventActivity activity) {
-            return new TreeSet<String>(activity.getPreventPackages().keySet());
-        }
-
-        @Override
-        protected int getQueryHint() {
-            return R.string.query_hint;
-        }
-
-        @Override
-        protected String getDefaultQuery() {
-            return null;
-        }
-
     }
 
 }

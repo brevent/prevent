@@ -27,6 +27,7 @@ public class GmsUtils {
     private static final String GSF = "com.google.android.gsf";
     private static final String GSF_LOGIN = "com.google.android.gsf.login";
     private static final String GAPPS_PREFIX = "com.google.android.";
+    private static final String GAPPS_INPUTMETHOD_PREFIX = "com.google.android.inputmethod";
     private static final AtomicInteger GMS_COUNTER = new AtomicInteger();
     // https://developers.google.com/cloud-messaging/android/client
     private static Collection<String> GCM_ACTIONS = Arrays.asList(
@@ -95,7 +96,7 @@ public class GmsUtils {
     }
 
     public static boolean isGms(String packageName) {
-        return GMS_PACKAGES.contains(packageName);
+        return packageName != null && GMS_PACKAGES.contains(packageName);
     }
 
     public static Collection<String> getGmsPackages() {
@@ -138,6 +139,10 @@ public class GmsUtils {
             // I think it's logged already
             return !SystemHook.hasRunningGapps();
         }
+    }
+
+    public static boolean isInputMethod(String name) {
+        return name != null && name.startsWith(GAPPS_INPUTMETHOD_PREFIX);
     }
 
 }

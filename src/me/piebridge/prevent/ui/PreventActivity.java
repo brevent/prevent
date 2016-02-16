@@ -219,6 +219,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void retrievePrevents() {
+        PackageUtils.clearInputMethodPackages();
         Intent intent = new Intent();
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
         intent.setAction(PreventIntent.ACTION_GET_PACKAGES);
@@ -387,6 +388,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         refreshIfNeeded();
     }
 
+    private void setUnchecked() {
+        String tag = getTag(mPager.getCurrentItem());
+        ((PreventFragment) getSupportFragmentManager().findFragmentByTag(tag)).setChecked(false);
+    }
+
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.mismatch && code > 0) {
@@ -405,12 +411,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 preventPackages.put(packageName, !running.containsKey(packageName));
             }
             savePackages();
+            setUnchecked();
         } else if (id == R.id.remove || id == R.string.remove) {
             PreventUtils.update(this, selections.toArray(new String[selections.size()]), false);
             for (String packageName : selections) {
                 preventPackages.remove(packageName);
             }
             savePackages();
+            setUnchecked();
         } else if (id == R.string.user_guide) {
             startActivity(new Intent(this, UserGuideActivity.class));
         }
@@ -841,10 +849,10 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             Fragment fragment;
             switch (position) {
                 case APPLICATIONS:
-                    fragment = new PreventFragment.Applications();
+                    fragment = new Applications();
                     break;
                 case PREVENT_LIST:
-                    fragment = new PreventFragment.PreventList();
+                    fragment = new PreventList();
                     break;
                 default:
                     return null;

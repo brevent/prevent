@@ -1,12 +1,20 @@
 package me.piebridge.prevent.common;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import me.piebridge.forcestopgb.BuildConfig;
@@ -18,6 +26,16 @@ import me.piebridge.prevent.framework.SystemHook;
 public class PackageUtils {
 
     private static Set<String> launchers;
+
+    private static Set<String> inputMethodPackages = new HashSet<String>();
+
+    private static String smsDefaultApplication;
+
+    private static final Collection<String> IMPORT_PACKAGES = Arrays.asList(
+            "de.robv.android.xposed.installer",
+            "eu.chainfire.supersu",
+            BuildConfig.APPLICATION_ID
+    );
 
     private PackageUtils() {
 
@@ -81,6 +99,41 @@ public class PackageUtils {
 
     public static boolean equals(Object a, Object b) { // NOSONAR
         return (a == b) || (a != null && a.equals(b));
+    }
+
+    private static boolean isInputMethod(String name) {
+        if (GmsUtils.isGapps(name) && !GmsUtils.isInputMethod(name)) {
+            return false;
+        }
+        return inputMethodPackages.contains(name);
+    }
+
+    private static void initInputMethods(Context context) {
+        InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        List<InputMethodInfo> inputMethods = inputMethodManager.getEnabledInputMethodList();
+        final int count = inputMethods == null ? 0 : inputMethods.size();
+        for (int i = 0; i < count; ++i) {
+            inputMethodPackages.add(inputMethods.get(i).getPackageName());
+        }
+    }
+
+    public static void clearInputMethodPackages() {
+        inputMethodPackages.clear();
+    }
+
+    public static boolean isImportPackage(Context context, String name) {
+        if (name == null) {
+            return false;
+        }
+        if (inputMethodPackages.isEmpty()) {
+            initInputMethods(context);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                smsDefaultApplication = Settings.Secure.getString(context.getContentResolver(), "sms_default_application");
+            }
+        }
+        return IMPORT_PACKAGES.contains(name)
+                || isInputMethod(name)
+                || name.equals(smsDefaultApplication);
     }
 
 }
