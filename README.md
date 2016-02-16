@@ -34,6 +34,7 @@ And "`Prevent Running`" would keep non-"service" processes, of cource it cannot 
 ## Special Search
 
 - `-3` for `third` party apps
+- `-a` for `a`ll apps (default show third party apps and gapps)
 - `-s` for `s`ystem apps
 - `-e` for `e`nabled apps
 - `-r` for `r`unning apps
@@ -123,6 +124,7 @@ Android 3.1对强行停止的程序引入了[启动控制](http://developer.andr
 ## 特别搜索
 
 - `-3` 用户安装的第`三`方程序
+- `-a` 全部程序 (默认仅展示第三方和G家应用)
 - `-s` 系统预装的程序
 - `-e` 没有阻止的程序
 - `-r` 正在运行的程序
