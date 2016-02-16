@@ -493,13 +493,10 @@ public final class SystemHook {
     }
 
     public static boolean isSystemPackage(String packageName) {
-        if (packageName == null) {
-            return false;
-        }
         if (isFramework(packageName) || GmsUtils.isGms(packageName)) {
             return true;
         }
-        if (GmsUtils.isGapps(packageName)) {
+        if (packageName == null || GmsUtils.isGapps(packageName)) {
             return false;
         }
         try {
