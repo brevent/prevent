@@ -698,7 +698,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             }
 
             private boolean contains(String query, AppInfo appInfo) {
-                return appInfo.name.toLowerCase(Locale.US).contains(query);
+                return "-a".equals(query)
+                    || appInfo.name.toLowerCase(Locale.US).contains(query)
+                    || (query.length() >= 0x4 && appInfo.packageName.toLowerCase(Locale.US).contains(query));
             }
 
             private boolean queryForThirdParty(String query, AppInfo appInfo) {
