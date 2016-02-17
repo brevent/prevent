@@ -23,6 +23,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -36,12 +37,11 @@ public class AccountWatcher implements OnAccountsUpdateListener {
     private static final String NAMESPACE_ANDROID = "http://schemas.android.com/apk/res/android";
     private static final String SYNC_ADAPTER = "android.content.SyncAdapter";
     private final Context mContext;
-    private final Collection<Account> mEnabledAccounts = new ArrayList<Account>();
+    private Collection<Account> mEnabledAccounts = null;
 
     public AccountWatcher(Context context) {
         mContext = context;
-        AccountManager accountManager = AccountManager.get(context);
-        accountManager.addOnAccountsUpdatedListener(this, initHandler(), true);
+        AccountManager.get(context).addOnAccountsUpdatedListener(this, initHandler(), false);
     }
 
     private Handler initHandler() {
@@ -152,7 +152,7 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         PreventLog.d("set sync to " + syncable + " for " + component.flattenToShortString());
         SyncAdapterType type = getSyncAdapter(mContext, component);
         if (type != null && type.isUserVisible()) {
-            for (Account account : mEnabledAccounts) {
+            for (Account account : getEnabledAccounts()) {
                 if (account.type.equals(type.accountType)) {
                     ContentResolver.setSyncAutomatically(account, type.authority, syncable);
                 }
@@ -161,7 +161,7 @@ public class AccountWatcher implements OnAccountsUpdateListener {
     }
 
     private boolean isSyncable(SyncAdapterType type) {
-        for (Account account : mEnabledAccounts) {
+        for (Account account : getEnabledAccounts()) {
             if (account.type.equals(type.accountType)) {
                 PreventLog.v("check account " + account.type + " for " + type.authority);
                 if (ContentResolver.getSyncAutomatically(account, type.authority)
@@ -175,9 +175,22 @@ public class AccountWatcher implements OnAccountsUpdateListener {
 
     @Override
     public void onAccountsUpdated(Account[] accounts) {
-        mEnabledAccounts.clear();
-        Collections.addAll(mEnabledAccounts, accounts);
-        PreventLog.i("accounts: " + mEnabledAccounts.size());
+        Collection<Account> enabledAccounts = getEnabledAccounts();
+        enabledAccounts.clear();
+        Collections.addAll(enabledAccounts, accounts);
+        PreventLog.i("accounts: " + enabledAccounts.size());
+    }
+
+    public Collection<Account> getEnabledAccounts() {
+        if (mEnabledAccounts == null) {
+            mEnabledAccounts = new ArrayList<Account>();
+            try {
+                Collections.addAll(mEnabledAccounts, AccountManager.get(mContext).getAccounts());
+            } catch (RuntimeException e) {
+                PreventLog.e("cannot find system's account", e);
+            }
+        }
+        return mEnabledAccounts;
     }
 
 }

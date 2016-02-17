@@ -1,7 +1,6 @@
 package me.piebridge.prevent.framework;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -28,10 +27,10 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
-import me.piebridge.prevent.framework.util.PreventListUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.LogcatUtils;
+import me.piebridge.prevent.framework.util.PreventListUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
 
 /**
@@ -163,7 +162,7 @@ public class SystemReceiver extends ActivityReceiver {
     private boolean handleCheckLicense(Context context, Intent intent) {
         String user = intent.getStringExtra(Intent.EXTRA_USER);
         Map<String, Set<String>> users = new LinkedHashMap<String, Set<String>>();
-        for (Account account : AccountManager.get(context).getAccounts()) {
+        for (Account account : ActivityManagerServiceHook.getAccountWatcher().getEnabledAccounts()) {
             Set<String> accounts = users.get(account.type);
             if (accounts == null) {
                 accounts = new LinkedHashSet<String>();
