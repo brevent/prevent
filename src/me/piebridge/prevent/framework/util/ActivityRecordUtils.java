@@ -71,7 +71,6 @@ public class ActivityRecordUtils {
     }
 
     public static Object getActivityRecord(Object target) {
-        PreventLog.v("getActivityRecord, target: " + target);
         if (isActivityRecord(target)) {
             return target;
         }

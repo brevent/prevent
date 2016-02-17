@@ -568,12 +568,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 holder.loadingView.setVisibility(View.VISIBLE);
             }
             holder.packageName = appInfo.packageName;
-            if (mCanPreventNames.contains(holder.packageName)) {
-                holder.checkView.setEnabled(true);
-            } else {
-                UILog.d("cannot prevent " + holder.packageName);
-                holder.checkView.setEnabled(false);
-            }
+            holder.checkView.setEnabled(mCanPreventNames.contains(holder.packageName));
             holder.checkView.setChecked(mActivity.getSelection().contains(holder.packageName));
             if (appInfo.isSystem()) {
                 view.setBackgroundColor(mActivity.getDangerousColor());
