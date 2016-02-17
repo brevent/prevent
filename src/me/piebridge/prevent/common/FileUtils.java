@@ -57,7 +57,7 @@ public class FileUtils {
         }
     }
 
-    private static Set<String> load(File file) {
+    public static Set<String> load(File file) {
         Set<String> packages = new TreeSet<String>();
         if (!file.exists()) {
             return packages;

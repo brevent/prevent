@@ -66,7 +66,7 @@ public final class PreventListUtils {
     }
 
     public Set<String> load(Context context) {
-        return FileUtils.load(context, getPrevent(context));
+        return FileUtils.load(new File(getPrevent(context)));
     }
 
     public static boolean notifyNoPrevents(Context context) {
