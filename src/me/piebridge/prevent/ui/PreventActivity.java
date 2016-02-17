@@ -792,7 +792,9 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    showDisableDialog(result);
+                    if (!paused) {
+                        showDisableDialog(result);
+                    }
                 }
             });
             return false;
