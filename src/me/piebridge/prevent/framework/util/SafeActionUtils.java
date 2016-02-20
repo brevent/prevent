@@ -212,7 +212,13 @@ public class SafeActionUtils {
             return null;
         }
         SearchManager searchManager = (SearchManager) context.getSystemService(Context.SEARCH_SERVICE);
-        ComponentName searchActivity = searchManager.getGlobalSearchActivity();
+        ComponentName searchActivity;
+        try {
+            searchActivity = searchManager.getGlobalSearchActivity();
+        } catch (RuntimeException e) {
+            PreventLog.e("cannot get search activity", e);
+            return null;
+        }
         if (searchActivity == null) {
             return null;
         }
