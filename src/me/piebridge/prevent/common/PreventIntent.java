@@ -47,4 +47,7 @@ public final class PreventIntent {
 
     }
 
+    public static boolean isPreventAction(boolean isSystem, String action) {
+        return isSystem && (ACTION_REGISTERED.equals(action) || ACTION_NOT_SUPPORTED.equals(action));
+    }
 }

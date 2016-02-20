@@ -15,6 +15,7 @@ import java.util.Set;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.framework.util.AlarmManagerServiceUtils;
 import me.piebridge.prevent.framework.util.BroadcastFilterUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -141,7 +142,7 @@ public class IntentFilterHook {
         if (cannotPreventGms(packageName, sender)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
-        } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
+        } else if (GmsUtils.isGcmAction(sender, isSystem, action) || PreventIntent.isPreventAction(isSystem, action)) {
             return allowSafeIntent(filter, sender, action, packageName);
         } else if (isSafeReceiverAction(isSystem, action)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
