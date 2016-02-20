@@ -24,7 +24,7 @@ public class ReflectUtils {
                 field = clazz.getDeclaredField(name);
                 field.setAccessible(true);
             } catch (NoSuchFieldException e) {
-                PreventLog.w("cannot find field " + name + " in " + clazz);
+                PreventLog.d("cannot find field " + name + " in " + clazz, e);
                 clazz = clazz.getSuperclass();
             }
         }
