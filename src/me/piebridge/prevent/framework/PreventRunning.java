@@ -28,7 +28,7 @@ public class PreventRunning implements PreventRunningHook {
         PreventLog.i("prevent running " + BuildConfig.VERSION_NAME);
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         SystemHook.setClassLoader(classLoader);
-        LogcatUtils.logcat("*:v");
+        LogcatUtils.logcat(LogcatUtils.BOOT, "*:v");
     }
 
     @Override

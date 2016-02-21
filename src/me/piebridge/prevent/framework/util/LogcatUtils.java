@@ -22,16 +22,20 @@ import me.piebridge.prevent.framework.PreventLog;
  */
 public class LogcatUtils {
 
-    private static final String CACHE = "/data/system/prevent.log";
-    private static final String COMMAND = "/system/bin/logcat -d -v time -f " + CACHE;
+    private static final String CACHE_PREFIX = "/data/system/me.piebridge.prevent.log.";
+    private static final String COMMAND = "/system/bin/logcat -d -v time -f " + CACHE_PREFIX;
+
+    public static final String BOOT = "boot";
+    public static final String PREVENT = "prevent";
+    public static final String SYSTEM = "system";
 
     private LogcatUtils() {
 
     }
 
-    public static void logcat(String log) {
+    public static void logcat(String prefix, String log) {
         try {
-            String command = COMMAND + " " + log;
+            String command = COMMAND + prefix + " " + log;
             PreventLog.d("will execute: " + command);
             Runtime.getRuntime().exec(command);
             PreventLog.d("execute complete: " + command);
@@ -43,7 +47,7 @@ public class LogcatUtils {
 
     public static long logcat(Context context, String prefix) {
         PreventLog.d("send " + prefix + " log");
-        File cache = new File(CACHE);
+        File cache = new File(CACHE_PREFIX + prefix);
         if (cache.exists()) {
             long size = cache.length();
             PreventLog.d("log size: " + cache.length());
@@ -56,7 +60,7 @@ public class LogcatUtils {
             cache.delete();
             return size;
         } else {
-            PreventLog.d("not exist: " + CACHE);
+            PreventLog.d("not exist: " + cache.getAbsolutePath());
             return 0L;
         }
     }

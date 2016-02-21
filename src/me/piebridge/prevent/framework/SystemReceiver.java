@@ -88,10 +88,11 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
             handleUpdatePrevent(action, intent);
         } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
-            LogcatUtils.logcat("-s Prevent:v PreventUI:v");
-            LogcatUtils.logcat(context, "prevent");
-            LogcatUtils.logcat("ContentResolver:s *:v");
-            LogcatUtils.logcat(context, "system");
+            LogcatUtils.logcat(context, LogcatUtils.BOOT);
+            LogcatUtils.logcat(LogcatUtils.PREVENT, "-s Prevent:v PreventUI:v");
+            LogcatUtils.logcat(context, LogcatUtils.PREVENT);
+            LogcatUtils.logcat(LogcatUtils.SYSTEM, "ContentResolver:s *:v");
+            LogcatUtils.logcat(context, LogcatUtils.SYSTEM);
         } else if (PreventIntent.ACTION_UPDATE_CONFIGURATION.equals(action)) {
             handleConfiguration(intent.getBundleExtra(PreventIntent.EXTRA_CONFIGURATION));
         } else if (PreventIntent.ACTION_CHECK_LICENSE.equals(action)) {
@@ -234,7 +235,6 @@ public class SystemReceiver extends ActivityReceiver {
                 PreventListUtils.notifyNoPrevents(mContext);
             }
             loadConfiguration();
-            LogcatUtils.logcat(mContext, "boot");
         }
     }
 
