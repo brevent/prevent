@@ -689,7 +689,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 }
                 updateTimeIfNeeded(packageName);
             } else if (PreventIntent.ACTION_GET_INFO.equals(action)) {
-                handleGetInfo();
+                handleGetInfo(context);
             } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
                 handleRequestLog();
             }
@@ -705,7 +705,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             });
         }
 
-        private void handleGetInfo() {
+        private void handleGetInfo(Context context) {
             String info = getResultData();
             if (TextUtils.isEmpty(info)) {
                 return;
@@ -714,6 +714,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 JSONObject json = new JSONObject(info);
                 name = json.optString("name");
                 code = json.optInt("code");
+                PreventUtils.updateConfiguration(context, json);
                 showRebootIfNeeded();
             } catch (JSONException e) {
                 UILog.d("cannot get version from " + info, e);

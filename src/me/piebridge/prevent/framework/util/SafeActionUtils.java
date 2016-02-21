@@ -137,12 +137,7 @@ public class SafeActionUtils {
         if (action == null) {
             return false;
         }
-        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || PreventIntent.ACTION_REGISTERED.equals(action)
-                || PreventIntent.ACTION_NOT_SUPPORTED.equals(action)) {
-            // should be white list
-            return true;
-        }
-        if (GmsUtils.isGcmAction(null, false, action)) {
+        if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action) || GmsUtils.isGcmAction(null, false, action)) {
             return true;
         }
         return !action.startsWith("android.intent.action") && !AppGlobals.getPackageManager().isProtectedBroadcast(action);

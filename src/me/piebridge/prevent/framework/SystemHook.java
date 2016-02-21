@@ -515,6 +515,7 @@ public final class SystemHook {
 
     public static void setDestroyProcesses(boolean destroyProcesses) {
         SystemHook.destroyProcesses = destroyProcesses;
+        PreventLog.i("update destroy processes to " + destroyProcesses);
     }
 
     public static boolean isDestroyProcesses() {
@@ -554,6 +555,7 @@ public final class SystemHook {
 
     public static void setLockSyncSettings(boolean lockSyncSettings) {
         SystemHook.lockSyncSettings = lockSyncSettings;
+        PreventLog.i("update lock sync settings to " + lockSyncSettings);
     }
 
     public static int getVersion() {
@@ -578,6 +580,7 @@ public final class SystemHook {
 
     public static void setUseAppStandby(boolean useAppStandby) {
         SystemHook.useAppStandby = useAppStandby;
+        PreventLog.i("update use app standby settings to " + useAppStandby);
     }
 
     public static void setNotSupported() {
@@ -673,5 +676,9 @@ public final class SystemHook {
 
     public static Context getContext() {
         return mContext;
+    }
+
+    public static boolean isLockSyncSettings() {
+        return lockSyncSettings;
     }
 }

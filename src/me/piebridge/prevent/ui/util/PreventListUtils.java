@@ -14,7 +14,6 @@ import me.piebridge.prevent.common.ExternalFileUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.common.FileUtils;
 import me.piebridge.prevent.framework.PreventLog;
-import me.piebridge.prevent.ui.PreventReceiver;
 import me.piebridge.prevent.ui.UILog;
 
 public final class PreventListUtils {
@@ -68,7 +67,7 @@ public final class PreventListUtils {
         boolean updated = false;
         if (packages.isEmpty() && !synced) {
             synced = true;
-            updated = PreventReceiver.updateConfiguration(context, true);
+            updated = PreventUtils.updateConfiguration(context, true);
         }
         backupIfNeeded(context, packages);
         return updated;

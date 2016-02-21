@@ -19,7 +19,6 @@ public final class PreventIntent {
     public static final String ACTION_SYSTEM_LOG = NAMESPACE + "SYSTEM_LOG";
     public static final String ACTION_CHECK_LICENSE = NAMESPACE + "CHECK_LICENSE";
     public static final String ACTION_UPDATE_CONFIGURATION = NAMESPACE + "UPDATE_CONFIGURATION";
-    public static final String ACTION_REGISTERED = NAMESPACE + "REGISTERED";
     public static final String ACTION_SOFT_REBOOT = NAMESPACE + "SOFT_REBOOT";
     public static final String ACTION_REBOOT = NAMESPACE + "REBOOT";
     public static final String ACTION_NOT_SUPPORTED = NAMESPACE + "NOT_SUPPORTED";
@@ -41,13 +40,37 @@ public final class PreventIntent {
     public static final String KEY_USE_APP_STANDBY = "use_app_standby";
     public static final String KEY_PREVENT_LIST = "prevent_list";
 
+    public static final String[] KEYS_LONG = new String[] {
+            KEY_FORCE_STOP_TIMEOUT
+    };
+
+    public static final String[] KEYS_BOOLEAN = new String[] {
+            KEY_DESTROY_PROCESSES,
+            KEY_BACKUP_PREVENT_LIST,
+            KEY_LOCK_SYNC_SETTINGS,
+            KEY_USE_APP_STANDBY
+    };
+
     public static final Uri CONTENT_URI = Uri.parse("content://me.piebridge.prevent.provider");
 
     private PreventIntent() {
 
     }
 
-    public static boolean isPreventAction(boolean isSystem, String action) {
-        return isSystem && (ACTION_REGISTERED.equals(action) || ACTION_NOT_SUPPORTED.equals(action));
+    private static boolean isKey(String key, String[] keys) {
+        for (String k : keys) {
+            if (k.equals(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isBoolean(String key) {
+        return isKey(key, KEYS_BOOLEAN);
+    }
+
+    public static boolean isLong(String key) {
+        return isKey(key, KEYS_LONG);
     }
 }

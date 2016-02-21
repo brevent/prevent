@@ -34,7 +34,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     protected Map<String, Boolean> mPreventPackages;
 
     private boolean screen = false;
-    protected long timeout = -1;
+    protected long forceStopTimeout = -1;
     private Map<String, Integer> packageUids = new HashMap<String, Integer>();
     private Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
     private Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
@@ -248,18 +248,18 @@ abstract class ActivityReceiver extends BroadcastReceiver {
                 PreventLog.v(packageName + " is running, set elapsed to 0");
                 elapsed = 0;
             } else if (checkLeavingNext.contains(packageName)) {
-                elapsed = timeout;
+                elapsed = forceStopTimeout;
             } else {
                 PreventLog.v("cannot figure elapsed for " + packageName + ", wait for next checking");
                 checkLeavingNext.add(packageName);
-                elapsed = timeout - SystemHook.TIME_CHECK_USER_LEAVING;
+                elapsed = forceStopTimeout - SystemHook.TIME_CHECK_USER_LEAVING;
             }
         }
         return elapsed;
     }
 
     private void checkLeavingPackages() {
-        if (timeout < 0) {
+        if (forceStopTimeout <= 0) {
             return;
         }
         PreventLog.d("checking leaving packages");
@@ -278,7 +278,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
                 continue;
             }
             long elapsed = getElapsed(now, packageName);
-            if (elapsed >= timeout) {
+            if (elapsed >= forceStopTimeout) {
                 PreventLog.i("leaving package " + packageName + " for " + elapsed + " seconds");
                 stopPackages.add(packageName);
             } else {
@@ -377,4 +377,8 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         leavingPackages.remove(packageName);
     }
 
+    public void setForceStopTimeout(long forceStopTimeout) {
+        this.forceStopTimeout = forceStopTimeout;
+        PreventLog.i("update force stop timeout to " + this.forceStopTimeout + " s");
+    }
 }

@@ -115,22 +115,11 @@ public class IntentFilterHook {
         PackageParser.Package owner = activity.owner;
         if (owner.receivers.contains(activity)) {
             String packageName = owner.applicationInfo.packageName;
-            if (canIgnoreReceiver(packageName, action)) {
-                // prevent update prevent list
-                LogUtils.logIntentFilter(true, sender, filter, action, packageName);
-                return IntentFilterMatchResult.NO_MATCH;
-            } else {
-                return hookReceiver(filter, packageName, sender, action);
-            }
+            return hookReceiver(filter, packageName, sender, action);
         } else {
             // we only care about receiver
             return IntentFilterMatchResult.NONE;
         }
-    }
-
-    private static boolean canIgnoreReceiver(String packageName, String action) {
-        return BuildConfig.APPLICATION_ID.equals(packageName) && mPreventPackages.containsKey(BuildConfig.APPLICATION_ID) &&
-                (Intent.ACTION_PACKAGE_ADDED.equals(action) || Intent.ACTION_PACKAGE_REMOVED.equals(action));
     }
 
     private static IntentFilterMatchResult hookReceiver(PackageParser.ActivityIntentInfo filter, String packageName, String sender, String action) {
@@ -142,7 +131,7 @@ public class IntentFilterHook {
         if (cannotPreventGms(packageName, sender)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);
             return IntentFilterMatchResult.NONE;
-        } else if (GmsUtils.isGcmAction(sender, isSystem, action) || PreventIntent.isPreventAction(isSystem, action)) {
+        } else if (GmsUtils.isGcmAction(sender, isSystem, action)) {
             return allowSafeIntent(filter, sender, action, packageName);
         } else if (isSafeReceiverAction(isSystem, action)) {
             LogUtils.logIntentFilter(false, sender, filter, action, packageName);

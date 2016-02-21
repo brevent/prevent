@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -28,14 +29,13 @@ public class FileUtils {
 
     }
 
-    public static void save(String path, Set<String> packages) {
-        File lock = new File(path + ".lock");
-        File conf = lock.getParentFile();
-        if (conf.isFile()) {
-            conf.delete();
+    private static void makeSure(File lock) {
+        File parent = lock.getParentFile();
+        if (parent.isFile()) {
+            parent.delete();
         }
-        if (!conf.isDirectory()) {
-            conf.mkdirs();
+        if (!parent.isDirectory()) {
+            parent.mkdirs();
         }
         while (lock.exists() && System.currentTimeMillis() - lock.lastModified() < MAX_WAIT) {
             try {
@@ -44,10 +44,33 @@ public class FileUtils {
                 // do nothing
             }
         }
+    }
+
+    public static void save(String path, Set<String> packages) {
+        File lock = new File(path + ".lock");
+        makeSure(lock);
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(lock));
             for (String key : packages) {
                 writer.write(key);
+                writer.write("\n");
+            }
+            writer.close();
+            lock.renameTo(new File(path));
+        } catch (IOException e) {
+            PreventLog.e("cannot save " + path, e);
+        }
+    }
+
+    public static void save(String path, Map<String, Object> settings) {
+        File lock = new File(path + ".lock");
+        makeSure(lock);
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(lock));
+            for (Map.Entry<String, Object> entry : settings.entrySet()) {
+                writer.write(entry.getKey());
+                writer.write("=");
+                writer.write(String.valueOf(entry.getValue()));
                 writer.write("\n");
             }
             writer.close();
@@ -66,6 +89,9 @@ public class FileUtils {
             String line;
             BufferedReader reader = new BufferedReader(new FileReader(file));
             while ((line = reader.readLine()) != null) {
+                if (line.startsWith("#")) {
+                    continue;
+                }
                 int index = line.indexOf('=');
                 if (index != -1) {
                     line = line.substring(0, index);

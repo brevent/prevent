@@ -22,6 +22,7 @@ import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.DeprecatedUtils;
 import me.piebridge.prevent.ui.util.LicenseUtils;
+import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
@@ -146,7 +147,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
     @Override
     protected void onPause() {
         if (changed) {
-            PreventReceiver.updateConfiguration(this);
+            PreventUtils.updateConfiguration(this);
         }
         super.onPause();
     }

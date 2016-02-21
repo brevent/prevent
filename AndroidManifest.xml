@@ -33,21 +33,6 @@
             android:name="xposedminversion"
             android:value="2.1+" />
 
-        <receiver android:name="me.piebridge.prevent.ui.PreventReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_ADDED" />
-                <action android:name="android.intent.action.PACKAGE_REMOVED" />
-
-                <data android:scheme="package" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="me.piebridge.prevent.REGISTERED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="me.piebridge.prevent.NOT_SUPPORTED" />
-            </intent-filter>
-        </receiver>
-
         <activity
             android:name="me.piebridge.prevent.ui.PreventActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
@@ -55,6 +40,7 @@
             android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="me.piebridge.prevent.NOT_SUPPORTED" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>

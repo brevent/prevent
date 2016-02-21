@@ -4,10 +4,13 @@ import android.accounts.Account;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemProperties;
 import android.telephony.TelephonyManager;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -24,6 +27,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.common.Configuration;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
@@ -48,7 +53,7 @@ public class SystemReceiver extends ActivityReceiver {
             PreventIntent.ACTION_CHECK_LICENSE,
             PreventIntent.ACTION_SOFT_REBOOT,
             PreventIntent.ACTION_REBOOT
-            );
+    );
 
     public static final Collection<String> PACKAGE_ACTIONS = Arrays.asList(
             Intent.ACTION_PACKAGE_RESTARTED,
@@ -64,6 +69,13 @@ public class SystemReceiver extends ActivityReceiver {
 
     public SystemReceiver(Context context, Map<String, Boolean> preventPackages) {
         super(context, preventPackages);
+        if (PreventListUtils.getInstance().canLoadConfiguration(mContext)) {
+            Configuration configuration = PreventListUtils.getInstance().loadConfiguration(mContext);
+            setForceStopTimeout(configuration.getForceStopTimeout());
+            SystemHook.setDestroyProcesses(configuration.isDestroyProcesses());
+            SystemHook.setLockSyncSettings(configuration.isLockSyncSettings());
+            SystemHook.setUseAppStandby(configuration.isUseAppStandby());
+        }
     }
 
     @Override
@@ -119,32 +131,26 @@ public class SystemReceiver extends ActivityReceiver {
         info.put("version", SystemHook.getVersion());
         info.put("name", BuildConfig.VERSION_NAME);
         info.put("code", BuildConfig.VERSION_CODE);
+        if (PreventListUtils.getInstance().canLoadConfiguration(mContext)) {
+            Configuration configuration = PreventListUtils.getInstance().loadConfiguration(mContext);
+            info.putAll(configuration.getMap());
+        }
         setResultData(new JSONObject(info).toString());
     }
 
     private void handleConfiguration(Bundle bundle) {
-        if (bundle.containsKey(PreventIntent.KEY_FORCE_STOP_TIMEOUT)) {
-            timeout = bundle.getLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT);
-            PreventLog.i("update timeout to " + timeout + "s");
-        }
-        if (bundle.containsKey(PreventIntent.KEY_DESTROY_PROCESSES)) {
-            boolean destroyProcesses = bundle.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES);
-            PreventLog.i("update destroy processes to " + destroyProcesses);
-            SystemHook.setDestroyProcesses(destroyProcesses);
-        }
-        if (bundle.containsKey(PreventIntent.KEY_LOCK_SYNC_SETTINGS)) {
-            boolean lockSyncSettings = bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS);
-            PreventLog.i("update lock sync settings to " + lockSyncSettings);
-            SystemHook.setLockSyncSettings(lockSyncSettings);
-        }
-        if (bundle.containsKey(PreventIntent.KEY_USE_APP_STANDBY)) {
-            boolean useAppStandby = bundle.getBoolean(PreventIntent.KEY_USE_APP_STANDBY);
-            PreventLog.i("update use app standby settings to " + useAppStandby);
-            SystemHook.setUseAppStandby(useAppStandby);
-        }
+        setForceStopTimeout(bundle.getLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT));
+        SystemHook.setDestroyProcesses(bundle.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES));
+        SystemHook.setLockSyncSettings(bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS));
+        SystemHook.setUseAppStandby(bundle.getBoolean(PreventIntent.KEY_USE_APP_STANDBY));
         if (bundle.containsKey(PreventIntent.KEY_PREVENT_LIST)) {
             updatePreventList(bundle.getStringArrayList(PreventIntent.KEY_PREVENT_LIST));
         }
+        saveConfiguration(new Configuration(bundle), true);
+    }
+
+    private void saveConfiguration(Configuration configuration, boolean force) {
+        PreventListUtils.getInstance().save(mContext, configuration, force);
     }
 
     private void updatePreventList(Collection<String> preventList) {
@@ -212,6 +218,36 @@ public class SystemReceiver extends ActivityReceiver {
         if (BuildConfig.APPLICATION_ID.equals(packageName) && !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
             SystemHook.setSupported(true);
             PreventListUtils.getInstance().save(mContext, mPreventPackages.keySet(), false);
+            Configuration configuration = new Configuration(new Bundle());
+            configuration.setForceStopTimeout(forceStopTimeout);
+            configuration.setDestroyProcesses(SystemHook.isDestroyProcesses());
+            configuration.setLockSyncSettings(SystemHook.isLockSyncSettings());
+            configuration.setUseAppStandby(SystemHook.isUseAppStandby());
+            PreventListUtils.getInstance().save(mContext, configuration, false);
+        } else if (!intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) && !mPreventPackages.containsKey(BuildConfig.APPLICATION_ID)) {
+            mPreventPackages.put(packageName, true);
+            showUpdated(packageName, mPreventPackages.size());
+            PreventListUtils.getInstance().save(mContext, mPreventPackages.keySet(), true);
+        }
+    }
+
+    private void showUpdated(String packageName, int size) {
+        try {
+            PackageManager pm = mContext.getPackageManager();
+            Resources resources = pm.getResourcesForApplication(BuildConfig.APPLICATION_ID);
+            String message = resources.getString(R.string.updated_prevents, size);
+            try {
+                String label = pm.getApplicationInfo(packageName, 0).loadLabel(pm).toString();
+                message += "(" + label + ")";
+            } catch (PackageManager.NameNotFoundException e) {
+                PreventLog.d("cannot find application " + packageName, e);
+                message += "(" + packageName + ")";
+            }
+            Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find application " + BuildConfig.APPLICATION_ID, e);
+        } catch (RuntimeException e) {
+            PreventLog.d("cannot show toast", e);
         }
     }
 
@@ -222,6 +258,9 @@ public class SystemReceiver extends ActivityReceiver {
         if (BuildConfig.APPLICATION_ID.equals(packageName) && !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
             SystemHook.setSupported(false);
             PreventListUtils.getInstance().onRemoved(mContext);
+        } else if (!intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+            mPreventPackages.remove(packageName);
+            PreventListUtils.getInstance().save(mContext, mPreventPackages.keySet(), true);
         }
     }
 
@@ -231,19 +270,12 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
             onScreenOn();
         } else if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
-            if (!PreventListUtils.getInstance().canLoad(mContext)) {
+            if (!SystemHook.isSupported()) {
+                PreventListUtils.notifyNotSupported(mContext);
+            } else if (!PreventListUtils.getInstance().canLoad(mContext)) {
                 PreventListUtils.notifyNoPrevents(mContext);
             }
-            loadConfiguration();
         }
-    }
-
-    private void loadConfiguration() {
-        PreventLog.i("load configuration via receiver");
-        Intent intent = new Intent(PreventIntent.ACTION_REGISTERED);
-        intent.setPackage(BuildConfig.APPLICATION_ID);
-        intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-        mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
     }
 
     private void handleGetProcesses(Context context, String action) {
@@ -374,5 +406,4 @@ public class SystemReceiver extends ActivityReceiver {
         }
         SystemHook.killNoFather();
     }
-
 }
