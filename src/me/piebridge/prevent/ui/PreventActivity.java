@@ -696,6 +696,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
 
         private void handleRequestLog() {
+            ReportUtils.waitForCompleted(PreventActivity.this);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -916,7 +917,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
             UILog.i("sending request log broadcast");
             showProcessDialog(R.string.retrieving);
-            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, null, 0, null, null);
+            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
         }
     }
 

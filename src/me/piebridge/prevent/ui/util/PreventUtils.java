@@ -28,6 +28,8 @@ import me.piebridge.prevent.ui.UILog;
  */
 public class PreventUtils {
 
+    private static final String INVALID_VALUE = "invalid value for ";
+
     private PreventUtils() {
 
     }
@@ -153,7 +155,7 @@ public class PreventUtils {
         try {
             value = sp.getBoolean(key, defaultValue);
         } catch (ClassCastException e) {
-            UILog.d("invalid value for " + key, e);
+            UILog.d(INVALID_VALUE + key, e);
             sp.edit().putBoolean(key, defaultValue).apply();
         }
         return value;
@@ -164,9 +166,9 @@ public class PreventUtils {
         try {
             value = Long.parseLong(sp.getString(key, String.valueOf(defaultValue)));
         } catch (NumberFormatException e) {
-            UILog.d("invalid value for " + key, e);
+            UILog.d(INVALID_VALUE + key, e);
         } catch (ClassCastException e) {
-            UILog.d("invalid value for " + key, e);
+            UILog.d(INVALID_VALUE + key, e);
         }
         if (value != defaultValue) {
             sp.edit().putString(key, String.valueOf(defaultValue)).apply();
@@ -180,7 +182,7 @@ public class PreventUtils {
         try {
             value = sp.getBoolean(key, value);
         } catch (ClassCastException e) {
-            UILog.d("invalid value for " + key, e);
+            UILog.d(INVALID_VALUE + key, e);
         }
         if (value != defaultValue) {
             sp.edit().putBoolean(key, defaultValue).apply();
@@ -193,9 +195,9 @@ public class PreventUtils {
         try {
             value = Long.parseLong(sp.getString(key, String.valueOf(value)));
         } catch (NumberFormatException e) {
-            UILog.d("invalid value for " + key, e);
+            UILog.d(INVALID_VALUE + key, e);
         } catch (ClassCastException e) {
-            UILog.d("invalid value for " + key, e);
+            UILog.d(INVALID_VALUE + key, e);
         }
         if (value != defaultValue) {
             sp.edit().putString(key, String.valueOf(defaultValue)).apply();

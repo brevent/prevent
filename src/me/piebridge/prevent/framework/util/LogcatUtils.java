@@ -25,9 +25,10 @@ public class LogcatUtils {
     private static final String CACHE_PREFIX = "/data/system/me.piebridge.prevent.log.";
     private static final String COMMAND = "/system/bin/logcat -d -v time -f " + CACHE_PREFIX;
 
-    public static final String BOOT = "boot";
+    public static final String BOOT = PreventIntent.LOGCAT_BOOT;
     public static final String PREVENT = "prevent";
     public static final String SYSTEM = "system";
+    public static final String COMPLETED = "completed";
 
     private LogcatUtils() {
 
@@ -37,20 +38,20 @@ public class LogcatUtils {
         try {
             String command = COMMAND + prefix + " " + log;
             PreventLog.d("will execute: " + command);
-            Runtime.getRuntime().exec(command);
+            Runtime.getRuntime().exec(command).waitFor();
             PreventLog.d("execute complete: " + command);
-            Runtime.getRuntime().exec("/system/bin/sync");
+        } catch (InterruptedException e) {
+            PreventLog.e("execute interrupted", e);
         } catch (IOException e) {
             PreventLog.d("exec wrong", e);
         }
     }
 
     public static long logcat(Context context, String prefix) {
-        PreventLog.d("send " + prefix + " log");
         File cache = new File(CACHE_PREFIX + prefix);
         if (cache.exists()) {
             long size = cache.length();
-            PreventLog.d("log size: " + cache.length());
+            PreventLog.d("send " + prefix + " log, size: " + cache.length());
             try {
                 sendToUi(context, new BufferedInputStream(new FileInputStream(cache)), prefix);
                 PreventLog.d("send to ui successfully");
@@ -59,10 +60,10 @@ public class LogcatUtils {
             }
             cache.delete();
             return size;
-        } else {
+        } else if (!BOOT.equals(prefix)) {
             PreventLog.d("not exist: " + cache.getAbsolutePath());
-            return 0L;
         }
+        return 0L;
     }
 
     private static void sendToUi(Context context, InputStream is, String prefix) throws IOException {
@@ -82,4 +83,18 @@ public class LogcatUtils {
         is.close();
     }
 
+    public static void completed(Context context) {
+        ContentResolver contentResolver = context.getContentResolver();
+        Uri uri = PreventIntent.CONTENT_URI.buildUpon().appendQueryParameter("path", COMPLETED)
+                .appendQueryParameter("offset", String.valueOf(0))
+                .appendQueryParameter("log", "").build();
+        contentResolver.query(uri, null, null, null, null);
+    }
+
+    public static void deleteBootLog() {
+        File cache = new File(CACHE_PREFIX + BOOT);
+        if (cache.exists()) {
+            cache.delete();
+        }
+    }
 }

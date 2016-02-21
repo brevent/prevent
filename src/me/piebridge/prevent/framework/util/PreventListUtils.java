@@ -83,6 +83,7 @@ public final class PreventListUtils {
         if (configuration.isFile()) {
             configuration.delete();
         }
+        LogcatUtils.deleteBootLog();
     }
 
     public Set<String> load(Context context) {
@@ -163,21 +164,25 @@ public final class PreventListUtils {
                 if (index != -1) {
                     String key = line.substring(0, index);
                     String value = line.substring(index + 1);
-                    if (PreventIntent.isBoolean(key)) {
-                        bundle.putBoolean(key, Boolean.valueOf(value));
-                    } else if (PreventIntent.isLong(key)) {
-                        try {
-                            bundle.putLong(key, Long.parseLong(value));
-                        } catch (NumberFormatException e) {
-                            PreventLog.w("cannot parse long from " + value, e);
-                        }
-                    }
+                    setValue(bundle, key, value);
                 }
             }
         } catch (IOException e) {
             PreventLog.d("cannot load configuration", e);
         }
         return new Configuration(bundle);
+    }
+
+    private void setValue(Bundle bundle, String key, String value) {
+        if (PreventIntent.isBoolean(key)) {
+            bundle.putBoolean(key, Boolean.valueOf(value));
+        } else if (PreventIntent.isLong(key)) {
+            try {
+                bundle.putLong(key, Long.parseLong(value));
+            } catch (NumberFormatException e) {
+                PreventLog.w("cannot parse long from " + value, e);
+            }
+        }
     }
 
     public static PreventListUtils getInstance() {

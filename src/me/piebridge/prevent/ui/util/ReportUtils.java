@@ -11,6 +11,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -58,7 +59,6 @@ public class ReportUtils {
             }
 
             zos.close();
-            Runtime.getRuntime().exec("/system/bin/sync");
             EmailUtils.sendZip(context, path, Build.FINGERPRINT);
         } catch (IOException e) {
             UILog.e("cannot report bug", e);
@@ -72,10 +72,29 @@ public class ReportUtils {
         }
         for (File file : dir.listFiles()) {
             String path = file.getName();
-            if (path.startsWith("system.") || path.startsWith("prevent.")) {
+            if (!path.startsWith(PreventIntent.LOGCAT_BOOT)) {
                 file.delete();
             }
         }
     }
 
+    public static void waitForCompleted(Context context) {
+        File dir = context.getExternalCacheDir();
+        if (dir == null) {
+            return;
+        }
+        while (true) {
+            for (File file : dir.listFiles()) {
+                String path = file.getName();
+                if (PreventIntent.LOGCAT_COMPLETED.equals(path)) {
+                    return;
+                }
+            }
+            try {
+                Thread.sleep(0x400);
+            } catch (InterruptedException e) {
+                UILog.d("cannot sleep", e);
+            }
+        }
+    }
 }

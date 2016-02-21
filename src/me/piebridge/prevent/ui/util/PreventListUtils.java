@@ -13,7 +13,6 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.ExternalFileUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.common.FileUtils;
-import me.piebridge.prevent.framework.PreventLog;
 import me.piebridge.prevent.ui.UILog;
 
 public final class PreventListUtils {
@@ -31,7 +30,7 @@ public final class PreventListUtils {
         try {
             dataDir = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).applicationInfo.dataDir;
         } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.d("cannot find package for context: " + context, e);
+            UILog.d("cannot find package for context: " + context, e);
             dataDir = Environment.getDataDirectory() + "/data/" + BuildConfig.APPLICATION_ID;
         }
         return new File(new File(dataDir, "conf"), FileUtils.PREVENT_LIST).getAbsolutePath();

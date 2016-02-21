@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import me.piebridge.prevent.common.FileUtils;
+import me.piebridge.prevent.common.PreventIntent;
 
 /**
  * Created by thom on 15/7/18.
@@ -42,7 +43,7 @@ public class PreventProvider extends ContentProvider {
         if (context == null) {
             return;
         }
-        if (path.startsWith("boot") && "0".equals(offset)) {
+        if (path.startsWith(PreventIntent.LOGCAT_BOOT) && "0".equals(offset)) {
             FileUtils.eraseFiles(context.getExternalCacheDir());
         }
         File dir = context.getExternalCacheDir();

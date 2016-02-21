@@ -52,6 +52,8 @@ public final class PreventIntent {
     };
 
     public static final Uri CONTENT_URI = Uri.parse("content://me.piebridge.prevent.provider");
+    public static final String LOGCAT_BOOT = "boot";
+    public static final String LOGCAT_COMPLETED = "completed";
 
     private PreventIntent() {
 

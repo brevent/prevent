@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
@@ -42,6 +44,10 @@ import me.piebridge.prevent.framework.util.SafeActionUtils;
  * Created by thom on 15/7/25.
  */
 public class SystemReceiver extends ActivityReceiver {
+
+    private Future<?> logFuture;
+
+    private ScheduledThreadPoolExecutor logExecutor = new ScheduledThreadPoolExecutor(0x2);
 
     public static final Collection<String> MANAGER_ACTIONS = Arrays.asList(
             PreventIntent.ACTION_GET_PACKAGES,
@@ -100,11 +106,7 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (PreventIntent.ACTION_UPDATE_PREVENT.equals(action)) {
             handleUpdatePrevent(action, intent);
         } else if (PreventIntent.ACTION_SYSTEM_LOG.equals(action)) {
-            LogcatUtils.logcat(context, LogcatUtils.BOOT);
-            LogcatUtils.logcat(LogcatUtils.PREVENT, "-s Prevent:v PreventUI:v");
-            LogcatUtils.logcat(context, LogcatUtils.PREVENT);
-            LogcatUtils.logcat(LogcatUtils.SYSTEM, "ContentResolver:s *:v");
-            LogcatUtils.logcat(context, LogcatUtils.SYSTEM);
+            sendLogAsync();
         } else if (PreventIntent.ACTION_UPDATE_CONFIGURATION.equals(action)) {
             handleConfiguration(intent.getBundleExtra(PreventIntent.EXTRA_CONFIGURATION));
         } else if (PreventIntent.ACTION_CHECK_LICENSE.equals(action)) {
@@ -231,18 +233,20 @@ public class SystemReceiver extends ActivityReceiver {
         }
     }
 
+    private String getLabel(PackageManager pm, String packageName) {
+        try {
+            return pm.getApplicationInfo(packageName, 0).loadLabel(pm).toString();
+        } catch (PackageManager.NameNotFoundException e) {
+            PreventLog.d("cannot find application " + packageName, e);
+            return packageName;
+        }
+    }
+
     private void showUpdated(String packageName, int size) {
         try {
             PackageManager pm = mContext.getPackageManager();
             Resources resources = pm.getResourcesForApplication(BuildConfig.APPLICATION_ID);
-            String message = resources.getString(R.string.updated_prevents, size);
-            try {
-                String label = pm.getApplicationInfo(packageName, 0).loadLabel(pm).toString();
-                message += "(" + label + ")";
-            } catch (PackageManager.NameNotFoundException e) {
-                PreventLog.d("cannot find application " + packageName, e);
-                message += "(" + packageName + ")";
-            }
+            String message = resources.getString(R.string.updated_prevents, size) + "(" + getLabel(pm, packageName) + ")";
             Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
         } catch (PackageManager.NameNotFoundException e) {
             PreventLog.d("cannot find application " + BuildConfig.APPLICATION_ID, e);
@@ -405,5 +409,22 @@ public class SystemReceiver extends ActivityReceiver {
             mPreventPackages.put(packageName, true);
         }
         SystemHook.killNoFather();
+    }
+
+    private void sendLogAsync() {
+        if (logFuture != null) {
+            logFuture.cancel(true);
+        }
+        logFuture = logExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                LogcatUtils.logcat(LogcatUtils.PREVENT, "-s Prevent:v PreventUI:v");
+                LogcatUtils.logcat(LogcatUtils.SYSTEM, "ContentResolver:s *:v");
+                LogcatUtils.logcat(mContext, LogcatUtils.BOOT);
+                LogcatUtils.logcat(mContext, LogcatUtils.PREVENT);
+                LogcatUtils.logcat(mContext, LogcatUtils.SYSTEM);
+                LogcatUtils.completed(mContext);
+            }
+        });
     }
 }
