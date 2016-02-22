@@ -347,22 +347,29 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         EmailUtils.sendEmail(this, getString(R.string.feedback));
     }
 
-    private boolean checkLicense() {
+    private void checkLicense() {
         if (LicenseUtils.importLicenseFromClipboard(this)) {
-            Toast.makeText(this, R.string.licensed, Toast.LENGTH_LONG).show();
-            if (request != null) {
-                request.dismiss();
-                request = null;
-            }
+            LicenseUtils.validLicense(this, true, new Runnable() {
+                @Override
+                public void run() {
+                    recreateIfNeeded();
+                }
+            });
+        }
+    }
+
+    private void recreateIfNeeded() {
+        if (request != null) {
+            request.dismiss();
+            request = null;
+        }
+        if (!TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
             RecreateUtils.recreate(this);
-            return true;
-        } else {
-            return false;
         }
     }
 
     private void requestLicense() {
-        if (!checkLicense()) {
+        if (TextUtils.isEmpty(LicenseUtils.getLicenseName(this))) {
             Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
             intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
             sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {

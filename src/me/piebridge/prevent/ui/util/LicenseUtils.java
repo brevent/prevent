@@ -2,10 +2,14 @@ package me.piebridge.prevent.ui.util;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,6 +22,7 @@ import me.piebridge.billing.DonateUtils;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.forcestopgb.R;
 import me.piebridge.prevent.common.ExternalFileUtils;
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -92,16 +97,38 @@ public class LicenseUtils {
         if (inAppLicensed) {
             return DonateUtils.ITEM_ID;
         }
-        byte[] key = readKey(context);
-        if (key.length == 0) {
+        String license = getLicense(readKey(context));
+        if (TextUtils.isEmpty(license)) {
             return null;
-        }
-        String license = getLicense(key);
-        if (license != null) {
-            return license.split(",")[0];
         } else {
-            return null;
+            return license.split(",")[0];
         }
+    }
+
+    public static void validLicense(Context context, final boolean show, final Runnable runnable) {
+        String license = getLicense(readKey(context));
+        if (inAppLicensed || context == null || TextUtils.isEmpty(license)) {
+            return;
+        }
+        final String account = license.split(",")[0];
+        Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, BuildConfig.APPLICATION_ID, null));
+        intent.putExtra(Intent.EXTRA_USER, account);
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+        context.sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (getResultCode() != 1) {
+                    String message = context.getString(R.string.no_valid_license, account);
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                    deleteLicenseIfNeeded(context);
+                } else if (show) {
+                    Toast.makeText(context, LicenseUtils.getRawLicenseName(context), Toast.LENGTH_LONG).show();
+                }
+                if (runnable != null) {
+                    runnable.run();
+                }
+            }
+        }, null, 0, null, null);
     }
 
     public static String getLicenseName(final Context context) {
@@ -112,12 +139,8 @@ public class LicenseUtils {
     }
 
     public static String getRawLicenseName(final Context context) {
-        byte[] key = readKey(context);
-        if (key.length == 0) {
-            return null;
-        }
-        String license = getLicense(key);
-        if (license == null) {
+        String license = getLicense(readKey(context));
+        if (TextUtils.isEmpty(license)) {
             return null;
         } else if (license.contains(",")) {
             return license.split(",", 0x2)[1];
@@ -155,7 +178,7 @@ public class LicenseUtils {
         return null;
     }
 
-    public static void saveLicense(Context context, byte[] key) {
+    private static void saveLicense(Context context, byte[] key) {
         try {
             File path = new File(context.getFilesDir(), LICENSE);
             FileOutputStream fos = new FileOutputStream(path);
@@ -166,18 +189,19 @@ public class LicenseUtils {
         }
     }
 
-    public static boolean importLicenseFromClipboard(Activity activity) {
-        byte[] key = readKeyFromClipboard(activity);
-        if (key.length > 0 && !TextUtils.isEmpty(LicenseUtils.getLicense(key))) {
-            LicenseUtils.saveLicense(activity, key);
-            DeprecatedUtils.setClipboard(activity, null);
+    public static boolean importLicenseFromClipboard(Context context) {
+        byte[] key = readKeyFromClipboard(context);
+        String license = getLicense(key);
+        if (!TextUtils.isEmpty(license)) {
+            DeprecatedUtils.setClipboard(context, null);
+            saveLicense(context, key);
             return true;
         }
         return false;
     }
 
-    private static byte[] readKeyFromClipboard(Activity activity) {
-        CharSequence plain = DeprecatedUtils.getClipboard(activity);
+    private static byte[] readKeyFromClipboard(Context context) {
+        CharSequence plain = DeprecatedUtils.getClipboard(context);
         if (TextUtils.isEmpty(plain)) {
             return new byte[0];
         }
