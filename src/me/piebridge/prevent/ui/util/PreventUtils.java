@@ -206,15 +206,21 @@ public class PreventUtils {
 
     public static void updateConfiguration(Context context, JSONObject json) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean updated = false;
         for (String key : PreventIntent.KEYS_LONG) {
             if (json.has(key)) {
+                updated = true;
                 updateLongPreference(sp, json, key);
             }
         }
         for (String key : PreventIntent.KEYS_BOOLEAN) {
             if (json.has(key)) {
+                updated = true;
                 updateBooleanPreference(sp, json, key);
             }
+        }
+        if (!updated) {
+            PreventUtils.updateConfiguration(context);
         }
     }
 
