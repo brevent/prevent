@@ -6,7 +6,7 @@
 命令行> 命令
 ```
 
-表示在`电脑`的 `命令行` 中执行`命令`，如果没有特别声明，Linux/Mac OS X/Windows下均可使用。
+表示在`电脑`的`命令行`中执行`命令`，如果没有特别声明，Linux/Mac OS X/Windows下均可使用。
 
 # smali 方式
 
@@ -33,7 +33,7 @@
 `baksmali`加上`-b -s`参数是为了去掉调试信息，因为补丁文件也是这样生成的。
 
 ```
-命令行> java -jar baksmali.jar -a 22 -b -s services.jar -o services
+命令行> java -jar baksmali.jar -a 21 -b -s services.jar -o services
 ```
 
 ### 反编译 `services.odex`
@@ -43,7 +43,7 @@
 ```
 命令行> java -jar oat2dex.jar boot boot.oat
 命令行> java -jar oat2dex.jar services.odex dex/
-命令行> java -jar baksmali.jar -a 22 -b -s services.dex -o services
+命令行> java -jar baksmali.jar -a 21 -b -s services.dex -o services
 ```
 
 ## 打补丁
@@ -68,7 +68,7 @@ Windows命令行> p@tch.exe --binary -p0 < api-21.smali.patch
 `smali`加上`-j 1`参数可以保证每次生成的dex文件一样。
 
 ```
-命令行> java -jar smali.jar -a 22 -j 1 -o classes.dex services
+命令行> java -jar smali.jar -a 21 -j 1 -o classes.dex services
 命令行> jar -cvf services.jar classes.dex
 ```
 
