@@ -664,9 +664,7 @@ public final class SystemHook {
     }
 
     public static void forceStopPackage(String packageName, boolean force) {
-        if (ActivityManagerServiceHook.cannotPrevent(packageName)) {
-            PreventLog.i("wont force-stop important system package: " + packageName + ", force: " + force);
-        } else if (force) {
+        if (force) {
             HideApiUtils.forceStopPackage(mContext, packageName);
         } else if (!isUseAppStandby() || !inactive(packageName)) {
             NotificationManagerServiceUtils.keepNotification(packageName);

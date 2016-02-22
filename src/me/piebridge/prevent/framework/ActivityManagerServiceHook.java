@@ -204,7 +204,7 @@ public class ActivityManagerServiceHook {
         return false;
     }
 
-    public static boolean cannotPrevent(String packageName) {
+    private static boolean cannotPrevent(String packageName) {
         if (importantSystemPackages.contains(packageName)) {
             return true;
         }
