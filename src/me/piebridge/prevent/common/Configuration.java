@@ -15,6 +15,7 @@ public class Configuration {
     private boolean backupPreventList;
     private boolean lockSyncSettings;
     private boolean autoPrevent;
+    private boolean stopSignatureApps;
     private boolean useAppStandby;
 
     private final Map<String, Object> map;
@@ -26,6 +27,9 @@ public class Configuration {
         setForceStopTimeout(bundle.getLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT));
         setLockSyncSettings(bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS));
         setAutoPrevent(bundle.getBoolean(PreventIntent.KEY_AUTO_PREVENT, true));
+        if (bundle.containsKey(PreventIntent.KEY_STOP_SIGNATURE_APPS)) {
+            setStopSignatureApps(bundle.getBoolean(PreventIntent.KEY_STOP_SIGNATURE_APPS, true));
+        }
         setUseAppStandby(bundle.getBoolean(PreventIntent.KEY_USE_APP_STANDBY));
     }
 
@@ -49,6 +53,10 @@ public class Configuration {
         return autoPrevent;
     }
 
+    public boolean isStopSignatureApps() {
+        return stopSignatureApps;
+    }
+
     public boolean isUseAppStandby() {
         return useAppStandby;
     }
@@ -62,7 +70,6 @@ public class Configuration {
         this.destroyProcesses = destroyProcesses;
         this.map.put(PreventIntent.KEY_DESTROY_PROCESSES, destroyProcesses);
     }
-
 
     public void setBackupPreventList(boolean backupPreventList) {
         this.backupPreventList = backupPreventList;
@@ -79,6 +86,11 @@ public class Configuration {
         this.map.put(PreventIntent.KEY_LOCK_SYNC_SETTINGS, lockSyncSettings);
     }
 
+    public void setStopSignatureApps(boolean stopSignatureApps) {
+        this.stopSignatureApps = stopSignatureApps;
+        this.map.put(PreventIntent.KEY_STOP_SIGNATURE_APPS, stopSignatureApps);
+    }
+
     public void setUseAppStandby(boolean useAppStandby) {
         this.useAppStandby = useAppStandby;
         this.map.put(PreventIntent.KEY_USE_APP_STANDBY, useAppStandby);
@@ -87,5 +99,4 @@ public class Configuration {
     public Map<String, Object> getMap() {
         return map;
     }
-
 }

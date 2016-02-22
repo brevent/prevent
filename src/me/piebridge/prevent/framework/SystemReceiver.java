@@ -83,6 +83,7 @@ public class SystemReceiver extends ActivityReceiver {
             SystemHook.setDestroyProcesses(configuration.isDestroyProcesses());
             SystemHook.setLockSyncSettings(configuration.isLockSyncSettings());
             setAutoPrevent(configuration.isAutoPrevent());
+            SystemHook.setStopSignatureApps(configuration.isStopSignatureApps());
             SystemHook.setUseAppStandby(configuration.isUseAppStandby());
         }
     }
@@ -149,6 +150,10 @@ public class SystemReceiver extends ActivityReceiver {
         SystemHook.setLockSyncSettings(bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS));
         SystemHook.setUseAppStandby(bundle.getBoolean(PreventIntent.KEY_USE_APP_STANDBY));
         setAutoPrevent(bundle.getBoolean(PreventIntent.KEY_AUTO_PREVENT, true));
+        if (bundle.containsKey(PreventIntent.KEY_STOP_SIGNATURE_APPS)) {
+            // this is not an option can set from ui
+            SystemHook.setStopSignatureApps(bundle.getBoolean(PreventIntent.KEY_STOP_SIGNATURE_APPS, true));
+        }
         if (bundle.containsKey(PreventIntent.KEY_PREVENT_LIST)) {
             updatePreventList(bundle.getStringArrayList(PreventIntent.KEY_PREVENT_LIST));
         }
@@ -229,6 +234,7 @@ public class SystemReceiver extends ActivityReceiver {
             configuration.setDestroyProcesses(SystemHook.isDestroyProcesses());
             configuration.setLockSyncSettings(SystemHook.isLockSyncSettings());
             configuration.setAutoPrevent(autoPrevent);
+            configuration.setStopSignatureApps(SystemHook.isStopSignatureApps());
             configuration.setUseAppStandby(SystemHook.isUseAppStandby());
             PreventListUtils.getInstance().save(mContext, configuration, false);
         } else if (!intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) && autoPrevent) {
@@ -434,7 +440,7 @@ public class SystemReceiver extends ActivityReceiver {
     }
 
     public void setAutoPrevent(boolean autoPrevent) {
-        PreventLog.i("set auto prevent to " + autoPrevent);
+        PreventLog.i("update auto prevent to " + autoPrevent);
         this.autoPrevent = autoPrevent;
     }
 }

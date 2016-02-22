@@ -93,6 +93,7 @@ public final class SystemHook {
     private static boolean destroyProcesses;
     private static boolean useAppStandby;
     private static boolean lockSyncSettings;
+    private static boolean stopSignatureApps = true;
 
     private static int version;
     private static String method;
@@ -664,7 +665,9 @@ public final class SystemHook {
     }
 
     public static void forceStopPackage(String packageName, boolean force) {
-        if (force) {
+        if (!stopSignatureApps && ActivityManagerServiceHook.cannotPrevent(packageName)) {
+            PreventLog.i("wont force-stop important system package: " + packageName + ", force: " + force);
+        } else if (force) {
             HideApiUtils.forceStopPackage(mContext, packageName);
         } else if (!isUseAppStandby() || !inactive(packageName)) {
             NotificationManagerServiceUtils.keepNotification(packageName);
@@ -678,5 +681,14 @@ public final class SystemHook {
 
     public static boolean isLockSyncSettings() {
         return lockSyncSettings;
+    }
+
+    public static boolean isStopSignatureApps() {
+        return stopSignatureApps;
+    }
+
+    public static void setStopSignatureApps(boolean stopSignatureApps) {
+        SystemHook.stopSignatureApps = stopSignatureApps;
+        PreventLog.i("update stop signature apps to " + stopSignatureApps);
     }
 }
