@@ -23,6 +23,12 @@
             android:title="@string/lock_sync" />
 
         <SwitchPreference
+            android:defaultValue="true"
+            android:key="auto_prevent"
+            android:summary="@string/auto_update_prevent"
+            android:title="@string/auto_prevent" />
+
+        <SwitchPreference
             android:defaultValue="false"
             android:key="use_app_standby"
             android:summary="@string/use_app_standby_settings"

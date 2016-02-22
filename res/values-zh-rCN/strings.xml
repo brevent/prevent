@@ -61,6 +61,8 @@
     <string name="backup_prevent_list">将阻止列表备份到外部存储</string>
     <string name="lock_sync">同步锁定</string>
     <string name="lock_sync_settings">阻止应用开启已经关闭的同步设置</string>
+    <string name="auto_prevent">自动阻止</string>
+    <string name="auto_update_prevent">自动阻止新装程序</string>
     <string name="use_app_standby">休眠应用</string>
     <string name="use_app_standby_settings">使用休眠代替强行停止</string>
     <string name="force_stop_label">强行停止后台程序</string>

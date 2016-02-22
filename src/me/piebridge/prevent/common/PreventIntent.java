@@ -37,6 +37,7 @@ public final class PreventIntent {
     public static final String KEY_DESTROY_PROCESSES = "destroy_processes";
     public static final String KEY_BACKUP_PREVENT_LIST = "backup_prevent_list";
     public static final String KEY_LOCK_SYNC_SETTINGS = "lock_sync_settings";
+    public static final String KEY_AUTO_PREVENT = "auto_prevent";
     public static final String KEY_USE_APP_STANDBY = "use_app_standby";
     public static final String KEY_PREVENT_LIST = "prevent_list";
 
@@ -48,6 +49,7 @@ public final class PreventIntent {
             KEY_DESTROY_PROCESSES,
             KEY_BACKUP_PREVENT_LIST,
             KEY_LOCK_SYNC_SETTINGS,
+            KEY_AUTO_PREVENT,
             KEY_USE_APP_STANDBY
     };
 

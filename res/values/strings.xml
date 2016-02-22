@@ -62,6 +62,8 @@
     <string name="backup_prevent_list">Back up prevent list to external storage</string>
     <string name="lock_sync">Lock Sync</string>
     <string name="lock_sync_settings">Prevent apps from turning on disabled sync items</string>
+    <string name="auto_prevent">Auto Prevent</string>
+    <string name="auto_update_prevent">Auto prevent new app</string>
     <string name="use_app_standby">App Standby</string>
     <string name="use_app_standby_settings">Use standby instead of force stopping</string>
     <string name="force_stop_label">Force stop background apps</string>

@@ -22,6 +22,12 @@
             android:summary="@string/lock_sync_settings"
             android:title="@string/lock_sync" />
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="auto_prevent"
+            android:summary="@string/auto_update_prevent"
+            android:title="@string/auto_prevent" />
+
         <me.piebridge.prevent.ui.ListPreferenceSummary
             android:defaultValue="-1"
             android:entries="@array/force_stop_entries"

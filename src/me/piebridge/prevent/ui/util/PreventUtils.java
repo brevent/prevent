@@ -127,17 +127,12 @@ public class PreventUtils {
 
     public static boolean updateConfiguration(Context context, boolean updatePreventList) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        long forceStopTimeout = getPreference(sp, PreventIntent.KEY_FORCE_STOP_TIMEOUT, -1);
-        boolean destroyProcesses = getPreference(sp, PreventIntent.KEY_DESTROY_PROCESSES, false);
-        boolean lockSyncSettings = getPreference(sp, PreventIntent.KEY_LOCK_SYNC_SETTINGS, false);
-        boolean useAppStandby = getPreference(sp, PreventIntent.KEY_USE_APP_STANDBY, false);
         Bundle bundle = new Bundle();
-        bundle.putLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT, forceStopTimeout);
-        bundle.putBoolean(PreventIntent.KEY_DESTROY_PROCESSES, destroyProcesses);
-        bundle.putBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS, lockSyncSettings);
-        bundle.putBoolean(PreventIntent.KEY_USE_APP_STANDBY, useAppStandby);
-        UILog.d("forceStopTimeout: " + forceStopTimeout + ", destroyProcesses: " + destroyProcesses
-                + ", lockSyncSettings: " + lockSyncSettings + ", useAppStandby: " + useAppStandby);
+        getPreference(sp, bundle, PreventIntent.KEY_FORCE_STOP_TIMEOUT, -1);
+        getPreference(sp, bundle, PreventIntent.KEY_DESTROY_PROCESSES, false);
+        getPreference(sp, bundle, PreventIntent.KEY_LOCK_SYNC_SETTINGS, false);
+        getPreference(sp, bundle, PreventIntent.KEY_AUTO_PREVENT, true);
+        getPreference(sp, bundle, PreventIntent.KEY_USE_APP_STANDBY, false);
         Set<String> prevents = null;
         if (updatePreventList) {
             prevents = PreventListUtils.getInstance().load(context);
@@ -150,7 +145,7 @@ public class PreventUtils {
         return prevents != null && !prevents.isEmpty();
     }
 
-    private static boolean getPreference(SharedPreferences sp, String key, boolean defaultValue) {
+    private static boolean getPreference(SharedPreferences sp, Bundle bundle, String key, boolean defaultValue) {
         boolean value = defaultValue;
         try {
             value = sp.getBoolean(key, defaultValue);
@@ -158,10 +153,12 @@ public class PreventUtils {
             UILog.d(INVALID_VALUE + key, e);
             sp.edit().putBoolean(key, defaultValue).apply();
         }
+        bundle.putBoolean(key, value);
+        UILog.d(key + ": " + value);
         return value;
     }
 
-    private static long getPreference(SharedPreferences sp, String key, long defaultValue) {
+    private static long getPreference(SharedPreferences sp, Bundle bundle, String key, long defaultValue) {
         long value = defaultValue;
         try {
             value = Long.parseLong(sp.getString(key, String.valueOf(defaultValue)));
@@ -173,6 +170,8 @@ public class PreventUtils {
         if (value != defaultValue) {
             sp.edit().putString(key, String.valueOf(defaultValue)).apply();
         }
+        bundle.putLong(key, value);
+        UILog.d(key + ": " + value);
         return value;
     }
 

@@ -13,7 +13,6 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -41,12 +40,6 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
     private static Collection<String> KEYS_NEED_LICENSE = Collections.emptyList();
 
-    private static Collection<String> KEYS_BOOLEAN = Arrays.asList(
-            PreventIntent.KEY_DESTROY_PROCESSES,
-            PreventIntent.KEY_LOCK_SYNC_SETTINGS,
-            PreventIntent.KEY_USE_APP_STANDBY
-    );
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         ThemeUtils.setTheme(this);
@@ -60,7 +53,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         forceStopTimeout.setOnPreferenceChangeListener(this);
         forceStopTimeout.setOnPreferenceClickListener(this);
 
-        for (String key : KEYS_BOOLEAN) {
+        for (String key : PreventIntent.KEYS_BOOLEAN) {
             Preference preference = DeprecatedUtils.findPreference(this, key);
             if (preference != null) {
                 preference.setOnPreferenceChangeListener(this);

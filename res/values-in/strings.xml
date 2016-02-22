@@ -62,6 +62,8 @@
     <string name="backup_prevent_list">Cadangkan daftar pencegahan ke penyimpanan eksternal</string>
     <string name="lock_sync">Kunci Sync</string>
     <string name="lock_sync_settings">Cegah aplikasi dari menyalakan item sync yang dinonaktifkan</string>
+    <string name="auto_prevent">Auto mencegah</string>
+    <string name="auto_update_prevent">Auto mencegah aplikasi baru</string>
     <string name="use_app_standby">Aplikasi siaga</string>
     <string name="use_app_standby_settings">Gunakan siaga daripada henti paksa aplikasi</string>
     <string name="force_stop_label">Paksa berhenti aplikasi latar belakang</string>

@@ -27,8 +27,6 @@ Not-in-use packages in `prevent list` can only run:
 2. Open "`Prevent Running`",  then add/remove application to/from prevent list.
 3. Use android normally, press `back` or remove it from recent task to exit, and press `HOME` for pause.
 
-If you don't like "auto prevent" added packages, please add "`Prevent Running`" to `prevent list`.
-
 And "`Prevent Running`" would keep non-"service" processes, of cource it cannot turn to "service".
 
 ## Special Search
@@ -114,8 +112,6 @@ Android 3.1对强行停止的程序引入了[启动控制](http://developer.andr
 1. 安装“`阻止运行`”，在“`Xposed Installer`”中激活它，重启（必须）。
 2. 重启后，打开“`阻止运行`”，配置`阻止列表`(这个只需要一次)。
 3. 正常使用手机，临时退出时按`HOME`，不用时按`返回键`退出或者从最近列表划掉。
-
-“`阻止运行`”自动把新装应用添加到`阻止列表`，如果不想这样，请把“`阻止运行`”添加到`阻止列表`（不建议）。
 
 同时，“`阻止运行`”不杀非`服务`的程序，但是保证非`服务`类进程不会变成`服务`在后台***一直***运行。
 
