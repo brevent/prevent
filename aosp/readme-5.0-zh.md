@@ -53,12 +53,13 @@ Linux/Mac OS X命令行> # Linux / Mac OS X使用
 Linux/Mac OS X命令行> patch -p0 < api-21.smali.patch
 ```
 
-在Windows的某些版本下(如windows 7)，名称中含`patch`的程序，必须额外加上特定的`manifest`，否则不能运行，所以换个名字吧。此外，由于Windows下的一些换行符问题，参数还必须加上`--binary`。
+在Windows的某些版本下(如windows 7)，名称中含`patch`的程序，必须额外加上特定的`manifest`，否则不能运行，所以换个名字吧。此外，由于补丁文件不是在Windows下生成，所以需要先转换成Windows的\r\n格式。
 
 ```
 Windows命令行> :: Windows 使用
 Windows命令行> move patch.exe p@tch.exe
-Windows命令行> p@tch.exe --binary -p0 < api-21.smali.patch
+Windows命令行> type api-21.smali.patch | more /p > api-21.win32.smali.patch
+Windows命令行> p@tch.exe -p0 < api-21.smali.patch
 ```
 
 如果有出现任何 `*.orig` 文件，都需要仔细确认；如果无法确认，请联系作者。
