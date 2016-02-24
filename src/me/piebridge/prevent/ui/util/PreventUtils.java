@@ -167,9 +167,6 @@ public class PreventUtils {
         } catch (ClassCastException e) {
             UILog.d(INVALID_VALUE + key, e);
         }
-        if (value != defaultValue) {
-            sp.edit().putString(key, String.valueOf(defaultValue)).apply();
-        }
         bundle.putLong(key, value);
         UILog.d(key + ": " + value);
         return value;
