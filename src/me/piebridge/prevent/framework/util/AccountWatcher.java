@@ -65,6 +65,9 @@ public class AccountWatcher implements OnAccountsUpdateListener {
                     boolean supportsUploading = Boolean.valueOf(getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "supportsUploading"), "true"));
                     PreventLog.v(cn.flattenToShortString() + ", accountType: " + accountType + ", contentAuthority: " + contentAuthority
                             + ", userVisible: " + userVisible + ", supportsUploading: " + supportsUploading);
+                    if (TextUtils.isEmpty(contentAuthority) || TextUtils.isEmpty(accountType)) {
+                        return null;
+                    }
                     return new SyncAdapterType(contentAuthority, accountType, userVisible, supportsUploading);
                 } else if (type == XmlPullParser.END_DOCUMENT) {
                     break;
