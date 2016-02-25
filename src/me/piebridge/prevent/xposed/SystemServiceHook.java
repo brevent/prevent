@@ -273,7 +273,7 @@ public class SystemServiceHook extends XC_MethodHook {
     private void hookActivityManagerServiceStartService(Class<?> activityManagerService) {
         int sdk = Build.VERSION.SDK_INT;
         String method = "startService";
-        XC_MethodHook hook = new ContextHook();
+        XC_MethodHook hook = new StartServiceContextHook();
         try {
             hookLongestMethod(activityManagerService, method, hook);
         } catch (LinkageError e) {
@@ -474,6 +474,19 @@ public class SystemServiceHook extends XC_MethodHook {
         protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
             preventRunning.setSender(null);
         }
+    }
+
+    public static class StartServiceContextHook extends ContextHook {
+
+        @Override
+        protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
+            super.afterHookedMethod(param);
+            ComponentName cn = (ComponentName) param.getResult();
+            if (cn != null && cn.getPackageName().startsWith("!")) {
+                param.setResult(null);
+            }
+        }
+
     }
 
     public static class BroadcastIntentContextHook extends ContextHook {
