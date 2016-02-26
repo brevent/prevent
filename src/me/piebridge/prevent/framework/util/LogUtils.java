@@ -118,7 +118,7 @@ public class LogUtils {
     }
 
     public static void logIntentFilter(boolean disallow, String sender, final Object filter, final String action, final String packageName) {
-        if (disallow) {
+        if (BuildConfig.DEBUG || disallow) {
             PreventLog.v(buildIntentFilterLog(disallow, sender, filter, action, packageName));
         }
     }
