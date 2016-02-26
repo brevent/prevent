@@ -54,7 +54,7 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
  */
 public class UserGuideActivity extends DonateActivity implements View.OnClickListener {
 
-    private static final Integer VERSION = 20150212;
+    private static final int VERSION = 20160226;
 
     private View donateView;
 

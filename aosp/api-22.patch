@@ -167,7 +167,7 @@
                  // This may be a heavy-weight process!  Note that the package
 --- a/services/core/java/com/android/server/am/PreventRunningUtils.java
 +++ b/services/core/java/com/android/server/am/PreventRunningUtils.java
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,136 @@
 +package com.android.server.am;
 +
 +import android.app.IApplicationThread;
@@ -225,6 +225,9 @@
 +
 +    public static ComponentName clearSenderInStartService(ComponentName res) {
 +        mPreventRunning.setSender(null);
++        if (res != null && res.getPackageName().startsWith("!")) {
++            return null;
++        }
 +        return res;
 +    }
 +
@@ -327,7 +330,7 @@
 +
 +    private static final String TAG = "Prevent";
 +
-+    private static final int VERSION = 20151210;
++    private static final int VERSION = 20160226;
 +
 +    private PreventRunningHook mPreventRunning;
 +
