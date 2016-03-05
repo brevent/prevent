@@ -30,14 +30,14 @@ public class PreventLog {
 
     public static void v(String msg) {
         Log.v(TAG, msg);
-        if (SystemHook.isNotActivated()) {
+        if (!SystemHook.isActivated()) {
             logToXposed("[V/" + TAG + "] " + msg);
         }
     }
 
     public static void v(String msg, Throwable t) {
         Log.v(TAG, msg, t);
-        if (SystemHook.isNotActivated()) {
+        if (!SystemHook.isActivated()) {
             logToXposed("[V/" + TAG + "] " + msg);
             logToXposed(t);
         }
@@ -45,14 +45,14 @@ public class PreventLog {
 
     public static void d(String msg) {
         Log.d(TAG, msg);
-        if (SystemHook.isNotActivated()) {
+        if (!SystemHook.isActivated()) {
             logToXposed("[D/" + TAG + "] " + msg);
         }
     }
 
     public static void d(String msg, Throwable t) {
         Log.d(TAG, msg, t);
-        if (SystemHook.isNotActivated()) {
+        if (!SystemHook.isActivated()) {
             logToXposed("[D/" + TAG + "] " + msg);
             logToXposed(t);
         }

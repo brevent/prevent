@@ -510,8 +510,8 @@ public final class SystemHook {
         }
     }
 
-    public static boolean isNotActivated() {
-        return !activated;
+    public static boolean isActivated() {
+        return activated;
     }
 
     public static void setDestroyProcesses(boolean destroyProcesses) {
@@ -587,10 +587,6 @@ public final class SystemHook {
     public static void setNotSupported() {
         if (isSupported()) {
             SystemHook.supported = false;
-            Intent intent = new Intent(PreventIntent.ACTION_NOT_SUPPORTED);
-            intent.setPackage(BuildConfig.APPLICATION_ID);
-            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-            mContext.sendBroadcast(intent, PreventIntent.PERMISSION_MANAGER);
         }
     }
 
