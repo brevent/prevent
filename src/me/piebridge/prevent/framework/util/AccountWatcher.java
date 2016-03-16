@@ -59,16 +59,7 @@ public class AccountWatcher implements OnAccountsUpdateListener {
             while (true) {
                 int type = parser.next();
                 if (type == XmlPullParser.START_TAG && "sync-adapter".equals(parser.getName())) {
-                    String contentAuthority = getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "contentAuthority"), "");
-                    String accountType = getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "accountType"), "");
-                    boolean userVisible = Boolean.valueOf(getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "userVisible"), "true"));
-                    boolean supportsUploading = Boolean.valueOf(getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "supportsUploading"), "true"));
-                    PreventLog.v(cn.flattenToShortString() + ", accountType: " + accountType + ", contentAuthority: " + contentAuthority
-                            + ", userVisible: " + userVisible + ", supportsUploading: " + supportsUploading);
-                    if (TextUtils.isEmpty(contentAuthority) || TextUtils.isEmpty(accountType)) {
-                        return null;
-                    }
-                    return new SyncAdapterType(contentAuthority, accountType, userVisible, supportsUploading);
+                    return parseSyncAdapter(resources, cn, parser);
                 } else if (type == XmlPullParser.END_DOCUMENT) {
                     break;
                 }
@@ -85,6 +76,19 @@ public class AccountWatcher implements OnAccountsUpdateListener {
             }
         }
         return null;
+    }
+
+    private static SyncAdapterType parseSyncAdapter(Resources resources, ComponentName cn, XmlResourceParser parser) {
+        String contentAuthority = getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "contentAuthority"), "");
+        String accountType = getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "accountType"), "");
+        boolean userVisible = Boolean.valueOf(getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "userVisible"), "true"));
+        boolean supportsUploading = Boolean.valueOf(getValue(resources, parser.getAttributeValue(NAMESPACE_ANDROID, "supportsUploading"), "true"));
+        PreventLog.v(cn.flattenToShortString() + ", accountType: " + accountType + ", contentAuthority: " + contentAuthority
+                + ", userVisible: " + userVisible + ", supportsUploading: " + supportsUploading);
+        if (TextUtils.isEmpty(contentAuthority) || TextUtils.isEmpty(accountType)) {
+            return null;
+        }
+        return new SyncAdapterType(contentAuthority, accountType, userVisible, supportsUploading);
     }
 
     private static String getValue(Resources resources, String value, String defaultValue) {
