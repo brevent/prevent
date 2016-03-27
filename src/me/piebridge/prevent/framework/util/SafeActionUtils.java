@@ -239,4 +239,13 @@ public class SafeActionUtils {
         return null;
     }
 
+    public static boolean isSafeService(ComponentName cn) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            ServiceInfo si = AppGlobals.getPackageManager().getServiceInfo(cn, 0, 0);
+            return si != null && Manifest.permission.BIND_NFC_SERVICE.equals(si.permission);
+        } else {
+            return false;
+        }
+    }
+
 }

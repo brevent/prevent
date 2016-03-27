@@ -2,7 +2,6 @@ package me.piebridge.prevent.framework;
 
 import android.app.usage.IUsageStatsManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;

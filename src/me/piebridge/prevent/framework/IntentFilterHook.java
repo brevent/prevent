@@ -143,7 +143,8 @@ public class IntentFilterHook {
     private static boolean isSafeServiceAction(String action) {
         return "android.content.SyncAdapter".equals(action)
                 || AccountManager.ACTION_AUTHENTICATOR_INTENT.equals(action)
-                || GmsUtils.isGcmRegisterAction(action);
+                || GmsUtils.isGcmRegisterAction(action)
+                || action.startsWith("android.nfc.cardemulation");
     }
 
     public static IntentFilterMatchResult hookServiceIntentInfo(PackageParser.ServiceIntentInfo filter, String sender, String action) {
