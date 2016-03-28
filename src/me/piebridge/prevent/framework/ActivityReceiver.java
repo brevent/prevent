@@ -244,7 +244,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         if (lastRunning != null) {
             elapsed = now - lastRunning;
         } else {
-            if (packageName.equals(SystemHook.getCurrentPackageName())) {
+            if (SystemHook.getCurrentPackageNames().contains(packageName)) {
                 PreventLog.v(packageName + " is running, set elapsed to 0");
                 elapsed = 0;
             } else if (checkLeavingNext.contains(packageName)) {

@@ -24,9 +24,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -86,7 +88,7 @@ public final class SystemHook {
     private static final Object RESTORE_LOCK = new Object();
     private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
 
-    private static String currentPackageName;
+    private static Stack<String> currentPackageNames = new Stack<String>();
     private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
 
     private static boolean destroyProcesses;
@@ -426,7 +428,10 @@ public final class SystemHook {
     }
 
     public static void onLaunchActivity(Object activityRecord) {
-        currentPackageName = ActivityRecordUtils.getPackageName(activityRecord);
+        String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+        currentPackageNames.remove(packageName);
+        currentPackageNames.push(packageName);
+        PreventLog.v("launch, current: " + currentPackageNames);
         if (systemReceiver != null) {
             systemReceiver.onLaunchActivity(activityRecord);
         }
@@ -439,13 +444,18 @@ public final class SystemHook {
     }
 
     public static void onResumeActivity(Object activityRecord) {
-        currentPackageName = ActivityRecordUtils.getPackageName(activityRecord);
+        String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+        currentPackageNames.remove(packageName);
+        currentPackageNames.push(packageName);
+        PreventLog.v("resume, current: " + currentPackageNames);
         if (systemReceiver != null) {
             systemReceiver.onResumeActivity(activityRecord);
         }
     }
 
     public static void onUserLeavingActivity(Object activityRecord) {
+        String packageName = ActivityRecordUtils.getPackageName(activityRecord);
+        currentPackageNames.remove(packageName);
         if (systemReceiver != null) {
             systemReceiver.onUserLeavingActivity(activityRecord);
         }
@@ -459,11 +469,11 @@ public final class SystemHook {
 
     public static void onMoveActivityToBack(final String packageName) {
         systemReceiver.removeLeavingPackage(packageName);
-        PreventLog.v("move activity to back, package: " + packageName + ", current: " + currentPackageName);
+        PreventLog.v("move activity to back, package: " + packageName + ", current: " + currentPackageNames);
         moveBackExecutor.schedule(new Runnable() {
             @Override
             public void run() {
-                if (PackageUtils.equals(packageName, currentPackageName)) {
+                if (currentPackageNames.contains(packageName) && currentPackageNames.peek().equals(packageName)) {
                     PreventLog.d(packageName + " move activity to back, but not in back");
                 } else if (systemReceiver != null && !systemReceiver.getLeavingPackages().containsKey(packageName)) {
                     systemReceiver.onDestroyActivity("move activity to back", packageName);
@@ -522,8 +532,8 @@ public final class SystemHook {
         return SystemHook.destroyProcesses;
     }
 
-    public static String getCurrentPackageName() {
-        return currentPackageName;
+    public static Set<String> getCurrentPackageNames() {
+        return Collections.unmodifiableSet(new HashSet<String>(currentPackageNames));
     }
 
     public static void checkSync(final String packageName) {
@@ -602,6 +612,7 @@ public final class SystemHook {
             return;
         }
         if (!added) {
+            currentPackageNames.remove(packageName);
             resetSync(packageName);
         }
         systemReceiver.removeLeavingPackage(packageName);

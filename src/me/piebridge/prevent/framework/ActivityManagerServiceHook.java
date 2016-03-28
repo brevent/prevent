@@ -12,6 +12,7 @@ import android.net.Uri;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import me.piebridge.forcestopgb.BuildConfig;
@@ -132,12 +133,12 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookAccountService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        String currentPackageName = SystemHook.getCurrentPackageName();
-        PreventLog.d("account authenticator, current package: " + currentPackageName + ", " + hostingName.flattenToShortString());
+        Set<String> currentPackageNames = SystemHook.getCurrentPackageNames();
+        PreventLog.d("account authenticator, current package: " + currentPackageNames + ", " + hostingName.flattenToShortString());
         if (settingsPackages.isEmpty()) {
             retrieveSettingsPackage(mContext.getPackageManager(), settingsPackages);
         }
-        if ((currentPackageName != null && settingsPackages.contains(currentPackageName)) || (GmsUtils.isGapps(packageName) && GmsUtils.isGapps(currentPackageName))) {
+        if (isSettingPackageName(currentPackageNames) || (GmsUtils.isGapps(packageName) && GmsUtils.isGapps(currentPackageNames))) {
             handleSafeService(packageName);
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType + "(account)", hostingName, sender);
@@ -146,6 +147,15 @@ public class ActivityManagerServiceHook {
             LogUtils.logStartProcess(true, packageName, hostingType + "(account)", hostingName, sender);
             return false;
         }
+    }
+
+    private static boolean isSettingPackageName(Set<String> currentPackageNames) {
+        for (String currentPackageName : currentPackageNames) {
+            if (settingsPackages.contains(currentPackageName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean cannotPrevent(String sender, String packageName, ComponentName hostingName) {
