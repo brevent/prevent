@@ -26,9 +26,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -88,7 +88,7 @@ public final class SystemHook {
     private static final Object RESTORE_LOCK = new Object();
     private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
 
-    private static Stack<String> currentPackageNames = new Stack<String>();
+    private static LinkedList<String> currentPackageNames = new LinkedList<String>();
     private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
 
     private static boolean destroyProcesses;
