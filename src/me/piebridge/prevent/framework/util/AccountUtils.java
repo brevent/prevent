@@ -2,7 +2,6 @@ package me.piebridge.prevent.framework.util;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.OnAccountsUpdateListener;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -13,8 +12,6 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
@@ -31,22 +28,13 @@ import me.piebridge.prevent.framework.PreventLog;
 /**
  * Created by thom on 15/8/7.
  */
-public class AccountWatcher implements OnAccountsUpdateListener {
+public class AccountUtils {
 
     private static final String NAMESPACE_ANDROID = "http://schemas.android.com/apk/res/android";
     private static final String SYNC_ADAPTER = "android.content.SyncAdapter";
-    private final Context mContext;
-    private Collection<Account> mEnabledAccounts = null;
 
-    public AccountWatcher(Context context) {
-        mContext = context;
-        AccountManager.get(context).addOnAccountsUpdatedListener(this, initHandler(), false);
-    }
+    private AccountUtils() {
 
-    private Handler initHandler() {
-        HandlerThread thread = new HandlerThread("AccountWatcher");
-        thread.start();
-        return new Handler(thread.getLooper());
     }
 
     private static SyncAdapterType getSyncAdapter(Context context, ComponentName cn) {
@@ -109,13 +97,13 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         }
     }
 
-    public boolean isComponentSyncable(ComponentName component) {
+    public static boolean isComponentSyncable(Context context, ComponentName component) {
         PreventLog.d("check sync for " + component.flattenToShortString());
-        SyncAdapterType type = getSyncAdapter(mContext, component);
+        SyncAdapterType type = getSyncAdapter(context, component);
         if (type == null) {
             PreventLog.w("cannot find sync adapter for " + component.flattenToShortString());
             return false;
-        } else if (type.isUserVisible() && isSyncable(type)) {
+        } else if (type.isUserVisible() && isSyncable(context, type)) {
             PreventLog.d(component.flattenToShortString() + " is syncable, account type: " + type.accountType + ", authority: " + type.authority);
             return true;
         } else {
@@ -125,8 +113,8 @@ public class AccountWatcher implements OnAccountsUpdateListener {
     }
 
     @Nullable
-    public Boolean isPackageSyncable(String packageName) {
-        PackageManager pm = mContext.getPackageManager();
+    public static Boolean isPackageSyncable(Context context, String packageName) {
+        PackageManager pm = context.getPackageManager();
         Intent intent = new Intent(SYNC_ADAPTER);
         intent.setPackage(packageName);
         Boolean result = null;
@@ -134,7 +122,7 @@ public class AccountWatcher implements OnAccountsUpdateListener {
             ServiceInfo si = info.serviceInfo;
             if (packageName.equals(si.packageName)) {
                 result = false;
-                if (isComponentSyncable(new ComponentName(si.packageName, si.name))) {
+                if (isComponentSyncable(context, new ComponentName(si.packageName, si.name))) {
                     return true;
                 }
             }
@@ -142,23 +130,23 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         return result;
     }
 
-    public void setSyncable(String packageName, boolean syncable) {
-        PackageManager pm = mContext.getPackageManager();
+    public static void setSyncable(Context context, String packageName, boolean syncable) {
+        PackageManager pm = context.getPackageManager();
         Intent intent = new Intent(SYNC_ADAPTER);
         intent.setPackage(packageName);
         for (ResolveInfo info : pm.queryIntentServices(intent, 0)) {
             ServiceInfo si = info.serviceInfo;
             if (packageName.equals(si.packageName)) {
-                setSyncable(new ComponentName(si.packageName, si.name), syncable);
+                setSyncable(context, new ComponentName(si.packageName, si.name), syncable);
             }
         }
     }
 
-    private void setSyncable(ComponentName component, boolean syncable) {
+    private static void setSyncable(Context context, ComponentName component, boolean syncable) {
         PreventLog.d("set sync to " + syncable + " for " + component.flattenToShortString());
-        SyncAdapterType type = getSyncAdapter(mContext, component);
+        SyncAdapterType type = getSyncAdapter(context, component);
         if (type != null && type.isUserVisible()) {
-            for (Account account : getEnabledAccounts()) {
+            for (Account account : getEnabledAccounts(context)) {
                 if (account.type.equals(type.accountType)) {
                     ContentResolver.setSyncAutomatically(account, type.authority, syncable);
                 }
@@ -166,8 +154,8 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         }
     }
 
-    private boolean isSyncable(SyncAdapterType type) {
-        for (Account account : getEnabledAccounts()) {
+    private static boolean isSyncable(Context context, SyncAdapterType type) {
+        for (Account account : getEnabledAccounts(context)) {
             if (account.type.equals(type.accountType)) {
                 PreventLog.v("check account " + account.type + " for " + type.authority);
                 if (ContentResolver.getSyncAutomatically(account, type.authority)
@@ -179,24 +167,14 @@ public class AccountWatcher implements OnAccountsUpdateListener {
         return false;
     }
 
-    @Override
-    public void onAccountsUpdated(Account[] accounts) {
-        Collection<Account> enabledAccounts = getEnabledAccounts();
-        enabledAccounts.clear();
-        Collections.addAll(enabledAccounts, accounts);
-        PreventLog.i("accounts: " + enabledAccounts.size());
-    }
-
-    public Collection<Account> getEnabledAccounts() {
-        if (mEnabledAccounts == null) {
-            mEnabledAccounts = new ArrayList<Account>();
-            try {
-                Collections.addAll(mEnabledAccounts, AccountManager.get(mContext).getAccounts());
-            } catch (RuntimeException e) {
-                PreventLog.e("cannot find system's account", e);
-            }
+    public static Collection<Account> getEnabledAccounts(Context context) {
+        Collection<Account> enabledAccounts = new ArrayList<Account>();
+        try {
+            Collections.addAll(enabledAccounts, AccountManager.get(context).getAccounts());
+        } catch (RuntimeException e) {
+            PreventLog.e("cannot find system's account", e);
         }
-        return mEnabledAccounts;
+        return enabledAccounts;
     }
 
 }

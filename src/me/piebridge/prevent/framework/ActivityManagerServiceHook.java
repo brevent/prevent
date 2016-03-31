@@ -18,7 +18,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
-import me.piebridge.prevent.framework.util.AccountWatcher;
+import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.SafeActionUtils;
 
@@ -32,7 +32,6 @@ public class ActivityManagerServiceHook {
     // normally, there is only one
     private static Collection<String> settingsPackages = new HashSet<String>();
     private static Collection<String> importantSystemPackages = new HashSet<String>();
-    private static AccountWatcher mAccountWatcher;
 
     private static ScheduledThreadPoolExecutor cleanUpExecutor = new ScheduledThreadPoolExecutor(0x1);
 
@@ -43,7 +42,6 @@ public class ActivityManagerServiceHook {
     public static void setContext(Context context, Map<String, Boolean> preventPackages) {
         mContext = context;
         mPreventPackages = preventPackages;
-        mAccountWatcher = new AccountWatcher(context);
     }
 
     public static boolean hookStartProcessLocked(Context context, ApplicationInfo info, String hostingType, ComponentName hostingName, String sender) {
@@ -243,7 +241,7 @@ public class ActivityManagerServiceHook {
     }
 
     private static boolean hookSyncService(ComponentName hostingName, String hostingType, String packageName, String sender) {
-        if (ContentResolver.getMasterSyncAutomatically() && mAccountWatcher.isComponentSyncable(hostingName)) {
+        if (ContentResolver.getMasterSyncAutomatically() && AccountUtils.isComponentSyncable(mContext, hostingName)) {
             handleSafeService(packageName);
             SystemHook.checkRunningServices(packageName, true);
             LogUtils.logStartProcess(packageName, hostingType + "(sync)", hostingName, sender);
@@ -277,10 +275,6 @@ public class ActivityManagerServiceHook {
             });
         }
         return true;
-    }
-
-    public static AccountWatcher getAccountWatcher() {
-        return mAccountWatcher;
     }
 
 }

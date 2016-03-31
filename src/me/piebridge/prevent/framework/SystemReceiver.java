@@ -34,6 +34,7 @@ import me.piebridge.prevent.common.Configuration;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.HookUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
 import me.piebridge.prevent.framework.util.LogcatUtils;
@@ -180,7 +181,7 @@ public class SystemReceiver extends ActivityReceiver {
     private boolean handleCheckLicense(Context context, Intent intent) {
         String user = intent.getStringExtra(Intent.EXTRA_USER);
         Map<String, Set<String>> users = new LinkedHashMap<String, Set<String>>();
-        for (Account account : ActivityManagerServiceHook.getAccountWatcher().getEnabledAccounts()) {
+        for (Account account : AccountUtils.getEnabledAccounts(context)) {
             Set<String> accounts = users.get(account.type);
             if (accounts == null) {
                 accounts = new LinkedHashSet<String>();

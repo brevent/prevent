@@ -39,7 +39,7 @@ import me.piebridge.forcestopgb.BuildConfig;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
-import me.piebridge.prevent.framework.util.AccountWatcher;
+import me.piebridge.prevent.framework.util.AccountUtils;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -540,8 +540,7 @@ public final class SystemHook {
         singleExecutor.submit(new Runnable() {
             @Override
             public void run() {
-                AccountWatcher accountWatcher = ActivityManagerServiceHook.getAccountWatcher();
-                Boolean syncable = accountWatcher.isPackageSyncable(packageName);
+                Boolean syncable = AccountUtils.isPackageSyncable(mContext, packageName);
                 if (syncable != null) {
                     PreventLog.d("sync for " + packageName + ": " + syncable);
                     syncPackages.put(packageName, syncable);
@@ -554,10 +553,9 @@ public final class SystemHook {
         singleExecutor.submit(new Runnable() {
             @Override
             public void run() {
-                AccountWatcher accountWatcher = ActivityManagerServiceHook.getAccountWatcher();
                 if (SystemHook.lockSyncSettings && Boolean.FALSE.equals(syncPackages.get(packageName)) && Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
                     PreventLog.d("reset sync for " + packageName + " to false");
-                    accountWatcher.setSyncable(packageName, false);
+                    AccountUtils.setSyncable(mContext, packageName, false);
                 }
             }
         });
