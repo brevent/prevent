@@ -84,7 +84,7 @@ public class AccountUtils {
             String number = value.substring(1);
             if (TextUtils.isDigitsOnly(number)) {
                 try {
-                    return resources.getString(Integer.valueOf(number));
+                    return resources.getString(Integer.parseInt(number));
                 } catch (Resources.NotFoundException e) {
                     PreventLog.d("cannot find " + value, e);
                 }
