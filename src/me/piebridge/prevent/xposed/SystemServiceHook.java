@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -470,6 +471,9 @@ public class SystemServiceHook extends XC_MethodHook {
             Object processRecord = getRecordForAppLocked(param.thisObject, param.args[0]);
             ApplicationInfo info = ProcessRecordUtils.getInfo(processRecord);
             String sender = info == null ? "" : info.packageName;
+            if (sender == null) {
+                sender = String.valueOf(Binder.getCallingUid());
+            }
             preventRunning.setSender(sender);
         }
 

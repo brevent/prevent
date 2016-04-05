@@ -8,6 +8,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.text.TextUtils;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -213,6 +214,8 @@ public class ActivityManagerServiceHook {
     private static boolean cannotPrevent(String sender, String packageName) {
         if (SystemHook.isFramework(packageName)) {
             return true;
+        } else if (TextUtils.isDigitsOnly(sender)) {
+            return Integer.parseInt(sender) < SystemHook.FIRST_APPLICATION_UID;
         } else if (cannotPrevent(sender)) {
             // the sender cannot be prevent
             return true;
