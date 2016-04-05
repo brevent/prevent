@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -88,7 +89,7 @@ public final class SystemHook {
     private static final Object RESTORE_LOCK = new Object();
     private static Map<String, ScheduledFuture<?>> restoreFutures = new HashMap<String, ScheduledFuture<?>>();
 
-    private static LinkedList<String> currentPackageNames = new LinkedList<String>();
+    private static Deque<String> currentPackageNames = new LinkedList<String>();
     private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
 
     private static boolean destroyProcesses;
