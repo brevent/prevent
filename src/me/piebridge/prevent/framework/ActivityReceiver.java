@@ -23,6 +23,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import me.piebridge.prevent.common.Configuration;
 import me.piebridge.prevent.framework.util.ActivityRecordUtils;
 import me.piebridge.prevent.framework.util.HideApiUtils;
 import me.piebridge.prevent.framework.util.LogUtils;
@@ -34,7 +35,6 @@ abstract class ActivityReceiver extends BroadcastReceiver {
     protected Map<String, Boolean> mPreventPackages;
 
     private boolean screen = false;
-    protected long forceStopTimeout = -1;
     private Map<String, Integer> packageUids = new HashMap<String, Integer>();
     private Map<String, Set<String>> abnormalProcesses = new ConcurrentHashMap<String, Set<String>>();
     private Map<String, Map<Integer, AtomicInteger>> packageCounters = new ConcurrentHashMap<String, Map<Integer, AtomicInteger>>();
@@ -248,18 +248,18 @@ abstract class ActivityReceiver extends BroadcastReceiver {
                 PreventLog.v(packageName + " is running, set elapsed to 0");
                 elapsed = 0;
             } else if (checkLeavingNext.contains(packageName)) {
-                elapsed = forceStopTimeout;
+                elapsed = Configuration.getDefault().getForceStopTimeout();
             } else {
                 PreventLog.v("cannot figure elapsed for " + packageName + ", wait for next checking");
                 checkLeavingNext.add(packageName);
-                elapsed = forceStopTimeout - SystemHook.TIME_CHECK_USER_LEAVING;
+                elapsed = Configuration.getDefault().getForceStopTimeout() - SystemHook.TIME_CHECK_USER_LEAVING;
             }
         }
         return elapsed;
     }
 
     private void checkLeavingPackages() {
-        if (forceStopTimeout <= 0) {
+        if (Configuration.getDefault().getForceStopTimeout() <= 0) {
             return;
         }
         PreventLog.d("checking leaving packages");
@@ -278,7 +278,7 @@ abstract class ActivityReceiver extends BroadcastReceiver {
                 continue;
             }
             long elapsed = getElapsed(now, packageName);
-            if (elapsed >= forceStopTimeout) {
+            if (elapsed >= Configuration.getDefault().getForceStopTimeout()) {
                 PreventLog.i("leaving package " + packageName + " for " + elapsed + " seconds");
                 stopPackages.add(packageName);
             } else {
@@ -377,8 +377,4 @@ abstract class ActivityReceiver extends BroadcastReceiver {
         leavingPackages.remove(packageName);
     }
 
-    public void setForceStopTimeout(long forceStopTimeout) {
-        this.forceStopTimeout = forceStopTimeout;
-        PreventLog.i("update force stop timeout to " + this.forceStopTimeout + " s");
-    }
 }

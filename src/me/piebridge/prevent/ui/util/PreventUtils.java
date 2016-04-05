@@ -133,6 +133,8 @@ public class PreventUtils {
         getPreference(sp, bundle, PreventIntent.KEY_LOCK_SYNC_SETTINGS, false);
         getPreference(sp, bundle, PreventIntent.KEY_AUTO_PREVENT, true);
         getPreference(sp, bundle, PreventIntent.KEY_USE_APP_STANDBY, false);
+        getPreference(sp, bundle, PreventIntent.KEY_ALLOW_EMPTY_SENDER, true);
+        getPreference(sp, bundle, PreventIntent.KEY_STOP_SIGNATURE_APPS, true);
         Set<String> prevents = null;
         if (updatePreventList) {
             prevents = PreventListUtils.getInstance().load(context);

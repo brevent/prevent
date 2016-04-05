@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.Configuration;
 import me.piebridge.prevent.framework.util.HookUtils;
 
 /**
@@ -35,7 +36,7 @@ abstract class CheckingRunningService implements Runnable {
         }
         PreventLog.d("checking services, packages: " + packageNames + ", whitelist: " + whiteList);
         Set<String> shouldStopPackageNames = new TreeSet<String>();
-        if (SystemHook.isDestroyProcesses()) {
+        if (Configuration.getDefault().isDestroyProcesses()) {
             shouldStopPackageNames.addAll(packageNames);
             shouldStopPackageNames.removeAll(whiteList);
             packageNames = Collections.emptyList();
@@ -80,7 +81,7 @@ abstract class CheckingRunningService implements Runnable {
             if (SystemHook.isUseAppStandby()) {
                 forceStop = "standby";
             }
-            if (SystemHook.isDestroyProcesses()) {
+            if (Configuration.getDefault().isDestroyProcesses()) {
                 PreventLog.i(forceStop + " " + name);
             } else {
                 PreventLog.i(name + " has running services, " + forceStop + " it");

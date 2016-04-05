@@ -54,8 +54,6 @@ public class SystemReceiver extends ActivityReceiver {
 
     private ScheduledThreadPoolExecutor logExecutor = new ScheduledThreadPoolExecutor(0x2);
 
-    private boolean autoPrevent = true;
-
     public static final Collection<String> MANAGER_ACTIONS = Arrays.asList(
             PreventIntent.ACTION_GET_PACKAGES,
             PreventIntent.ACTION_GET_PROCESSES,
@@ -83,13 +81,7 @@ public class SystemReceiver extends ActivityReceiver {
     public SystemReceiver(Context context, Map<String, Boolean> preventPackages) {
         super(context, preventPackages);
         if (PreventListUtils.getInstance().canLoadConfiguration(mContext)) {
-            Configuration configuration = PreventListUtils.getInstance().loadConfiguration(mContext);
-            setForceStopTimeout(configuration.getForceStopTimeout());
-            SystemHook.setDestroyProcesses(configuration.isDestroyProcesses());
-            SystemHook.setLockSyncSettings(configuration.isLockSyncSettings());
-            setAutoPrevent(configuration.isAutoPrevent());
-            SystemHook.setStopSignatureApps(configuration.isStopSignatureApps());
-            SystemHook.setUseAppStandby(configuration.isUseAppStandby());
+            PreventListUtils.getInstance().loadConfiguration(mContext);
         }
     }
 
@@ -142,27 +134,20 @@ public class SystemReceiver extends ActivityReceiver {
         info.put("version", SystemHook.getVersion());
         info.put("name", BuildConfig.VERSION_NAME);
         info.put("code", BuildConfig.VERSION_CODE);
-        if (PreventListUtils.getInstance().canLoadConfiguration(mContext)) {
-            Configuration configuration = PreventListUtils.getInstance().loadConfiguration(mContext);
-            info.putAll(configuration.getMap());
+        Bundle configuration = Configuration.getDefault().getBundle();
+        for (String key : configuration.keySet()) {
+            info.put(key, configuration.get(key));
         }
         setResultData(new JSONObject(info).toString());
     }
 
     private void handleConfiguration(Bundle bundle) {
-        setForceStopTimeout(bundle.getLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT));
-        SystemHook.setDestroyProcesses(bundle.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES));
-        SystemHook.setLockSyncSettings(bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS));
-        SystemHook.setUseAppStandby(bundle.getBoolean(PreventIntent.KEY_USE_APP_STANDBY));
-        setAutoPrevent(bundle.getBoolean(PreventIntent.KEY_AUTO_PREVENT, true));
-        if (bundle.containsKey(PreventIntent.KEY_STOP_SIGNATURE_APPS)) {
-            // this is not an option can set from ui
-            SystemHook.setStopSignatureApps(bundle.getBoolean(PreventIntent.KEY_STOP_SIGNATURE_APPS, true));
-        }
+        Configuration configuration = Configuration.getDefault();
+        configuration.updateBundle(bundle);
         if (bundle.containsKey(PreventIntent.KEY_PREVENT_LIST)) {
             updatePreventList(bundle.getStringArrayList(PreventIntent.KEY_PREVENT_LIST));
         }
-        saveConfiguration(new Configuration(bundle), true);
+        saveConfiguration(configuration, true);
     }
 
     private void saveConfiguration(Configuration configuration, boolean force) {
@@ -250,15 +235,8 @@ public class SystemReceiver extends ActivityReceiver {
         if (BuildConfig.APPLICATION_ID.equals(packageName) && !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
             SystemHook.setSupported(true);
             PreventListUtils.getInstance().save(mContext, mPreventPackages.keySet(), false);
-            Configuration configuration = new Configuration(new Bundle());
-            configuration.setForceStopTimeout(forceStopTimeout);
-            configuration.setDestroyProcesses(SystemHook.isDestroyProcesses());
-            configuration.setLockSyncSettings(SystemHook.isLockSyncSettings());
-            configuration.setAutoPrevent(autoPrevent);
-            configuration.setStopSignatureApps(SystemHook.isStopSignatureApps());
-            configuration.setUseAppStandby(SystemHook.isUseAppStandby());
-            PreventListUtils.getInstance().save(mContext, configuration, false);
-        } else if (!intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) && autoPrevent) {
+            PreventListUtils.getInstance().save(mContext, Configuration.getDefault(), false);
+        } else if (!intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) && Configuration.getDefault().isAutoPrevent()) {
             mPreventPackages.put(packageName, true);
             showUpdated(packageName, mPreventPackages.size());
             PreventListUtils.getInstance().save(mContext, mPreventPackages.keySet(), true);
@@ -458,10 +436,5 @@ public class SystemReceiver extends ActivityReceiver {
                 LogcatUtils.completed(mContext);
             }
         });
-    }
-
-    public void setAutoPrevent(boolean autoPrevent) {
-        PreventLog.i("update auto prevent to " + autoPrevent);
-        this.autoPrevent = autoPrevent;
     }
 }

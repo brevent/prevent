@@ -1,6 +1,7 @@
 package me.piebridge.prevent.common;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Environment;
 
 import java.io.BufferedReader;
@@ -9,7 +10,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -62,15 +62,15 @@ public class FileUtils {
         }
     }
 
-    public static void save(String path, Map<String, Object> settings) {
+    public static void save(String path, Bundle bundle) {
         File lock = new File(path + ".lock");
         makeSure(lock);
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(lock));
-            for (Map.Entry<String, Object> entry : settings.entrySet()) {
-                writer.write(entry.getKey());
+            for (String key : new TreeSet<String>(bundle.keySet())) {
+                writer.write(key);
                 writer.write("=");
-                writer.write(String.valueOf(entry.getValue()));
+                writer.write(String.valueOf(bundle.get(key)));
                 writer.write("\n");
             }
             writer.close();

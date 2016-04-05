@@ -16,7 +16,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -55,9 +54,7 @@ public final class PreventListUtils {
     public synchronized void save(Context context, Configuration configuration, boolean force) {
         File file = getFile(context, SYSTEM_PREVENT_CONFIGURATION);
         if (force || file.isFile()) {
-            Map<String, Object> map = PreventListUtils.getInstance().loadConfiguration(context).getMap();
-            map.putAll(configuration.getMap());
-            FileUtils.save(file.getAbsolutePath(), map);
+            FileUtils.save(file.getAbsolutePath(), configuration.getBundle());
         }
     }
 
@@ -147,10 +144,11 @@ public final class PreventListUtils {
         return file.isFile() && file.canRead();
     }
 
-    public Configuration loadConfiguration(Context context) {
+    public boolean loadConfiguration(Context context) {
+        Configuration configuration = Configuration.getDefault();
         File file = getFile(context, SYSTEM_PREVENT_CONFIGURATION);
         if (!file.isFile()) {
-            return new Configuration(new Bundle());
+            return false;
         }
         Bundle bundle = new Bundle();
         try {
@@ -170,7 +168,8 @@ public final class PreventListUtils {
         } catch (IOException e) {
             PreventLog.d("cannot load configuration", e);
         }
-        return new Configuration(bundle);
+        configuration.updateBundle(bundle);
+        return true;
     }
 
     private void setValue(Bundle bundle, String key, String value) {

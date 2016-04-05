@@ -37,6 +37,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.Configuration;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
@@ -91,11 +92,6 @@ public final class SystemHook {
 
     private static Deque<String> currentPackageNames = new LinkedList<String>();
     private static Map<String, Boolean> syncPackages = new HashMap<String, Boolean>();
-
-    private static boolean destroyProcesses;
-    private static boolean useAppStandby;
-    private static boolean lockSyncSettings;
-    private static boolean stopSignatureApps = true;
 
     private static int version;
     private static String method;
@@ -524,15 +520,6 @@ public final class SystemHook {
         return activated;
     }
 
-    public static void setDestroyProcesses(boolean destroyProcesses) {
-        SystemHook.destroyProcesses = destroyProcesses;
-        PreventLog.i("update destroy processes to " + destroyProcesses);
-    }
-
-    public static boolean isDestroyProcesses() {
-        return SystemHook.destroyProcesses;
-    }
-
     public static Set<String> getCurrentPackageNames() {
         return Collections.unmodifiableSet(new HashSet<String>(currentPackageNames));
     }
@@ -554,17 +541,13 @@ public final class SystemHook {
         singleExecutor.submit(new Runnable() {
             @Override
             public void run() {
-                if (SystemHook.lockSyncSettings && Boolean.FALSE.equals(syncPackages.get(packageName)) && Boolean.TRUE.equals(mPreventPackages.get(packageName))) {
+                if (Boolean.FALSE.equals(syncPackages.get(packageName)) && Boolean.TRUE.equals(mPreventPackages.get(packageName))
+                        && Configuration.getDefault().isLockSyncSettings()) {
                     PreventLog.d("reset sync for " + packageName + " to false");
                     AccountUtils.setSyncable(mContext, packageName, false);
                 }
             }
         });
-    }
-
-    public static void setLockSyncSettings(boolean lockSyncSettings) {
-        SystemHook.lockSyncSettings = lockSyncSettings;
-        PreventLog.i("update lock sync settings to " + lockSyncSettings);
     }
 
     public static int getVersion() {
@@ -584,12 +567,7 @@ public final class SystemHook {
     }
 
     public static boolean isUseAppStandby() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && SystemHook.useAppStandby;
-    }
-
-    public static void setUseAppStandby(boolean useAppStandby) {
-        SystemHook.useAppStandby = useAppStandby;
-        PreventLog.i("update use app standby settings to " + useAppStandby);
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Configuration.getDefault().isUseAppStandby();
     }
 
     public static void setNotSupported() {
@@ -670,7 +648,7 @@ public final class SystemHook {
     }
 
     public static void forceStopPackage(String packageName, boolean force) {
-        if (!stopSignatureApps && ActivityManagerServiceHook.cannotPrevent(packageName)) {
+        if (!Configuration.getDefault().isStopSignatureApps() && ActivityManagerServiceHook.cannotPrevent(packageName)) {
             PreventLog.i("wont force-stop important system package: " + packageName + ", force: " + force);
         } else if (force) {
             HideApiUtils.forceStopPackage(mContext, packageName);
@@ -682,18 +660,5 @@ public final class SystemHook {
 
     public static Context getContext() {
         return mContext;
-    }
-
-    public static boolean isLockSyncSettings() {
-        return lockSyncSettings;
-    }
-
-    public static boolean isStopSignatureApps() {
-        return stopSignatureApps;
-    }
-
-    public static void setStopSignatureApps(boolean stopSignatureApps) {
-        SystemHook.stopSignatureApps = stopSignatureApps;
-        PreventLog.i("update stop signature apps to " + stopSignatureApps);
     }
 }

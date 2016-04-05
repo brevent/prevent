@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.common.Configuration;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.framework.util.AccountUtils;
@@ -159,10 +160,13 @@ public class ActivityManagerServiceHook {
     private static boolean cannotPrevent(String sender, String packageName, ComponentName hostingName) {
         if (SafeActionUtils.isUnsafeService(hostingName)) {
             return false;
-        } else if (SafeActionUtils.isSafeService(hostingName)) {
+        } else if (SafeActionUtils.isSafeService(hostingName) || SafeActionUtils.cannotPrevent(mContext, hostingName)) {
             return true;
+        } else if (sender == null) {
+            return Configuration.getDefault().isAllowEmptySender();
+        } else {
+            return cannotPrevent(sender, packageName);
         }
-        return sender == null || cannotPrevent(sender, packageName) || SafeActionUtils.cannotPrevent(mContext, hostingName);
     }
 
     private static boolean hookGmsService(ComponentName hostingName, String hostingType, String packageName, String sender) {

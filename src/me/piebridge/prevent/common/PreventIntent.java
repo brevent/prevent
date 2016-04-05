@@ -40,6 +40,7 @@ public final class PreventIntent {
     public static final String KEY_AUTO_PREVENT = "auto_prevent";
     public static final String KEY_STOP_SIGNATURE_APPS = "stop_signature_apps";
     public static final String KEY_USE_APP_STANDBY = "use_app_standby";
+    public static final String KEY_ALLOW_EMPTY_SENDER = "allow_empty_sender";
     public static final String KEY_PREVENT_LIST = "prevent_list";
 
     public static final String[] KEYS_LONG = new String[] {
@@ -47,6 +48,7 @@ public final class PreventIntent {
     };
 
     public static final String[] KEYS_BOOLEAN = new String[] {
+            KEY_ALLOW_EMPTY_SENDER,
             KEY_DESTROY_PROCESSES,
             KEY_BACKUP_PREVENT_LIST,
             KEY_LOCK_SYNC_SETTINGS,

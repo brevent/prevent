@@ -2,101 +2,75 @@ package me.piebridge.prevent.common;
 
 import android.os.Bundle;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import me.piebridge.prevent.framework.PreventLog;
 
 /**
  * Created by thom on 16/2/21.
  */
 public class Configuration {
 
-    private long forceStopTimeout = -1;
-    private boolean destroyProcesses;
-    private boolean backupPreventList;
-    private boolean lockSyncSettings;
-    private boolean autoPrevent;
-    private boolean stopSignatureApps;
-    private boolean useAppStandby;
+    private final Bundle bundle;
 
-    private final Map<String, Object> map;
+    private static Configuration mConfiguration = new Configuration();
 
-    public Configuration(Bundle bundle) {
-        map = new LinkedHashMap<String, Object>();
-        setBackupPreventList(bundle.getBoolean(PreventIntent.KEY_BACKUP_PREVENT_LIST));
-        setDestroyProcesses(bundle.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES));
-        setForceStopTimeout(bundle.getLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT));
-        setLockSyncSettings(bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS));
-        setAutoPrevent(bundle.getBoolean(PreventIntent.KEY_AUTO_PREVENT, true));
-        if (bundle.containsKey(PreventIntent.KEY_STOP_SIGNATURE_APPS)) {
-            setStopSignatureApps(bundle.getBoolean(PreventIntent.KEY_STOP_SIGNATURE_APPS, true));
-        }
-        setUseAppStandby(bundle.getBoolean(PreventIntent.KEY_USE_APP_STANDBY));
+    private Configuration() {
+        this.bundle = new Bundle();
+    }
+
+    public static Configuration getDefault() {
+        return mConfiguration;
     }
 
     public long getForceStopTimeout() {
-        return forceStopTimeout;
+        return bundle.getLong(PreventIntent.KEY_FORCE_STOP_TIMEOUT, -1);
     }
 
-    public boolean isDestroyProcesses() {
-        return destroyProcesses;
-    }
-
-    public boolean isBackupPreventList() {
-        return backupPreventList;
-    }
-
-    public boolean isLockSyncSettings() {
-        return lockSyncSettings;
+    public boolean isAllowEmptySender() {
+        return bundle.getBoolean(PreventIntent.KEY_ALLOW_EMPTY_SENDER, true);
     }
 
     public boolean isAutoPrevent() {
-        return autoPrevent;
+        return bundle.getBoolean(PreventIntent.KEY_AUTO_PREVENT, true);
+    }
+
+    public boolean isBackupPreventList() {
+        return bundle.getBoolean(PreventIntent.KEY_BACKUP_PREVENT_LIST, false);
+    }
+
+    public boolean isDestroyProcesses() {
+        return bundle.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES, false);
+    }
+
+    public boolean isLockSyncSettings() {
+        return bundle.getBoolean(PreventIntent.KEY_LOCK_SYNC_SETTINGS, false);
     }
 
     public boolean isStopSignatureApps() {
-        return stopSignatureApps;
+        return bundle.getBoolean(PreventIntent.KEY_STOP_SIGNATURE_APPS, true);
     }
 
     public boolean isUseAppStandby() {
-        return useAppStandby;
+        return bundle.getBoolean(PreventIntent.KEY_USE_APP_STANDBY, false);
     }
 
-    public void setForceStopTimeout(long forceStopTimeout) {
-        this.forceStopTimeout = forceStopTimeout;
-        this.map.put(PreventIntent.KEY_FORCE_STOP_TIMEOUT, forceStopTimeout);
+    public Bundle getBundle() {
+        return new Bundle(bundle);
     }
 
-    public void setDestroyProcesses(boolean destroyProcesses) {
-        this.destroyProcesses = destroyProcesses;
-        this.map.put(PreventIntent.KEY_DESTROY_PROCESSES, destroyProcesses);
-    }
-
-    public void setBackupPreventList(boolean backupPreventList) {
-        this.backupPreventList = backupPreventList;
-        this.map.put(PreventIntent.KEY_BACKUP_PREVENT_LIST, backupPreventList);
-    }
-
-    public void setAutoPrevent(boolean autoPrevent) {
-        this.autoPrevent = autoPrevent;
-        this.map.put(PreventIntent.KEY_AUTO_PREVENT, autoPrevent);
-    }
-
-    public void setLockSyncSettings(boolean lockSyncSettings) {
-        this.lockSyncSettings = lockSyncSettings;
-        this.map.put(PreventIntent.KEY_LOCK_SYNC_SETTINGS, lockSyncSettings);
-    }
-
-    public void setStopSignatureApps(boolean stopSignatureApps) {
-        this.stopSignatureApps = stopSignatureApps;
-        this.map.put(PreventIntent.KEY_STOP_SIGNATURE_APPS, stopSignatureApps);
-    }
-
-    public void setUseAppStandby(boolean useAppStandby) {
-        this.useAppStandby = useAppStandby;
-        this.map.put(PreventIntent.KEY_USE_APP_STANDBY, useAppStandby);
-    }
-
-    public Map<String, Object> getMap() {
-        return map;
+    public void updateBundle(Bundle bundle) {
+        for (String key : PreventIntent.KEYS_LONG) {
+            if (bundle.containsKey(key)) {
+                long value = bundle.getLong(key);
+                PreventLog.d("update " + key + " to " + value);
+                this.bundle.putLong(key, value);
+            }
+        }
+        for (String key : PreventIntent.KEYS_BOOLEAN) {
+            if (bundle.containsKey(key)) {
+                boolean value = bundle.getBoolean(key);
+                PreventLog.d("update " + key + " to " + value);
+                this.bundle.putBoolean(key, value);
+            }
+        }
     }
 }
