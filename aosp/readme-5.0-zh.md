@@ -12,8 +12,8 @@
 
 ## 需求
 - [java](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 运行smali/baksmali需要Java，请下载JDK。
-- [smali](http://github.com/JesusFreke/smali) 把smali源码编译成dex，本文建议自行编译最新代码，或者从这里下载：[smali-v2.1.0+14.jar](smali-v2.1.0+14.jar)。
-- [baksmali](http://github.com/JesusFreke/smali) 把dex反编译成smali，本文建议自行编译最新代码，或者从这里下载：[baksmali-v2.1.0+14.jar](baksmali-v2.1.0+14.jar)。
+- [smali](http://github.com/JesusFreke/smali) 把smali源码编译成dex，建议使用2.1.1及以上版本。
+- [baksmali](http://github.com/JesusFreke/smali) 把dex反编译成smali，建议使用2.1.1及以上版本。
 - patch 打补丁，Linux/Mac OS X下自带，windows需要下载[Patch for Windows](http://gnuwin32.sourceforge.net/packages/patch.htm)，另外[Git for Windows](https://git-for-windows.github.io/)也自带。
 - [api-21.smali.patch](api-21.smali.patch), [api-21.patch](api-21.patch)
 - (可选) [oat2dex](https://github.com/testwhat/SmaliEx/) 把oat转换成dex，二进制下载在 [Releases - testwhat/SmaliEx](https://github.com/testwhat/SmaliEx/releases) 上。
