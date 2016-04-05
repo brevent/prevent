@@ -41,6 +41,18 @@
             android:key="force_stop_timeout"
             android:summary="@string/force_stop_summary"
             android:title="@string/force_stop_label" />
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="allow_empty_sender"
+            android:summary="@string/allow_empty_sender_in_service"
+            android:title="@string/allow_empty_sender" />
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="stop_signature_apps"
+            android:summary="@string/force_stop_uncheckable_signature_apps"
+            android:title="@string/force_stop_signature_apps" />
     </PreferenceCategory>
 
 </PreferenceScreen>

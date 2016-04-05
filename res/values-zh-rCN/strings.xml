@@ -65,6 +65,10 @@
     <string name="auto_update_prevent">自动阻止新装程序</string>
     <string name="use_app_standby">休眠应用</string>
     <string name="use_app_standby_settings">使用休眠代替强行停止</string>
+    <string name="allow_empty_sender">允许未知唤醒</string>
+    <string name="allow_empty_sender_in_service">这个有助于在通知栏或者小部件中直接打开应用，但也有些副作用</string>
+    <string name="force_stop_signature_apps">强行停止重要系统应用</string>
+    <string name="force_stop_uncheckable_signature_apps">这些应用不能选中，也只有获取“阻止全部”许可后才能添加到阻止列表</string>
     <string name="force_stop_label">强行停止后台程序</string>
     <string name="force_stop_summary">后台程序无操作%1$s后（屏幕关闭时处理）</string>
     <string name="force_stop_never">永不（推荐）</string>

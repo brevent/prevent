@@ -66,6 +66,10 @@
     <string name="auto_update_prevent">Auto prevent new app</string>
     <string name="use_app_standby">App Standby</string>
     <string name="use_app_standby_settings">Use standby instead of force stopping</string>
+    <string name="allow_empty_sender">Allow Unknown Sender</string>
+    <string name="allow_empty_sender_in_service">Allow unknown sender to start service, which is useful to open some apps directly through notification or widget, however, it may has side effects</string>
+    <string name="force_stop_signature_apps">Force Stop Signature Apps</string>
+    <string name="force_stop_uncheckable_signature_apps">It\'s uncheckable, and cannot be added to prevent list without a \"prevent all\" license</string>
     <string name="force_stop_label">Force stop background apps</string>
     <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
     <string name="force_stop_never">Never (Recommend)</string>
