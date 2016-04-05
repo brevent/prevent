@@ -9,7 +9,10 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemProperties;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
+import android.util.Patterns;
 import android.widget.Toast;
 
 import org.json.JSONObject;
@@ -22,6 +25,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -181,28 +185,28 @@ public class SystemReceiver extends ActivityReceiver {
     private boolean handleCheckLicense(Context context, Intent intent) {
         String user = intent.getStringExtra(Intent.EXTRA_USER);
         Map<String, Set<String>> users = new LinkedHashMap<String, Set<String>>();
+        boolean isEmail = !TextUtils.isEmpty(user) && Patterns.EMAIL_ADDRESS.matcher(user).matches();
         for (Account account : AccountUtils.getEnabledAccounts(context)) {
+            if (TextUtils.isEmpty(account.type)) {
+                continue;
+            }
             Set<String> accounts = users.get(account.type);
             if (accounts == null) {
                 accounts = new LinkedHashSet<String>();
                 users.put(account.type, accounts);
             }
             accounts.add(account.name);
-            if (PackageUtils.equals(account.name, user)) {
+            if (isValid(account.name, user, isEmail)) {
                 setResultCode(0x1);
                 return true;
             }
         }
         String number = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getLine1Number();
-        if (number != null) {
-            number = number.replace("-", "");
-            number = number.replace(" ", "");
-            Set<String> numbers = users.get("");
-            if (numbers == null) {
-                numbers = new LinkedHashSet<String>();
-                users.put("", numbers);
-            }
+        if (!TextUtils.isEmpty(number) && Patterns.PHONE.matcher(user).matches()) {
+            number = PhoneNumberUtils.normalizeNumber(number);
+            Set<String> numbers = new LinkedHashSet<String>();
             numbers.add(number);
+            users.put("", numbers);
             if (PackageUtils.equals(number, user)) {
                 setResultCode(0x1);
                 return true;
@@ -210,6 +214,22 @@ public class SystemReceiver extends ActivityReceiver {
         }
         setResultCode(0x0);
         setResultData(users.toString());
+        return false;
+    }
+
+    private static boolean isValid(String name, String user, boolean isEmail) {
+        if (TextUtils.isEmpty(name) || TextUtils.isEmpty(user)) {
+            return false;
+        }
+        if (name.equalsIgnoreCase(user)) {
+            return true;
+        }
+        // for outlook and other email app
+        if (isEmail
+                && !Patterns.EMAIL_ADDRESS.matcher(name).matches()
+                && name.toLowerCase(Locale.US).startsWith(user.toLowerCase(Locale.US))) {
+            return true;
+        }
         return false;
     }
 
