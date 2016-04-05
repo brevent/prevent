@@ -9,7 +9,6 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemProperties;
-import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Patterns;
@@ -53,6 +52,8 @@ public class SystemReceiver extends ActivityReceiver {
     private Future<?> logFuture;
 
     private ScheduledThreadPoolExecutor logExecutor = new ScheduledThreadPoolExecutor(0x2);
+
+    private static final int RADIX = 10;
 
     public static final Collection<String> MANAGER_ACTIONS = Arrays.asList(
             PreventIntent.ACTION_GET_PACKAGES,
@@ -172,9 +173,6 @@ public class SystemReceiver extends ActivityReceiver {
         Map<String, Set<String>> users = new LinkedHashMap<String, Set<String>>();
         boolean isEmail = !TextUtils.isEmpty(user) && Patterns.EMAIL_ADDRESS.matcher(user).matches();
         for (Account account : AccountUtils.getEnabledAccounts(context)) {
-            if (TextUtils.isEmpty(account.type)) {
-                continue;
-            }
             Set<String> accounts = users.get(account.type);
             if (accounts == null) {
                 accounts = new LinkedHashSet<String>();
@@ -188,9 +186,8 @@ public class SystemReceiver extends ActivityReceiver {
         }
         String number = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getLine1Number();
         if (!TextUtils.isEmpty(number) && Patterns.PHONE.matcher(user).matches()) {
-            number = PhoneNumberUtils.normalizeNumber(number);
             Set<String> numbers = new LinkedHashSet<String>();
-            numbers.add(number);
+            numbers.add(normalizeNumber(number));
             users.put("", numbers);
             if (PackageUtils.equals(number, user)) {
                 setResultCode(0x1);
@@ -200,6 +197,21 @@ public class SystemReceiver extends ActivityReceiver {
         setResultCode(0x0);
         setResultData(users.toString());
         return false;
+    }
+
+    private String normalizeNumber(String number) {
+        StringBuilder sb = new StringBuilder();
+        int len = number.length();
+        for (int i = 0; i < len; i++) {
+            char c = number.charAt(i);
+            int digit = Character.digit(c, RADIX);
+            if (digit != -1) {
+                sb.append(digit);
+            } else if (sb.length() == 0 && c == '+') {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     private static boolean isValid(String name, String user, boolean isEmail) {
