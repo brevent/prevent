@@ -187,7 +187,7 @@ public class SystemReceiver extends ActivityReceiver {
             }
         }
         String number = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getLine1Number();
-        if (!TextUtils.isEmpty(number) && Patterns.PHONE.matcher(user).matches()) {
+        if (!TextUtils.isEmpty(number) && Patterns.PHONE.matcher(number).matches()) {
             Set<String> numbers = new LinkedHashSet<String>();
             numbers.add(normalizeNumber(number));
             users.put("", numbers);
