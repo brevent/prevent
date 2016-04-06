@@ -1,6 +1,7 @@
 package me.piebridge.prevent.framework;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -74,6 +75,7 @@ public class SystemReceiver extends ActivityReceiver {
     );
 
     public static final Collection<String> NON_SCHEME_ACTIONS = Arrays.asList(
+            AccountManager.LOGIN_ACCOUNTS_CHANGED_ACTION,
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_SCREEN_OFF,
             Intent.ACTION_SCREEN_ON
@@ -296,11 +298,16 @@ public class SystemReceiver extends ActivityReceiver {
         } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
             onScreenOn();
         } else if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
+            PreventLog.d("boot completed");
+            AccountUtils.fetchAccounts(mContext);
             if (!SystemHook.isSupported()) {
                 PreventListUtils.notifyNotSupported(mContext);
             } else if (!PreventListUtils.getInstance().canLoad(mContext)) {
                 PreventListUtils.notifyNoPrevents(mContext);
             }
+        } else if (AccountManager.LOGIN_ACCOUNTS_CHANGED_ACTION.equals(action)) {
+            PreventLog.d("login accounts changed");
+            AccountUtils.fetchAccounts(mContext);
         }
     }
 

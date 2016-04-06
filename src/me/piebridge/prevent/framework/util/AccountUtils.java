@@ -32,6 +32,7 @@ public class AccountUtils {
 
     private static final String NAMESPACE_ANDROID = "http://schemas.android.com/apk/res/android";
     private static final String SYNC_ADAPTER = "android.content.SyncAdapter";
+    private static Collection<Account> ENABLED_ACCOUNTS = new ArrayList<Account>();
 
     private AccountUtils() {
 
@@ -103,7 +104,7 @@ public class AccountUtils {
         if (type == null) {
             PreventLog.w("cannot find sync adapter for " + component.flattenToShortString());
             return false;
-        } else if (type.isUserVisible() && isSyncable(context, type)) {
+        } else if (type.isUserVisible() && isSyncable(type)) {
             PreventLog.d(component.flattenToShortString() + " is syncable, account type: " + type.accountType + ", authority: " + type.authority);
             return true;
         } else {
@@ -146,7 +147,7 @@ public class AccountUtils {
         PreventLog.d("set sync to " + syncable + " for " + component.flattenToShortString());
         SyncAdapterType type = getSyncAdapter(context, component);
         if (type != null && type.isUserVisible()) {
-            for (Account account : getEnabledAccounts(context)) {
+            for (Account account : getEnabledAccounts(null)) {
                 if (account.type.equals(type.accountType)) {
                     ContentResolver.setSyncAutomatically(account, type.authority, syncable);
                 }
@@ -154,8 +155,8 @@ public class AccountUtils {
         }
     }
 
-    private static boolean isSyncable(Context context, SyncAdapterType type) {
-        for (Account account : getEnabledAccounts(context)) {
+    private static boolean isSyncable(SyncAdapterType type) {
+        for (Account account : getEnabledAccounts(null)) {
             if (account.type.equals(type.accountType)) {
                 PreventLog.v("check account " + account.type + " for " + type.authority);
                 if (ContentResolver.getSyncAutomatically(account, type.authority)
@@ -168,13 +169,20 @@ public class AccountUtils {
     }
 
     public static Collection<Account> getEnabledAccounts(Context context) {
-        Collection<Account> enabledAccounts = new ArrayList<Account>();
+        if (context != null) {
+            fetchAccounts(context);
+        }
+        return ENABLED_ACCOUNTS;
+    }
+
+    public static synchronized void fetchAccounts(Context context) {
         try {
-            Collections.addAll(enabledAccounts, AccountManager.get(context).getAccounts());
+            ENABLED_ACCOUNTS.clear();
+            Collections.addAll(ENABLED_ACCOUNTS, AccountManager.get(context).getAccounts());
+            PreventLog.i("found accounts: " + ENABLED_ACCOUNTS.size());
         } catch (RuntimeException e) {
             PreventLog.e("cannot find system's account", e);
         }
-        return enabledAccounts;
     }
 
 }
