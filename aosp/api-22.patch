@@ -87,13 +87,14 @@
                  }
              } finally {
                  Binder.restoreCallingIdentity(origId);
-@@ -15107,8 +15116,10 @@
+@@ -15106,9 +15115,11 @@
+         synchronized(this) {
              final int callingPid = Binder.getCallingPid();
              final int callingUid = Binder.getCallingUid();
++            PreventRunningUtils.setSenderInStartService(caller);
              final long origId = Binder.clearCallingIdentity();
 -            ComponentName res = mServices.startServiceLocked(caller, service,
 -                    resolvedType, callingPid, callingUid, userId);
-+            PreventRunningUtils.setSenderInStartService(caller);
 +            ComponentName res = PreventRunningUtils.clearSenderInStartService(
 +                mServices.startServiceLocked(caller, service,
 +                    resolvedType, callingPid, callingUid, userId));
@@ -113,12 +114,13 @@
          }
      }
  
-@@ -16331,11 +16344,13 @@
+@@ -16330,12 +16343,14 @@
+             final ProcessRecord callerApp = getRecordForAppLocked(caller);
              final int callingPid = Binder.getCallingPid();
              final int callingUid = Binder.getCallingUid();
++            PreventRunningUtils.setSenderInBroadcastIntent(caller);
              final long origId = Binder.clearCallingIdentity();
 -            int res = broadcastIntentLocked(callerApp,
-+            PreventRunningUtils.setSenderInBroadcastIntent(caller);
 +            int res = PreventRunningUtils.onBroadcastIntent(
 +                broadcastIntentLocked(callerApp,
                      callerApp != null ? callerApp.info.packageName : null,
@@ -167,7 +169,7 @@
                  // This may be a heavy-weight process!  Note that the package
 --- a/services/core/java/com/android/server/am/PreventRunningUtils.java
 +++ b/services/core/java/com/android/server/am/PreventRunningUtils.java
-@@ -0,0 +1,136 @@
+@@ -0,0 +1,137 @@
 +package com.android.server.am;
 +
 +import android.app.IApplicationThread;
@@ -176,6 +178,7 @@
 +import android.content.IntentFilter;
 +import android.content.pm.ApplicationInfo;
 +import android.net.Uri;
++import android.os.Binder;
 +import android.os.IBinder;
 +import android.util.ArraySet;
 +
@@ -216,7 +219,7 @@
 +
 +    private static void setSender(IApplicationThread caller) {
 +        final ProcessRecord callerApp = mAm.getRecordForAppLocked(caller);
-+        mPreventRunning.setSender(callerApp != null ? callerApp.info.packageName : null);
++        mPreventRunning.setSender(callerApp != null ? callerApp.info.packageName : String.valueOf(Binder.getCallingUid()));
 +    }
 +
 +    public static void setSenderInStartService(IApplicationThread caller) {
@@ -330,7 +333,7 @@
 +
 +    private static final String TAG = "Prevent";
 +
-+    private static final int VERSION = 20160226;
++    private static final int VERSION = 20160406;
 +
 +    private PreventRunningHook mPreventRunning;
 +
