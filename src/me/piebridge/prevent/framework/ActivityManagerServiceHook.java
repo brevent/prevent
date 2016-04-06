@@ -216,14 +216,12 @@ public class ActivityManagerServiceHook {
             return true;
         } else if (TextUtils.isDigitsOnly(sender)) {
             return Integer.parseInt(sender) < SystemHook.FIRST_APPLICATION_UID;
-        } else if (cannotPrevent(sender)) {
+        } else if (cannotPrevent(sender)
+                || mContext.getPackageManager().getLaunchIntentForPackage(sender) == null
+                || (SystemHook.isSystemPackage(packageName) && SystemHook.hasRunningActivity(sender))) {
             // the sender cannot be prevent
-            return true;
-        } else if (mContext.getPackageManager().getLaunchIntentForPackage(sender) == null) {
-            // allow the sender has no launcher
-            return true;
-        } else if (SystemHook.isSystemPackage(packageName) && SystemHook.hasRunningActivity(sender)) {
-            // allow third-party app to call system package (except gms)
+            // the sender has no launcher
+            // running sender call system package
             return true;
         }
         return false;
