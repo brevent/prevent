@@ -111,17 +111,27 @@ baksmali ... -b -s [-x] ...
  
      move-result v0
  
-@@ -31734,12 +31753,21 @@
+@@ -31697,10 +31716,13 @@
  
-     move/from16 v15, p12
+     invoke-static {}, Landroid/os/Binder;->getCallingUid()I
  
-     move/from16 v18, p13
+     move-result v17
  
 +    # .method public final broadcastIntent(Landroid/app/IApplicationThread;Landroid/content/Intent;Ljava/lang/String;Landroid/content/IIntentReceiver;ILjava/lang/String;Landroid/os/Bundle;[Ljava/lang/String;ILandroid/os/Bundle;ZZI)I
 +    invoke-static/range {p1 .. p1}, Lcom/android/server/am/PreventRunningUtils;->setSenderInBroadcastIntent(Landroid/app/IApplicationThread;)V
 +
+     invoke-static {}, Landroid/os/Binder;->clearCallingIdentity()J
+ 
+     move-result-wide v20
+ 
+     if-eqz v3, :cond_0
+@@ -31736,10 +31758,17 @@
+ 
+     move/from16 v18, p13
+ 
      invoke-direct/range {v2 .. v18}, Lcom/android/server/am/ActivityManagerService;->broadcastIntentLocked(Lcom/android/server/am/ProcessRecord;Ljava/lang/String;Landroid/content/Intent;Ljava/lang/String;Landroid/content/IIntentReceiver;ILjava/lang/String;Landroid/os/Bundle;[Ljava/lang/String;ILandroid/os/Bundle;ZZIII)I
  
++    # .method public final broadcastIntent(Landroid/app/IApplicationThread;Landroid/content/Intent;Ljava/lang/String;Landroid/content/IIntentReceiver;ILjava/lang/String;Landroid/os/Bundle;[Ljava/lang/String;ILandroid/os/Bundle;ZZI)I
 +    move-result v2
 +
 +    move-object/from16 v0, p2
@@ -133,7 +143,7 @@ baksmali ... -b -s [-x] ...
      invoke-static/range {v20 .. v21}, Landroid/os/Binder;->restoreCallingIdentity(J)V
      :try_end_0
      .catchall {:try_start_0 .. :try_end_0} :catchall_0
-@@ -58973,10 +59001,15 @@
+@@ -58973,10 +59002,15 @@
      invoke-static {p1}, Lcom/android/server/am/ActivityRecord;->getStackLocked(Landroid/os/IBinder;)Lcom/android/server/am/ActivityStack;
  
      move-result-object v4
@@ -149,7 +159,7 @@ baksmali ... -b -s [-x] ...
  
      move-result v4
  
-@@ -69714,10 +69747,15 @@
+@@ -69714,10 +69748,15 @@
  
      invoke-virtual/range {v0 .. v11}, Lcom/android/server/am/ActivityManagerService;->startActivityAsUser(Landroid/app/IApplicationThread;Ljava/lang/String;Landroid/content/Intent;Ljava/lang/String;Landroid/os/IBinder;Ljava/lang/String;IILandroid/app/ProfilerInfo;Landroid/os/Bundle;I)I
  
@@ -165,7 +175,7 @@ baksmali ... -b -s [-x] ...
  
  .method public final startActivityAndWait(Landroid/app/IApplicationThread;Ljava/lang/String;Landroid/content/Intent;Ljava/lang/String;Landroid/os/IBinder;Ljava/lang/String;IILandroid/app/ProfilerInfo;Landroid/os/Bundle;I)Landroid/app/IActivityManager$WaitResult;
      .registers 33
-@@ -72193,10 +72231,21 @@
+@@ -72193,10 +72232,21 @@
  .end method
  
  .method final startProcessLocked(Ljava/lang/String;Landroid/content/pm/ApplicationInfo;ZILjava/lang/String;Landroid/content/ComponentName;ZZIZLjava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/Runnable;)Lcom/android/server/am/ProcessRecord;
@@ -187,17 +197,27 @@ baksmali ... -b -s [-x] ...
      move-result-wide v10
  
      if-nez p8, :cond_3
-@@ -72832,12 +72881,19 @@
+@@ -72816,10 +72866,13 @@
  
-     move-object v6, p4
+     invoke-static {}, Landroid/os/Binder;->getCallingUid()I
  
-     move/from16 v7, p5
+     move-result v5
  
 +    # .method public startService(Landroid/app/IApplicationThread;Landroid/content/Intent;Ljava/lang/String;Ljava/lang/String;I)Landroid/content/ComponentName;
 +    invoke-static/range {p1 .. p1}, Lcom/android/server/am/PreventRunningUtils;->setSenderInStartService(Landroid/app/IApplicationThread;)V
 +
+     invoke-static {}, Landroid/os/Binder;->clearCallingIdentity()J
+ 
+     move-result-wide v8
+ 
+     iget-object v0, p0, Lcom/android/server/am/ActivityManagerService;->mServices:Lcom/android/server/am/ActiveServices;
+@@ -72834,10 +72887,15 @@
+ 
+     move/from16 v7, p5
+ 
      invoke-virtual/range {v0 .. v7}, Lcom/android/server/am/ActiveServices;->startServiceLocked(Landroid/app/IApplicationThread;Landroid/content/Intent;Ljava/lang/String;IILjava/lang/String;I)Landroid/content/ComponentName;
  
++    # .method public startService(Landroid/app/IApplicationThread;Landroid/content/Intent;Ljava/lang/String;Ljava/lang/String;I)Landroid/content/ComponentName;
 +    move-result-object v0
 +
 +    invoke-static {v0}, Lcom/android/server/am/PreventRunningUtils;->clearSenderInStartService(Landroid/content/ComponentName;)Landroid/content/ComponentName;
