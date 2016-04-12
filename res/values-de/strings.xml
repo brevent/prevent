@@ -68,8 +68,8 @@
     <string name="use_app_standby_settings">Versetze Apps in Standby, anstatt ein Beenden zu erzwingen</string>
     <string name="allow_empty_sender">Unbekannte Aufrufe erlauben</string>
     <string name="allow_empty_sender_in_service">Anderen Apps erlauben, Services zu starten. Dies ist nützlich, um manche Apps direkt durch Benachrichtigungen oder Widgets zu öffnen, es könnte jedoch auch unerwünschte Auswirkungen haben</string>
-    <string name="force_stop_signature_apps">Force Stop Signature Apps (English)</string>
-    <string name="force_stop_uncheckable_signature_apps">It\'s uncheckable, and cannot be added to prevent list without a \"prevent all\" license (English)</string>
+    <string name="force_stop_signature_apps">Wichtige Systemanwendungen blockieren</string>
+    <string name="force_stop_uncheckable_signature_apps">Diese sind nicht anklickbar und können nicht ohne eine "Alle Blockieren"-Lizenz zur Blockier-Liste hinzugefügt werden</string>
     <string name="force_stop_label">Beenden von Hintergrund-Apps erzwingen</string>
     <string name="force_stop_summary">%1$s nach Bildschirm aus und Inaktivität der Hintergrund-Apps</string>
     <string name="force_stop_never">Nie (Empfohlen)</string>
