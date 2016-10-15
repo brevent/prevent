@@ -1,10 +1,8 @@
 # English
 
-## Why this module
+## Why Brevent
 
-Android 3.1 introduces [Launch controls](http://developer.android.com/about/versions/android-3.1.html#launchcontrols) on stopped applications. However, there are no such features on android 2.3, some 4.X devices didn't implement it well. Furthermore, there are some way for apps to wakeup some stopped apps.
-
-"`Prevent Running`" hajacks several system API to prevent not-in-use apps in `prevent list` from running or keep running. Furthermore, it applies to system apps too, specially, support google-family apps(`GAPPS`).
+"`Brevent`" hajacks several system API to prevent not-in-use apps in `prevent list` from running or keep running. Furthermore, it applies to system apps too, specially, support google-family apps(`GAPPS`).
 
 Not-in-use packages in `prevent list` can only run:
 
@@ -19,15 +17,15 @@ Not-in-use packages in `prevent list` can only run:
 
 **WARNING**: Don't prevent "`Xposed Installer`", otherwise the module won't active when you update it.
 
-"`Prevent Running`" should work from android 2.3 to 6.0. However, I mainly use 5.1.
+"`Brevent`" should work from Android 4.4 to 6.0. However, I mainly use 7.1.
 
 ## How to use
 
-1. Install "`Prevent Running`", activate it in "`Xposed Installer`", reboot.
-2. Open "`Prevent Running`",  then add/remove application to/from prevent list.
+1. Patch your ROM with "`Brevent`".
+2. Open "`Brevent`",  then add/remove application to/from prevent list.
 3. Use android normally, press `back` or remove it from recent task to exit, and press `HOME` for pause.
 
-And "`Prevent Running`" would keep non-"service" processes, of cource it cannot turn to "service".
+And "`Brevent`" would keep non-"service" processes, of cource it cannot turn to "service".
 
 ## Special Search
 
@@ -79,15 +77,13 @@ This process is running something that is actively visible to the user, though n
 
 ## Project
 
-Project: [ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB). If you like, feel free to donate.
+Project: [Brevent - GitHub](https://github.com/liudongmiao/Brevent). If you like, feel free to donate.
 
 # 中文
 
-## 模块介绍
+## 黑域介绍
 
-Android 3.1对强行停止的程序引入了[启动控制](http://developer.android.com/about/versions/android-3.1.html#launchcontrols)。但是，在Android 2.3没有这个功能，而有些Android 4.X的设备根本没有实现。再者，很多流氓，总是有办法不断启动。
-
-“`阻止运行`”通过劫持几个系统API，保证`阻止列表`里的应用只在需要时才启动，同时支持谷歌家族应用。
+“`黑域`”通过劫持几个系统API，保证`阻止列表`里的应用只在需要时才启动，同时支持谷歌家族应用。
 
 没有运行的`阻止列表`应用只会在以下几种情况下启动：
 
@@ -99,23 +95,21 @@ Android 3.1对强行停止的程序引入了[启动控制](http://developer.andr
 
 **注意**：当`谷歌服务`在阻止列表时，只有`谷歌家族应用`和第三方的`GCM`应用可以使用。同时，当有任何一个`谷歌家族应用`没有退出时，都不会退出`谷歌服务`。当然，只有`GMS`运行时才能接收`GCM`消息，并唤醒相应应用。
 
-**警告**：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。“`阻止运行`”不会显示和系统同一签名的系统应用，也不会显示系统内置的启动器。
+**警告**：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。“`黑域`”不会显示和系统同一签名的系统应用，也不会显示系统内置的启动器。
 
 **警告**：请不要阻止“`Xposed Installer`”，否则模块更新时，无法更新模块路径，导致重启以后无法加载模块。
 
 **提示**：有些用户无法或不愿分清`HOME`与`返回键`区别，可以开启“强行停止后台程序”，在离开程序一段时间后并黑屏时退出应用。这项功能默认关闭。
 
-“`阻止运行`”支持Android 2.3到6.0，本人主要在5.1上测试。(2.3请安装本人移植的xposed框架。）
+“`黑域`”支持Android 4.4到7.1，本人主要在7.1上测试。
 
 ## 使用说明
 
-1. 安装“`阻止运行`”，在“`Xposed Installer`”中激活它，重启（必须）。
-2. 重启后，打开“`阻止运行`”，配置`阻止列表`(这个只需要一次)。
+1. 给手机安装`黑域`补丁。
+2. 打开“`黑域`”，配置`阻止列表`(这个只需要一次)。
 3. 正常使用手机，临时退出时按`HOME`，不用时按`返回键`退出或者从最近列表划掉。
 
-同时，“`阻止运行`”不杀非`服务`的程序，但是保证非`服务`类进程不会变成`服务`在后台***一直***运行。
-
-**高级**：在`Xposed Installer`之外，本程序提供`ROM补丁`模式，只需替换相应文件，即可直接使用“`阻止运行`”。如有需要，请联系作者；或者阅读源码目录`aosp`下的文档。
+同时，“`黑域`”不杀非`服务`的程序，但是保证非`服务`类进程不会变成`服务`在后台***一直***运行。
 
 ## 特别搜索
 
@@ -139,7 +133,7 @@ Android 3.1对强行停止的程序引入了[启动控制](http://developer.andr
 
 ### 前台(foreground)
 
-进程正在前台运行，也是你正在使用的应用。（译者注：当你在“`阻止运行`”中查看进程状态时，“`阻止运行`”永远是前台。）
+进程正在前台运行，也是你正在使用的应用。（译者注：当你在“`黑域`”中查看进程状态时，“`黑域`”永远是前台。）
 
 ### 前台服务(foreground service, 自Android 6.0)
 
@@ -167,4 +161,4 @@ Android 3.1对强行停止的程序引入了[启动控制](http://developer.andr
 
 ## 项目
 
-“`阻止运行`”开源，项目地址：[ForceStopGB - GitHub](https://github.com/liudongmiao/ForceStopGB)。如果喜欢，请随意捐赠。
+“`黑域`”开源，项目地址：[Brevent - GitHub](https://github.com/liudongmiao/Brevent)。如果喜欢，请随意捐赠。

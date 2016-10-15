@@ -3,8 +3,7 @@ package android.os;
 /**
  * {@hide}
  */
-public class SystemProperties
-{
+public class SystemProperties {
 
     public static String get(String key) {
         throw new UnsupportedOperationException();

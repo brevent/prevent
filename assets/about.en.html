@@ -3,17 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
-<title>Prevent Running</title>
+<title>Brevent</title>
 <style>
 code { font-size: larger }
 </style>
 </head>
 <body>
-<h2>Why this module</h2>
+<h2>Why Brevent</h2>
 
-<p>Android 3.1 introduces <a href="http://developer.android.com/about/versions/android-3.1.html#launchcontrols">Launch controls</a> on stopped applications. However, there are no such features on android 2.3, some 4.X devices didn't implement it well. Furthermore, there are some way for apps to wakeup some stopped apps.</p>
-
-<p>"<code>Prevent Running</code>" hajacks several system API to prevent not-in-use apps in <code>prevent list</code> from running or keep running. Furthermore, it applies to system apps too, specially, support google-family apps(<code>GAPPS</code>).</p>
+<p>"<code>Brevent</code>" hajacks several system API to prevent not-in-use apps in <code>prevent list</code> from running or keep running. Furthermore, it applies to system apps too, specially, support google-family apps(<code>GAPPS</code>).</p>
 
 <p>Not-in-use packages in <code>prevent list</code> can only run:</p>
 
@@ -30,17 +28,17 @@ code { font-size: larger }
 
 <p><strong>WARNING</strong>: Don't prevent "<code>Xposed Installer</code>", otherwise the module won't active when you update it.</p>
 
-<p>"<code>Prevent Running</code>" should work from android 2.3 to 6.0. However, I mainly use 5.1.</p>
+<p>"<code>Brevent</code>" should work from android 4.4 to 7.1. However, I mainly use 7.1.</p>
 
 <h2>How to use</h2>
 
 <ol>
-<li>Install "<code>Prevent Running</code>", activate it in "<code>Xposed Installer</code>", reboot.</li>
-<li>Open "<code>Prevent Running</code>",  then add/remove application to/from prevent list.</li>
+<li>Patch your ROM with "<code>Brevent</code>".</li>
+<li>Open "<code>Brevent</code>",  then add/remove application to/from prevent list.</li>
 <li>Use android normally, press <code>back</code> or remove it from recent task to exit, and press <code>HOME</code> for pause.</li>
 </ol>
 
-<p>"<code>Prevent Running</code>" would keep non-"service" processes, of cource it cannot turn to "service".</p>
+<p>"<code>Brevent</code>" would keep non-"service" processes, of cource it cannot turn to "service".</p>
 
 <h2>Special Search</h2>
 
@@ -94,6 +92,6 @@ code { font-size: larger }
 
 <h2>Project</h2>
 
-<p>Project: <a href="https://github.com/liudongmiao/ForceStopGB">ForceStopGB - GitHub</a>. If you like, feel free to donate.</p>
+<p>Project: <a href="https://github.com/liudongmiao/Brevent">Brevent - GitHub</a>. If you like, feel free to donate.</p>
 </body>
 </html>

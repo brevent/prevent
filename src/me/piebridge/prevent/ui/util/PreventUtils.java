@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 

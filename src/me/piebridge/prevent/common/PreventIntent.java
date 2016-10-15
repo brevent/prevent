@@ -2,7 +2,7 @@ package me.piebridge.prevent.common;
 
 import android.net.Uri;
 
-import me.piebridge.forcestopgb.Manifest;
+import me.piebridge.prevent.Manifest;
 
 /**
  * Created by thom on 15/7/12.
@@ -17,7 +17,6 @@ public final class PreventIntent {
     public static final String ACTION_GET_INFO = NAMESPACE + "GET_INFO";
     public static final String ACTION_UPDATE_PREVENT = NAMESPACE + "UPDATE_PREVENT";
     public static final String ACTION_SYSTEM_LOG = NAMESPACE + "SYSTEM_LOG";
-    public static final String ACTION_CHECK_LICENSE = NAMESPACE + "CHECK_LICENSE";
     public static final String ACTION_UPDATE_CONFIGURATION = NAMESPACE + "UPDATE_CONFIGURATION";
     public static final String ACTION_SOFT_REBOOT = NAMESPACE + "SOFT_REBOOT";
     public static final String ACTION_REBOOT = NAMESPACE + "REBOOT";
@@ -50,7 +49,6 @@ public final class PreventIntent {
     public static final String[] KEYS_BOOLEAN = new String[] {
             KEY_ALLOW_EMPTY_SENDER,
             KEY_DESTROY_PROCESSES,
-            KEY_BACKUP_PREVENT_LIST,
             KEY_LOCK_SYNC_SETTINGS,
             KEY_AUTO_PREVENT,
             KEY_STOP_SIGNATURE_APPS,

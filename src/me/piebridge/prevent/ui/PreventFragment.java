@@ -51,12 +51,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.R;
 import me.piebridge.prevent.common.GmsUtils;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.ui.util.LabelLoader;
-import me.piebridge.prevent.ui.util.LicenseUtils;
 import me.piebridge.prevent.ui.util.StatusUtils;
 
 public abstract class PreventFragment extends ListFragment implements AbsListView.OnScrollListener {
@@ -167,9 +165,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
     }
 
     @Override
-    public void onPause() {
+    public void onStop() {
         saveListPosition();
-        super.onPause();
+        super.onStop();
     }
 
     private int getHeaderIconWidth() {
@@ -195,9 +193,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             setHeaderIcon(menu, holder.icon);
         }
         menu.add(Menu.NONE, R.string.app_info, Menu.NONE, R.string.app_info);
-        if (holder.checkView.isEnabled() || canPreventAll()) {
-            updatePreventMenu(menu, holder.packageName);
-        }
+        updatePreventMenu(menu, holder.packageName);
         if (getMainIntent(holder.packageName) != null) {
             menu.add(Menu.NONE, R.string.open, Menu.NONE, R.string.open);
         }
@@ -206,15 +202,6 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
         }
         if (appNotification) {
             menu.add(Menu.NONE, R.string.app_notifications, Menu.NONE, R.string.app_notifications);
-        }
-    }
-
-    private boolean canPreventAll() {
-        if (BuildConfig.DONATE) {
-            String licenseName = LicenseUtils.getRawLicenseName(mActivity);
-            return licenseName != null && licenseName.startsWith("PA");
-        } else {
-            return true;
         }
     }
 
@@ -535,7 +522,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             this(activity);
             mView = view;
             mNames.addAll(names);
-            mTask = new RetrieveInfoTask();
+            mTask = new RetrieveInfoTask(mActivity, this);
             mCanPreventNames.addAll(names);
             if (showRunning) {
                 mNames.addAll(mActivity.getRunningProcesses().keySet());
@@ -561,6 +548,9 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
             ViewHolder holder = (ViewHolder) view.getTag();
             AppInfo appInfo = getItem(position);
+            if (appInfo == null) {
+                return view;
+            }
             holder.nameView.setText(appInfo.name);
             if (!PackageUtils.equals(holder.packageName, appInfo.packageName)) {
                 holder.summaryView.setVisibility(View.GONE);
@@ -580,7 +570,7 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             if (holder.task != null) {
                 holder.task.cancel(true);
             }
-            holder.task = new RetrieveIconTask();
+            holder.task = new RetrieveIconTask(mActivity);
             holder.task.execute(holder, appInfo);
             return view;
         }
@@ -620,6 +610,32 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
             } else if (mTask.dialog != null) {
                 mTask.dialog.show();
             }
+        }
+
+        public void addAppInfo(AppInfo application) {
+            add(application);
+            mAppInfos.add(application);
+        }
+
+        public void addCompleted() {
+            if (mView != null) {
+                mView.setVisibility(View.VISIBLE);
+            }
+            String query = search.getText().toString();
+            if (TextUtils.isEmpty(query)) {
+                query = getDefaultQuery();
+            }
+            if (!TextUtils.isEmpty(query)) {
+                getFilter().filter(query);
+            }
+        }
+
+        public int getSize() {
+            return mNames.size();
+        }
+
+        public Collection<String> getNames() {
+            return mNames;
         }
 
         private class SimpleFilter extends Filter {
@@ -718,79 +734,92 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
                 return "-e".equals(query) && !mActivity.getPreventPackages().containsKey(appInfo.packageName);
             }
         }
+    }
 
-        private class RetrieveInfoTask extends AsyncTask<Void, Integer, Set<AppInfo>> {
-            ProgressDialog dialog;
-            LabelLoader labelLoader;
 
-            @Override
-            protected void onPreExecute() {
-                dialog = new ProgressDialog(mActivity);
+    private static class RetrieveInfoTask extends AsyncTask<Void, Integer, Set<AppInfo>> {
+        ProgressDialog dialog;
+        LabelLoader labelLoader;
+        private Adapter mAdapter;
+
+        private final WeakReference<PreventActivity> wr;
+
+        public RetrieveInfoTask(PreventActivity activity, Adapter adapter) {
+            wr = new WeakReference<PreventActivity>(activity);
+            mAdapter = adapter;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            PreventActivity pa = wr.get();
+            if (pa != null) {
+                dialog = new ProgressDialog(pa);
                 dialog.setTitle(R.string.app_name);
                 dialog.setIcon(R.drawable.ic_launcher);
                 dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                 dialog.setCancelable(false);
-                dialog.setMax(mNames.size());
+                dialog.setMax(mAdapter.getSize());
                 dialog.show();
-                labelLoader = new LabelLoader(mActivity);
+                labelLoader = new LabelLoader(pa);
             }
+        }
 
-            @Override
-            protected Set<AppInfo> doInBackground(Void... params) {
-                Map<String, Set<Long>> running = mActivity.getRunningProcesses();
-                Set<AppInfo> applications = new TreeSet<AppInfo>();
-                int i = 1;
-                for (String name : mNames) {
-                    publishProgress(++i);
-                    ApplicationInfo info;
-                    try {
-                        info = mPm.getApplicationInfo(name, 0);
-                    } catch (NameNotFoundException e) { // NOSONAR
-                        info = null;
-                    }
-                    if (info == null || !info.enabled) {
-                        continue;
-                    }
-                    String label = labelLoader.loadLabel(info);
-                    applications.add(new AppInfo(name, label, running.get(name)).setFlags(info.flags));
-                }
+        @Override
+        protected Set<AppInfo> doInBackground(Void... params) {
+            PreventActivity pa = wr.get();
+            Set<AppInfo> applications = new TreeSet<AppInfo>();
+            if (pa == null) {
                 return applications;
             }
-
-            @Override
-            protected void onProgressUpdate(Integer... progress) {
-                if (dialog != null) {
-                    dialog.setProgress(progress[0]);
+            PackageManager pm = pa.getPackageManager();
+            Map<String, Set<Long>> running = pa.getRunningProcesses();
+            int i = 1;
+            for (String name : mAdapter.getNames()) {
+                publishProgress(++i);
+                ApplicationInfo info;
+                try {
+                    info = pm.getApplicationInfo(name, 0);
+                } catch (NameNotFoundException e) { // NOSONAR
+                    info = null;
                 }
+                if (info == null || !info.enabled) {
+                    continue;
+                }
+                String label = labelLoader.loadLabel(info);
+                applications.add(new AppInfo(name, label, running.get(name)).setFlags(info.flags));
             }
+            return applications;
+        }
 
-            @Override
-            protected void onPostExecute(Set<AppInfo> applications) {
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            if (wr.get() != null && dialog != null) {
+                dialog.setProgress(progress[0]);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Set<AppInfo> applications) {
+            if (wr.get() != null) {
                 for (AppInfo application : applications) {
-                    add(application);
-                    mAppInfos.add(application);
+                    mAdapter.addAppInfo(application);
                 }
                 if (dialog != null) {
                     dialog.dismiss();
                     dialog = null;
                 }
-                if (mView != null) {
-                    mView.setVisibility(View.VISIBLE);
-                }
-                String query = search.getText().toString();
-                if (TextUtils.isEmpty(query)) {
-                    query = getDefaultQuery();
-                }
-                if (!TextUtils.isEmpty(query)) {
-                    getFilter().filter(query);
-                }
+                mAdapter.addCompleted();
             }
         }
     }
 
-    private class RetrieveIconTask extends AsyncTask<Object, Void, ViewHolder> {
+    private static class RetrieveIconTask extends AsyncTask<Object, Void, ViewHolder> {
 
-        WeakReference<PreventActivity> wr = new WeakReference<PreventActivity>(mActivity);
+        private final WeakReference<PreventActivity> wr;
+
+        private RetrieveIconTask(PreventActivity activity) {
+            wr = new WeakReference<PreventActivity>(activity);
+        }
 
         @Override
         protected ViewHolder doInBackground(Object... params) {
@@ -811,10 +840,13 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
         @Override
         protected void onPostExecute(ViewHolder holder) {
-            holder.iconView.setImageDrawable(holder.icon);
-            holder.summaryView.setText(StatusUtils.formatRunning(mActivity, holder.running));
-            holder.loadingView.setVisibility(View.GONE);
-            holder.summaryView.setVisibility(View.VISIBLE);
+            PreventActivity pa = wr.get();
+            if (pa != null) {
+                holder.iconView.setImageDrawable(holder.icon);
+                holder.summaryView.setText(StatusUtils.formatRunning(pa, holder.running));
+                holder.loadingView.setVisibility(View.GONE);
+                holder.summaryView.setVisibility(View.VISIBLE);
+            }
         }
     }
 

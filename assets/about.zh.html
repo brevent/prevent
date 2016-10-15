@@ -3,17 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
-<title>阻止运行</title>
+<title>黑域</title>
 <style>
 code { font-size: larger }
 </style>
 </head>
 <body>
-<h2>模块介绍</h2>
+<h2>黑域介绍</h2>
 
-<p>Android 3.1对强行停止的程序引入了<a href="http://developer.android.com/about/versions/android-3.1.html#launchcontrols">启动控制</a>。但是，在Android 2.3没有这个功能，而有些Android 4.X的设备根本没有实现。再者，很多流氓，总是有办法不断启动。</p>
-
-<p>“<code>阻止运行</code>”通过劫持几个系统API，保证<code>阻止列表</code>里的应用只在需要时才启动，同时支持谷歌家族应用。</p>
+<p>“<code>黑域</code>”通过劫持几个系统API，保证<code>阻止列表</code>里的应用只在需要时才启动，同时支持谷歌家族应用。</p>
 
 <p>没有运行的<code>阻止列表</code>应用只会在以下几种情况下启动：</p>
 
@@ -27,25 +25,23 @@ code { font-size: larger }
 
 <p><strong>注意</strong>：当<code>谷歌服务</code>在阻止列表时，只有<code>谷歌家族应用</code>和第三方的<code>GCM</code>应用可以使用。同时，当有任何一个<code>谷歌家族应用</code>没有退出时，都不会退出<code>谷歌服务</code>。当然，只有<code>GMS</code>运行时才能接收<code>GCM</code>消息，并唤醒相应应用。</p>
 
-<p><strong>警告</strong>：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。“<code>阻止运行</code>”不会显示和系统同一签名的系统应用，也不会显示系统内置的启动器。</p>
+<p><strong>警告</strong>：请谨慎阻止“系统应用”，以及常用应用。要不然，你可能无法及时收到短信或其它重要消息。“<code>黑域</code>”不会显示和系统同一签名的系统应用，也不会显示系统内置的启动器。</p>
 
 <p><strong>警告</strong>：请不要阻止“<code>Xposed Installer</code>”，否则模块更新时，无法更新模块路径，导致重启以后无法加载模块。</p>
 
 <p><strong>提示</strong>：有些用户无法或不愿分清<code>HOME</code>与<code>返回键</code>区别，可以开启“强行停止后台程序”，在离开程序一段时间后并黑屏时退出应用。这项功能默认关闭。</p>
 
-<p>“<code>阻止运行</code>”支持Android 2.3到6.0，本人主要在5.1上测试。(2.3请安装本人移植的xposed框架。）</p>
+<p>“<code>黑域</code>”支持Android 4.4到7.1，本人主要在7.1上测试。</p>
 
 <h2>使用说明</h2>
 
 <ol>
-<li>安装“<code>阻止运行</code>”，在“<code>Xposed Installer</code>”中激活它，重启（必须）。</li>
-<li>重启后，打开“<code>阻止运行</code>”，配置<code>阻止列表</code>(这个只需要一次)。</li>
+<li>给系统打“<code>黑域</code>”补丁。</li>
+<li>重启后，打开“<code>黑域</code>”，配置<code>阻止列表</code>(这个只需要一次)。</li>
 <li>正常使用手机，临时退出时按<code>HOME</code>，不用时按<code>返回键</code>退出或者从最近列表划掉。</li>
 </ol>
 
-<p>“<code>阻止运行</code>”不杀非<code>服务</code>的程序，但是保证非<code>服务</code>类进程不会变成<code>服务</code>在后台<strong><em>一直</em></strong>运行。</p>
-
-<p><strong>高级</strong>：在<code>Xposed Installer</code>之外，本程序提供<code>ROM补丁</code>模式，只需替换相应文件，即可直接使用“<code>阻止运行</code>”。如有需要，请联系作者；或者阅读源码目录<code>aosp</code>下的文档。</p>
+<p>“<code>黑域</code>”不杀非<code>服务</code>的程序，但是保证非<code>服务</code>类进程不会变成<code>服务</code>在后台<strong><em>一直</em></strong>运行。</p>
 
 <h2>特别搜索</h2>
 
@@ -71,7 +67,7 @@ code { font-size: larger }
 
 <h3>前台(foreground)</h3>
 
-<p>进程正在前台运行，也是你正在使用的应用。（译者注：当你在“<code>阻止运行</code>”中查看进程状态时，“<code>阻止运行</code>”永远是前台。）</p>
+<p>进程正在前台运行，也是你正在使用的应用。（译者注：当你在“<code>黑域</code>”中查看进程状态时，“<code>黑域</code>”永远是前台。）</p>
 
 <h3>前台服务(foreground service, 自Android 6.0)</h3>
 
@@ -99,6 +95,6 @@ code { font-size: larger }
 
 <h2>项目</h2>
 
-<p>“<code>阻止运行</code>”开源，项目地址：<a href="https://github.com/liudongmiao/ForceStopGB">ForceStopGB - GitHub</a>。如果喜欢，请随意捐赠。</p>
+<p>“<code>黑域</code>”开源，项目地址：<a href="https://github.com/liudongmiao/Brevent">Brevent - GitHub</a>。如果喜欢，请随意捐赠。</p>
 </body>
 </html>

@@ -16,14 +16,14 @@
 # and specify the fully qualified class name to the JavaScript interface
 # class:
 
--keepattributes SourceFile,LineNumberTable
+-keepattributes SourceFile,LineNumberTable,EnclosingMethod
 
 # -keepnames class android.support.** { *; }
 # -keepnames class me.piebridge.** { *; }
 
--keepnames class com.android.vending.billing.** { *; }
-
--keep class me.piebridge.prevent.xposed.XposedMod { public *; }
-
--keep class me.piebridge.PreventRunningHook { *; }
+-keep class com.android.server.am.* { *; }
 -keep class me.piebridge.prevent.framework.PreventRunning { public *; }
+
+-dontnote me.piebridge.prevent.framework.util.*
+-dontnote me.piebridge.prevent.ui.util.XposedUtils
+-dontwarn com.android.server.am.*

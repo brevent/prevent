@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Prevent Running</string>
+    <string name="app_name">Brevent</string>
 
     <string name="soak_version">Ini bukan versi rilis, dan mungkin memblokir perangkatmu. Jika kamu tidak suka untuk berpartisipasi, tolong hapus pemasangan dan kembali gunakan versi rilis.</string>
 
-    <!-- xposed -->
-    <string name="xposed_summary">Mencegah berjalannya aplikasi.</string>
-    <string name="xposed_disabled">Tolong aktifkan \"Prevent Running\" di \"Xposed Installer\", atau matikan kemudian aktifkan \"Prevent Running\".</string>
-    <string name="install_internal">Prevent Running harus dipasang di penyimpanan internal.</string>
-    <string name="no_xposed">Tolong instal \"Xposed Installer\".</string>
+    <string name="install_internal">\"Brevent\" harus dipasang di penyimpanan internal.</string>
+    <string name="no_patched">Please patch your ROM with "Brevent" (English).</string>
 
     <!-- receiver -->
     <string name="no_prevents">Tolong atur daftar pencegahan.</string>
@@ -48,6 +45,7 @@
     <string name="importance_foreground_service">Latar depan Layanan</string>
     <string name="importance_top_sleeping">Tidur tertinggi</string>
     <string name="importance_service_not_started">Layanan (Belum dimulai)</string>
+    <string name="importance_inactive">Tidak aktif</string>
 
     <!-- app menu -->
     <string name="app_info">Info Aplikasi</string>
@@ -68,8 +66,8 @@
     <string name="use_app_standby_settings">Gunakan siaga daripada henti paksa aplikasi</string>
     <string name="allow_empty_sender">Ijinkan pengirim tak diketahui</string>
     <string name="allow_empty_sender_in_service">Ijinkan pengirim tak diketahui untuk memulai layanan, yang berguna untuk membuka beberapa aplikasi secara langsung melalui pemberitahuan atau widget, bagaimanapun, itu mungkin mempunyai efek samping</string>
-    <string name="force_stop_signature_apps">Paksa berhenti aplikasi bertanda tangan</string>
-    <string name="force_stop_uncheckable_signature_apps">Itu tidak terkontrol, dan tidak dapat ditambahkan ke daftar pencegahan tanpa lisensi \"cegah semua\"</string>
+    <string name="force_stop_signature_apps">Paksa berhenti aplikasi sistem penting</string>
+    <string name="force_stop_uncheckable_signature_apps">Itu tidak terkontrol</string>
     <string name="force_stop_label">Paksa berhenti aplikasi latar belakang</string>
     <string name="force_stop_summary">Layar mati, dan setelah %1$s ketidakaktifan dengan aplikasi latar belakang</string>
     <string name="force_stop_never">Jangan pernah (Disarankan)</string>
@@ -79,18 +77,10 @@
     <string name="force_stop_30min">30 menit</string>
     <string name="force_stop_1hour">1 jam</string>
 
-    <!-- request license -->
-    <string name="no_license">Silahkan menyumbangkan setidaknya 2 usd, kemudian hubungi pengembang untuk mendapatkannya.</string>
-    <string name="no_valid_license">Lisensi ini untuk \"%1$s\", kamu tidak punya izin untuk menggunakannya. Harap minta yang baru.</string>
-    <string name="email_request">Email</string>
-    <string name="copy_request">@android:string/copy</string>
-
     <!-- user guide menu -->
-    <string name="donate">Donasi</string>
     <string name="version">Versi</string>
     <string name="feedback">Umpan balik</string>
     <string name="report_bug">Laporkan kesalahan</string>
-    <string name="request_license">Minta lisensi</string>
     <string name="advanced_settings">Setelan lanjutan</string>
     <string name="choose_email">Silahkan pilih EMail klien</string>
 
@@ -98,11 +88,5 @@
     <string name="donation">Jangan ragu untuk donasi jika kamu suka.</string>
     <string name="select_qr_code">Pilih Kode QR dari Album</string>
     <string name="paypal">PayPal</string>
-
-    <!-- version -->
-    <string name="licensed">Berlisensi</string>
-
-    <!-- google play in-app billing -->
-    <string name="play_verify_error">Kegagalan untuk memverifikasi pembelian Anda, jangan merusak Google Play In-app Billing.</string>
 
 </resources>

@@ -1,6 +1,7 @@
 package me.piebridge.prevent.ui;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -38,39 +39,30 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
-import me.piebridge.billing.DonateActivity;
-import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.BuildConfig;
+import me.piebridge.prevent.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.DeprecatedUtils;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.FileUtils;
-import me.piebridge.prevent.ui.util.LicenseUtils;
-import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 
 /**
  * Created by thom on 15/10/3.
  */
-public class UserGuideActivity extends DonateActivity implements View.OnClickListener {
+public class UserGuideActivity extends Activity implements View.OnClickListener {
 
-    private static final int VERSION = 20160406;
-
-    private View donateView;
-
-    private AlertDialog request;
+    private static final int VERSION = 20161017;
 
     private ProgressDialog donateDialog;
 
     private BroadcastReceiver receiver;
 
-    private boolean clickedDonate = false;
-
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0x1;
 
     private String name;
-    private Integer version = getXposedVersion();
-    private String method = "xposed";
+    private Integer version = null;
+    private String method = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,7 +70,7 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.about);
         ThemeUtils.fixSmartBar(this);
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1 && getActionBar() != null) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -102,26 +94,13 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             paypal.setOnClickListener(this);
             paypal.setCompoundDrawablesWithIntrinsicBounds(null, cropDrawable(paypal.getCompoundDrawables()[1]), null, null);
         }
-        if (setView(R.id.play, "com.android.vending")) {
-            findViewById(R.id.play).setVisibility(View.GONE);
-            checkDonate();
-        }
-        donateView = findViewById(R.id.donate);
-        if (BuildConfig.DONATE && TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
-            donateView.setVisibility(View.VISIBLE);
-        } else {
-            donateView.setVisibility(View.GONE);
-        }
         retrieveInfo();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (BuildConfig.DONATE) {
-            checkLicense();
-            hideDonateDialog();
-        }
+        hideDonateDialog();
     }
 
     @Override
@@ -295,29 +274,15 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             donateViaAlipay();
         } else if (id == R.id.paypal) {
             donateViaPayPal();
-        } else if (id == R.id.play) {
-            showDonateDialog();
-            donateViaPlay();
         }
-    }
-
-    @Override
-    public void onDonateFailed() {
-        hideDonateDialog();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
-        if (BuildConfig.DONATE && donateView.getVisibility() == View.GONE) {
-            menu.add(Menu.NONE, R.string.donate, Menu.NONE, R.string.donate);
-        }
         menu.add(Menu.NONE, R.string.version, Menu.NONE, R.string.version);
-        if (BuildConfig.DONATE) {
+        if (BuildConfig.RELEASE) {
             menu.add(Menu.NONE, R.string.feedback, Menu.NONE, R.string.feedback);
-            if (TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
-                menu.add(Menu.NONE, R.string.request_license, Menu.NONE, R.string.request_license);
-            }
         }
         menu.add(Menu.NONE, R.string.advanced_settings, Menu.NONE, R.string.advanced_settings);
         return super.onCreateOptionsMenu(menu);
@@ -328,59 +293,18 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         int id = item.getItemId();
         if (id == android.R.id.home) {
             finish();
-        } else if (id == R.string.donate) {
-            clickedDonate = true;
-            donateView.setVisibility(View.VISIBLE);
         } else if (id == R.string.feedback) {
             feedback();
         } else if (id == R.string.version) {
             showVersionInfo();
         } else if (id == R.string.advanced_settings) {
             startActivity(new Intent(this, AdvancedSettingsActivity.class));
-        } else if (id == R.string.request_license) {
-            requestLicense();
         }
         return true;
     }
 
     private void feedback() {
         EmailUtils.sendEmail(this, getString(R.string.feedback));
-    }
-
-    private void checkLicense() {
-        if (LicenseUtils.importLicenseFromClipboard(this)) {
-            LicenseUtils.validLicense(this, true, new Runnable() {
-                @Override
-                public void run() {
-                    recreateIfNeeded();
-                }
-            });
-        }
-    }
-
-    private void recreateIfNeeded() {
-        if (request != null) {
-            request.dismiss();
-            request = null;
-        }
-        if (!TextUtils.isEmpty(LicenseUtils.getLicense(this))) {
-            RecreateUtils.recreate(this);
-        }
-    }
-
-    private void requestLicense() {
-        if (TextUtils.isEmpty(LicenseUtils.getLicenseName(this))) {
-            Intent intent = new Intent(PreventIntent.ACTION_CHECK_LICENSE, Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
-            intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
-            sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    if (PreventIntent.ACTION_CHECK_LICENSE.equals(intent.getAction()) && getResultCode() != 1) {
-                        request = LicenseUtils.requestLicense(UserGuideActivity.this, null, getResultData());
-                    }
-                }
-            }, null, 0, null, null);
-        }
     }
 
     private void showDonateDialog() {
@@ -391,7 +315,9 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         layout.addView(new ProgressBar(this), params);
         donateDialog = ProgressDialog.show(this, null, null);
         donateDialog.setContentView(layout);
-        donateDialog.getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, pixel * 0x4);
+        if (donateDialog.getWindow() != null) {
+            donateDialog.getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, pixel * 0x4);
+        }
     }
 
     private void hideDonateDialog() {
@@ -411,36 +337,6 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
             receiver = new HookReceiver();
         }
         sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, null, 0, null, null);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (clickedDonate && donateView.getVisibility() == View.VISIBLE) {
-            donateView.setVisibility(View.GONE);
-            clickedDonate = false;
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    public void onUnavailable() {
-        findViewById(R.id.play).setVisibility(View.GONE);
-    }
-
-    @Override
-    public void onAvailable() {
-        findViewById(R.id.play).setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onDonated() {
-        LicenseUtils.setInAppLicensed();
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
-            invalidateOptionsMenu();
-        }
-        donateView.setVisibility(View.GONE);
-        findViewById(R.id.play).setVisibility(View.GONE);
     }
 
     private class HookReceiver extends BroadcastReceiver {
@@ -468,28 +364,8 @@ public class UserGuideActivity extends DonateActivity implements View.OnClickLis
         }
     }
 
-    private static Integer getXposedVersion() {
-        try {
-            return (Integer) Class.forName("de.robv.android.xposed.XposedBridge", false, ClassLoader.getSystemClassLoader()).getField("XPOSED_BRIDGE_VERSION").get(null);
-        } catch (Throwable t) { // NOSONAR
-            return 0;
-        }
-    }
-
     private String getVersionInfo(boolean showAppVersion) {
         StringBuilder sb = new StringBuilder();
-        String licenseName;
-        if (!BuildConfig.DONATE) {
-            licenseName = null;
-        } else if (showAppVersion) {
-            licenseName = LicenseUtils.getLicense(this);
-        } else {
-            licenseName = LicenseUtils.getLicenseName(this);
-        }
-        if (!TextUtils.isEmpty(licenseName)) {
-            sb.append(licenseName);
-            sb.append("\n");
-        }
         showVersion(sb);
         sb.append("Android: ");
         sb.append(Locale.getDefault());

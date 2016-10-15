@@ -43,8 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.BuildConfig;
+import me.piebridge.prevent.R;
 import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.PreventListUtils;
@@ -52,7 +52,7 @@ import me.piebridge.prevent.ui.util.PreventUtils;
 import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
-import me.piebridge.prevent.xposed.XposedUtils;
+import me.piebridge.prevent.ui.util.XposedUtils;
 
 public class PreventActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
@@ -88,7 +88,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private final Object preventLock = new Object();
 
     private boolean initialized;
-    private boolean paused;
+    private boolean stopped;
 
     private int code;
     private String name;
@@ -114,11 +114,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             Field field = clazz.getDeclaredField("disableHooks");
             field.setAccessible(true);
             field.set(null, true);
-            if (BuildConfig.DONATE && XposedUtils.canDisableXposed()) {
-                XposedUtils.disableXposed(clazz);
-            } else {
-                field.set(null, false);
-            }
+            XposedUtils.disableXposed(clazz);
         } catch (Throwable t) { // NOSONAR
             // do nothing
         }
@@ -151,13 +147,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         mHandler = new Handler(thread.getLooper());
         mainHandler = new Handler(getMainLooper());
 
-        try {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
             ActionBar actionBar = getActionBar();
             if (actionBar != null) {
                 actions.setVisibility(View.GONE);
             }
-        } catch (NoSuchMethodError e) { // NOSONAR
-            // do nothing
         }
 
         if (PreventIntent.ACTION_NOT_SUPPORTED.equals(getIntent().getAction())) {
@@ -175,7 +169,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (!paused) {
+                if (!stopped) {
                     retrievePrevents();
                 }
             }
@@ -189,7 +183,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (!paused) {
+                    if (!stopped) {
                         retrievePrevents();
                     }
                 }
@@ -197,7 +191,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (preventPackages == null && !paused) {
+                    if (preventPackages == null && !stopped) {
                         showRetrieving();
                     }
                 }
@@ -229,17 +223,17 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void retrieveRunning() {
+        if (name == null) {
+            retrieveInfo();
+        } else {
+            showRebootIfNeeded();
+        }
         Intent intent = new Intent();
         intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
         intent.setAction(PreventIntent.ACTION_GET_PROCESSES);
         intent.setData(Uri.fromParts(PreventIntent.SCHEME, getPackageName(), null));
         UILog.i("sending get processes broadcast");
         sendOrderedBroadcast(intent, PreventIntent.PERMISSION_SYSTEM, receiver, mHandler, 0, null, null);
-        if (name == null) {
-            retrieveInfo();
-        } else {
-            showRebootIfNeeded();
-        }
     }
 
     private void retrieveInfo() {
@@ -443,7 +437,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void showProcessDialog(int resId) {
-        if (paused) {
+        if (stopped) {
             return;
         }
         if (dialog == null) {
@@ -502,10 +496,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private int getDisabledMessage() {
         if (!isInternal()) {
             return R.string.install_internal;
-        } else if (XposedUtils.hasXposed(this)) {
-            return R.string.xposed_disabled;
         } else {
-            return R.string.no_xposed;
+            return R.string.no_patched;
         }
     }
 
@@ -516,12 +508,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private void fixDisabled() {
         if (!isInternal()) {
             startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, getPackage()));
-            finish();
-        } else if (XposedUtils.hasXposed(this)) {
-            XposedUtils.startXposed(this);
-        } else {
-            finish();
         }
+        finish();
     }
 
     private Uri getPackage() {
@@ -622,9 +610,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         if (name == null) {
             return false;
         }
-        String version = getVersion(BuildConfig.VERSION_NAME);
-        String activeVersion = getVersion(name);
-        if (version.equalsIgnoreCase(activeVersion)) {
+        if (BuildConfig.VERSION_NAME.equalsIgnoreCase(name)) {
             return false;
         }
         runOnUiThread(new Runnable() {
@@ -634,40 +620,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             }
         });
         return true;
-    }
-
-    /**
-     * x.y.z
-     *
-     * @param version
-     * @return
-     */
-    private static String getVersion(String version) {
-        int index;
-        String releaseVersion;
-        int count = 0x3;
-        index = version.indexOf("_r");
-        if (index != -1) {
-            releaseVersion = version.substring(0, index);
-        } else {
-            releaseVersion = version;
-        }
-        index = -1;
-        while (count > 0) {
-            int newIndex = releaseVersion.indexOf('.', index + 1);
-            if (newIndex == -1) {
-                index = -1;
-                break;
-            } else {
-                index = newIndex;
-                count--;
-            }
-        }
-        if (index == -1) {
-            return releaseVersion;
-        } else {
-            return releaseVersion.substring(0, index);
-        }
     }
 
     private class HookReceiver extends BroadcastReceiver {
@@ -794,7 +746,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (!paused) {
+                    if (!stopped) {
                         showDisableDialog(result);
                     }
                 }
@@ -882,11 +834,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_RESTARTED);
         filter.addDataScheme("package");
         registerReceiver(receiver, filter);
-        paused = false;
+        stopped = false;
         mainHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (!paused) {
+                if (!stopped) {
                     updateTimeIfNeeded(null);
                     mainHandler.postDelayed(this, 0x3e8);
                 }
@@ -895,16 +847,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     @Override
-    protected void onPause() {
-        unregisterReceiver(receiver);
-        super.onPause();
-        paused = true;
-    }
-
-    @Override
     public void onStop() {
+        unregisterReceiver(receiver);
         preventPackages = null;
         super.onStop();
+        stopped = true;
     }
 
     private void requestLog() {

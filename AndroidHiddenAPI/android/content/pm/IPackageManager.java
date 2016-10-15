@@ -6,8 +6,9 @@ public interface IPackageManager {
 
     boolean isProtectedBroadcast(String actionName);
 
-    ServiceInfo getServiceInfo(ComponentName className, int flags);
-
+    /* since api-16 */
     ServiceInfo getServiceInfo(ComponentName className, int flags, int userId);
+
+    int getPackageUid(String packageName, int flags, int userId);
 
 }

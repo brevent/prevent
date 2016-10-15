@@ -9,10 +9,10 @@ import android.preference.PreferenceManager;
 import java.io.File;
 import java.util.Set;
 
-import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.BuildConfig;
 import me.piebridge.prevent.common.ExternalFileUtils;
-import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.common.FileUtils;
+import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 
 public final class PreventListUtils {

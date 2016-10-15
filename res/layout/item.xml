@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:ellipsize="middle"
-            android:singleLine="true"
+            android:maxLines="1"
             android:textColor="?android:textColorPrimary"
             android:textStyle="bold"/>
 
@@ -64,6 +64,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_marginLeft="7dp"
+        android:layout_marginRight="7dp"
         android:contentDescription="@android:string/yes"/>
 
 </LinearLayout>

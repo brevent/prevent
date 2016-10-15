@@ -3,7 +3,7 @@ package me.piebridge.prevent.ui;
 import java.util.Set;
 import java.util.TreeSet;
 
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.R;
 
 /**
  * Created by thom on 16/2/17.

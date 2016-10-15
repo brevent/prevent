@@ -59,18 +59,6 @@
             android:text="@string/paypal"
             android:textAppearance="?android:attr/textAppearanceSmall"/>
 
-        <TextView
-            android:id="@+id/play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:drawableTop="@drawable/ic_launcher"
-            android:gravity="center"
-            android:text="@android:string/unknownName"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:visibility="gone"/>
-
     </LinearLayout>
 
 </LinearLayout>

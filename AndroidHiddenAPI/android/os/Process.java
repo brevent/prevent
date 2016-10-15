@@ -8,6 +8,7 @@ public class Process {
       * @hide
       */
     public static final void readProcLines(String path, String[] reqFields, long[] outSizes) {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -18,6 +19,7 @@ public class Process {
     }
 
     public static final void killProcess(int pid) {
+        throw new UnsupportedOperationException();
     }
 
     public static final int myUid() {

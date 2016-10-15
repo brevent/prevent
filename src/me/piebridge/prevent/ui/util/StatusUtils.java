@@ -2,16 +2,15 @@ package me.piebridge.prevent.ui.util;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.os.SystemClock;
 import android.text.format.DateUtils;
 import android.util.SparseIntArray;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.R;
+import me.piebridge.prevent.common.TimeUtils;
 
 /**
  * Created by thom on 15/10/17.
@@ -23,13 +22,14 @@ public class StatusUtils {
     static {
         statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND, R.string.importance_background);
         statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY, R.string.importance_empty);
-        statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, R.string.importance_gone);
         statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND, R.string.importance_foreground);
         statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE, R.string.importance_foreground_service);
-        statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING, R.string.importance_top_sleeping);
+        statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE, R.string.importance_gone);
         statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE, R.string.importance_perceptible);
         statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE, R.string.importance_service);
+        statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING, R.string.importance_top_sleeping);
         statusMap.put(ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE, R.string.importance_visible);
+        statusMap.put(-ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND, R.string.importance_inactive);
         statusMap.put(-ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE, R.string.importance_service_not_started);
     }
 
@@ -50,10 +50,11 @@ public class StatusUtils {
 
     private static CharSequence doFormatRunning(Context context, Set<Long> running) {
         Set<String> sets = new LinkedHashSet<String>();
+        long now = TimeUtils.now();
         for (Long i : running) {
             int v = statusMap.get(i.intValue());
             if (v == 0) {
-                long elapsed = TimeUnit.MILLISECONDS.toSeconds(SystemClock.elapsedRealtime()) - Math.abs(i);
+                long elapsed = now - Math.abs(i);
                 sets.add(DateUtils.formatElapsedTime(elapsed));
             } else {
                 sets.add(context.getString(v));

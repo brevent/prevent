@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Prevent Running</string>
+    <string name="app_name">Brevent</string>
 
     <string name="soak_version">Dies ist keine Releaseversion und könnte Dein Gerät unnutzbar machen. Falls Du nichts testen willst, deinstalliere diese Version bitte und wechsle zu einer Releaseversion.</string>
 
-    <!-- xposed -->
-    <string name="xposed_summary">Hindere Apps am Laufen</string>
-    <string name="xposed_disabled">Bitte aktiviere \"Prevent Running\" im \"Xposed Installer\" und starte Dein Gerät neu.</string>
-    <string name="install_internal">Prevent Running sollte im internen Speicher installiert werden.</string>
-    <string name="no_xposed">Bitte installiere \"Xposed Installer\".</string>
+    <string name="install_internal">Brevent sollte im internen Speicher installiert werden.</string>
+    <string name="no_patched">Please patch your ROM with "Brevent" (English).</string>
 
     <!-- receiver -->
     <string name="no_prevents">Bitte konfiguriere die Blockier-Liste.</string>
@@ -48,6 +45,7 @@
     <string name="importance_foreground_service">Vordergrund-Service</string>
     <string name="importance_top_sleeping">Vordergrund-Schlafend</string>
     <string name="importance_service_not_started">Service (Nicht gestartet)</string>
+    <string name="importance_inactive">Inaktiv</string>
 
     <!-- app menu -->
     <string name="app_info">App-Info</string>
@@ -69,7 +67,7 @@
     <string name="allow_empty_sender">Unbekannte Aufrufe erlauben</string>
     <string name="allow_empty_sender_in_service">Anderen Apps erlauben, Services zu starten. Dies ist nützlich, um manche Apps direkt durch Benachrichtigungen oder Widgets zu öffnen, es könnte jedoch auch unerwünschte Auswirkungen haben</string>
     <string name="force_stop_signature_apps">Wichtige Systemanwendungen blockieren</string>
-    <string name="force_stop_uncheckable_signature_apps">Diese sind nicht anklickbar und können nicht ohne eine "Alle Blockieren"-Lizenz zur Blockier-Liste hinzugefügt werden</string>
+    <string name="force_stop_uncheckable_signature_apps">Diese sind nicht anklickbar</string>
     <string name="force_stop_label">Beenden von Hintergrund-Apps erzwingen</string>
     <string name="force_stop_summary">%1$s nach Bildschirm aus und Inaktivität der Hintergrund-Apps</string>
     <string name="force_stop_never">Nie (Empfohlen)</string>
@@ -79,18 +77,10 @@
     <string name="force_stop_30min">30 Minuten</string>
     <string name="force_stop_1hour">1 Stunde</string>
 
-    <!-- request license -->
-    <string name="no_license">Bitte spende mindestens 2 USD und kontaktiere dann den Entwickler, um eine Lizenz zu erhalten.</string>
-    <string name="no_valid_license">Diese Lizenz gehört \"%1$s\", Du hast keine Berechtigung, sie zu benutzen. Fordere bitte eine neue an.</string>
-    <string name="email_request">E-Mail</string>
-    <string name="copy_request">@android:string/copy</string>
-
     <!-- user guide menu -->
-    <string name="donate">Spenden</string>
     <string name="version">Version</string>
     <string name="feedback">Feedback</string>
     <string name="report_bug">Fehler melden</string>
-    <string name="request_license">Lizenz anfordern</string>
     <string name="advanced_settings">Erweiterte Einstellungen</string>
     <string name="choose_email">Bitte wähle einen E-Mail-Client aus</string>
 
@@ -98,11 +88,5 @@
     <string name="donation">Spenden sind gern gesehen, wenn Du magst.</string>
     <string name="select_qr_code">QR-Code aus Album wählen</string>
     <string name="paypal">PayPal</string>
-
-    <!-- version -->
-    <string name="licensed">Lizenziert</string>
-
-    <!-- google play in-app billing -->
-    <string name="play_verify_error">Kauf konnte nicht überprüft werden, bitte Google Play In-app-Käufe nicht hacken.</string>
 
 </resources>

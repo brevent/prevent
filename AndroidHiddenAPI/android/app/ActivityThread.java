@@ -1,9 +1,5 @@
 package android.app;
 
-import android.content.res.Configuration;
-import android.os.IBinder;
-import android.os.RemoteException;
-
 /**
   * @hide
   */

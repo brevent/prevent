@@ -6,7 +6,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.view.MenuItem;
 
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.R;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.DeprecatedUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
@@ -24,7 +24,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         DeprecatedUtils.addPreferencesFromResource(this, R.xml.settings);
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1 && getActionBar() != null) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -35,6 +35,8 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         for (String key : PreventIntent.KEYS_BOOLEAN) {
             setOnPreferenceChangeListener(key);
         }
+
+        setOnPreferenceChangeListener(PreventIntent.KEY_BACKUP_PREVENT_LIST);
     }
 
     private void setOnPreferenceChangeListener(String key) {
@@ -61,11 +63,11 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
 
 
     @Override
-    protected void onPause() {
+    protected void onStop() {
         if (changed) {
             PreventUtils.updateConfiguration(this);
         }
-        super.onPause();
+        super.onStop();
     }
 
     @Override

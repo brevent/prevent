@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Prevent Running</string>
+    <string name="app_name">Brevent</string>
 
     <string name="soak_version">This is not a release version, and may block your device. If you don\'t like to be participate, please uninstall and restore to release version.</string>
 
-    <!-- xposed -->
-    <string name="xposed_summary">Prevent applications from running.</string>
-    <string name="xposed_disabled">Please enable \"Prevent Running\" in \"Xposed Installer\", or disable then enable \"Prevent Running\".</string>
-    <string name="install_internal">Prevent Running should be installed in internal storage.</string>
-    <string name="no_xposed">Please install Xposed Installer.</string>
+    <string name="install_internal">Brevent should be installed in internal storage.</string>
+    <string name="no_patched">Please patch your ROM with "Brevent".</string>
 
     <!-- receiver -->
     <string name="no_prevents">Please configure prevent list.</string>
@@ -48,6 +45,7 @@
     <string name="importance_foreground_service">Foreground Service</string>
     <string name="importance_top_sleeping">Top Sleeping</string>
     <string name="importance_service_not_started">Service (Not started)</string>
+    <string name="importance_inactive">Inactive</string>
 
     <!-- app menu -->
     <string name="app_info">App Info</string>
@@ -68,8 +66,8 @@
     <string name="use_app_standby_settings">Use standby instead of force stopping</string>
     <string name="allow_empty_sender">Allow Unknown Sender</string>
     <string name="allow_empty_sender_in_service">Allow unknown sender to start service, which is useful to open some apps directly through notification or widget, however, it may has side effects</string>
-    <string name="force_stop_signature_apps">Force Stop Signature Apps</string>
-    <string name="force_stop_uncheckable_signature_apps">It\'s uncheckable, and cannot be added to prevent list without a \"prevent all\" license</string>
+    <string name="force_stop_signature_apps">Force stop important system apps</string>
+    <string name="force_stop_uncheckable_signature_apps">It\'s uncheckable</string>
     <string name="force_stop_label">Force stop background apps</string>
     <string name="force_stop_summary">Screen is off, and after %1$s of inactivity with background apps</string>
     <string name="force_stop_never">Never (Recommend)</string>
@@ -79,18 +77,10 @@
     <string name="force_stop_30min">30 minutes</string>
     <string name="force_stop_1hour">1 hour</string>
 
-    <!-- request license -->
-    <string name="no_license">Please donate at least 2 usd, then contact the author to get license.</string>
-    <string name="no_valid_license">This license is for \"%1$s\", you have no permission to use it. Please request for a new one.</string>
-    <string name="email_request">Email</string>
-    <string name="copy_request">@android:string/copy</string>
-
     <!-- user guide menu -->
-    <string name="donate">Donate</string>
     <string name="version">Version</string>
     <string name="feedback">Feedback</string>
     <string name="report_bug">Report Bug</string>
-    <string name="request_license">Request license</string>
     <string name="advanced_settings">Advanced Settings</string>
     <string name="choose_email">Please choose EMail client</string>
 
@@ -98,11 +88,5 @@
     <string name="donation">Feel free to donate if you like.</string>
     <string name="select_qr_code">Please click menu, choose QR Code from Album</string>
     <string name="paypal">PayPal</string>
-
-    <!-- version -->
-    <string name="licensed">Licensed</string>
-
-    <!-- google play in-app billing -->
-    <string name="play_verify_error">Fail to verify your purchase, please don\'t crack Google Play In-app Billing.</string>
 
 </resources>

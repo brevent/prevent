@@ -10,7 +10,7 @@ import android.preference.PreferenceManager;
 
 import java.lang.reflect.Method;
 
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.R;
 
 /**
  * Created by thom on 15/10/6.
@@ -38,7 +38,7 @@ public class ThemeUtils {
     public static void setTheme(Activity activity) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
         activity.setTheme(THEME_LIGHT.equals(sp.getString(THEME, THEME_LIGHT)) ? R.style.light : R.style.dark);
-        if (hasSmartBar()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && hasSmartBar()) {
             activity.getWindow().setUiOptions(ActivityInfo.UIOPTION_SPLIT_ACTION_BAR_WHEN_NARROW);
         }
     }
@@ -54,13 +54,15 @@ public class ThemeUtils {
     }
 
     public static void fixSmartBar(Activity activity) {
-        try {
-            ActionBar actionBar = activity.getActionBar();
-            if (actionBar != null) {
-                actionBar.setActionBarViewCollapsable(true);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
+            try {
+                ActionBar actionBar = activity.getActionBar();
+                if (actionBar != null) {
+                    actionBar.setActionBarViewCollapsable(true);
+                }
+            } catch (NoSuchMethodError e) { // NOSONAR
+                // do nothing
             }
-        } catch (NoSuchMethodError e) { // NOSONAR
-            // do nothing
         }
     }
 

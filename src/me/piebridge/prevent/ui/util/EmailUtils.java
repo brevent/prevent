@@ -10,8 +10,8 @@ import android.text.TextUtils;
 import java.io.File;
 import java.util.Locale;
 
-import me.piebridge.forcestopgb.BuildConfig;
-import me.piebridge.forcestopgb.R;
+import me.piebridge.prevent.BuildConfig;
+import me.piebridge.prevent.R;
 import me.piebridge.prevent.ui.UILog;
 
 /**
@@ -24,16 +24,8 @@ public class EmailUtils {
     }
 
     public static String getSubject(Context context) {
-        StringBuilder subject = new StringBuilder();
-        subject.append(context.getString(R.string.app_name));
-        subject.append(" ");
-        subject.append(BuildConfig.VERSION_NAME);
-        subject.append("(Android ");
-        subject.append(Locale.getDefault().toString());
-        subject.append("-");
-        subject.append(Build.VERSION.RELEASE);
-        subject.append(")");
-        return subject.toString();
+        return context.getString(R.string.app_name) + " " + BuildConfig.VERSION_NAME +
+                "(Android " + Locale.getDefault().toString() + "-" + Build.VERSION.RELEASE + ")";
     }
 
     public static boolean sendEmail(Context context, String content) {

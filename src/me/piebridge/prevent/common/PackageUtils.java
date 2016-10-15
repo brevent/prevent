@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.BuildConfig;
 import me.piebridge.prevent.framework.SystemHook;
 
 /**

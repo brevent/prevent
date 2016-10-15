@@ -145,13 +145,4 @@ public class GmsUtils {
         return name != null && name.startsWith(GAPPS_INPUTMETHOD_PREFIX);
     }
 
-    public static boolean isGapps(Set<String> currentPackageNames) {
-        for (String packageName : currentPackageNames) {
-            if (isGapps(packageName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 }

@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">阻止運行</string>
+    <string name="app_name">黑域</string>
 
     <string name="soak_version">這是測試版本，可能導致您的機器無法運行。如果不想參加測試，請恢復至正式版本。</string>
 
-    <!-- xposed -->
-    <string name="xposed_summary">阻止程式自動運行</string>
-    <string name="xposed_disabled">請在『Xposed Installer』中啟用『阻止運行』，或者先禁用再啟用『阻止運行』。 </string>
-    <string name="install_internal">『阻止運行』應當安裝在內部存儲。</string>
-    <string name="no_xposed">請先安裝『Xposed Installer』，或者給ROM打『阻止運行』補丁。</string>
+    <string name="install_internal">『黑域』應當安裝在內部存儲。</string>
+    <string name="no_patched">請給ROM打『黑域』補丁。</string>
 
     <!-- receiver -->
     <string name="no_prevents">請配置『阻止列表』。 </string>
@@ -47,6 +44,7 @@
     <string name="importance_foreground_service">前景服務</string>
     <string name="importance_top_sleeping">前景休眠</string>
     <string name="importance_service_not_started">服務(沒有開始)</string>
+    <string name="importance_inactive">未啟用</string>
 
     <!-- app menu -->
     <string name="app_info">程式資訊</string>
@@ -68,7 +66,7 @@
     <string name="allow_empty_sender">允許未知喚醒</string>
     <string name="allow_empty_sender_in_service">這個有助於在通知欄或者小部件中直接打開應用，但也有些副作用</string>
     <string name="force_stop_signature_apps">強制停止重要係統應用</string>
-    <string name="force_stop_uncheckable_signature_apps">這些應用不能選中，也只有獲取“阻止全部”許可後才能添加到阻止列表</string>
+    <string name="force_stop_uncheckable_signature_apps">這些應用不能選中</string>
     <string name="force_stop_label">強制停止背景程式</string>
     <string name="force_stop_summary">背景程式閒置%1$s後（螢幕關閉時處理）</string>
     <string name="force_stop_never">永不（推薦）</string>
@@ -78,18 +76,10 @@
     <string name="force_stop_30min">30分鐘</string>
     <string name="force_stop_1hour">1小時</string>
 
-    <!-- request license -->
-    <string name="no_license">請累計捐贈10元或以上，然後聯繫作者獲取許可。</string>
-    <string name="no_valid_license">您沒有權限使用頒發給『%1$s』的許可，請重新獲取。</string>
-    <string name="email_request">電郵獲取</string>
-    <string name="copy_request">複製請求</string>
-
     <!-- user guide menu -->
-    <string name="donate">捐贈</string>
     <string name="feedback">回饋</string>
     <string name="version">版本</string>
     <string name="report_bug">回報錯誤</string>
-    <string name="request_license">导入授權</string>
     <string name="advanced_settings">進階設定</string>
     <string name="choose_email">請選擇郵件客戶端</string>
 
@@ -97,11 +87,5 @@
     <string name="donation">如果喜歡，請隨意捐贈</string>
     <string name="paypal">PayPal</string>
     <string name="select_qr_code">從相簿中選擇QR Code</string>
-
-    <!-- version -->
-    <string name="licensed">已授權</string>
-
-    <!-- google play in-app billing -->
-    <string name="play_verify_error">無法核實您的購買，請不要破解 Google Play 應用內結算。</string>
 
 </resources>

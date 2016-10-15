@@ -33,10 +33,6 @@ public class Configuration {
         return bundle.getBoolean(PreventIntent.KEY_AUTO_PREVENT, true);
     }
 
-    public boolean isBackupPreventList() {
-        return bundle.getBoolean(PreventIntent.KEY_BACKUP_PREVENT_LIST, false);
-    }
-
     public boolean isDestroyProcesses() {
         return bundle.getBoolean(PreventIntent.KEY_DESTROY_PROCESSES, false);
     }

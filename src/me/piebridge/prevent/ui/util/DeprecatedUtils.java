@@ -14,11 +14,6 @@ public class DeprecatedUtils {
     }
 
     @SuppressWarnings("deprecation")
-    public static CharSequence getClipboard(Context context) {
-        return ((android.text.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE)).getText();
-    }
-
-    @SuppressWarnings("deprecation")
     public static void setClipboard(Context context, CharSequence content) {
         ((android.text.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE)).setText(content);
     }

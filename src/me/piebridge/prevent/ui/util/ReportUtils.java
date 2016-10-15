@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import me.piebridge.forcestopgb.BuildConfig;
+import me.piebridge.prevent.BuildConfig;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.UILog;
 

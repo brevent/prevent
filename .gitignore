@@ -16,3 +16,10 @@ proguard-project.txt
 *.log
 
 .DS_Store
+
+/build
+/*.iml
+/.idea
+/.gradle
+
+*.class

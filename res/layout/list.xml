@@ -27,8 +27,8 @@
             android:layout_height="wrap_content"
             android:imeOptions="actionSearch"
             android:inputType="text"
-            android:singleLine="true"
-            android:hint="@string/query_hint"/>
+            android:hint="@string/query_hint"
+            android:maxLines="1" />
 
     </LinearLayout>
 
