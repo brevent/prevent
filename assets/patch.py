@@ -107,7 +107,7 @@ class IntentResolver(Patch):
 
 class ActivityManagerService(Patch):
     methods = None
-    prev_line = ''
+    pkg_deps = ''
     extra_count = 0
 
     fixing = {'startProcessLocked', 'startActivity', 'handleAppDiedLocked', 'cleanUpRemovedTaskLocked',
@@ -164,15 +164,19 @@ class ActivityManagerService(Patch):
                     self.fixing.remove(method_name)
                     return True
 
-        if 'Lcom/android/server/am/ProcessRecord;->pkgDeps:Landroid/util/ArraySet;' in self.prev_line \
-                and 'Landroid/util/ArraySet;->contains(Ljava/lang/Object;)Z' in line_strip:
+        if self.pkg_deps and 'Landroid/util/ArraySet;->contains(Ljava/lang/Object;)Z' in line_strip:
             output.write("    invoke-static {},"
                          " Lcom/android/server/am/PreventRunningUtils;->returnFalse()Z")
             output.write(os.linesep)
             self.extra_count += 1
+            self.pkg_deps = ''
             return True
 
-        self.prev_line = line_strip
+        if line_strip.startswith('iget-object'):
+            if 'Lcom/android/server/am/ProcessRecord;->pkgDeps:Landroid/util/ArraySet;' in line_strip:
+                self.pkg_deps = line_strip
+            else:
+                self.pkg_deps = ''
 
     def get_patch_count(self):
         return 8 + self.extra_count

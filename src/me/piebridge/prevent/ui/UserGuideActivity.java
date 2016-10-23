@@ -32,6 +32,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.server.am.PreventRunning;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -51,8 +53,6 @@ import me.piebridge.prevent.ui.util.ThemeUtils;
  * Created by thom on 15/10/3.
  */
 public class UserGuideActivity extends Activity implements View.OnClickListener {
-
-    private static final int VERSION = 20161017;
 
     private ProgressDialog donateDialog;
 
@@ -396,9 +396,9 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             sb.append(method);
             sb.append(" v");
             sb.append(version);
-            if ("native".equalsIgnoreCase(method) && version < VERSION) {
+            if ("native".equalsIgnoreCase(method) && version < PreventRunning.VERSION) {
                 sb.append(" -> v");
-                sb.append(VERSION);
+                sb.append(PreventRunning.VERSION);
             }
             sb.append("\n");
         }
