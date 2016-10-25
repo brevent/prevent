@@ -161,4 +161,4 @@ Project: [Brevent - GitHub](https://github.com/liudongmiao/Brevent). If you like
 
 ## 项目
 
-“`黑域`”开源，项目地址：[Brevent - GitHub](https://github.com/liudongmiao/Brevent)。如果喜欢，请随意捐赠。
+“`黑域`”<del>代码暂时不</del>开源，项目地址：[Brevent - GitHub](https://github.com/liudongmiao/Brevent)。如果喜欢，请随意捐赠。

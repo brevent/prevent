@@ -2,14 +2,38 @@
 # encoding: utf-8
 # Author: Liu DongMiao <liudongmiao@gmail.com>
 
+import locale
 import os
 import sys
 import shutil
 
 
-def _(message):
-    return message
+MESSAGE_ZH_TW = {
+    '%s not exists%s': '無法找到檔案 %s%s',
+    '%s patched %s%s': '成功為 %s 打了 %s 處補丁%s',
+    '%s patched %s, should patch %s%s': '為 %s 打了 %s 處補丁，應該打 %s 處%s',
+    'copying %s%s': '正在拷貝%s%s',
+}
 
+MESSAGE_ZH = {
+    '%s not exists%s': '无法找到文件 %s%s',
+    '%s patched %s%s': '成功为 %s 打了 %s 处补丁%s',
+    '%s patched %s, should patch %s%s': '为 %s 打了 %s 处补丁，应该打 %s 处%s',
+    'copying %s%s': '正在复制 %s%s',
+}
+
+def _(message):
+    lang, encoding = locale.getdefaultlocale()
+    if not lang or not lang.startswith("zh"):
+        return message
+    if lang.startswith("zh_TW"):
+        translate = MESSAGE_ZH_TW.get(message, message)
+    else:
+        translate = MESSAGE_ZH.get(message, message)
+    if hasattr(translate, 'decode'):
+        return translate.decode('utf8').encode(encoding)
+    else:
+        return translate
 
 class Patch(object):
     def __init__(self, dir_services='services'):
@@ -18,7 +42,7 @@ class Patch(object):
     def build_path(self, paths, dir_path=None):
         if dir_path is None:
             dir_path = self.dir_services
-        path = os.path.realpath(dir_path)
+        path = os.path.normpath(dir_path)
         for x in paths.split("/"):
             path = os.path.join(path, x)
         return path
@@ -27,7 +51,8 @@ class Patch(object):
         patched = 0
         path = self.build_path(self.get_path())
         if not os.path.exists(path):
-            raise SystemError(_("%s not exists") % path)
+            sys.stderr.write(_("%s not exists%s") % (path, os.linesep))
+            raise SystemExit
 
         output = open(path + ".patched", "w")
         for line in open(path, "r"):
