@@ -113,6 +113,18 @@ public abstract class ActivityManagerService implements IBinder {
         }
     }
 
+    // for samsung 23
+    // check tr.getBaseIntent
+    private void cleanUpRemovedTaskLocked(TaskRecord tr, boolean killProcess, int flags) {
+        try {
+            cleanUpRemovedTaskLocked$Pr(tr, killProcess, flags);
+        } finally {
+            if (killProcess) {
+                PreventRunningUtils.onCleanUpRemovedTask(tr.getBaseIntent());
+            }
+        }
+    }
+
     // 21, 19, 18, 17, 16
     // check baseIntent
     private void cleanUpRemovedTaskLocked(TaskRecord tr, int flags) {
@@ -271,16 +283,20 @@ public abstract class ActivityManagerService implements IBinder {
     }
 
     private final void handleAppDiedLocked$Pr(ProcessRecord app,
-                                                boolean restarting, boolean allowRestart) {
+                                              boolean restarting, boolean allowRestart) {
         throw new UnsupportedOperationException();
     }
 
     private void cleanUpRemovedTaskLocked$Pr(TaskRecord tr, boolean killProcess,
-                                               boolean removeFromRecents) {
+                                             boolean removeFromRecents) {
         throw new UnsupportedOperationException();
     }
 
     private void cleanUpRemovedTaskLocked$Pr(TaskRecord tr, boolean killProcess) {
+        throw new UnsupportedOperationException();
+    }
+
+    private void cleanUpRemovedTaskLocked$Pr(TaskRecord tr, boolean killProcess, int flags) {
         throw new UnsupportedOperationException();
     }
 
