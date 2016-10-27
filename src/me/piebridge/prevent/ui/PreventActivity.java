@@ -1,6 +1,6 @@
 package me.piebridge.prevent.ui;
 
-import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -10,24 +10,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.Settings;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.FragmentUtils;
 import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,12 +42,11 @@ import me.piebridge.prevent.common.PackageUtils;
 import me.piebridge.prevent.common.PreventIntent;
 import me.piebridge.prevent.ui.util.PreventListUtils;
 import me.piebridge.prevent.ui.util.PreventUtils;
-import me.piebridge.prevent.ui.util.RecreateUtils;
 import me.piebridge.prevent.ui.util.ReportUtils;
 import me.piebridge.prevent.ui.util.ThemeUtils;
 import me.piebridge.prevent.ui.util.XposedUtils;
 
-public class PreventActivity extends FragmentActivity implements ViewPager.OnPageChangeListener, View.OnClickListener {
+public class PreventActivity extends Activity implements ViewPager.OnPageChangeListener, View.OnClickListener {
 
     private ViewPager mPager;
     private String[] mPageTitles;
@@ -64,14 +56,8 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private static Map<String, Set<Long>> running = new HashMap<String, Set<Long>>();
 
     private View main;
-    private View actions;
-    private Button removeButton;
-    private Button preventButton;
     private MenuItem removeMenu;
     private MenuItem preventMenu;
-
-    private static final int APPLICATIONS = 0;
-    private static final int PREVENT_LIST = 1;
 
     private ProgressDialog dialog;
 
@@ -125,13 +111,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
 
         mPager = (ViewPager) findViewById(R.id.pager);
         main = findViewById(R.id.main);
-        actions = findViewById(R.id.actions);
-        removeButton = (Button) findViewById(R.id.remove);
-        preventButton = (Button) findViewById(R.id.prevent);
-        removeButton.setOnClickListener(this);
-        preventButton.setOnClickListener(this);
-        preventButton.setEnabled(false);
-        removeButton.setEnabled(false);
         findViewById(R.id.mismatch).setOnClickListener(this);
         receiver = new HookReceiver();
 
@@ -140,19 +119,12 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         mPageSelections.add(new HashSet<String>());
         mPageSelections.add(new HashSet<String>());
         mPager.addOnPageChangeListener(this);
-        mPager.setAdapter(new ScreenSlidePagerAdapter(getSupportFragmentManager()));
+        mPager.setAdapter(new ScreenSlidePagerAdapter(getFragmentManager(), mPageTitles));
 
         HandlerThread thread = new HandlerThread("PreventUI");
         thread.start();
         mHandler = new Handler(thread.getLooper());
         mainHandler = new Handler(getMainLooper());
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
-            ActionBar actionBar = getActionBar();
-            if (actionBar != null) {
-                actions.setVisibility(View.GONE);
-            }
-        }
 
         if (PreventIntent.ACTION_NOT_SUPPORTED.equals(getIntent().getAction())) {
             reportBug();
@@ -197,6 +169,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
                 }
             }, 0x500);
         }
+        mPager.getAdapter().notifyDataSetChanged();
     }
 
     private void showRetrieving() {
@@ -260,16 +233,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.clear();
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1) {
-            preventMenu = menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
-            preventMenu.setIcon(R.drawable.ic_menu_prevent);
-            preventMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-            preventMenu.setVisible(false);
-            removeMenu = menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
-            removeMenu.setIcon(R.drawable.ic_menu_recover);
-            removeMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-            removeMenu.setVisible(false);
-        }
+        preventMenu = menu.add(Menu.NONE, R.string.prevent, Menu.NONE, R.string.prevent);
+        preventMenu.setIcon(R.drawable.ic_menu_prevent);
+        preventMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        preventMenu.setVisible(false);
+        removeMenu = menu.add(Menu.NONE, R.string.remove, Menu.NONE, R.string.remove);
+        removeMenu.setIcon(R.drawable.ic_menu_recover);
+        removeMenu.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        removeMenu.setVisible(false);
         menu.add(Menu.NONE, R.string.switch_theme, Menu.NONE, R.string.switch_theme);
         menu.add(Menu.NONE, R.string.report_bug, Menu.NONE, R.string.report_bug);
         menu.add(Menu.NONE, R.string.user_guide, Menu.NONE, R.string.user_guide);
@@ -293,7 +264,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         ThemeUtils.switchTheme(this);
         dangerousColor = null;
         transparentColor = null;
-        RecreateUtils.recreate(this);
+        recreate();
         return true;
     }
 
@@ -334,16 +305,11 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void checkSelection(int position) {
-        if (actions.getVisibility() != View.VISIBLE) {
-            if (preventMenu != null) {
-                preventMenu.setVisible(canPrevent(position));
-            }
-            if (removeMenu != null) {
-                removeMenu.setVisible(canRemove(position));
-            }
-        } else {
-            preventButton.setEnabled(canPrevent(position));
-            removeButton.setEnabled(canRemove(position));
+        if (preventMenu != null) {
+            preventMenu.setVisible(canPrevent(position));
+        }
+        if (removeMenu != null) {
+            removeMenu.setVisible(canRemove(position));
         }
     }
 
@@ -383,8 +349,7 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void setUnchecked() {
-        String tag = getTag(mPager.getCurrentItem());
-        ((PreventFragment) getSupportFragmentManager().findFragmentByTag(tag)).setChecked(false);
+        getCurrentFragment().setChecked(false);
     }
 
     @Override
@@ -399,14 +364,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     private boolean onClick(int id) {
         int position = mPager.getCurrentItem();
         Set<String> selections = mPageSelections.get(position);
-        if (id == R.id.prevent || id == R.string.prevent) {
+        if (id == R.string.prevent) {
             PreventUtils.update(this, selections.toArray(new String[selections.size()]), true);
             for (String packageName : selections) {
                 preventPackages.put(packageName, !running.containsKey(packageName));
             }
             savePackages();
             setUnchecked();
-        } else if (id == R.id.remove || id == R.string.remove) {
+        } else if (id == R.string.remove) {
             PreventUtils.update(this, selections.toArray(new String[selections.size()]), false);
             for (String packageName : selections) {
                 preventPackages.remove(packageName);
@@ -543,14 +508,20 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         builder.create().show();
     }
 
+    private PreventFragment getCurrentFragment() {
+        return getFragment(mPager.getCurrentItem());
+    }
+
+    private PreventFragment getFragment(int position) {
+        return ((ScreenSlidePagerAdapter) mPager.getAdapter()).getFragment(position);
+    }
+
     private boolean refresh(int position, boolean force) {
-        String tag = getTag(position);
-        int currentItem = mPager.getCurrentItem();
-        PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
+        PreventFragment fragment = getFragment(position);
         if (fragment != null) {
             fragment.saveListPosition();
             fragment.refresh(force);
-            if (position == currentItem) {
+            if (position == mPager.getCurrentItem()) {
                 fragment.startTaskIfNeeded();
             }
             return true;
@@ -573,18 +544,14 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
     }
 
     private void updateTimeIfNeeded(String packageName) {
-        int position = mPager.getCurrentItem();
-        String tag = getTag(position);
-        final PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
+        final PreventFragment fragment = getCurrentFragment();
         if (fragment != null) {
             fragment.updateTimeIfNeeded(packageName);
         }
     }
 
     private void notifyDataSetChanged() {
-        int position = mPager.getCurrentItem();
-        String tag = getTag(position);
-        final PreventFragment fragment = (PreventFragment) getSupportFragmentManager().findFragmentByTag(tag);
+        final PreventFragment fragment = getCurrentFragment();
         if (fragment != null) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -790,43 +757,6 @@ public class PreventActivity extends FragmentActivity implements ViewPager.OnPag
         }
     }
 
-    private static String getTag(int position) {
-        return "fragment-" + position;
-    }
-
-    private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
-
-        public ScreenSlidePagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            Fragment fragment;
-            switch (position) {
-                case APPLICATIONS:
-                    fragment = new Applications();
-                    break;
-                case PREVENT_LIST:
-                    fragment = new PreventList();
-                    break;
-                default:
-                    return null;
-            }
-            FragmentUtils.setTag(fragment, getTag(position));
-            return fragment;
-        }
-
-        @Override
-        public int getCount() {
-            return mPageTitles.length;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return mPageTitles[position];
-        }
-    }
 
     @Override
     protected void onResume() {

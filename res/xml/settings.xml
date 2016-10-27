@@ -4,25 +4,25 @@
         android:key="applications"
         android:title="@string/prevent_list">
 
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="false"
             android:key="destroy_processes"
             android:summary="@string/destroy_processes_summary"
             android:title="@string/destroy_processes" />
 
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="false"
             android:key="backup_prevent_list"
             android:summary="@string/backup_prevent_list"
             android:title="@string/backup" />
 
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="false"
             android:key="lock_sync_settings"
             android:summary="@string/lock_sync_settings"
             android:title="@string/lock_sync" />
 
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="true"
             android:key="auto_prevent"
             android:summary="@string/auto_update_prevent"
@@ -36,13 +36,13 @@
             android:summary="@string/force_stop_summary"
             android:title="@string/force_stop_label" />
 
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="true"
             android:key="allow_empty_sender"
             android:summary="@string/allow_empty_sender_in_service"
             android:title="@string/allow_empty_sender" />
 
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="true"
             android:key="stop_signature_apps"
             android:summary="@string/force_stop_uncheckable_signature_apps"

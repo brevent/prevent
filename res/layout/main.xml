@@ -30,26 +30,4 @@
             android:paddingBottom="8dp" />
     </android.support.v4.view.ViewPager>
 
-    <LinearLayout
-        android:id="@+id/actions"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-
-        <Button
-            android:id="@+id/prevent"
-            android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:drawableLeft="@drawable/ic_menu_prevent"
-            android:text="@string/prevent" />
-
-        <Button
-            android:id="@+id/remove"
-            android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:drawableLeft="@drawable/ic_menu_recover"
-            android:text="@string/remove" />
-    </LinearLayout>
-
 </LinearLayout>

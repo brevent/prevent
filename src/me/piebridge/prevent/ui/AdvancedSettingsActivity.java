@@ -1,6 +1,5 @@
 package me.piebridge.prevent.ui;
 
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -24,7 +23,7 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Pref
         ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         DeprecatedUtils.addPreferencesFromResource(this, R.xml.settings);
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1 && getActionBar() != null) {
+        if (getActionBar() != null) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
 

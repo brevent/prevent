@@ -6,7 +6,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.Settings;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -127,9 +126,7 @@ public class PackageUtils {
         }
         if (inputMethodPackages.isEmpty()) {
             initInputMethods(context);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                smsDefaultApplication = Settings.Secure.getString(context.getContentResolver(), "sms_default_application");
-            }
+            smsDefaultApplication = Settings.Secure.getString(context.getContentResolver(), "sms_default_application");
         }
         return IMPORT_PACKAGES.contains(name)
                 || isInputMethod(name)

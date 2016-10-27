@@ -1,7 +1,6 @@
 package me.piebridge.prevent.ui;
 
 import android.content.Context;
-import android.os.Build;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
 
@@ -26,11 +25,7 @@ public class ListPreferenceSummary extends ListPreference {
         if (getEntries()[0].equals(entry)) {
             return entry;
         }
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1) {
-            return String.format(String.valueOf(super.getSummary()), entry);
-        } else {
-            return super.getSummary();
-        }
+        return super.getSummary();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package me.piebridge.prevent.ui;
 
+import android.app.ListFragment;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -15,7 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.v4.app.ListFragment;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -710,8 +710,8 @@ public abstract class PreventFragment extends ListFragment implements AbsListVie
 
             private boolean contains(String query, AppInfo appInfo) {
                 return "-a".equals(query)
-                    || appInfo.name.toLowerCase(Locale.US).contains(query)
-                    || (query.length() >= 0x4 && appInfo.packageName.toLowerCase(Locale.US).contains(query));
+                        || appInfo.name.toLowerCase(Locale.US).contains(query)
+                        || (query.length() >= 0x4 && appInfo.packageName.toLowerCase(Locale.US).contains(query));
             }
 
             private boolean queryForThirdParty(String query, AppInfo appInfo) {

@@ -1,5 +1,7 @@
 package me.piebridge.prevent.ui.util;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -36,6 +38,18 @@ public class FileUtils {
         }
         os.flush();
         is.close();
+    }
+
+    public static String readAsString(InputStream is) throws IOException {
+        int length;
+        byte[] bytes = new byte[0x2000];
+        BufferedInputStream bis = new BufferedInputStream(is);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        while ((length = bis.read(bytes)) != -1) {
+            bos.write(bytes, 0, length);
+        }
+        bis.close();
+        return bos.toString("UTF-8");
     }
 
 }

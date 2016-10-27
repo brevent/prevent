@@ -18,8 +18,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.os.Process;
+import android.support.v13.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -44,6 +44,7 @@ import java.util.Locale;
 import me.piebridge.prevent.BuildConfig;
 import me.piebridge.prevent.R;
 import me.piebridge.prevent.common.PreventIntent;
+import me.piebridge.prevent.ui.util.ColorUtils;
 import me.piebridge.prevent.ui.util.DeprecatedUtils;
 import me.piebridge.prevent.ui.util.EmailUtils;
 import me.piebridge.prevent.ui.util.FileUtils;
@@ -64,23 +65,37 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
     private Integer version = null;
     private String method = null;
 
+    private String colorBackground;
+    private String colorText;
+    private String colorLink;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         ThemeUtils.setTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.about);
         ThemeUtils.fixSmartBar(this);
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD_MR1 && getActionBar() != null) {
+        if (getActionBar() != null) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
         WebView webView = (WebView) findViewById(R.id.webview);
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
+        String path;
         if ("zh".equals(Locale.getDefault().getLanguage())) {
-            webView.loadUrl("file:///android_asset/about.zh.html");
+            path = "about.zh.html";
         } else {
-            webView.loadUrl("file:///android_asset/about.en.html");
+            path = "about.en.html";
+        }
+        try {
+            String template = FileUtils.readAsString(getAssets().open(path));
+            resolveColors();
+            String body = String.format(template, colorBackground, colorText, colorLink);
+            webView.loadData(body, "text/html", "utf-8");
+        } catch (IOException e) {
+            webView.loadUrl("file:///android_asset/" + path);
+            UILog.d("cannot open " + path, e);
         }
         setView(R.id.alipay, "com.eg.android.AlipayGphone");
         if (hasPermission()) {
@@ -174,17 +189,21 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         return new File(screenshots, "pr_donate.png");
     }
 
+    public int checkPermission(String permission) {
+        return checkPermission(permission, android.os.Process.myPid(), Process.myUid());
+    }
+
     private boolean hasPermission() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+        return checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
                 || !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
     }
 
     private boolean checkPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             return true;
         }
         if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
         }
         return false;
     }
@@ -416,6 +435,13 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             }
         });
         builder.create().show();
+    }
+
+    private void resolveColors() {
+        colorBackground = ColorUtils.rgba(ColorUtils.resolveColor(this, android.R.attr.colorBackground));
+        colorLink = ColorUtils.rgba(ColorUtils.resolveColor(this, android.R.attr.textColorLink));
+        int textColorPrimary = ColorUtils.resolveColor(this, android.R.attr.textColorPrimary);
+        colorText = ColorUtils.rgba(ColorUtils.fixOpacity(textColorPrimary));
     }
 
 }
