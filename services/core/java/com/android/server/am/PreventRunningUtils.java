@@ -67,6 +67,10 @@ public class PreventRunningUtils {
         return false;
     }
 
+    public static boolean returnFalse(boolean dep) {
+        return dep && !mPreventRunning.isActiviated();
+    }
+
     public static void onCleanUpRemovedTask(Intent intent) {
         if (intent != null && intent.getComponent() != null) {
             mPreventRunning.onCleanUpRemovedTask(intent.getComponent().getPackageName());
