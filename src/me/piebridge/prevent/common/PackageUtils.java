@@ -17,12 +17,13 @@ import java.util.List;
 import java.util.Set;
 
 import me.piebridge.prevent.BuildConfig;
-import me.piebridge.prevent.framework.SystemHook;
 
 /**
  * Created by thom on 15/7/23.
  */
 public class PackageUtils {
+
+    public static final int FIRST_APPLICATION_UID = 10000;
 
     private static Set<String> launchers;
 
@@ -67,7 +68,7 @@ public class PackageUtils {
     }
 
     public static boolean canPrevent(PackageManager pm, ApplicationInfo appInfo) {
-        return appInfo.uid >= SystemHook.FIRST_APPLICATION_UID && (!isSystemPackage(appInfo.flags) || canPreventSystemPackage(pm, appInfo));
+        return appInfo.uid >= FIRST_APPLICATION_UID && (!isSystemPackage(appInfo.flags) || canPreventSystemPackage(pm, appInfo));
     }
 
     private static boolean canPreventSystemPackage(PackageManager pm, ApplicationInfo appInfo) {

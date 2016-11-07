@@ -2,8 +2,6 @@ package me.piebridge.prevent.common;
 
 import android.os.Bundle;
 
-import me.piebridge.prevent.framework.PreventLog;
-
 /**
  * Created by thom on 16/2/21.
  */
@@ -57,14 +55,14 @@ public class Configuration {
         for (String key : PreventIntent.KEYS_LONG) {
             if (bundle.containsKey(key)) {
                 long value = bundle.getLong(key);
-                PreventLog.d("update " + key + " to " + value);
+                CommonLog.d("update " + key + " to " + value);
                 this.bundle.putLong(key, value);
             }
         }
         for (String key : PreventIntent.KEYS_BOOLEAN) {
             if (bundle.containsKey(key)) {
                 boolean value = bundle.getBoolean(key);
-                PreventLog.d("update " + key + " to " + value);
+                CommonLog.d("update " + key + " to " + value);
                 this.bundle.putBoolean(key, value);
             }
         }

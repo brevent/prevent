@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import me.piebridge.prevent.framework.PreventLog;
-import me.piebridge.prevent.framework.SystemHook;
-
 /**
  * Created by thom on 15/7/28.
  */
@@ -54,14 +51,14 @@ public class GmsUtils {
     public static void increaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(packageName) && !PackageUtils.isLauncher(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.incrementAndGet();
-            PreventLog.d("increase gms reference: " + gmsCount + ", package: " + packageName);
+            CommonLog.d("increase gms reference: " + gmsCount + ", package: " + packageName);
         }
     }
 
     public static void decreaseGmsCount(Context context, String packageName) {
         if (!GMS.equals(packageName) && isGapps(packageName) && !PackageUtils.isLauncher(context.getPackageManager(), packageName)) {
             int gmsCount = GMS_COUNTER.decrementAndGet();
-            PreventLog.d("decrease gms reference: " + gmsCount + ", package: " + packageName);
+            CommonLog.d("decrease gms reference: " + gmsCount + ", package: " + packageName);
         }
     }
 
@@ -90,7 +87,7 @@ public class GmsUtils {
         for (int i = 0; i < size; ++i) {
             ServiceInfo si = intentServices.get(i).serviceInfo;
             if (GMS.equals(si.packageName) && GCM_REGISTERS.add(new ComponentName(si.packageName, si.name))) {
-                PreventLog.d("add gcm register/unregister: " + si.name);
+                CommonLog.d("add gcm register/unregister: " + si.name);
             }
         }
     }
@@ -106,13 +103,13 @@ public class GmsUtils {
     public static boolean isGappsCaller(Context context) {
         try {
             int callingUid = Binder.getCallingUid();
-            if (callingUid < SystemHook.FIRST_APPLICATION_UID) {
+            if (callingUid < PackageUtils.FIRST_APPLICATION_UID) {
                 return false;
             }
             PackageManager pm = context.getPackageManager();
             return pm.getApplicationInfo(GMS, 0).uid == callingUid || isGapps(pm, callingUid);
         } catch (PackageManager.NameNotFoundException e) {
-            PreventLog.v("cannot find gms", e);
+            CommonLog.v("cannot find gms", e);
         }
         return false;
     }
@@ -133,11 +130,10 @@ public class GmsUtils {
     public static boolean canStopGms() {
         int gmsCount = GMS_COUNTER.get();
         if (gmsCount != 0) {
-            PreventLog.d("cannot stop gms now, gms reference: " + gmsCount);
+            CommonLog.d("cannot stop gms now, gms reference: " + gmsCount);
             return false;
         } else {
-            // I think it's logged already
-            return !SystemHook.hasRunningGapps();
+            return true;
         }
     }
 

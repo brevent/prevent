@@ -13,8 +13,6 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
-import me.piebridge.prevent.framework.PreventLog;
-
 /**
  * Created by thom on 16/2/11.
  */
@@ -58,7 +56,7 @@ public class FileUtils {
             writer.close();
             lock.renameTo(new File(path));
         } catch (IOException e) {
-            PreventLog.e("cannot save " + path, e);
+            CommonLog.e("cannot save " + path, e);
         }
     }
 
@@ -76,7 +74,7 @@ public class FileUtils {
             writer.close();
             lock.renameTo(new File(path));
         } catch (IOException e) {
-            PreventLog.e("cannot save " + path, e);
+            CommonLog.e("cannot save " + path, e);
         }
     }
 
@@ -100,9 +98,9 @@ public class FileUtils {
                 packages.add(line);
             }
             reader.close();
-            PreventLog.i("load " + file.getAbsolutePath() + ", size: " + packages.size());
+            CommonLog.i("load " + file.getAbsolutePath() + ", size: " + packages.size());
         } catch (IOException e) {
-            PreventLog.e("cannot load " + file.getAbsolutePath(), e);
+            CommonLog.e("cannot load " + file.getAbsolutePath(), e);
         }
         return packages;
     }
