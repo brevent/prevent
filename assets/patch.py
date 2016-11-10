@@ -217,6 +217,9 @@ class ActivityManagerService(Patch):
 
 
 class ActivityStack(Patch):
+
+    patched = 0
+
     def get_path(self):
         return "com/android/server/am/ActivityStack.smali"
 
@@ -229,6 +232,7 @@ class ActivityStack(Patch):
                          " Lcom/android/server/am/PreventRunningUtils;"
                          "->onResumeActivity(Landroid/os/IBinder;)V" % (argument, argument))
             output.write(os.linesep)
+            self.patched += 1
             return True
         elif "Landroid/app/IApplicationThread;->scheduleDestroyActivity(Landroid/os/IBinder;" in line:
             output.write(line)
@@ -238,6 +242,7 @@ class ActivityStack(Patch):
                          " Lcom/android/server/am/PreventRunningUtils;"
                          "->onDestroyActivity(Landroid/os/IBinder;)V" % (argument, argument))
             output.write(os.linesep)
+            self.patched += 1
             return True
         elif "Landroid/app/IApplicationThread;->schedulePauseActivity(Landroid/os/IBinder;ZZ" in line:
             output.write(line)
@@ -252,13 +257,20 @@ class ActivityStack(Patch):
                          " Lcom/android/server/am/PreventRunningUtils;"
                          "->onUserLeavingActivity(Landroid/os/IBinder;ZZ)V" % ', '.join(arguments[1:4]))
             output.write(os.linesep)
+            self.patched += 1
             return True
 
     def get_patch_count(self):
-        return 3
+        if self.patched > 3:
+            return self.patched
+        else:
+            return 3
 
 
 class ActivityStackSupervisor(Patch):
+
+    patched = 0
+
     def get_path(self):
         return "com/android/server/am/ActivityStackSupervisor.smali"
 
@@ -272,10 +284,14 @@ class ActivityStackSupervisor(Patch):
                          " Lcom/android/server/am/PreventRunningUtils;"
                          "->onLaunchActivity(Landroid/os/IBinder;)V" % (argument, argument))
             output.write(os.linesep)
+            self.patched += 1
             return True
 
     def get_patch_count(self):
-        return 1
+        if self.patched > 1:
+            return self.patched
+        else:
+            return 1
 
 
 def main():
