@@ -34,6 +34,7 @@ public class PackageUtils {
     private static final Collection<String> IMPORT_PACKAGES = Arrays.asList(
             "de.robv.android.xposed.installer",
             "eu.chainfire.supersu",
+            "eu.chainfire.supersu.pro",
             BuildConfig.APPLICATION_ID
     );
 
