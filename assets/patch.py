@@ -52,7 +52,7 @@ class Patch(object):
         path = self.build_path(self.get_path())
         if not os.path.exists(path):
             sys.stderr.write(_("%s not exists%s") % (path, os.linesep))
-            raise SystemExit
+            raise SystemExit(1)
 
         output = open(path + ".patched", "w")
         for line in open(path, "r"):
@@ -71,7 +71,7 @@ class Patch(object):
         else:
             sys.stderr.write(_("%s patched %s, should patch %s%s") % (
                 path_name, patched, self.get_patch_count(), os.linesep))
-            raise SystemExit()
+            raise SystemExit(2)
         return patched
 
     def get_path(self):
