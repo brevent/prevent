@@ -80,6 +80,7 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
         }
 
         WebView webView = (WebView) findViewById(R.id.webview);
+        webView.setBackgroundColor(ColorUtils.resolveColor(this, android.R.attr.colorBackground));
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
         String path;
