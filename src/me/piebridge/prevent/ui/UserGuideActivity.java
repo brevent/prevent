@@ -92,7 +92,7 @@ public class UserGuideActivity extends Activity implements View.OnClickListener 
             String template = FileUtils.readAsString(getAssets().open(path));
             resolveColors();
             String body = String.format(template, colorBackground, colorText, colorLink);
-            webView.loadData(body, "text/html", "utf-8");
+            webView.loadDataWithBaseURL(null, body, "text/html; charset=utf-8", "UTF-8", null);
         } catch (IOException e) {
             webView.loadUrl("file:///android_asset/" + path);
             UILog.d("cannot open " + path, e);
