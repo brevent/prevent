@@ -1,3 +1,3 @@
 [submodule "src/me/piebridge/prevent/framework"]
 	path = src/me/piebridge/prevent/framework
-	url = ../brevent-framework
+	url = git@github.com:brevent/prevent-framework.git
