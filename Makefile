@@ -8,7 +8,7 @@ lib/AndroidHiddenAPI.jar: \
             AndroidHiddenAPI/com/android/server/am/*.java \
             AndroidHiddenAPI/com/android/internal/app/*.java
 
-	javac -cp ${ANDROID_HOME}/platforms/android-25/android.jar \
+	javac -cp ${ANDROID_HOME}/platforms/android-27/android.jar \
             AndroidHiddenAPI/android/app/*.java \
             AndroidHiddenAPI/android/app/usage/*.java \
             AndroidHiddenAPI/android/content/*.java \
