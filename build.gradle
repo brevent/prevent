@@ -1,18 +1,46 @@
 buildscript {
     repositories {
         jcenter()
+        maven {
+            url 'https://dl.google.com/dl/android/maven2'
+        }
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.2'
+        classpath 'com.android.tools.build:gradle:3.0.0'
     }
 }
 
 apply plugin: 'com.android.application'
 
+allprojects {
+    repositories {
+        jcenter()
+        maven {
+            url 'https://dl.google.com/dl/android/maven2'
+        }
+    }
+}
+
+def isIde = { ->
+    def ide = false
+    def taskRequests = project.gradle.startParameter.taskRequests
+    if (taskRequests?.empty) {
+        ide = true
+    } else {
+        taskRequests[0].args.any {
+            if (it.endsWith('generateDebugSources') || it.endsWith('assembleDebug')) {
+                ide = true
+                return true
+            }
+        }
+        return ide
+    }
+}
+
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.0"
+    compileSdkVersion 27
+    buildToolsVersion "27.0.0"
 
     defaultConfig {
         versionName new XmlSlurper().parse("AndroidManifest.xml").@'android:versionName'.text()
@@ -32,7 +60,11 @@ android {
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src', 'services/core/java', 'AndroidHiddenAPI']
+            if (isIde()) {
+                java.srcDirs = ['src', 'services/core/java', 'AndroidHiddenAPI']
+            } else {
+                java.srcDirs = ['src', 'services/core/java']
+            }
             resources.srcDirs = ['src']
             aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
@@ -72,10 +104,16 @@ android {
 }
 
 dependencies {
-    compile "com.android.support:support-core-ui:25.0.0"
-    compile "com.android.support:support-v13:25.0.0"
+    if (!isIde()) {
+        compileOnly fileTree(dir: 'lib', include: ['*.jar'])
+    }
+    implementation "com.android.support:support-core-ui:27.0.2"
+    implementation "com.android.support:support-v13:27.0.2"
 }
 
 tasks.withType(JavaCompile) {
     options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+    if (!isIde()) {
+        options.compilerArgs << '-Xbootclasspath/p:' + fileTree(dir: 'lib', include: ['*.jar']).asPath
+    }
 }
